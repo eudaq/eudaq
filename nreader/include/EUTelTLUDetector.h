@@ -16,71 +16,68 @@
 #include "eudaq/Platform.hh"
 namespace eutelescope {
 
-
   //! This is the TLU fake detector
   /*!
    *
    */
 
-  class  DLLEXPORT  EUTelTLUDetector : public EUTelBaseDetector {
+  class DLLEXPORT EUTelTLUDetector : public EUTelBaseDetector {
 
   public:
     //! Default constructor
-    EUTelTLUDetector() ;
+    EUTelTLUDetector();
 
     //! Default destructor
-    virtual ~EUTelTLUDetector() {;}
+    virtual ~EUTelTLUDetector() { ; }
 
     //! Returns the and mask
-    inline unsigned int getAndMask() const { return _andMask ; }
+    inline unsigned int getAndMask() const { return _andMask; }
 
     //! Returns the or mask
-    inline unsigned int getOrMask() const { return _orMask ; }
+    inline unsigned int getOrMask() const { return _orMask; }
 
     //! Returns the veto mask
-    inline unsigned int getVetoMask() const { return _vetoMask ; }
+    inline unsigned int getVetoMask() const { return _vetoMask; }
 
     //! Returns the DUT mask
-    inline unsigned int getDUTMask() const { return _dutMask ; }
+    inline unsigned int getDUTMask() const { return _dutMask; }
 
     //! Returns the firmware ID (version)
     inline unsigned int getFirmwareID() const { return _firmwareID; }
 
     //! Returns the internal time interval
-    inline short getTimeInterval() const { return _timeInterval ; }
-
+    inline short getTimeInterval() const { return _timeInterval; }
 
     // From here below, the setters
-    
+
     //! Sets the AndMask
-    void setAndMask( unsigned short value) ;
+    void setAndMask(unsigned short value);
 
     //! Sets the OrMask
-    void setOrMask( unsigned short value) ;
+    void setOrMask(unsigned short value);
 
     //! Sets the VetoMask
-    void setVetoMask( unsigned short value) ;
+    void setVetoMask(unsigned short value);
 
     //! Sets the DUTMask
-    void setDUTMask( unsigned short value) ;
+    void setDUTMask(unsigned short value);
 
     //! Sets the firmware ID (version)
-    void setFirmwareID( unsigned short value );
+    void setFirmwareID(unsigned short value);
 
     //! Sets the internal time interval
     /*! Usually this number is below 255
      */
-    void setTimeInterval( short value );
+    void setTimeInterval(short value);
 
     //! Print
     /*! This method is used to print out the detector
      *
      *  @param os The input output stream
      */
-    virtual void print(std::ostream& os) const ;
+    virtual void print(std::ostream &os) const;
 
   protected:
-
     //! The AndMask
     unsigned int _andMask;
 
@@ -98,10 +95,7 @@ namespace eutelescope {
 
     //! The internal time interval
     unsigned short _timeInterval;
-
-
   };
-
 }
 
 #endif

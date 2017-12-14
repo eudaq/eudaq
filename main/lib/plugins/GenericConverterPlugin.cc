@@ -12,7 +12,9 @@ using namespace std;
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
 #  include "IMPL/TrackerRawDataImpl.h"
+#  include "IMPL/TrackerDataImpl.h"
 #  include "IMPL/LCCollectionVec.h"
+#  include "UTIL/CellIDEncoder.h"
 #  include "lcio.h"
 #endif
 
@@ -91,10 +93,8 @@ namespace eudaq {
       }
 
 #if USE_LCIO
-      // This is where the conversion to LCIO is done
-    virtual lcio::LCEvent * GetLCIOEvent(const Event * /*ev*/) const {
-        return 0;
-      }
+     virtual void GetLCIORunHeader(lcio::LCRunHeader & , eudaq::Event const & , eudaq::Configuration const & ) const; 
+     virtual bool GetLCIOSubEvent(lcio::LCEvent & lev, const Event & ev) const; 
 #endif
 
     private:
@@ -107,5 +107,64 @@ namespace eudaq {
   };
 
   GenericConverterPlugin GenericConverterPlugin::m_instance;
+
+#if USE_LCIO
+void GenericConverterPlugin::GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & , eudaq::Configuration const & ) const {}
+ 
+
+bool GenericConverterPlugin::GetLCIOSubEvent(lcio::LCEvent & lev, const Event & ev) const {
+ 
+  if (ev.IsBORE()) {
+            return true;
+  } else if (ev.IsEORE()) {
+            return true;
+  }
+   
+  const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
+  if (ev_raw.NumBlocks() != 1)
+    return false;
+        
+  const std::vector<unsigned char> & data = ev_raw.GetBlock(0);
+    
+  pb::StandardEvent event;
+  event.ParseFromArray( data.data(), data.size());
+        
+  //cout << event.DebugString() << endl; 
+
+  LCCollectionVec * ZSDataCollection = new LCCollectionVec(lcio::LCIO::TRACKERDATA);
+  CellIDEncoder<TrackerDataImpl> ZSDataEncoder( "sensorID:6,sparsePixelType:5", ZSDataCollection);   
+  
+  for (int i = 0; i < event.plane_size(); i++) {
+
+    const pb::StandardPlane& pb_plane = event.plane(i);
+
+    TrackerDataImpl* zspixels = new TrackerDataImpl; 
+    ZSDataEncoder["sensorID"] = pb_plane.id(); 
+    ZSDataEncoder["sparsePixelType"] =0; 
+    ZSDataEncoder.setCellID(zspixels); 
+             
+       
+    for (int iframe = 0; iframe < pb_plane.frame_size(); iframe++) {
+      const pb::Frame& pb_frame = pb_plane.frame(iframe);
+                
+      for (int i = 0; i < pb_frame.pixel_size(); i++) {
+        const pb::Pixel& pb_pix = pb_frame.pixel(i);
+        zspixels->chargeValues().push_back(pb_pix.x()); 
+        zspixels->chargeValues().push_back(pb_pix.y()); 
+        zspixels->chargeValues().push_back(pb_pix.val()); 
+      }
+    }
+            
+    ZSDataCollection->push_back(zspixels);
+  }
+  
+  lev.addCollection( ZSDataCollection, "zsdata_generic" );  
+ 
+  return true;
+
+}
+#endif
+
+
 
 } // namespace eudaq

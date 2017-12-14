@@ -1,14 +1,11 @@
 # Determine platform- and compiler-specific settings
 
-# check for and activate c++11 support
-include(${PROJECT_SOURCE_DIR}/cmake/CXX11.cmake)
-check_for_cxx11_compiler(CXX11_COMPILER)
-if(CXX11_COMPILER)
-  enable_cxx11()
-  ADD_DEFINITIONS("-DCPP11=1")
-else(CXX11_COMPILER)
-  MESSAGE(FATAL_ERROR "Your C++ compiler version (${CMAKE_CXX_COMPILER_ID} ${COMPILER_VERSION}) is not compatible with C++11. Please use a fully C++11 compliant compiler -- see the EUDAQ documentation for more information.")
-endif(CXX11_COMPILER)
+# demand c++11 support
+set (CMAKE_CXX_STANDARD 11)
+set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
+
+# position independent code on instead of setting -fPIC directly
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # platform dependent preprocessor defines
 if (WIN32)
@@ -45,12 +42,14 @@ endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 if (CMAKE_COMPILER_IS_GNUCC)
    # add some more general preprocessor defines (only for gcc)
    message(STATUS "Using gcc-specific preprocessor identifiers")
-   add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__")
+   add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__ ")
+   add_definitions("-D_GLIBCXX_USE_NANOSLEEP")
 elseif(MSVC)
    message(STATUS "Using MSVC-specific preprocessor identifiers and options")
    add_definitions("-DEUDAQ_FUNC=__FUNCTION__")
    add_definitions("/wd4251") # disables warning concerning dll-interface (comes up for std classes too often)
    add_definitions("/wd4996") # this compiler warnung is about that functions like fopen are unsafe.
+   add_definitions("/wd4800") # disables warning concerning usage of old style bool (in root)
 else()
    add_definitions("-DEUDAQ_FUNC=__func__")
 endif()

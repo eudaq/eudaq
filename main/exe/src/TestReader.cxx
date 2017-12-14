@@ -15,7 +15,6 @@ using eudaq::to_string;
 using eudaq::split;
 using eudaq::parsenumbers;
 
-using namespace std;
 
 
 

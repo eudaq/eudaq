@@ -8,27 +8,24 @@
 #include "MonitorPerformanceCollection.hh"
 #include "OnlineMon.hh"
 
-MonitorPerformanceCollection::MonitorPerformanceCollection(): BaseCollection()
-{
-  mymonhistos=new MonitorPerformanceHistos();
-  histos_init=false;
-  cout << " Initialising MonitorPerformance Collection" <<endl;
-  CollectionType=MONITORPERFORMANCE_COLLECTION_TYPE;
+MonitorPerformanceCollection::MonitorPerformanceCollection()
+    : BaseCollection() {
+  mymonhistos = new MonitorPerformanceHistos();
+  histos_init = false;
+  cout << " Initialising MonitorPerformance Collection" << endl;
+  CollectionType = MONITORPERFORMANCE_COLLECTION_TYPE;
 }
 
-MonitorPerformanceCollection::~MonitorPerformanceCollection()
-{
+MonitorPerformanceCollection::~MonitorPerformanceCollection() {
   // TODO Auto-generated destructor stub
 }
 
-void MonitorPerformanceCollection::Write(TFile *file)
-{
-  if (file==NULL)
-  {
-    cout << "MonitorPerformanceCollection::Write File pointer is NULL"<<endl;
+void MonitorPerformanceCollection::Write(TFile *file) {
+  if (file == NULL) {
+    cout << "MonitorPerformanceCollection::Write File pointer is NULL" << endl;
     exit(-1);
   }
-  if (gDirectory!=NULL) //check if this pointer exists
+  if (gDirectory != NULL) // check if this pointer exists
   {
     gDirectory->mkdir("MonitorPerformance");
     gDirectory->cd("MonitorPerformance");
@@ -37,45 +34,62 @@ void MonitorPerformanceCollection::Write(TFile *file)
   }
 }
 
-void MonitorPerformanceCollection::Calculate(const unsigned int /*currentEventNumber*/)
-{
+void MonitorPerformanceCollection::Calculate(
+    const unsigned int /*currentEventNumber*/) {}
 
-}
+void MonitorPerformanceCollection::Reset() { mymonhistos->Reset(); }
 
-void MonitorPerformanceCollection::Reset()
-{
-  mymonhistos->Reset();
-}
-
-void MonitorPerformanceCollection::Fill(const SimpleStandardEvent &simpev)
-{
-  if (histos_init==false)
-  {
+void MonitorPerformanceCollection::Fill(const SimpleStandardEvent &simpev) {
+  if (histos_init == false) {
     bookHistograms(simpev);
-    histos_init=true;
+    histos_init = true;
   }
   mymonhistos->Fill(simpev);
 }
 
+void MonitorPerformanceCollection::bookHistograms(
+    const SimpleStandardEvent & /*simpev*/) {
+  if (_mon != NULL) {
+    string performance_folder_name = "Monitor Performance";
+    _mon->getOnlineMon()->registerTreeItem(
+        (performance_folder_name + "/Data Analysis Time"));
+    _mon->getOnlineMon()->registerHisto(
+        (performance_folder_name + "/Data Analysis Time"),
+        mymonhistos->getAnalysisTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Data Analysis Time"),
+        mymonhistos->getMutex());
+    _mon->getOnlineMon()->registerTreeItem(
+        (performance_folder_name + "/Histo Fill Time"));
+    _mon->getOnlineMon()->registerHisto(
+        (performance_folder_name + "/Histo Fill Time"),
+        mymonhistos->getFillTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Histo Fill Time"),
+        mymonhistos->getMutex());
+    _mon->getOnlineMon()->registerTreeItem(
+        (performance_folder_name + "/Clustering Time"));
+    _mon->getOnlineMon()->registerHisto(
+        (performance_folder_name + "/Clustering Time"),
+        mymonhistos->getClusteringTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Clustering Time"),
+        mymonhistos->getMutex());
+    _mon->getOnlineMon()->registerTreeItem(
+        (performance_folder_name + "/Correlation Time"));
+    _mon->getOnlineMon()->registerHisto(
+        (performance_folder_name + "/Correlation Time"),
+        mymonhistos->getCorrelationTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Correlation Time"),
+        mymonhistos->getMutex());
 
-void MonitorPerformanceCollection::bookHistograms(const SimpleStandardEvent & /*simpev*/)
-{
-  if (_mon != NULL)
-  {
-    string performance_folder_name="Monitor Performance";
-    _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Data Analysis Time"));
-    _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Data Analysis Time"),mymonhistos->getAnalysisTimeHisto());
-    _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Histo Fill Time"));
-    _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Histo Fill Time"),mymonhistos->getFillTimeHisto());
-    _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Clustering Time"));
-    _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Clustering Time"),mymonhistos->getClusteringTimeHisto());
-    _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Correlation Time"));
-    _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Correlation Time"),mymonhistos->getCorrelationTimeHisto());
-    _mon->getOnlineMon()->makeTreeItemSummary(performance_folder_name.c_str()); //make summary page
+    _mon->getOnlineMon()->makeTreeItemSummary(
+        performance_folder_name.c_str()); // make summary page
   }
 }
 
-MonitorPerformanceHistos * MonitorPerformanceCollection::getMonitorPerformanceHistos()
-{
+MonitorPerformanceHistos *
+MonitorPerformanceCollection::getMonitorPerformanceHistos() {
   return mymonhistos;
 }

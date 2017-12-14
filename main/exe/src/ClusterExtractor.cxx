@@ -217,8 +217,8 @@ int main(int /*argc*/, char ** argv) {
                 if (!badseed && charge >= clust.Value() * noise.Value() * thresh_clus.Value()) {
                   double cx = seeds[i].x, cy = seeds[i].y;
                   if (weighted.IsSet()) {
-                    cx = sumx / (double)charge;
-                    cy = sumy / (double)charge;
+                    cx = sumx / static_cast<double>(charge);
+                    cy = sumy / static_cast<double>(charge);
                   }
                   clusters.push_back(Cluster(cx, cy, charge));
                   for (int dy = -dclust; dy <= dclust; ++dy) {

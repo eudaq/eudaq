@@ -2,6 +2,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/Configuration.hh"
 #include "eudaq/Timer.hh"
 #include "depfet/rc_depfet.hh"
 #include "depfet/TCPclient.h"

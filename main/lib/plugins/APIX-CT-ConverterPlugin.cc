@@ -36,6 +36,8 @@ namespace eudaq {
 
   static const unsigned int NCOL=80;
   static const unsigned int NROW=336;
+  static const unsigned int NCOLFEI3=18;
+  static const unsigned int NROWFEI3=160;
   static int chip_id_offset = 20;
 
   class FormattedRecord{
@@ -79,7 +81,8 @@ namespace eudaq {
       unsigned int col: 7;
       unsigned int tot: 8;
       unsigned int fe: 4;
-      unsigned int unused1: 3;
+      unsigned int dataflag: 1;
+      unsigned int unused1: 2;
       unsigned int key: 1;
       
     };
@@ -125,6 +128,8 @@ namespace eudaq {
     void setCol(unsigned col){m_record.da.col=col;}
     unsigned getRow(){return m_record.da.row;}
     void setRow(unsigned row){m_record.da.row=row;}
+    unsigned getDataflag(){return m_record.da.dataflag;}
+    void setDataflag(unsigned fl){m_record.da.dataflag=fl;}
 
     unsigned getWord(){return m_record.ui;}
 
@@ -139,6 +144,7 @@ namespace eudaq {
     unsigned int tot;
     unsigned int lv1;
     unsigned int col;
+    unsigned int chip;
     unsigned int row;
     uint64_t rceTrigger;
     unsigned int eudetTrigger;
@@ -166,18 +172,21 @@ namespace eudaq {
                               m_feToSensorid(*new std::map<int, int>), 
                               m_fepos(*new std::map<int, int>), 
                               m_sensorids(*new std::vector<int>),
-                              m_nFeSensor(*new std::map<int,int>) {}
+                              m_nFeSensor(*new std::map<int,int>), 
+                              m_smult(*new std::vector<int>){}
     virtual ~APIXCTConverterPlugin(){
        delete &m_feToSensorid;
        delete &m_fepos;
        delete &m_sensorids;
        delete &m_nFeSensor;
+       delete &m_smult;
     }
     unsigned m_nFrames;
     std::map<int, int> &m_feToSensorid;
     std::map<int, int> &m_fepos;
     std::vector<int> &m_sensorids;
     std::map<int,int> &m_nFeSensor;
+    std::vector<int> &m_smult;
     
     static APIXCTConverterPlugin const m_instance;
   };
@@ -223,60 +232,61 @@ namespace eudaq {
     std::vector< eutelescope::EUTelSetupDescription * >  setupDescription;
     std::vector<CTELHit> hits = decodeData( ev_raw);
     for (size_t sensor=0;sensor<m_sensorids.size();sensor++){
-      if (lcioEvent.getEventNumber() == 0) {
+      for(size_t sm=0;sm<m_smult[sensor];sm++){
+	if (lcioEvent.getEventNumber() == 0) {
 	eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelAPIXMCDetector(2);
 	currentDetector->setMode( "ZS" );
 	
 	setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
-      }
-      
-      std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
-      
-      zsDataEncoder["sensorID"] = m_sensorids[sensor] + chip_id_offset;
-      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
-      
-      // prepare a new TrackerData object for the ZS data
-      // it contains all the hits for a particular sensor in one event
-      std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
-      // set some values of "Cells" for this object
-      zsDataEncoder.setCellID( zsFrame.get() );
-      
-      // this is the structure that will host the sparse pixel
-      // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
-      // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-      std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
-	sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
-      
-      for (size_t i=0;i<hits.size();i++){
-	if(m_feToSensorid[hits[i].link]==m_sensorids[sensor]){
-	  if(m_nFeSensor[m_feToSensorid[hits[i].link]]==4){ // 4-chip module
-	    int col=0, row=0;
-	    // FE orientation for 4-chip modules:
-	    // 1 0
-	    // 2 3
-	    // columns are x, rows are y. 
-	    if(m_fepos[hits[i].link]==0){ 
-	      col=2*NCOL-1-hits[i].col;
-	      row=NROW+hits[i].row;
-	    }else if(m_fepos[hits[i].link]==1){ 
-	      col=NCOL-1-hits[i].col;
-	      row=NROW+hits[i].row;
-	    }else if(m_fepos[hits[i].link]==2){ 
-	      col=hits[i].col;
-	      row=NROW-1-hits[i].row;
-	    }else{     
-	      col=NCOL+hits[i].col;  
-	      row=NROW-1-hits[i].row;
+	}
+	
+	int cio=chip_id_offset;
+	if(m_nFeSensor[m_sensorids[sensor]]==3)cio=0;
+	zsDataEncoder["sensorID"] = m_sensorids[sensor] + sm + cio;
+	zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+	
+	// prepare a new TrackerData object for the ZS data
+	// it contains all the hits for a particular sensor in one event
+	std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+	
+	// set some values of "Cells" for this object
+	zsDataEncoder.setCellID( zsFrame.get() );
+	
+	// this is the structure that will host the sparse pixel
+	// it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
+	// a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
+	std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+	  sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
+	
+	for (size_t i=0;i<hits.size();i++){
+	  if(m_feToSensorid[hits[i].link]==m_sensorids[sensor]){
+	    if(m_nFeSensor[m_sensorids[sensor]]==3 && hits[i].chip!=sm)continue;
+	    if(m_nFeSensor[m_feToSensorid[hits[i].link]]==4){ // 4-chip module
+	      int col=0, row=0;
+	      // FE orientation for 4-chip modules:
+	      // 1 0
+	      // 2 3
+	      // columns are x, rows are y. 
+	      if(m_fepos[hits[i].link]==0){ 
+		col=2*NCOL-1-hits[i].col;
+		row=NROW+hits[i].row;
+	      }else if(m_fepos[hits[i].link]==1){ 
+		col=NCOL-1-hits[i].col;
+		row=NROW+hits[i].row;
+	      }else if(m_fepos[hits[i].link]==2){ 
+		col=hits[i].col;
+		row=NROW-1-hits[i].row;
+	      }else{     
+		col=NCOL+hits[i].col;  
+		row=NROW-1-hits[i].row;
 	      }
-	    int ModuleID=m_sensorids[sensor]+chip_id_offset;
-	    int lvl1=hits[i].lv1;
-	    int ToT=hits[i].tot;
-            eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, ToT, lvl1);
-	    sparseFrame->addSparsePixel( thisHit );
-	    tmphits.push_back( thisHit );
-/*
-	    //ganged pixels bottom
-	    if (row==329){
+	      int ModuleID=m_sensorids[sensor]+chip_id_offset;
+	      int lvl1=hits[i].lv1;
+	      int ToT=hits[i].tot;
+	      sparseFrame->emplace_back( col, row, ToT, lvl1 );
+	      /*
+	      //ganged pixels bottom
+	      if (row==329){
 	      row = 336;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -287,9 +297,9 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-	    
-	    if (row==331){
+	      }
+	      
+	      if (row==331){
 	      row = 337;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -300,9 +310,9 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-	    
-	    if (row==333){
+	      }
+	      
+	      if (row==333){
 	      row = 338;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -313,9 +323,9 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-	    
-	    if (row==335){
+	      }
+	      
+	      if (row==335){
 	      row = 339;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -326,10 +336,10 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-	    
-	    //ganged pixels top
-	    if (row==352){
+	      }
+	      
+	      //ganged pixels top
+	      if (row==352){
 	      row = 348;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -340,9 +350,9 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-	    
-	    if (row==354){
+	      }
+	      
+	      if (row==354){
 	      row = 349;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -353,9 +363,9 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-	    
-	    if (row==356){
+	      }
+	      
+	      if (row==356){
 	      row = 350;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -366,9 +376,9 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-	    
-	    if (row==358){
+	      }
+	      
+	      if (row==358){
 	      row = 351;
 	      col=col;
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
@@ -379,52 +389,46 @@ namespace eudaq {
 	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT,  lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
-	    }
-*/
-	  }else{ //1 or 2 chip module
-	    //500x25
-	    //unsigned int Col1 = (int)(t_Col/2);
-	    //unsigned int Row1 = (t_Col+1)%2 + 2 * t_Row;
-	    //int col = (int)(hits[i].col/2);
-	    //int row = (hits[i].col+1)%2 + (2 * hits[i].row);
-/*	    
-	    if( m_sensorids[sensor] + chip_id_offset == 21)
-	      {
-		//SQUARE 125X100 GEOMETRY
-		unsigned int Col1 = hits[i].col;
-		unsigned int Row1 = hits[i].row;
-		unsigned int rem4r = (hits[i].row + 1)%4;
-		unsigned int rem2c = (hits[i].col + 1)%2;
-		int col = ( (rem4r<2 && rem2c==1) || (rem4r>1 && rem2c==0) ) ? Col1*2 : Col1*2+1;
-		int row = (int)(Row1/2);
-		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
-		sparseFrame->addSparsePixel( thisHit );
-		tmphits.push_back( thisHit );
 	      }
-	    else
-*/	    
+	      */
+	    }else{ //1 or 2 chip module
+	      //500x25
+	      //unsigned int Col1 = (int)(t_Col/2);
+	      //unsigned int Row1 = (t_Col+1)%2 + 2 * t_Row;
+	      //int col = (int)(hits[i].col/2);
+	      //int row = (hits[i].col+1)%2 + (2 * hits[i].row);
+	      /*	    
+			    if( m_sensorids[sensor] + chip_id_offset == 21)
+			    {
+			    //SQUARE 125X100 GEOMETRY
+			    unsigned int Col1 = hits[i].col;
+			    unsigned int Row1 = hits[i].row;
+			    unsigned int rem4r = (hits[i].row + 1)%4;
+			    unsigned int rem2c = (hits[i].col + 1)%2;
+			    int col = ( (rem4r<2 && rem2c==1) || (rem4r>1 && rem2c==0) ) ? Col1*2 : Col1*2+1;
+			    int row = (int)(Row1/2);
+			    eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
+			    sparseFrame->addSparsePixel( thisHit );
+			    tmphits.push_back( thisHit );
+			    }
+			    else
+	      */	    
 	      {
 		int col = hits[i].col;
 		int row = hits[i].row;
-		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
-		sparseFrame->addSparsePixel( thisHit );
-		tmphits.push_back( thisHit );
+		sparseFrame->emplace_back( col, row, hits[i].tot, hits[i].lv1 );
 	      }
-	    //int col=(1+m_fepos[hits[i].link])*NCOL-1-hits[i].col; //left or right on 2-chip module
-	    // eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
-	    //sparseFrame->addSparsePixel( thisHit );
-	    // tmphits.push_back( thisHit );
-   
+	      //int col=(1+m_fepos[hits[i].link])*NCOL-1-hits[i].col; //left or right on 2-chip module
+	      // eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
+	      //sparseFrame->addSparsePixel( thisHit );
+	      // tmphits.push_back( thisHit );
+	      
+	    }
 	  }
 	}
-      }
       
-      // write TrackerData object that contains info from one sensor to LCIO collection
-      zsDataCollection->push_back( zsFrame.release() );
-      
-      // clean up
-      for( std::list<eutelescope::EUTelGenericSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
-	delete (*it);
+	// write TrackerData object that contains info from one sensor to LCIO collection
+	zsDataCollection->push_back( zsFrame.release() );
       }
     }
     
@@ -470,6 +474,7 @@ namespace eudaq {
     m_fepos.clear();
     m_sensorids.clear();
     m_nFeSensor.clear();
+    m_smult.clear();
     for(int i=0;i<nFrontends;i++){
       sprintf(tagname, "OutLink_%d", i);
       int link=from_string(source.GetTag(tagname), 0);
@@ -491,6 +496,9 @@ namespace eudaq {
       }
       if(found==false){
         m_sensorids.push_back(sid);
+	int sm=1;
+	if(stype==3)sm=pos;
+	m_smult.push_back(sm); //for FEI3 one FE (MCC) can have multiple planes (FEs)
       }
     }
     std::cout<<nFrontends<<" frontends and "<<m_sensorids.size()<<" sensors."<<std::endl;
@@ -512,24 +520,32 @@ namespace eudaq {
     unsigned eudetTrig = getlittleendian<unsigned int>(&ev.GetBlock(0)[36])&0x7fff;
     //std::cout<<"eudet ID "<<eudetTrig<<std::endl;
     std::map<int, StandardPlane> planes; //sensor id to plane
-    for(size_t i=0;i<m_sensorids.size();i++){
-      int sensorid=m_sensorids[i];
-      StandardPlane plane(sensorid, "APIXCT", "APIXCT");
-      int colmult=1;
-      int rowmult=1;
-      if(m_nFeSensor[sensorid]>1)colmult=2; //2 or 4 chip module
-      if(m_nFeSensor[sensorid]==4)rowmult=2; //4 chip module
-      if(rowmult>1)
-	plane.SetSizeZS(rowmult*NROW, colmult*NCOL, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-      else
-	plane.SetSizeZS(colmult*NCOL, NROW, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-      plane.SetTLUEvent(eudetTrig);
-      planes[sensorid]=plane;
+    for(std::size_t i=0;i<m_sensorids.size();i++){
+      for(int sm=0;sm<m_smult[i];sm++){
+	int sensorid=m_sensorids[i];
+	StandardPlane plane(sensorid+sm + chip_id_offset, "APIX", "APIX");
+	if(m_nFeSensor[sensorid]!=3){
+	  int colmult=1;
+	  int rowmult=1;
+	  if(m_nFeSensor[sensorid]>1)colmult=2; //2 or 4 chip module
+	  if(m_nFeSensor[sensorid]==4)rowmult=2; //4 chip module
+	  if(rowmult>1)
+	    plane.SetSizeZS(rowmult*NROW, colmult*NCOL, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+	  else
+	    plane.SetSizeZS(colmult*NCOL, NROW, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+	}else{
+	  plane.SetSizeZS(NCOLFEI3, NROWFEI3, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+	}
+	plane.SetTLUEvent(eudetTrig);
+	planes[sensorid+sm]=plane;
+      }
     }
     ConvertPlanes(ev, planes);
     for (size_t i = 0; i < m_sensorids.size(); i++) {
       int sensorid=m_sensorids[i];
-      result.AddPlane(planes[sensorid]);
+      for(int sm=0;sm<m_smult[i];sm++){
+	result.AddPlane(planes[sensorid+sm]);
+      }
     }
    // std::cout << "End of GetStandardSubEvent" << std::endl;
     return true;
@@ -575,7 +591,9 @@ namespace eudaq {
 	      col=NCOL+hits[i].col;  
 	      row=NROW-1-hits[i].row;
 	      }
-	result[sid].PushPixel(col, row, hit.tot, false, hit.lv1);
+	result[sid].PushPixel(col, row, hit.tot, false, hit.lv1);}
+      else  if(m_nFeSensor[sid]==3){ //FE-I3 module
+	result[sid+hit.chip].PushPixel(hit.col, hit.row, hit.tot, false, hit.lv1);
       }else{ //1 or 2 chip module
 	result[sid].PushPixel(NCOL*(m_fepos[hit.link]+1)-1-hit.col, hit.row, hit.tot, false, hit.lv1);
       }	
@@ -635,10 +653,12 @@ namespace eudaq {
 	int tot=current.getToT();
 	int col=current.getCol();
 	int row=current.getRow();
+	int fe=current.getFE();
 	CTELHit hit;
 	hit.tot = tot;
 	hit.col = col;
 	hit.row = row;
+	hit.chip = fe;
 	hit.lv1 = bxdiff;
 	hit.link = link;
 	hit.rceTrigger = rcetrig;

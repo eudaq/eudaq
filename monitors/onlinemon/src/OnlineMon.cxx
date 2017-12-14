@@ -37,12 +37,8 @@
 #include <cstring>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef WIN32
-#define EUDAQ_SLEEP(x) Sleep(x*1000)
-#else
-#define EUDAQ_SLEEP(x) sleep(x)
-#endif
+#include <chrono>
+#include <thread>
 
 //ONLINE MONITOR Includes
 #include "OnlineMon.hh"
@@ -52,7 +48,7 @@ using namespace std;
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
 			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
 			 const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false) {
+  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
 
   if (_offline <= 0)
   {
@@ -68,7 +64,9 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   corrCollection = new CorrelationCollection();
   MonitorPerformanceCollection *monCollection =new MonitorPerformanceCollection();
   eudaqCollection = new EUDAQMonitorCollection();
+  paraCollection = new ParaMonitorCollection();
 
+  
   cout << "--- Done ---"<<endl<<endl;
 
   // put collections into the vector
@@ -76,12 +74,16 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   _colls.push_back(corrCollection);
   _colls.push_back(monCollection);
   _colls.push_back(eudaqCollection);
+  _colls.push_back(paraCollection);
+
   // set the root Monitor
   if (_offline <= 0) {
     hmCollection->setRootMonitor(this);
     corrCollection->setRootMonitor(this);
     monCollection->setRootMonitor(this);
     eudaqCollection->setRootMonitor(this);
+    paraCollection->setRootMonitor(this);
+
     onlinemon->setCollections(_colls);
   }
 
@@ -104,7 +106,6 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
 
   // print the configuration
   mon_configdata.PrintConfiguration();
-
 
   cout << "Datafile: " << datafile << endl;
   if (datafile != "") {
@@ -170,6 +171,10 @@ void RootMonitor::setReduce(const unsigned int red) {
 }
 
 void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
+  while(_offline <= 0 && onlinemon==NULL){
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+    
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
   cout << "Number of Planes " << ev.NumPlanes()<< endl;
@@ -212,16 +217,13 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   }
 
 
-
-
   if (reduce)
   {
     unsigned int num = (unsigned int) ev.NumPlanes();
     // Initialize the geometry with the first event received:
     if(!_planesInitialized) {
       myevent.setNPlanes(num);
-      _planesInitialized = true;
-      std::cout << "Initialized geometry." << std::endl;
+      std::cout << "Initialized geometry: " << num << " planes." << std::endl;
     }
     else {
       if (myevent.getNPlanes()!=num) {
@@ -252,7 +254,28 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     // add some info into the simple event header
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestamp());
+    
+    std::string tagname;
+    tagname = "Temperature";
+    if(ev.HasTag(tagname)){
+      double val =-999;
+      val = ev.GetTag(tagname, val);
+      simpEv.setSlow_para(tagname,val);
+    }
+    tagname = "Voltage";
+    if(ev.HasTag(tagname)){
+      double val=-999;
+      val = ev.GetTag(tagname, val);
+      simpEv.setSlow_para(tagname,val);
+    }
 
+    std::vector<std::string> paralist = ev.GetTagList("PLOT_");
+    for(auto &e: paralist){
+      double val=-999;
+      val=ev.GetTag(e, val);
+      simpEv.setSlow_para(e,val);
+    }
+    
     if (skip_dodgy_event)
     {
       return; //don't process any further
@@ -347,7 +370,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     my_event_inner_operations_time.Stop();
     previous_event_clustering_time = my_event_inner_operations_time.RealTime();
 
-    if (ev.GetEventNumber() < 1)
+    if(!_planesInitialized)
     {
 #ifdef DEBUG
       cout << "Waiting for booking of Histograms..." << endl;
@@ -356,6 +379,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 #ifdef DEBUG
       cout << "...long enough"<< endl;
 #endif
+      _planesInitialized = true;
     }
 
     //stop the Stop watch
@@ -421,6 +445,10 @@ void RootMonitor::autoReset(const bool reset) {
 
 void RootMonitor::OnStopRun()
 {
+  while(_offline <= 0 && onlinemon==NULL){
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
   if (_writeRoot)
   {
     TFile *f = new TFile(rootfilename.c_str(),"RECREATE");
@@ -434,6 +462,9 @@ void RootMonitor::OnStopRun()
 }
 
 void RootMonitor::OnStartRun(unsigned param) {
+  while(_offline <= 0 && onlinemon==NULL){
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 
   if (onlinemon->getAutoReset())
   {
@@ -458,7 +489,10 @@ void RootMonitor::OnStartRun(unsigned param) {
     onlinemon->setRootFileName(rootfilename);
   }
 
-  SetStatus(eudaq::Status::LVL_OK);
+  // Reset the planes initializer on new run start:
+  _planesInitialized = false;
+
+  SetConnectionState(eudaq::ConnectionState::STATE_RUNNING);
 }
 
 void RootMonitor::setUpdate(const unsigned int up) {
@@ -524,8 +558,8 @@ int main(int argc, const char ** argv) {
     {
       gStyle->SetPalette(1);
       gStyle->SetNumberContours(99);
-      gStyle->SetOptStat(0111);
-      gStyle->SetStatH(0.03);
+      gStyle->SetOptStat(1111);
+      gStyle->SetStatH(static_cast<Float_t>(0.15));
     }
     else
     {

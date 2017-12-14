@@ -15,16 +15,18 @@ int main() {
   usb_find_busses();
   usb_find_devices();
   std::vector<struct usb_device *> tlus;
-  for (usb_bus * bus = usb_get_busses(); bus; bus = bus->next) {
-    for (struct usb_device * dev = bus->devices; dev; dev = dev->next) {
-      if (dev->descriptor.idVendor == TLU_VENDOR_ID && dev->descriptor.idProduct == TLU_PRODUCT_ID) {
+  for (usb_bus *bus = usb_get_busses(); bus; bus = bus->next) {
+    for (struct usb_device *dev = bus->devices; dev; dev = dev->next) {
+      if (dev->descriptor.idVendor == TLU_VENDOR_ID &&
+          dev->descriptor.idProduct == TLU_PRODUCT_ID) {
         tlus.push_back(dev);
       }
     }
   }
   std::cout << "Found " << tlus.size() << " tlu(s)" << std::endl;
   for (size_t i = 0; i < tlus.size(); ++i) {
-    std::string fname = std::string("/dev/bus/usb/") + tlus[i]->bus->dirname + "/" + tlus[i]->filename;
+    std::string fname = std::string("/dev/bus/usb/") + tlus[i]->bus->dirname +
+                        "/" + tlus[i]->filename;
 
     std::string result = "Fixed";
     struct stat st;
@@ -34,7 +36,8 @@ int main() {
       result = std::string("Error ") + strerror(errno);
       ret = 1;
     }
-    std::cout << "TLU " << (i+1) << " at " << fname << ": " << result << std::endl;
+    std::cout << "TLU " << (i + 1) << " at " << fname << ": " << result
+              << std::endl;
   }
   return ret;
 }

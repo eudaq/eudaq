@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <connections>
+<connection id="minitlu.udp" uri="ipbusudp-2.0://192.168.200.16:50001" address_table="file://miniTLU.xml" />
+<connection id="minitlu.hub" uri="chtcp-2.0://localhost:10203?target=192.168.200.16:50001" address_table="file://miniTLU.xml" />
 
-  <!-- DUMMY UDP -->
-<!--  <connection id="minitlu" uri="chtcp-2.0://128.141.139.11:10203?target=192.168.200.16:50001"	address_table="file://miniTLU.xml" /> -->
-  <connection id="minitlu" uri="ipbusudp-2.0://192.168.5.16:50001" address_table="file://miniTLU.xml" /> 
 </connections>
-

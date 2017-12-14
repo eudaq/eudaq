@@ -6,7 +6,5 @@
 
 namespace eudaq {
 
-  TransportServer::~TransportServer() {
-  }
-
+  TransportServer::~TransportServer() {}
 }

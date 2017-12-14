@@ -1,0 +1,4 @@
+If you do not want to run the FX3 flashing as root, you have to change your udev rules.
+
+On Ubuntu (12.04) you have to place the file udev/fx3.rules into /etc/udev/rules.d 
+and reload udev with udevadm control --reload-rules  

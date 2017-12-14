@@ -6,9 +6,9 @@
 
 % PDF info and link colours
 \hypersetup{
-  pdftitle={EUDAQ Software User Manual},
+  pdftitle={EUDAQ User Manual},
   pdfauthor={EUDAQ Development Team},
-  pdfsubject={EUDET},
+  pdfsubject={EUDAQ},
   pdfkeywords={EUDET, EUDAQ, Software, User Manual},
   colorlinks=true,
   linkcolor=black, % \ref \autoref \pageref
@@ -33,16 +33,19 @@
 % Title info
 \subject{
 \begin{center}
-\includegraphics[width=0.1\textwidth]{src/images/logo_eudet} \includegraphics[width=0.3\textwidth]{src/images/AIDA_logo_medium}\vspace{.5cm}\\
-\includegraphics[width=0.6\textwidth]{src/images/eudaq_logo}
+\includegraphics[width=0.1\textwidth]{src/images/logo_eudet} \includegraphics[width=0.3\textwidth]{src/images/AIDA_logo_medium} 
+\includegraphics[width=0.35\textwidth]{src/images/logo_aida2020}
+\vspace{1.5cm}\\
+\includegraphics[width=0.7\textwidth]{src/images/eudaq_logo}
 \end{center}
 }
-\title{\Large EUDAQ Software User Manual} 
+\title{\Large EUDAQ User Manual} 
 \author{\normalsize EUDAQ Development Team}
 \input{src/version.tex} % defines the \CMakeLibVersion command which is
                     % set by CMake to the current EUDAQ version number
                     % (with git hash tag)
-\date{\normalsize As of \today \\ for EUDAQ version \CMakeLibVersion}
+\date{\normalsize Last update on October 2016 \\  %\today
+for EUDAQ version v1.7} %\CMakeLibVersion}
 
 \begin{document}
 
@@ -50,12 +53,11 @@
 \maketitle
 \begin{abstract}
 \noindent
-This document provides an overview of the EUDAQ software,
-the data acquisition framework used by the EUDET JRA1 beam telescope.
+This document provides an overview of the EUDAQ software framework,
+the data acquisition framework used also by the EUDET-type beam telescopes~\cite{telescopesWiki}.
 It describes how to install and run the DAQ system and use many of the included utility programs,
-and how users may integrate their systems into the EUDAQ framework
-by writing their own Producer and DataConverterPlugin,
-thus allowing them to take advantage of the EUTelescope analysis framework.
+and how users may integrate their DAQ systems into the EUDAQ framework
+by writing their own Producer -- for integrating the data stream into the acquisition -- and DataConverterPlugin -- for converting data for offline analysis (e.g. the EUTelescope analysis framework).
 \end{abstract}
 \newpage
 
@@ -87,16 +89,11 @@ thus allowing them to take advantage of the EUTelescope analysis framework.
 \printglossaries
 
 \section*{Acknowledgements}
-This work is supported by the Commission of the European Communities
-under the 6\textsuperscript{th} Framework Programme
-``Structuring the European Research Area,'' contract number
-RII3--026126.
-
-The research leading to these results has received funding from the
-European Commission under the FP7 Research Infrastructures project
-AIDA, grant agreement no. 262025. The support is gratefully
-acknowledged. 
+This project receives funding from the European Union’s Horizon 2020 Research and Innovation programme under Grant Agreement no. 654168.
+The support is gratefully acknowledged.
 \emph{Disclaimer}: The information herein only reflects the views of its authors and not those of the European Commission and no warranty expressed or implied is made with regard to such information or its use.
+
+Before, this work was supported by the Commission of the European Communities under the 6\textsuperscript{th} Framework Programme ``Structuring the European Research Area,'' contract number RII3--026126, and received funding from the European Commission under the FP7 Research Infrastructures project AIDA, grant agreement no. 262025. 
 
 
 %\bibliographystyle{unsrt}

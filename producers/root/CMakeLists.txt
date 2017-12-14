@@ -1,41 +1,29 @@
-FIND_PACKAGE( ROOT REQUIRED)
+FIND_PACKAGE(ROOT REQUIRED)
 
-INCLUDE_DIRECTORIES( . inc ${ROOT_INCLUDE_DIR} )
+INCLUDE_DIRECTORIES(. inc ${ROOT_INCLUDE_DIR})
 
 SET(ROOTProducer_name ROOTProducer)
-
-
-SET (ROOTProducer_SOURCES
-     
-src/ROOTProducer.cpp      
-
+SET(ROOTProducer_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/${ROOTProducer_name}.cxx)
+SET(ROOTProducer_SOURCES
+  src/ROOTProducer.cpp
+  src/DemoHardware.cpp
   )
 
 
-set(ROOTProducer_HEADERS 
-  ${PROJECT_SOURCE_DIR}/producers/root/inc/ROOTProducer.h
- )
- 
- SET(MY_INCLUDE_DIRECTORIES 
-     inc
-     ${PROJECT_SOURCE_DIR}/producers/root/inc
-     ${PROJECT_SOURCE_DIR}/main/include 
-     ${ROOT_INCLUDE_DIR} )
- 
- set(ROOTProducer_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ROOTProducer_Dict.cxx) 
- 
- ROOT_GENERATE_DICTIONARY_OLD("${ROOTProducer_HEADERS}" "${ROOTProducer_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
-
-
-
+ROOT_GENERATE_DICTIONARY(${ROOTProducer_name}  ROOTProducer.h DemoHardware.h)
 ADD_LIBRARY( ${ROOTProducer_name} SHARED ${ROOTProducer_SOURCES} ${ROOTProducer_DICTIONARY})
-
-
-
-target_link_libraries(${ROOTProducer_name} EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
+TARGET_LINK_LIBRARIES(${ROOTProducer_name} EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
 INSTALL(TARGETS ${ROOTProducer_name}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
-)
+  )
+
+IF(found_root_major_vers GREATER 5)
+  SET(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/${ROOTProducer_name}_rdict.pcm)
+  INSTALL(FILES
+    ${ROOTProducer_PCM}
+    DESTINATION lib
+    )
+ENDIF(found_root_major_vers GREATER 5)

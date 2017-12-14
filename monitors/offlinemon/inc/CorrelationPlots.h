@@ -9,16 +9,16 @@
 class plane;
 class TH2D;
 
-
-class CorrelationPlot:public CorrelationPlots_interface{
+class CorrelationPlot : public CorrelationPlots_interface {
 public:
-	CorrelationPlot(rapidxml::xml_node<> *node);
-	~CorrelationPlot();
-	virtual void Draw(const char* DrawOptions="");
-	virtual void createHistogram();
-	virtual void processEntry();
+  CorrelationPlot(rapidxml::xml_node<> *node);
+  ~CorrelationPlot();
+  virtual void Draw(const char *DrawOptions = "");
+  virtual void createHistogram();
+  virtual void processEntry();
+
 private:
-	TH2D* m_corr;
+  TH2D *m_corr;
 };
 
 #endif // CorrelationPlots_h__

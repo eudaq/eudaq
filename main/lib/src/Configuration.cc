@@ -7,79 +7,85 @@
 
 namespace eudaq {
 
-  Configuration::Configuration(const std::string & config, const std::string & section)
-    : m_cur(&m_config[""]) {
-      std::istringstream confstr(config);
-      Load(confstr, section);
-    }
+  Configuration::Configuration(const std::string &config,
+                               const std::string &section)
+      : m_cur(&m_config[""]) {
+    std::istringstream confstr(config);
+    Load(confstr, section);
+  }
 
-  Configuration::Configuration(std::istream & conffile, const std::string & section)
-    : m_cur(&m_config[""]) {
-      Load(conffile, section);
-    }
+  Configuration::Configuration(std::istream &conffile,
+                               const std::string &section)
+      : m_cur(&m_config[""]) {
+    Load(conffile, section);
+  }
 
-  Configuration::Configuration(const Configuration & other)
-    : m_config(other.m_config)
-  {
+  Configuration::Configuration(const Configuration &other)
+      : m_config(other.m_config) {
     SetSection(other.m_section);
   }
 
   std::string Configuration::Name() const {
     map_t::const_iterator it = m_config.find("");
-    if (it == m_config.end()) return "";
+    if (it == m_config.end())
+      return "";
     section_t::const_iterator it2 = it->second.find("Name");
-    if (it2 == it->second.end()) return "";
+    if (it2 == it->second.end())
+      return "";
     return it2->second;
   }
 
-  void Configuration::Save(std::ostream & stream) const {
-    for (map_t::const_iterator i = m_config.begin(); i != m_config.end(); ++i) {
-      if (i->first != "") {
-        stream << "[" << i->first << "]\n";
+  void Configuration::Save(std::ostream &stream) const {
+    for (const auto& i : m_config) {
+      if (i.first != "") {
+        stream << "[" << i.first << "]\n";
       }
-      for (section_t::const_iterator j = i->second.begin(); j != i->second.end(); ++j) {
-        stream << j->first << " = " << j->second << "\n";
+      for (const auto& j : i.second) {
+        stream << j.first << " = " << j.second << "\n";
       }
       stream << "\n";
     }
   }
 
-  Configuration & Configuration::operator = (const Configuration & other) {
+  Configuration &Configuration::operator=(const Configuration &other) {
     m_config = other.m_config;
     SetSection(other.m_section);
     return *this;
   }
 
-  void Configuration::Load(std::istream & stream, const std::string & section) {
+  void Configuration::Load(std::istream &stream, const std::string &section) {
     map_t config;
-    section_t * cur_sec = &config[""];
+    section_t *cur_sec = &config[""];
     for (;;) {
       std::string line;
-      if (stream.eof()) break;
+      if (stream.eof())
+        break;
       std::getline(stream, line);
       size_t equals = line.find('=');
       if (equals == std::string::npos) {
         line = trim(line);
-        if (line == "" || line[0] == ';' || line[0] == '#') continue;
-        if (line[0] == '[' && line[line.length()-1] == ']') {
-          line = std::string(line, 1, line.length()-2);
+        if (line == "" || line[0] == ';' || line[0] == '#')
+          continue;
+        if (line[0] == '[' && line[line.length() - 1] == ']') {
+          line = std::string(line, 1, line.length() - 2);
           // TODO: check name is alphanumeric?
-          //std::cerr << "Section " << line << std::endl;
+          // std::cerr << "Section " << line << std::endl;
           cur_sec = &config[line];
         }
       } else {
         std::string key = trim(std::string(line, 0, equals));
         // TODO: check key does not already exist
         // handle lines like: blah = "foo said ""bar""; ok." # not "baz"
-        line = trim(std::string(line, equals+1));
-        if ((line[0] == '\'' && line[line.length()-1] == '\'') ||
-            (line[0] == '\"' && line[line.length()-1] == '\"')) {
-          line = std::string(line, 1, line.length()-2);
+        line = trim(std::string(line, equals + 1));
+        if ((line[0] == '\'' && line[line.length() - 1] == '\'') ||
+            (line[0] == '\"' && line[line.length() - 1] == '\"')) {
+          line = std::string(line, 1, line.length() - 2);
         } else {
           size_t i = line.find_first_of(";#");
-          if (i != std::string::npos) line = trim(std::string(line, 0, i));
+          if (i != std::string::npos)
+            line = trim(std::string(line, 0, i));
         }
-        //std::cerr << "Key " << key << " = " << line << std::endl;
+        // std::cerr << "Key " << key << " = " << line << std::endl;
         (*cur_sec)[key] = line;
       }
     }
@@ -87,21 +93,23 @@ namespace eudaq {
     SetSection(section);
   }
 
-  bool Configuration::SetSection(const std::string & section) const {
+  bool Configuration::SetSection(const std::string &section) const {
     map_t::const_iterator i = m_config.find(section);
-    if (i == m_config.end()) return false;
+    if (i == m_config.end())
+      return false;
     m_section = section;
-    m_cur = const_cast<section_t*>(&i->second);
+    m_cur = const_cast<section_t *>(&i->second);
     return true;
   }
 
-  bool Configuration::SetSection(const std::string & section) {
+  bool Configuration::SetSection(const std::string &section) {
     m_section = section;
     m_cur = &m_config[section];
     return true;
   }
 
-  std::string Configuration::Get(const std::string & key, const std::string & def) const {
+  std::string Configuration::Get(const std::string &key,
+                                 const std::string &def) const {
     try {
       return GetString(key);
     } catch (const Exception &) {
@@ -110,7 +118,7 @@ namespace eudaq {
     return def;
   }
 
-  double Configuration::Get(const std::string & key, double def) const {
+  double Configuration::Get(const std::string &key, double def) const {
     try {
       return from_string(GetString(key), def);
     } catch (const Exception &) {
@@ -119,7 +127,7 @@ namespace eudaq {
     return def;
   }
 
-  int64_t Configuration::Get(const std::string & key, int64_t def) const {
+  int64_t Configuration::Get(const std::string &key, int64_t def) const {
     try {
       std::string s = GetString(key);
 #if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(WIN32)
@@ -133,25 +141,23 @@ namespace eudaq {
     }
     return def;
   }
-uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
-	  try {
-		  std::string s = GetString(key);
+  uint64_t Configuration::Get(const std::string &key, uint64_t def) const {
+    try {
+      std::string s = GetString(key);
 #if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(WIN32)
-		  // Windows doesn't have strtull, so just use stoull for now
-		  return std::stoull(s);
-		  
+      // Windows doesn't have strtull, so just use stoull for now
+      return std::stoull(s);
+
 #else
-		  return std::strtoull(s.c_str(), 0, 0);
+      return std::strtoull(s.c_str(), 0, 0);
 #endif
-	  } catch (const Exception &) {
-		  // ignore: return default
-	  }
-	  return def;
+    } catch (const Exception &) {
+      // ignore: return default
+    }
+    return def;
   }
 
-
-
-  int Configuration::Get(const std::string & key, int def) const {
+  int Configuration::Get(const std::string &key, int def) const {
     try {
       std::string s = GetString(key);
       return std::strtol(s.c_str(), 0, 0);
@@ -161,14 +167,15 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
     return def;
   }
 
-  void Configuration::Print(){
-      for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
-      std::cout << it->first << " : " << it->second << std::endl;
+  void Configuration::Print(std::ostream &out) const {
+    for (auto& it : *m_cur) {
+      out << it.first << " : " << it.second << std::endl;
     }
   }
 
+  void Configuration::Print() const { Print(std::cout); }
 
-  std::string Configuration::GetString(const std::string & key) const {
+  std::string Configuration::GetString(const std::string &key) const {
     section_t::const_iterator i = m_cur->find(key);
     if (i != m_cur->end()) {
       return i->second;
@@ -176,8 +183,8 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
     throw Exception("Configuration: key not found");
   }
 
-  void Configuration::SetString(const std::string & key, const std::string & val) {
+  void Configuration::SetString(const std::string &key,
+                                const std::string &val) {
     (*m_cur)[key] = val;
   }
-
 }

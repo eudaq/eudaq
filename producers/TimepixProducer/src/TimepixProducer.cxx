@@ -597,13 +597,13 @@ while(!fitpixstate.FrameReady){
       }
 
 
-      for(std::vector<mimtlu_event>::iterator it=events.begin(); it!=events.end(); it++)
+      for(auto& it : events)
       {
      //   std::cout<< "[event] "<<it->to_char();
         eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
         std::vector<unsigned char> buffer;
         for(unsigned int i=0;i<16;i++)
-          buffer.push_back(it->to_char()[i]);
+          buffer.push_back(it.to_char()[i]);
         ev.AddBlock(0, bufferOut);
         ev.AddBlock(1, buffer);
 

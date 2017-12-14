@@ -1,18 +1,15 @@
 ########################################################
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 ########################################################
 # project name
 PROJECT( EUDAQ )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 5 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 7 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
-LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
-LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
-
-# some macros are redefined to keep compatability with CMake 2.6
+# some macros are redefined if not exisiting
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
 # Determine platform- and compiler-specific settings
@@ -67,6 +64,13 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 # optional debug defines
 # add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
 
+# Set the correct build type and allow command line options:
+# Set a default build type if none was specified
+IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  MESSAGE(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+ENDIF()
+
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )
 INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
@@ -81,17 +85,17 @@ set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
 IF(BUILD_nreader)
-  FIND_PACKAGE(LCIO REQUIRED)
-  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS})
+  SET(USE_LCIO ON)
   FIND_PACKAGE(EUTelescope REQUIRED)
-  INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
-  add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
+  FIND_PACKAGE(LCIO REQUIRED)
+  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS} ${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
+  add_definitions(${LCIO_DEFINITIONS} ${EUTELESCOPE_DEFINITIONS})
   AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
   ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
   INSTALL(TARGETS DetectorDescriptons RUNTIME DESTINATION bin
                                       LIBRARY DESTINATION lib
                                       ARCHIVE DESTINATION lib)
-  set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
+  set(ADDITIONAL_LIBRARIES ${LCIO_LIBRARIES} ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
 ENDIF()
 
 find_package(Protobuf)
@@ -167,6 +171,13 @@ IF(BUILD_offlinemon)
 ENDIF()
 
 
+# build Runsplitter
+option(BUILD_runsplitter "Compile Runsplitter executable?" ON)
+IF(BUILD_runsplitter)
+  add_subdirectory(etc/tools/runsplitter)
+ENDIF()
+
+
 
 ###############################################
 # LaTeX target to compile the PDF user manual #
@@ -199,9 +210,24 @@ add_subdirectory(producers)
 
 #######################################################
 # Print out system information useful for bug reports #
-############################################### #######
+#######################################################
 include(PrintSystemInformation)
 
+
+####################
+# Uninstall Target #
+####################
+
+IF(NOT TARGET uninstall)
+  # uninstall target
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+ENDIF(NOT TARGET uninstall)
 
 ###############################################
 # Python-based regression tests
@@ -210,24 +236,19 @@ include(PrintSystemInformation)
 # installed, we can make available the Python-based regression tests
 # through CMake/CTest; for more detailed information see the CMake manual or
 #web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
-if (${CMAKE_VERSION} VERSION_GREATER 2.8)
-  # git support only available with CMake greater 2.8
-  ENABLE_TESTING()
-  INCLUDE(CTest)
-  FIND_PACKAGE(PythonInterp)
-  IF(PYTHONINTERP_FOUND AND BUILD_python)
-    # test for numpy package
-    EXECUTE_PROCESS( COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
-    IF(NUMPYRC EQUAL 1)
-      MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
-    ELSE(NUMPYRC EQUAL 1)
-      MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
-      INCLUDE(etc/tests/testing.cmake)
-    ENDIF(NUMPYRC EQUAL 1)
-  ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
-ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
-  MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
-ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
+ENABLE_TESTING()
+INCLUDE(CTest)
+FIND_PACKAGE(PythonInterp)
+IF(PYTHONINTERP_FOUND AND BUILD_python)
+  # test for numpy package
+  EXECUTE_PROCESS( COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
+  IF(NUMPYRC EQUAL 1)
+    MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
+  ELSE(NUMPYRC EQUAL 1)
+    MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
+    INCLUDE(etc/tests/testing.cmake)
+  ENDIF(NUMPYRC EQUAL 1)
+ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
 
 MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
 MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )

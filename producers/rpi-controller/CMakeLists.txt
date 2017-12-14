@@ -1,0 +1,15 @@
+SET(name "RPiController.exe")
+
+FIND_PACKAGE(wiringPi REQUIRED)
+
+SET(sourcefiles src/RPiController.cxx)
+
+INCLUDE_DIRECTORIES(include ${wiringPi_INCLUDE_DIR})
+ADD_EXECUTABLE(${name} ${sourcefiles})
+
+TARGET_LINK_LIBRARIES(${name} EUDAQ ${EUDAQ_THREADS_LIB} ${wiringPi_LIBRARIES})
+
+INSTALL(TARGETS ${name}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)

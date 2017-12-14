@@ -1,17 +1,15 @@
 
 Maintainers:
 -----------
-Hanno Perrey <hanno.perrey@desy.de>
-Igor Rubinsky <rubinsky@mail.desy.de>
+Yi Liu <yi.liu@desy.de> (Core library, EUDAQ2)
+Andre Rummler <andre.rummler@lapp.in2p3.fr> (Continous Integration)
+Simon Spannagel <simon.spannagel@desy.de> (Versions)
 
-
-Core library developers:
------------------------
-Emlyn Corrin <emlyn.corrin@gmail.com>
-Hanno Perrey <hanno.perrey@desy.de>
-Richard Peschke <richard.peschke@desy.de>
-Igor Rubinsky <rubinsky@mail.desy.de>
-
+Coordinators:
+------------
+David Cussans <David.Cussans@bristol.ac.uk>
+Jan Dreyling-Eschweiler <jan.dreyling-eschweiler@desy.de>
+Hendrik Jansen <hendrik.jansen@desy.de>
 
 Contributors:
 ------------
@@ -24,8 +22,16 @@ Francesco Crescioli <francesco.crescioli@lpnhe.in2p3.fr>
 Daniel Haas <raist7@gmail.com>
 Phillip Hamnett <phillip.hamnett@desy.de>
 Moritz Kiehn <kiehn@physi.uni-heidelberg.de>
+Hanno Perrey <hanno.perrey@desy.de>
 Felix Reidt <felix.reidt@cern.ch>
-Simon Spannagel <simon.spannagel@desy.de>
+Igor Rubinsky <rubinsky@mail.desy.de>
 Marcel Stanitzki <marcel.stanitzki@desy.de>
 
 ... and many more ... should your name be missing here, please let us know!
+
+Former core/library developers:
+------------------------------
+Emlyn Corrin <emlyn.corrin@gmail.com>
+Hanno Perrey <hanno.perrey@desy.de>
+Richard Peschke <richard.peschke@desy.de>
+Igor Rubinsky <rubinsky@mail.desy.de>

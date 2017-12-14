@@ -16,7 +16,7 @@ file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h)
 if (extern_file)
   # should have found multiple files of that name, take root of folder (no 'windows*7/inc' string)
   FOREACH (this_file ${extern_file})
-  	  IF(NOT "${this_file}" MATCHES ".*windows.?7/Inc/")
+  	  IF( (NOT "${this_file}" MATCHES ".*windows.?7/Inc/") AND (NOT "${this_file}" MATCHES ".*windows/Inc/") AND (NOT "${this_file}" MATCHES ".*macosx/Inc/") AND (NOT "${this_file}" MATCHES ".*linux/Inc/"))
 	        SET(zest_inc_path "${this_file}")
 	  ENDIF()
   ENDFOREACH(this_file)
@@ -32,7 +32,7 @@ IF(WIN32)
  find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
     HINTS "${extern_lib_path}/windows_7/Inc"
           "${extern_lib_path}/windows 7/Inc"
-		  "${extern_lib_path}/Inc"
+	  "${extern_lib_path}/Inc"
     ${arg}
 	  )
 ELSE(WIN32)
@@ -56,12 +56,16 @@ if (WIN32)
       ${arg})
   endif(${EX_PLATFORM} EQUAL 64)
   elseif (UNIX)
+    MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
+    
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
 	HINTS "${extern_lib_path}/macosx/Lib" ${arg})
     else()
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-	HINTS "${extern_lib_path}/linux/Lib" ${arg})
+	HINTS "${extern_lib_path}/Lib" 
+	      "${extern_lib_path}/linux/Lib" 
+        ${arg})
     endif()
   else()
     MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
@@ -76,7 +80,18 @@ find_zestsc1_in_extern("")
 if (NOT ZESTSC1_LIBRARY)
   IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")
     MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer; downloading it now via AFS to ./extern ....")
-    copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1" ${PROJECT_SOURCE_DIR}/extern)
+    if(DEFINED ENV{TRAVIS})
+    MESSAGE(STATUS "Running on travis and therefore downloading only the absolutely necessary part of the ZestSC1 driver.")
+    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/Inc" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+    if("$ENV{TRAVIS_OS_NAME}" STREQUAL "linux")
+	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/linux" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+    else()
+	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/macosx" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+    endif()    
+    else()
+    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1" DESTINATION ${PROJECT_SOURCE_DIR}/extern)
+    endif()
     find_zestsc1_in_extern(NO_DEFAULT_PATH)
   ELSE()
     MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")

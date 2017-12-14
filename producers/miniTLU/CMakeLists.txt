@@ -1,25 +1,31 @@
-set(name "miniTLU_Producer.exe")
-IF(NOT IGNORE_KNOWN_ISSUES)
-  IF(NOT BUILD_allproducer) # only warn if not configuring all producers at the same time (for testing)
-    MESSAGE(WARNING "There are known issues compiling ${name} (see https://github.com/eudaq/eudaq/issues/75). Set the IGNORE_KNOWN_ISSUES option to configure this producer to be build anyway.")
-  ENDIF(NOT BUILD_allproducer)
-ELSE(NOT IGNORE_KNOWN_ISSUES)
-  find_package(CACTUS REQUIRED)
+set(name_pro "miniTLUProducer.exe")
+set(name_con "miniTLUControl.exe")
 
-  #add_definitions(${TLUFIRMWARE_DEFINITIONS})
+# find_package(CACTUS REQUIRED)
+set(UHAL_INCLUDE_PREFIX /opt/cactus/include)
+set(UHAL_LIB_PREFIX /opt/cactus/lib)
+set(UHAL_LIB cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal)
+include_directories(${UHAL_INCLUDE_PREFIX} )
+link_directories(${LINK_DIRECTORIES} ${UHAL_LIB_PREFIX})
 
-  INCLUDE_DIRECTORIES( include ${UHAL_LOG_INCLUDE_PREFIX} ${UHAL_GRAMMARS_INCLUDE_PREFIX} ${EXTERN_BOOST_INCLUDE_PREFIX} ${EXTERN_PUGIXML_INCLUDE_PREFIX} ${UHAL_UHAL_INCLUDE_PREFIX} )
+# find_package(pugixml REQUIRED)
 
-  LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${EXTERN_BOOST_LIB_PREFIX} ${EXTERN_PUGIXML_LIB_PREFIX} ${UHAL_LOG_LIB_PREFIX} ${UHAL_GRAMMARS_LIB_PREFIX} ${UHAL_UHAL_LIB_PREFIX} )
-  add_executable(miniTLU_Producer.exe src/miniTLU_Producer.cxx src/miniTLUController.cc )
-  add_executable(miniTLUControl.exe src/miniTLUControl.cxx src/miniTLUController.cc )
+# find_package(Boost REQUIRED COMPONENTS thread filesystem regex system program_options)
+# include_directories(${Boost_INCLUDE_DIRS})
+# set(BOOST_LIB ${Boost_LIBRARIES})
+set(BOOST_LIB boost_thread boost_filesystem boost_regex boost_system boost_program_options)
 
-  target_link_libraries(miniTLUControl.exe  EUDAQ boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal )
+include_directories( include)
 
-  target_link_libraries(${name}  EUDAQ boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal )
+add_executable(${name_pro} src/miniTLUProducer.cxx src/miniTLUController.cc )
+add_executable(${name_con} src/miniTLUControl.cxx src/miniTLUController.cc )
 
-  INSTALL(TARGETS miniTLU_Producer.exe miniTLUControl.exe
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
-ENDIF(NOT IGNORE_KNOWN_ISSUES)
+target_link_libraries(${name_con}  EUDAQ ${UHAL_LIB} ${BOOST_LIB} pugixml)
+target_link_libraries(${name_pro}  EUDAQ ${UHAL_LIB} ${BOOST_LIB} pugixml)
+
+INSTALL(TARGETS ${name_pro} ${name_con}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
+
+# TODO::check the pugixml boost

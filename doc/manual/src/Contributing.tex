@@ -1,5 +1,6 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Developing and Contributing to EUDAQ}
+\label{sec:contributing}
 
 \subsection{Regression Testing}
 \label{sec:ctest}
@@ -42,6 +43,8 @@ to the CDash webserver hosted at DESY: \url{http://aidasoft.desy.de/CDash/index.
 \subsection{Commiting Code to the Main Repository}
 \label{sec:commiting}
 
+
+
 If you would like to contribute your code back into the main repository, please follow the ``fork \& pull request'' strategy:
 
 \begin{itemize}
@@ -83,3 +86,13 @@ git push origin
 \item Summarize your changes and click on ``send''
 \item Thank you!
 \end{itemize}
+
+
+Working together on a branch:
+If you have a copy installed, and want to update it to the
+latest version, you do not need to clone the repository again, just change to the \texttt{eudaq} directory use the command:
+\begin{listing}[mybash]
+git pull
+\end{listing}
+to update your local copy with all changes commited to the central repository.%
+

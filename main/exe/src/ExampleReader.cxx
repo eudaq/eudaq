@@ -50,7 +50,7 @@ int main(int /*argc*/, const char ** argv) {
               reader.GetDetectorEvent().GetRawSubEvent(EVENT_TYPE);
             // Display summary of the Example RawDataEvent
             std::cout << rev << std::endl;
-          } catch (const eudaq::Exception & e) {
+          } catch (const eudaq::Exception & ) {
             std::cout << "No " << EVENT_TYPE << " subevent in event "
               << reader.GetDetectorEvent().GetEventNumber()
               << std::endl;

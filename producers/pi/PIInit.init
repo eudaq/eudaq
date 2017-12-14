@@ -1,0 +1,12 @@
+# This is an example init file, you can adapt it to your needs.
+# All text following a # character is treated as comments
+
+[RunControl]
+
+[DataCollector]
+
+[LogCollector]
+
+[Controller.PIController]
+HostName = 192.168.22.5
+PortNumber = 50000

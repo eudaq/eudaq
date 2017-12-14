@@ -97,7 +97,7 @@ unsigned Mupix3ConverterPlugin::GetTriggerID(const Event & ev) const
 
     unsigned unused = 0;
     const unsigned char * data = GetRawDataChecked(ev, unused);
-    if (data == NULL) {
+    if (data == nullptr) {
         EUDAQ_INFO("cannot extract trigger_id from event "
                    + eudaq::to_string(ev.GetEventNumber()));
         return (unsigned)(-1);
@@ -129,7 +129,7 @@ bool Mupix3ConverterPlugin::GetStandardSubEvent(
     
     // avoid breaking the data collector by adding an empty plane for
     // empty data
-    if (data == NULL) {
+    if (data == nullptr) {
         EUDAQ_WARN("received event "
                    + eudaq::to_string(source)
                    + " with no data blocks.");
@@ -178,13 +178,12 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     unsigned n_hits;
     const unsigned char * raw_buffer;
     // lcio takes ownership over the different data objects when they are
-    // added to the event. secure them w/ auto_ptr so they get deleted
+    // added to the event. secure them w/ unique_ptr so they get deleted
     // automatically when something breaks.
-    // NOTE to future self: use unique_ptr since auto_ptr are deprecated
     bool collection_exists = false;
     LCCollectionVec * collection;
-    std::auto_ptr<TrackerDataImpl> frame;
-    std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
+    std::unique_ptr<TrackerDataImpl> frame;
+    std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
     
     if (source.IsBORE()) {
         // this should never happen. BORE event should be handled
@@ -199,7 +198,7 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     
     // get the raw input data
     raw_buffer = GetRawDataChecked(source, n_hits);
-    if (raw_buffer == NULL) {
+    if (raw_buffer == nullptr) {
         std::cerr << "could not convert " << source << std::endl;
         return false;
     }
@@ -235,8 +234,7 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     unsigned row;
     for (unsigned i = 0; i < n_hits; ++i) {
         ExtractHit(raw_buffer, i, col, row);
-        EUTelGenericSparsePixel pixel(col, row, MUPIX3_FAKE_SIGNAL);
-        pixels->addSparsePixel(&pixel);
+        pixels->emplace_back( col, row, MUPIX3_FAKE_SIGNAL );
     }
     
     // hand over ownership over the readout frame to the lcio collection
@@ -269,14 +267,14 @@ const unsigned char * Mupix3ConverterPlugin::GetRawDataChecked(
                    + to_string(raw.GetEventNumber())
                    + ": invalid number of data blocks "
                    + to_string(raw.NumBlocks()));
-        return NULL;
+        return nullptr;
     }
 
     if (raw.GetBlock(0).size() < 16) {
         EUDAQ_WARN("event "
                    + to_string(raw.GetEventNumber())
                    + ": data block is too small");
-        return NULL;
+        return nullptr;
     }
 
     // TODO check for consistency, i.e. not 32bit aligned. should never happen

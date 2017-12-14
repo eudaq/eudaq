@@ -10,11 +10,14 @@ lib/*
 *.idx
 *.dat
 
+# ignore everything in logs
+logs/*
+
 # ignore log files
 *.log
 
-# ignore conf files
-#conf/*.conf
+# ignore everything in conf:
+conf/*
 
 # ignore ROOT files
 *.root
@@ -33,16 +36,22 @@ lib/*
 .project
 .cproject
 
+# Ignore path to library necessary for cmspixel option
+extern/pxar
+
 # Ignore binary data file folders downloaded for TLU producer:
 extern/ZestSC1
 extern/tlufirmware
+
+# Ignore binary data file folders downloaded for SBG Mimosa re-integration:
+extern/IPHCRC
 
 # Ignore paths to windows libraries installed by user:
 extern/pthread*
 extern/libusb*
 
 
-#ignore debug folder 
+#ignore debug folder
 debug/*
 
 # ignore python byte code

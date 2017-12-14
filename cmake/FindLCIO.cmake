@@ -5,6 +5,8 @@
 #  LCIO_LIBRARIES - The libraries needed to use LCIO
 #  LCIO_DEFINITIONS - Compiler switches required for using LCIO
 
+MESSAGE(STATUS "Looking for LCIO...")
+
   find_path(LCIO_INCLUDE_DIR lcio.h
     HINTS "${LCIO}/include" "$ENV{LCIO}/include")
 

@@ -1,0 +1,49 @@
+miniTLU Producer
+
+=== To compile
+
+Look at cmake/FindCACTUS.cmake and change CACTUS_ROOT to point at your installation directory (/opt/cactus on SLC5/6).
+
+If you don't use SLC5/6 you can use the script producers/miniTLU/etc/cactus_download_script_ubuntu.sh (for Ubuntu) in a tmp directory to download and extract all rpm (edit it to choose between SLC5 and SLC6 rpms) then move opt/cactus to extern/cactus. You need rpm2cpio to extract.
+If you use gcc > 4.7 you may need to apply the patch producers/miniTLU/etc/boost_1_48_with_gcc_47.patch
+
+Then:
+
+ cd build
+ cmake -DBUILD_miniTLU=ON -DIGNORE_KNOWN_ISSUES=ON ..
+ make install
+
+=== To start the program
+
+The miniTLU executable needs uhal libraries and their dependencies in the LD_LIBRARY_PATH. If these libraries are not default on your system you can copy and modify the script producers/miniTLU/etc/start_minitlu.sh to setup the environment and start the producer.
+
+The producer needs some configuration in the .conf file:
+
+[Producer.TLU]
+
+# in this xml file it's specified the connection protocol and address
+ConnectionFile = file://connection.xml
+# the name of the connection to use
+DeviceName = minitlu
+
+# (optional) the interval in clock cycles between internally generated triggers
+InternalTriggerInterval = 100000000
+
+# (optional) DAC threshold values
+DACThreshold0 = 0x4100
+DACThreshold1 = 0x4100
+DACThreshold2 = 0x4100
+DACThreshold3 = 0x4100
+
+
+Two other configuration files are needed:
+- connection.xml
+- miniTLU.xml
+
+You can find these files in producers/miniTLU/etc and you must copy them in the working directory. You may want to edit connection.xml to reflect your network configuration, you don't want to edit miniTLU.xml.
+
+
+=== Known bugs
+
+The first time you connect with IPBus 1 protocol (default) it may fail. Try again. If the second time fails it's an error.
+
