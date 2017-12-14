@@ -71,7 +71,11 @@ void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP ev){
 }
 
 /*
+<<<<<<< HEAD
+void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
+=======
 void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP ev){  
+>>>>>>> tbsc.standalone
   std::unique_lock<std::mutex> lk(m_mtx_map);
   eudaq::EventSP evsp = std::move(ev);
   if(!evsp->IsFlagTrigger()){
