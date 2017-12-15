@@ -5,6 +5,7 @@
 #include <ostream>
 #include <ctime>
 #include <iomanip>
+#include <vector>
 
 
 #include "TFile.h"
@@ -23,22 +24,18 @@ namespace eudaq {
   class TTreeFileWriter : public FileWriter {
   public:
     TTreeFileWriter(const std::string &patt);
+    ~TTreeFileWriter();
     void WriteEvent(EventSPC ev) override;
   private:
     std::unique_ptr<TFile> m_ttreewriter;
     std::string m_filepattern;
     uint32_t m_run_n;
     TFile *m_tfile; // book the pointer to a file (to store the otuput)
-  };
+    TTreeEventSP ttree;
+    };
 
   TTreeFileWriter::TTreeFileWriter(const std::string &patt){
     m_filepattern = patt;    
-  }
-  
-  void TTreeFileWriter::WriteEvent(EventSPC ev) {
-    uint32_t run_n = ev->GetRunN();
-      if(!m_ttreewriter || m_run_n != run_n){
-      try{
 	std::time_t time_now = std::time(nullptr);
 	char time_buff[13];
 	time_buff[12] = 0;
@@ -47,6 +44,24 @@ namespace eudaq {
 	std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', m_run_n).Set('D', time_str));
 	m_tfile = new TFile(foutput.c_str(), "RECREATE");
 	EUDAQ_INFO("Preparing the outputfile: " + foutput);
+	ttree.reset(new TTree("EventTree","Converted from .raw"));
+	TBranch* run   = ttree->Branch("run_n",0, "run_n/i");
+	TBranch* event = ttree->Branch("event_n",0, "event_n/i");
+	TBranch* eventflag = ttree->Branch("event_flag",0, "eflag/i");
+	TBranch* device_n = ttree->Branch("device_n",0, "devnum/i");	
+	TBranch* trigger_n = ttree->Branch("trigger_n",0, "trign/i");
+	TBranch* tsb = ttree->Branch("timestampbegin",0, "tsb/i");
+	TBranch* tse = ttree->Branch("timestampend",0, "tse/i");
+	//	TBranch* block = ttree->Branch("block",0, "block/b");
+  }
+  TTreeFileWriter::~TTreeFileWriter () {
+    m_tfile->Write();    
+  }
+  
+  void TTreeFileWriter::WriteEvent(EventSPC ev) {
+    uint32_t run_n = ev->GetRunN();
+    if(!m_ttreewriter || m_run_n != run_n){
+      try{
 	m_ttreewriter.reset(m_tfile);
 	m_run_n = run_n;
       } catch(const Exception &e){
@@ -55,10 +70,11 @@ namespace eudaq {
     }
     if(!m_ttreewriter)
       EUDAQ_THROW("TTreeFileWriter: Attempt to write unopened file");
-    TTreeEventSP ttree(new TTree);
+    uint32_t event_n = ev->GetEventN();
+    std::cout << " Event Number in early " << event_n << std::endl;
+    //    if(event_n < 10)
     TTreeEventConverter::Convert(ev, ttree, GetConfiguration());
-    ttree->Write();
-    m_tfile->Write();
-    //    m_tfile->Close();    
-}
+  }
+
+
 }

@@ -27,9 +27,9 @@ namespace eudaq{
     TTreeEventConverter(const TTreeEventConverter&) = delete;
     TTreeEventConverter& operator = (const TTreeEventConverter&) = delete;
     bool Converting(EventSPC d1, TTreeEventSP d2, ConfigurationSPC conf) const override = 0;
-        static bool Convert(EventSPC d1, TTreeEventSP d2, ConfigurationSPC conf);
+    static bool Convert(EventSPC d1, TTreeEventSP d2, ConfigurationSPC conf);
   private:
-	TTree *m_ttree; // book the tree (to store the needed event info)
+    /*	TTree *m_ttree; // book the tree (to store the needed event info)
 	// Book variables for the Event_to_TTree conversion
 	Int_t id_plane;        // plane id, where the hit is
 	Int_t id_hit;          // the hit id (within a plane)
@@ -38,8 +38,8 @@ namespace eudaq{
 	unsigned i_tlu;        // a trigger id
 	unsigned run_n;        // a run  number
 	unsigned event_n;      // an event number
-	uint64_t time_stamp; // the time stamp
-
+	uint64_t time_stamp; // the time stamp */
+	
   };
 
 }
