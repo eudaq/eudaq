@@ -1,3 +1,8 @@
+/*
+ * mengqing.wu@desy.de
+ * based on eudaq euCliConverter.cxx
+ * -- lively update for desy slow control system and lycoris telescope studies
+ */
 #include "eudaq/OptionParser.hh"
 #include "eudaq/DataConverter.hh"
 #include "eudaq/FileWriter.hh"
@@ -44,12 +49,9 @@ int main(int /*argc*/, const char **argv) {
   eudaq::FileReaderUP reader;
   eudaq::FileWriterUP writer;
   std::ofstream writerCSV;
-  std::vector<std::string> tag_vec = {"timer","ch0","ch10","ch20","ch30"};
+  //std::vector<std::string> tag_vec = {"timer","ch0","ch10","ch20","ch30"};
+  std::vector<std::string> tag_vec;
   std::string csv_str;
-  for (auto const& s: tag_vec) {
-    csv_str+=s+',';
-  }
-  std::cout<< csv_str <<"\n";
     
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
 
@@ -59,7 +61,7 @@ int main(int /*argc*/, const char **argv) {
       /* first line for excel read csv file directly: sep=<delimeter> */
       writerCSV << "sep=,\n";
       /* column title line: */
-      writerCSV << csv_str <<"\n";
+      //writerCSV << csv_str <<"\n";
     }
     else  
       writer = eudaq::Factory<eudaq::FileWriter>::MakeUnique(eudaq::str2hash(type_out), outfile_path);
@@ -73,6 +75,24 @@ int main(int /*argc*/, const char **argv) {
      */
 
     auto ev = reader->GetNextEvent(); //--> when ev is empty, an error catched from throw;
+
+    /*
+     * Register all tag-keys from the 1st event you read:
+     */
+    if (evtCounting==0 && writerCSV.is_open() && tag_vec.empty()){
+      auto tag_map = ev->GetTags();
+      for (auto const& it: tag_map) {
+
+	if (it.first=="timer") tag_vec.insert(tag_vec.begin(),it.first);
+	else 	tag_vec.push_back(it.first);
+      }
+
+      for (auto const& s: tag_vec)   csv_str+=s+','; 
+      std::cout << "Your .csv has following collumns:\n"
+		<< csv_str <<"\n";
+      /* column title line: */
+      writerCSV << csv_str <<"\n";  
+    }
     
     if(!ev) {
       /* 
@@ -90,6 +110,9 @@ int main(int /*argc*/, const char **argv) {
       writer->WriteEvent(ev);
 
     if(writerCSV.is_open()){
+      /*
+       * tight to the old fashion: doors open to choose tags to print
+       */
       std::string csv_line;
       for (auto const& tag: tag_vec) csv_line+=ev->GetTag(tag)+',';
       writerCSV << csv_line <<"\n";
