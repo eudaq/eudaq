@@ -368,7 +368,7 @@ class Timepix3Producer : public eudaq::Producer {
     m_pixToDel  = config.Get( "NpixelsToDelete", 5000 );
 
     // At the end, set the status that will be displayed in the Run Control.
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
 
     // Also display something for us
     cout << endl;
@@ -467,7 +467,7 @@ class Timepix3Producer : public eudaq::Producer {
     SendEvent(bore);
     
     // At the end, set the status that will be displayed in the Run Control.
-    SetStatus(eudaq::Status::LVL_OK, "Running");
+    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING);
     started=true;
   }
 
