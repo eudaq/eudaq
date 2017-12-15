@@ -101,7 +101,18 @@ class Timepix3Producer : public eudaq::Producer {
     myTimepix3Config = new Timepix3Config();
 
   }
-    
+
+  virtual void OnInitialise(const eudaq::Configuration &param) {
+    try {
+      std::cout << "Initialiation..." << std::endl;
+
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised");
+    } catch (...) {
+          printf("Unknown exception\n");
+          SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+    }
+  }
+  
   //////////////////////////////////////////////////////////////////////////////////
   // OnConfigure
   //////////////////////////////////////////////////////////////////////////////////
