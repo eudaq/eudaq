@@ -21,8 +21,9 @@ namespace eudaq{
       return false;
     }
     uint32_t id = ev->GetExtendWord();
+    //    std::cout << " Sub Type " << ev->GetDescription() << std::endl;
     auto cvt = Factory<TTreeEventConverter>::MakeUnique(id);
-    if(cvt){
+     if(cvt){
       cvt->Converting(d1, d2, conf);
       return true;
     }

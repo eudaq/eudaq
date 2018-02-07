@@ -50,8 +50,8 @@ namespace eudaq {
 	TBranch* eventflag = ttree->Branch("event_flag",0, "eflag/i");
 	TBranch* device_n = ttree->Branch("device_n",0, "devnum/i");	
 	TBranch* trigger_n = ttree->Branch("trigger_n",0, "trign/i");
-	TBranch* tsb = ttree->Branch("timestampbegin",0, "tsb/i");
-	TBranch* tse = ttree->Branch("timestampend",0, "tse/i");
+	TBranch* tsb = ttree->Branch("timestampbegin",0, "tsb/l");
+	TBranch* tse = ttree->Branch("timestampend",0, "tse/l");
 	//	TBranch* block = ttree->Branch("block",0, "block/b");
   }
   TTreeFileWriter::~TTreeFileWriter () {
@@ -71,8 +71,6 @@ namespace eudaq {
     if(!m_ttreewriter)
       EUDAQ_THROW("TTreeFileWriter: Attempt to write unopened file");
     uint32_t event_n = ev->GetEventN();
-    std::cout << " Event Number in early " << event_n << std::endl;
-    //    if(event_n < 10)
     TTreeEventConverter::Convert(ev, ttree, GetConfiguration());
   }
 

@@ -14,8 +14,11 @@ namespace{
 
 bool Ex0RawEvent2TTreeEventConverter::Converting(eudaq::EventSPC d1, eudaq::TTreeEventSP d2, eudaq::ConfigSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+  uint32_t id = ev->GetExtendWord();
+  std::cout << "ID " << id << std::endl;
   size_t nblocks= ev->NumBlocks();
   auto block_n_list = ev->GetBlockNumList();
+  std:: cout << " blocks " << nblocks << std::endl;
   for(auto &block_n: block_n_list){
     std::vector<uint8_t> block = ev->GetBlock(block_n);
     if(block.size() < 2)
