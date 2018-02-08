@@ -1,7 +1,8 @@
 include_directories(include)
-include_directories(/home/lycoris-admin/kpixDaq/kpix_dev/generic)
-include_directories(/home/lycoris-admin/kpixDaq/kpix_dev/kpix)
-include_directories(/home/lycoris-admin/kpixDaq/kpix_dev/deviceLib)
+#include_directories(/home/lycoris-admin/kpixDaq/kpix_dev/generic)
+#include_directories(/home/lycoris-admin/kpixDaq/kpix_dev/kpix)
+#include_directories(/home/lycoris-admin/kpixDaq/kpix_dev/deviceLib)
+include_directories(/usr/local/include/kpix)
 include_directories(/usr/include/libxml2)
 
 aux_source_directory(src MODULE_SRC)
@@ -16,7 +17,8 @@ add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 #message("[dev]: project_source_dir is ${PROJECT_SOURCE_DIR}; eudaq_install_rpath is ${EUDAQ_INSTALL_RPATH}")
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
   ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES}
-  -L${PROJECT_SOURCE_DIR}/extern/lib/ -lkpix)
+#  -L${PROJECT_SOURCE_DIR}/extern/lib/ -lkpix)
+  -L/usr/local/lib/kpix/ -lkpix) 
 
 install(TARGETS
   ${EUDAQ_MODULE}
