@@ -45,3 +45,5 @@ exit
 
 #======= EUDAQ1
 ./TLUControl.exe -a 1 -d 0
+# no handshake, DUT interface via LEMO:
+./TLUControl.exe -a 1 -d 0 -i LEMO -hm 0
