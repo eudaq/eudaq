@@ -65,7 +65,11 @@ protected:
   std::mutex _kpixQueue_guard;
 
 private:
- 
+  
+  uint32_t m_noeudaqbin;
+  uint32_t m_nokpixbin;
+  std::string m_binaries_database;
+
   UdpLink udpLink;
   std::string m_defFile;
   std::string m_debug;
@@ -103,7 +107,8 @@ kpixProducer::kpixProducer(const std::string & name, const std::string & runcont
   :eudaq::Producer(name, runcontrol),
    m_debug("False"), m_kpixRunState("Running"),
    m_runrate("1Hz"), m_dataOverEvt("0 - 0 Hz"),
-   dataFileFd_(-1), m_nEvt(0), _enableDataThread(false){}
+   dataFileFd_(-1), m_nEvt(0), _enableDataThread(false),
+   m_noeudaqbin(0),m_nokpixbin(0){}
 
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
 void kpixProducer::DoInitialise(){
@@ -111,6 +116,10 @@ void kpixProducer::DoInitialise(){
   // Create and setup PGP link
   udpLink.setMaxRxTx(500000);
   udpLink.open(8192,1,"192.168.1.16"); // to have multiple udplink connections
+  // --> start: wp 2018 Feb 8
+  m_thd_datarx = std::thread(&kpixProducer::KpixDataReceiver, this);
+  // --> edn: wp 2018 Feb 8
+
   //udpLink.openDataNet("127.0.0.1",8099);
   udpLink.enableEudaq();
   auto ini = GetInitConfiguration();
@@ -147,7 +156,13 @@ void kpixProducer::DoInitialise(){
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
 void kpixProducer::DoConfigure(){
   auto conf = GetConfiguration();
+  if (!conf) return;
+  
   conf->Print(std::cout);
+
+  m_noeudaqbin = conf->Get("DISABLE_EUDAQ_BIN",0);
+  m_nokpixbin = conf->Get("DISABLE_KPIX_BIN",0);
+  m_binaries_database = conf->Get("EUDAQ_DataBase","./");
   
   std::string conf_defFile = conf->Get("KPIX_CONFIG_FILE","");
   if (conf_defFile!="") m_defFile=conf_defFile; 
@@ -186,13 +201,13 @@ void kpixProducer::DoStartRun(){
   std::string myname(6-len_run_n, '0');
   myname+=run_num;
     
-  std::string kpixfile("./kpix_output_run"+myname+".bin");
+  std::string kpixfile(m_binaries_database+"kpix_output_run"+myname+".bin");
   std::cout<< kpixfile <<std::endl;
 
   dataFileFd_ = ::open(kpixfile.c_str(),O_RDWR|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
   _enableDataThread=true;
   if (_kpixQueue.size()!=0) _kpixQueue.clear();
-  m_thd_datarx = std::thread(&kpixProducer::KpixDataReceiver, this);
+  //m_thd_datarx = std::thread(&kpixProducer::KpixDataReceiver, this);
   m_thd_datatx = std::thread(&kpixProducer::SendKpixEvent, this);
   /* Core start to run*/
   m_thd_run = std::thread(&kpixProducer::RunKpix, this);
@@ -295,11 +310,15 @@ void kpixProducer::OnStatus(){
 /* start wmq-dev: polling data from kpix to eudaq*/
 
 void kpixProducer::KpixDataReceiver(){
+  /*
+   * This is the Eudaq DataRun, needs to start thread with Eudaq_rxRun, 
+   * which locates at kpix_DataRun enabled w/ udpLink.open()
+   */
   _enableDataThread=true;
 
   Data* datKpix;
   while( _enableDataThread ){
-    if ( ( datKpix = (Data*)udpLink.pollEudaqQueue()) != NULL ) {
+    if ( ( datKpix = (Data*)udpLink.Eudaq_DataRun()) != NULL ) {
       std::unique_lock<std::mutex> rxlock(_kpixQueue_guard);
       _kpixQueue.push_front(datKpix);
       rxlock.unlock();
