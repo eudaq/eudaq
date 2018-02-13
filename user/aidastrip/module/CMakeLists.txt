@@ -20,6 +20,11 @@ target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
 #  -L${PROJECT_SOURCE_DIR}/extern/lib/ -lkpix)
   -L/usr/local/lib/kpix/ -lkpix) 
 
+##--- set run path of the dynamic kpix lib
+set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
+  ${EUDAQ_INSTALL_RPATH}:/usr/local/lib/kpix/)
+
+
 install(TARGETS
   ${EUDAQ_MODULE}
   RUNTIME DESTINATION bin
