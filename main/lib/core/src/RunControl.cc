@@ -138,6 +138,12 @@ namespace eudaq {
     m_listening = true;
     SendCommand("RESET", "");
   }
+  
+  void RunControl::ResetSingleConnection(ConnectionSPC id) {
+    EUDAQ_INFO("Processing Reset command for connection ");
+    m_listening = true;	  
+    SendCommand("RESET", "", id);
+  }  
 
   void RunControl::StartRun(){
     EUDAQ_INFO("Processing StartRun command for RUN #" + std::to_string(m_run_n));
@@ -247,7 +253,13 @@ namespace eudaq {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     CloseRunControl();
   }
-
+  
+  void RunControl::TerminateSingleConnection(ConnectionSPC id) {
+    EUDAQ_INFO("Processing Terminate command for connection ");
+    SendCommand("TERMINATE", "", id);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  
   void RunControl::SendCommand(const std::string &cmd, const std::string &param,
                                ConnectionSPC id){
     std::unique_lock<std::mutex> lk(m_mtx_sendcmd);    

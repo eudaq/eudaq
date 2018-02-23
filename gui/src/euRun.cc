@@ -36,6 +36,9 @@ RunControlGUI::RunControlGUI()
   viewConn->setModel(&m_model_conns);
   viewConn->setItemDelegate(&m_delegate);
   
+  viewConn->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(viewConn, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onCustomContextMenu(const QPoint &)));
+  
   QRect geom(-1,-1, 150, 200);
   QRect geom_from_last_program_run;
   QSettings settings("EUDAQ collaboration", "EUDAQ");
@@ -319,3 +322,16 @@ std::map<int, QString> RunControlGUI::m_map_state_str ={
     {eudaq::Status::STATE_ERROR,
      "<font size=12 color='darkred'><b>Current State: Error </b></font>"}
 };
+
+void RunControlGUI::onCustomContextMenu(const QPoint &point)
+{
+    QModelIndex index = viewConn->indexAt(point);
+    QMenu *contextMenu = new QMenu(viewConn);	
+    QAction *resetAction = new QAction("Reset", this);
+    connect(resetAction, &QAction::triggered, this, [this,index]() {m_rc->ResetSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(resetAction);		
+    QAction *terminateAction = new QAction("Terminate", this);
+    connect(terminateAction, &QAction::triggered, this, [this,index]() {m_rc->TerminateSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(terminateAction);	
+    contextMenu->exec(viewConn->viewport()->mapToGlobal(point));
+}
