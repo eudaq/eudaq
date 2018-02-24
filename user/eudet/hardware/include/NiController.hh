@@ -36,7 +36,7 @@ typedef int SOCKET;
 class NiController {
 
 public:
-  void GetProduserHostInfo();
+  void GetProducerHostInfo();
   void Start();
   void Stop();
   void DatatransportClientSocket_Open(const std::string& addr, uint16_t port);

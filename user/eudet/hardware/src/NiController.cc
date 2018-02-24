@@ -47,7 +47,7 @@ unsigned char start[5] = "star";
 unsigned char stop[5] = "stop";
 
 
-void NiController::GetProduserHostInfo() {
+void NiController::GetProducerHostInfo() {
   /*** get Producer information, NAME and INET ADDRESS ***/
   char ThisHost[80];
   struct hostent *hclient;
