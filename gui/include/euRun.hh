@@ -37,6 +37,8 @@ private slots:
   void on_btnLoadConf_clicked();
   void onCustomContextMenu(const QPoint &point);
 private:
+  bool loadInitFile();
+  bool loadConfigFile();
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
   eudaq::RunControlUP m_rc;
