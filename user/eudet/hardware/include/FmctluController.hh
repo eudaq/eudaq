@@ -7,6 +7,7 @@
 #include <iostream>
 #include "FmctluI2c.hh"
 #include "FmctluHardware.hh"
+#include "FmctluPowerModule.hh"
 
 typedef unsigned char uchar_t;
 
@@ -133,6 +134,7 @@ namespace tlu {
     void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
+    void pwrled_Initialize();
     void PulseT0();
 
     void SetDACValue(unsigned char channel, uint32_t value);
@@ -151,6 +153,8 @@ namespace tlu {
     void SetI2C_EEPROM_addr(char addressa) { m_I2C_address.EEPROM = addressa; };
     void SetI2C_expander1_addr(char addressa) { m_I2C_address.expander1 = addressa; };
     void SetI2C_expander2_addr(char addressa) { m_I2C_address.expander2 = addressa; };
+    void SetI2C_pwrmdl_addr(char addressa, char addressb, char addressc) { m_I2C_address.pwraddr = addressa; m_I2C_address.ledxp1addr = addressb; m_I2C_address.ledxp2addr = addressc; };
+
   private:
 
 
@@ -162,6 +166,9 @@ namespace tlu {
       char EEPROM;
       char expander1;
       char expander2;
+      char pwraddr; // i2s address of DAC of power module
+      char ledxp1addr; // i2c address of expander (LED controller)
+      char ledxp2addr; //i2c address of expander (LED controller)
     } m_I2C_address;
 
 
@@ -177,6 +184,7 @@ namespace tlu {
     AD5665R m_zeDAC1, m_zeDAC2;
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
+    PWRLED m_pwrled;
 
     // Define constants such as number of DUTs and trigger inputs
     int m_nDUTs;

@@ -1,5 +1,6 @@
 #include "FmctluController.hh"
 #include "FmctluHardware.hh"
+#include "FmctluPowerModule.hh"
 #include "FmctluI2c.hh"
 #include <iomanip>
 #include <thread>
@@ -169,7 +170,6 @@ namespace tlu {
     return res;
   };
 
-
   uint32_t FmctluController::GetFW(){
     uint32_t res;
     res= ReadRRegister("version");
@@ -319,6 +319,15 @@ namespace tlu {
         else if (myaddr==m_I2C_address.expander2){
           std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
+        else if (myaddr==m_I2C_address.ledxp1addr){
+          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+        }
+        else if (myaddr==m_I2C_address.ledxp2addr){
+          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+        }
+        else if (myaddr==m_I2C_address.pwraddr){
+          std::cout << "\tFOUND I2C slave POWER MODULE DAC (0x" << std::hex << myaddr << ")" << std::endl;
+        }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
         }
@@ -334,6 +343,12 @@ namespace tlu {
       SetBoardID();
     }
     std::cout.flags( coutflags ); // Restore cout flags
+  }
+
+  void FmctluController::pwrled_Initialize() {
+    std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
+    m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77);
+    m_pwrled.initI2Cslaves(false, true);
   }
 
   unsigned int FmctluController::PackBits(std::vector< unsigned int>  rawValues){

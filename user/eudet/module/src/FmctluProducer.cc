@@ -2,6 +2,7 @@
 
 #include "FmctluController.hh"
 #include "FmctluHardware.hh"
+#include "FmctluPowerModule.hh"
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -143,6 +144,7 @@ void FmctluProducer::DoInitialise(){
     m_tlu->SetI2C_EEPROM_addr(ini->Get("I2C_ID_Addr", 0x50) );
     m_tlu->SetI2C_expander1_addr(ini->Get("I2C_EXP1_Addr",0x74));
     m_tlu->SetI2C_expander2_addr(ini->Get("I2C_EXP2_Addr",0x75) );
+    m_tlu->SetI2C_pwrmdl_addr(ini->Get("I2C_DACModule_Addr",  0x1C), ini->Get("I2C_EXP1Module_Addr",  0x76), ini->Get("I2C_EXP2Module_Addr",  0x77));
 
     // Initialize TLU hardware
     m_tlu->InitializeI2C();
@@ -158,6 +160,7 @@ void FmctluProducer::DoInitialise(){
     if (ini->Get("CONFCLOCK", true)){
       m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
     }
+    m_tlu->pwrled_Initialize();
 
     // Reset IPBus registers
     m_tlu->ResetSerdes();
