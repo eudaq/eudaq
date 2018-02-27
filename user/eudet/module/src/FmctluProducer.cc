@@ -209,6 +209,9 @@ void FmctluProducer::DoConfigure() {
     m_tlu->SetThresholdValue(4, conf->Get("DACThreshold4", 1.2));
     m_tlu->SetThresholdValue(5, conf->Get("DACThreshold5", 1.2));
 
+    // Set PMT power
+    m_tlu->pwrled_setVoltages(conf->Get("PMT1_V", 0.0), conf->Get("PMT2_V", 0.0), conf->Get("PMT3_V", 0.0), conf->Get("PMT4_V", 0.0));
+
     // Set trigger stretch and delay
     std::vector<unsigned int> stretcVec = {(unsigned int)conf->Get("in0_STR",0),
   					 (unsigned int)conf->Get("in1_STR",0),

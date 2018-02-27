@@ -56,7 +56,7 @@ void AD5665R::SetIntRef(bool intRef, bool verbose){
 void AD5665R::SetDACValue(unsigned char channel, uint32_t value) {
   unsigned char chrsToSend[2];
 
-  std::cout << "  Setting DAC channel " << (unsigned int)channel << " to " << value << std::endl;
+  std::cout << "\tSetting DAC channel " << (unsigned int)channel << " to " << value << std::endl;
 
   if (( (unsigned int)channel < 0 ) || ( 7 < (unsigned int)channel )){
     std::cout << "\tAD5665R - ERROR: channel " << int(channel)  << " not in range 0-7" << std::endl;

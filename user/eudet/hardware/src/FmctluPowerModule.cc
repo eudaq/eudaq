@@ -44,7 +44,7 @@ void PWRLED::setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp2Add << std::dec << "(LED EXPANDER 1)" << std::endl;
 }
 
-void PWRLED::setVch(int channel, float voltage, bool verbose){
+void PWRLED::setVchannel(int channel, float voltage, bool verbose){
   // Note: the channel here is the DAC channel.
   // The mapping with the power module is not one-to-one
   float dacValue;
@@ -61,6 +61,6 @@ void PWRLED::setVch(int channel, float voltage, bool verbose){
       voltage = 1;
     }
     dacValue= voltage*65535;
-    pwr_zeDAC.SetDACValue(int(dacValue), channel);
+    pwr_zeDAC.SetDACValue(channel, int(dacValue));
   }
 }

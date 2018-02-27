@@ -349,6 +349,19 @@ namespace tlu {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
     m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77);
     m_pwrled.initI2Cslaves(false, true);
+    //m_pwrled.setVchannel(0, 0.2, true);
+    //m_pwrled.setVchannel(1, 0.4, true);
+    //m_pwrled.setVchannel(2, 0.6, true);
+    //m_pwrled.setVchannel(3, 0.8, true);
+  }
+
+  void FmctluController::pwrled_setVoltages(float v1, float v2, float v3, float v4) {
+    std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
+    //std::cout << "\tvalues" << v1 << " " << v2 << " " << v3 << " " << v4 <<  std::endl;
+    m_pwrled.setVchannel(0, v1, true);
+    m_pwrled.setVchannel(1, v2, true);
+    m_pwrled.setVchannel(2, v3, true);
+    m_pwrled.setVchannel(3, v4, true);
   }
 
   unsigned int FmctluController::PackBits(std::vector< unsigned int>  rawValues){

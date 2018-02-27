@@ -22,7 +22,7 @@ public:
   PWRLED( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add);
   void testme();
   void setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add);
-  void setVch(int channel, float voltage, bool verbose);
+  void setVchannel(int channel, float voltage, bool verbose);
   void initI2Cslaves(bool intRef, bool verbose);
   //void SetIntRef(bool intRef, bool verbose);
   //void SetDACValue(unsigned char channel, uint32_t value);
