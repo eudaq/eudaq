@@ -349,10 +349,43 @@ namespace tlu {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
     m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77);
     m_pwrled.initI2Cslaves(false, true);
-    //m_pwrled.setVchannel(0, 0.2, true);
-    //m_pwrled.setVchannel(1, 0.4, true);
-    //m_pwrled.setVchannel(2, 0.6, true);
-    //m_pwrled.setVchannel(3, 0.8, true);
+    bool verbose= true;
+    //int indicator= 1;
+    //std::array<int, 3>RGB{ {1, 0, 1} };
+    //m_pwrled.setIndicatorRGB( indicator, RGB, verbose);
+    m_pwrled.led_allOff();
+    m_pwrled.setIndicatorRGB( 1, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 2, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 3, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 4, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 5, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 6, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 7, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 8, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 9, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 10, {{1,0,0}}, verbose);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    m_pwrled.setIndicatorRGB( 11, {{1,0,0}}, verbose);
+    // m_pwrled.testLED();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // m_pwrled.led_allBlue();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // m_pwrled.led_allOff();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // m_pwrled.led_allBlue();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // m_pwrled.led_allOff();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // m_pwrled.led_allBlue();
   }
 
   void FmctluController::pwrled_setVoltages(float v1, float v2, float v3, float v4) {

@@ -6,6 +6,7 @@
 #include <vector>
 #include "FmctluI2c.hh"
 #include "FmctluHardware.hh"
+#include <array>
 
 class PWRLED{
 private:
@@ -14,16 +15,27 @@ private:
   char pwr_i2c_exp2Add;
   i2cCore * pwr_i2c_core;
   AD5665R pwr_zeDAC;
-  PCA9539PW pwd_ledExp1, pwr_ledExp2;
+  PCA9539PW pwr_ledExp1, pwr_ledExp2;
+  std::array<std::array<int, 3>, 11> indicatorXYZ { { { {30, 29, 31} }, { {27, 26, 28} }, { {24, 23, 25} },
+                                                      { {21, 20, 22} }, { {18, 17, 19} }, { {15, 14, 16} },
+                                                      { {12, 11, 13} }, { {  9, 8, 10} }, { {   6, 5, 7} },
+                                                      { {3, 2, 4} }, { {1, 0, -1} } } };
   //i2cCore myi2c;
 public:
   //AD5665R::AD5665R()
   PWRLED();
   PWRLED( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add);
-  void testme();
+  void led_allBlue();
+  void led_allGreen();
+  void led_allRed();
+  void led_allOff();
+  void initI2Cslaves(bool intRef, bool verbose);
+  uint32_t _set_bit(uint32_t v, int index, bool x);
+  void setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, bool verbose);
   void setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add);
   void setVchannel(int channel, float voltage, bool verbose);
-  void initI2Cslaves(bool intRef, bool verbose);
+  void testme();
+  void testLED();
   //void SetIntRef(bool intRef, bool verbose);
   //void SetDACValue(unsigned char channel, uint32_t value);
 };
