@@ -356,12 +356,12 @@ namespace tlu {
   }
 
   void FmctluController::pwrled_setVoltages(float v1, float v2, float v3, float v4) {
+    // Note that ordering is not 1:1. Mapping is done in here.
     std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
-    //std::cout << "\tvalues" << v1 << " " << v2 << " " << v3 << " " << v4 <<  std::endl;
-    m_pwrled.setVchannel(0, v1, true);
+    m_pwrled.setVchannel(0, v3, true);
     m_pwrled.setVchannel(1, v2, true);
-    m_pwrled.setVchannel(2, v3, true);
-    m_pwrled.setVchannel(3, v4, true);
+    m_pwrled.setVchannel(2, v4, true);
+    m_pwrled.setVchannel(3, v1, true);
   }
 
   unsigned int FmctluController::PackBits(std::vector< unsigned int>  rawValues){
