@@ -29,6 +29,7 @@ public:
   void led_allGreen();
   void led_allRed();
   void led_allOff();
+  void led_allWhite();
   void initI2Cslaves(bool intRef, bool verbose);
   uint32_t _set_bit(uint32_t v, int index, bool x);
   void setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, bool verbose);

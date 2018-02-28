@@ -57,6 +57,7 @@ void PWRLED::initI2Cslaves(bool intRef, bool verbose){
 
 uint32_t PWRLED::_set_bit(uint32_t v, int index, bool x){
   ///Set the index:th bit of v to 1 if x is truthy, else to 0, and return the new value
+  std::cout << "set bit IN " << v << std::endl;
   uint32_t mask;
   if (index == -1){
     std::cout << "  SETBIT: Index= -1 will be ignored" << std::endl;
@@ -68,6 +69,7 @@ uint32_t PWRLED::_set_bit(uint32_t v, int index, bool x){
       v |= mask;        // If x was True, set the bit indicated by the mask.
     }
   }
+  std::cout << " INDEX " << index << " bool " << x << " OUT " << v << std::endl;
   return v;
 }
 
@@ -87,52 +89,54 @@ void PWRLED::setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, bool 
   // Note that one LED only has 2 components connected
   // print self.indicatorXYZ[indicator-1][2]
   //std::cout << "<><><><><><><>" << indicatorXYZ.at(ind).at(rgb) << std::endl;
+  std::cout << ",.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.," << std::endl;
   if ((1 <= indicator) && (indicator <= 11)){
-      char nowStatus[4];
-      char nextStatus[4];
-      nowStatus[0]= pwr_ledExp1.getOutputs(0, false);
-      nowStatus[1]= pwr_ledExp1.getOutputs(1, false);
-      nowStatus[2]= pwr_ledExp2.getOutputs(0, false);
-      nowStatus[3]= pwr_ledExp2.getOutputs(1, false);
-      std::cout << "NOW STATUS "<< (int)nowStatus[0] << " " << (int)nowStatus[1] << " " << (int)nowStatus[2] << " " << (int)nowStatus[3] << " " << std::endl;
+      unsigned char nowStatus[4];
+      unsigned char nextStatus[4];
+      nowStatus[0]= 0xFF & (pwr_ledExp1.getOutputs(0, false));
+      nowStatus[1]= 0xFF & (pwr_ledExp1.getOutputs(1, false));
+      nowStatus[2]= 0xFF & (pwr_ledExp2.getOutputs(0, false));
+      nowStatus[3]= 0xFF & (pwr_ledExp2.getOutputs(1, false));
+      std::cout << "NOW STATUS "<< (unsigned int)nowStatus[0] << " " << (unsigned int)nowStatus[1] << " " << (unsigned int)nowStatus[2] << " " << (unsigned int)nowStatus[3] << " " << std::endl;
       uint32_t nowWrd= 0x00000000;
-      nowWrd= nowWrd | (int)nowStatus[0];
-      nowWrd= nowWrd | ((int)nowStatus[1] << 8);
-      nowWrd= nowWrd | ((int)nowStatus[2] << 16);
-      nowWrd= nowWrd | ((int)nowStatus[3] << 24);
+      nowWrd= nowWrd | (unsigned int)nowStatus[0];
+      nowWrd= nowWrd | ((unsigned int)nowStatus[1] << 8);
+      nowWrd= nowWrd | ((unsigned int)nowStatus[2] << 16);
+      nowWrd= nowWrd | ((unsigned int)nowStatus[3] << 24);
       uint32_t nextWrd;
       nextWrd= nowWrd;
       int indexComp;
       int valueComp;
       for (int iComp=0; iComp <3; iComp++){
         indexComp= indicatorXYZ.at(indicator-1).at(iComp);
-        valueComp= not bool( RGB.at(iComp) );
+        valueComp= ! bool( RGB.at(iComp) );
         nextWrd= _set_bit(nextWrd, indexComp, int(valueComp));
-        if (verbose){
-          std::cout << "n= " << iComp << " INDEX= " << indexComp << " VALUE= " << int(valueComp) << " NEXTWORD= " << std::hex << (nextWrd) << std::endl;
-        }
-        if (verbose){
-          std::cout << "NOW  " << std::hex << (nowWrd) << std::dec << std::endl;
-          std::cout << "NEXT " << std::hex << (nextWrd) << std::dec << std::endl;
-        }
-        //nextStatus= [0xFF & nextWrd, 0xFF & (nextWrd >> 8), 0xFF & (nextWrd >> 16), 0xFF & (nextWrd >> 24) ];
-        nextStatus[0]= 0xFF & nextWrd;
-        nextStatus[1]= 0xFF & (nextWrd >> 8);
-        nextStatus[2]= 0xFF & (nextWrd >> 16);
-        nextStatus[3]= 0xFF & (nextWrd >> 24);
-        if (nowStatus[0] != nextStatus[0]){
-          pwr_ledExp1.setOutputs(0, nextStatus[0], false);
-        }
-        if (nowStatus[1] != nextStatus[1]){
-          pwr_ledExp1.setOutputs(1, nextStatus[1], false);
-        }
-        if (nowStatus[2] != nextStatus[2]){
-          pwr_ledExp2.setOutputs(0, nextStatus[2], false);
-        }
-        if (nowStatus[3] != nextStatus[3]){
-          pwr_ledExp2.setOutputs(1, nextStatus[3], false);
+        if (verbose==2){
+          std::cout << "n= " << iComp << " INDEX= " << indexComp << " VALUE= " << (unsigned int) valueComp << " NEXTWORD= " << std::hex << (nextWrd) << std::endl;
         }
       }
+      if (verbose){
+        std::cout << "NOW  " << std::hex << (nowWrd) << std::dec << std::endl;
+        std::cout << "NEXT " << std::hex << (nextWrd) << std::dec << std::endl;
+      }
+      //nextStatus= [0xFF & nextWrd, 0xFF & (nextWrd >> 8), 0xFF & (nextWrd >> 16), 0xFF & (nextWrd >> 24) ];
+      nextStatus[0]= 0xFF & nextWrd;
+      nextStatus[1]= 0xFF & (nextWrd >> 8);
+      nextStatus[2]= 0xFF & (nextWrd >> 16);
+      nextStatus[3]= 0xFF & (nextWrd >> 24);
+      if (nowStatus[0] != nextStatus[0]){
+        pwr_ledExp1.setOutputs(0, nextStatus[0], false);
+      }
+      if (nowStatus[1] != nextStatus[1]){
+        pwr_ledExp1.setOutputs(1, nextStatus[1], false);
+      }
+      if (nowStatus[2] != nextStatus[2]){
+        pwr_ledExp2.setOutputs(0, nextStatus[2], false);
+      }
+      if (nowStatus[3] != nextStatus[3]){
+        pwr_ledExp2.setOutputs(1, nextStatus[3], false);
+      }
+
   }
 }
 
@@ -183,6 +187,13 @@ void PWRLED::led_allOff(){
   pwr_ledExp1.setOutputs(1, 255, false);
   pwr_ledExp2.setOutputs(0, 255, false);
   pwr_ledExp2.setOutputs(1, 255, false);
+}
+
+void PWRLED::led_allWhite(){
+  pwr_ledExp1.setOutputs(0, 0, false);
+  pwr_ledExp1.setOutputs(1, 0, false);
+  pwr_ledExp2.setOutputs(0, 0, false);
+  pwr_ledExp2.setOutputs(1, 0, false);
 }
 
 void PWRLED::testLED(){
