@@ -35,6 +35,8 @@ class ExamplePyProducer(pyeudaq.Producer):
         while(self.is_running):
             ev = pyeudaq.Event("RawEvent", "sub_name")
             ev.SetTriggerN(trigger_n)
+            block = bytes(r'raw_data_string')
+            ev.AddBlock(0, block)
             print ev
             self.SendEvent(ev)
             trigger_n += 1

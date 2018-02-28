@@ -111,4 +111,12 @@ void  init_pybind_event(py::module &m){
 	     (size_t (eudaq::Event::*)(uint32_t, const std::vector<uint8_t>&))
 	     &eudaq::Event::AddBlock<uint8_t>,
 	     "Add data block", py::arg("index"), py::arg("data"));
+  event_.def("AddBlock",
+	     [](const eudaq::EventSP ev,
+		uint32_t index, const std::string &data){
+	       std::vector<uint8_t> v;
+	       std::copy(data.begin(), data.end(), std::back_inserter(v));
+	       return ev->AddBlock(index,v);
+	     },
+	     "Add data block", py::arg("index"), py::arg("data"));
 }
