@@ -30,11 +30,11 @@ public:
   void led_allRed();
   void led_allOff();
   void led_allWhite();
-  void initI2Cslaves(bool intRef, bool verbose);
+  void initI2Cslaves(bool intRef, int verbose);
   uint32_t _set_bit(uint32_t v, int index, bool x);
-  void setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, bool verbose);
+  void setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, int verbose);
   void setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add);
-  void setVchannel(int channel, float voltage, bool verbose);
+  void setVchannel(int channel, float voltage, int verbose);
   void testme();
   void testLED();
   //void SetIntRef(bool intRef, bool verbose);

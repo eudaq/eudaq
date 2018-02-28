@@ -345,67 +345,35 @@ namespace tlu {
     std::cout.flags( coutflags ); // Restore cout flags
   }
 
-  void FmctluController::pwrled_Initialize() {
+  void FmctluController::pwrled_Initialize(int verbose) {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
     m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77);
-    m_pwrled.initI2Cslaves(false, true);
-    bool verbose= 2;
+    m_pwrled.initI2Cslaves(false, verbose);
     //int indicator= 1;
     //std::array<int, 3>RGB{ {1, 0, 1} };
     //m_pwrled.setIndicatorRGB( indicator, RGB, verbose);
     m_pwrled.led_allOff();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     m_pwrled.led_allWhite();
-    std::cout << "ALL ON" << std::endl;
-    m_pwrled.setIndicatorRGB( 1, {{1,0,0}}, verbose);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    m_pwrled.setIndicatorRGB( 3, {{1,0,0}}, verbose);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     m_pwrled.led_allOff();
-    std::cout << "ALL ON" << std::endl;
-    m_pwrled.setIndicatorRGB( 1, {{1,0,0}}, verbose);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    m_pwrled.setIndicatorRGB( 3, {{1,0,0}}, verbose);
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    // m_pwrled.setIndicatorRGB( 2, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 3, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 4, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 5, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 6, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 7, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 8, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 9, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 10, {{1,0,0}}, verbose);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // m_pwrled.setIndicatorRGB( 11, {{1,0,0}}, verbose);
-
-    // m_pwrled.testLED();
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
-    // m_pwrled.led_allBlue();
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
-    // m_pwrled.led_allOff();
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
-    // m_pwrled.led_allBlue();
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
-    // m_pwrled.led_allOff();
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
-    // m_pwrled.led_allBlue();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    m_pwrled.testLED();
   }
 
-  void FmctluController::pwrled_setVoltages(float v1, float v2, float v3, float v4) {
+  void FmctluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose) {
     // Note that ordering is not 1:1. Mapping is done in here.
     std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
-    m_pwrled.setVchannel(0, v3, true);
-    m_pwrled.setVchannel(1, v2, true);
-    m_pwrled.setVchannel(2, v4, true);
-    m_pwrled.setVchannel(3, v1, true);
+    if (verbose > 0){
+      std::cout << "\tV PMT1=" << v3 << "V" << std::endl;
+      std::cout << "\tV PMT2=" << v2 << "V" << std::endl;
+      std::cout << "\tV PMT3=" << v4 << "V" << std::endl;
+      std::cout << "\tV PMT4=" << v1 << "V" << std::endl;
+    }
+    m_pwrled.setVchannel(0, v3, verbose);
+    m_pwrled.setVchannel(1, v2, verbose);
+    m_pwrled.setVchannel(2, v4, verbose);
+    m_pwrled.setVchannel(3, v1, verbose);
   }
 
   unsigned int FmctluController::PackBits(std::vector< unsigned int>  rawValues){

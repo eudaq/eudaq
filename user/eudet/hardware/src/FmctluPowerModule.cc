@@ -32,7 +32,7 @@ PWRLED::PWRLED( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add){
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp2Add << std::dec << "(LED EXPANDER 1)" << std::endl;
 }
 
-void PWRLED::initI2Cslaves(bool intRef, bool verbose){
+void PWRLED::initI2Cslaves(bool intRef, int verbose){
   pwr_zeDAC.SetI2CPar(pwr_i2c_core, pwr_i2c_DACaddr);
   pwr_zeDAC.SetIntRef(intRef, verbose);
   pwr_ledExp1.SetI2CPar( pwr_i2c_core, pwr_i2c_exp1Add );
@@ -40,24 +40,23 @@ void PWRLED::initI2Cslaves(bool intRef, bool verbose){
 
   pwr_ledExp1.setInvertReg(0, 0x00, false);// 0= normal, 1= inverted
   pwr_ledExp1.setIOReg(0, 0x00, false);// 0= output, 1= input
-  pwr_ledExp1.setOutputs(0, 0xDA, false);// If output, set to XX
+  pwr_ledExp1.setOutputs(0, 0xFF, false);// If output, set to XX
 
   pwr_ledExp1.setInvertReg(1, 0x00, false);// 0= normal, 1= inverted
   pwr_ledExp1.setIOReg(1, 0x00, false);// 0= output, 1= input
-  pwr_ledExp1.setOutputs(1, 0xB6, false);// If output, set to XX
+  pwr_ledExp1.setOutputs(1, 0xFF, false);// If output, set to XX
 
   pwr_ledExp2.setInvertReg(0, 0x00, false);// 0= normal, 1= inverted
   pwr_ledExp2.setIOReg(0, 0x00, false);// 0= output, 1= input
-  pwr_ledExp2.setOutputs(0, 0x6D, false);// If output, set to XX
+  pwr_ledExp2.setOutputs(0, 0xFF, false);// If output, set to XX
 
   pwr_ledExp2.setInvertReg(1, 0x00, false);// 0= normal, 1= inverted
   pwr_ledExp2.setIOReg(1, 0x00, false);// 0= output, 1= input
-  pwr_ledExp2.setOutputs(1, 0xDB, false);// If output, set to XX
+  pwr_ledExp2.setOutputs(1, 0xFF, false);// If output, set to XX
 }
 
 uint32_t PWRLED::_set_bit(uint32_t v, int index, bool x){
   ///Set the index:th bit of v to 1 if x is truthy, else to 0, and return the new value
-  std::cout << "set bit IN " << v << std::endl;
   uint32_t mask;
   if (index == -1){
     std::cout << "  SETBIT: Index= -1 will be ignored" << std::endl;
@@ -69,7 +68,6 @@ uint32_t PWRLED::_set_bit(uint32_t v, int index, bool x){
       v |= mask;        // If x was True, set the bit indicated by the mask.
     }
   }
-  std::cout << " INDEX " << index << " bool " << x << " OUT " << v << std::endl;
   return v;
 }
 
@@ -83,21 +81,19 @@ void PWRLED::setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp2Add << std::dec << "(LED EXPANDER 1)" << std::endl;
 }
 
-void PWRLED::setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, bool verbose){
+void PWRLED::setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, int verbose){
   // Indicator is one of the 11 LEDs on the front panels, labeled from 0 to 10
   // RGB allows to switch on (True) or off (False) the corresponding component for that Led
   // Note that one LED only has 2 components connected
   // print self.indicatorXYZ[indicator-1][2]
-  //std::cout << "<><><><><><><>" << indicatorXYZ.at(ind).at(rgb) << std::endl;
-  std::cout << ",.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.," << std::endl;
   if ((1 <= indicator) && (indicator <= 11)){
       unsigned char nowStatus[4];
       unsigned char nextStatus[4];
-      nowStatus[0]= 0xFF & (pwr_ledExp1.getOutputs(0, false));
-      nowStatus[1]= 0xFF & (pwr_ledExp1.getOutputs(1, false));
-      nowStatus[2]= 0xFF & (pwr_ledExp2.getOutputs(0, false));
-      nowStatus[3]= 0xFF & (pwr_ledExp2.getOutputs(1, false));
-      std::cout << "NOW STATUS "<< (unsigned int)nowStatus[0] << " " << (unsigned int)nowStatus[1] << " " << (unsigned int)nowStatus[2] << " " << (unsigned int)nowStatus[3] << " " << std::endl;
+      nowStatus[0]= 0xFF & (pwr_ledExp1.getOutputs(0, verbose));
+      nowStatus[1]= 0xFF & (pwr_ledExp1.getOutputs(1, verbose));
+      nowStatus[2]= 0xFF & (pwr_ledExp2.getOutputs(0, verbose));
+      nowStatus[3]= 0xFF & (pwr_ledExp2.getOutputs(1, verbose));
+      //std::cout << "NOW STATUS "<< (unsigned int)nowStatus[0] << " " << (unsigned int)nowStatus[1] << " " << (unsigned int)nowStatus[2] << " " << (unsigned int)nowStatus[3] << " " << std::endl;
       uint32_t nowWrd= 0x00000000;
       nowWrd= nowWrd | (unsigned int)nowStatus[0];
       nowWrd= nowWrd | ((unsigned int)nowStatus[1] << 8);
@@ -111,7 +107,7 @@ void PWRLED::setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, bool 
         indexComp= indicatorXYZ.at(indicator-1).at(iComp);
         valueComp= ! bool( RGB.at(iComp) );
         nextWrd= _set_bit(nextWrd, indexComp, int(valueComp));
-        if (verbose==2){
+        if (verbose>1){
           std::cout << "n= " << iComp << " INDEX= " << indexComp << " VALUE= " << (unsigned int) valueComp << " NEXTWORD= " << std::hex << (nextWrd) << std::endl;
         }
       }
@@ -125,22 +121,21 @@ void PWRLED::setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, bool 
       nextStatus[2]= 0xFF & (nextWrd >> 16);
       nextStatus[3]= 0xFF & (nextWrd >> 24);
       if (nowStatus[0] != nextStatus[0]){
-        pwr_ledExp1.setOutputs(0, nextStatus[0], false);
+        pwr_ledExp1.setOutputs(0, nextStatus[0], verbose);
       }
       if (nowStatus[1] != nextStatus[1]){
-        pwr_ledExp1.setOutputs(1, nextStatus[1], false);
+        pwr_ledExp1.setOutputs(1, nextStatus[1], verbose);
       }
       if (nowStatus[2] != nextStatus[2]){
-        pwr_ledExp2.setOutputs(0, nextStatus[2], false);
+        pwr_ledExp2.setOutputs(0, nextStatus[2], verbose);
       }
       if (nowStatus[3] != nextStatus[3]){
-        pwr_ledExp2.setOutputs(1, nextStatus[3], false);
+        pwr_ledExp2.setOutputs(1, nextStatus[3], verbose);
       }
-
   }
 }
 
-void PWRLED::setVchannel(int channel, float voltage, bool verbose){
+void PWRLED::setVchannel(int channel, float voltage, int verbose){
   // Note: the channel here is the DAC channel.
   // The mapping with the power module is not one-to-one
   float dacValue;
@@ -200,8 +195,19 @@ void PWRLED::testLED(){
   std::array<int, 3> RGB{{0, 1, 0}};
   led_allOff();
   for (int iInd=1; iInd < 12; iInd++){
-    setIndicatorRGB(iInd, RGB, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    setIndicatorRGB(iInd, {{1, 0, 0}}, false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-  setIndicatorRGB(11, {{0,0,0}}, false);
+  for (int iInd=1; iInd < 12; iInd++){
+    setIndicatorRGB(iInd, {{0, 1, 0}}, false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  for (int iInd=1; iInd < 12; iInd++){
+    setIndicatorRGB(iInd, {{0, 0, 1}}, false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  for (int iInd=1; iInd < 12; iInd++){
+    setIndicatorRGB(iInd, {{0, 0, 0}}, false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 }

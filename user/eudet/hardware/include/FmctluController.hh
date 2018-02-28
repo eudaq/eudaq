@@ -134,8 +134,8 @@ namespace tlu {
     void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
-    void pwrled_Initialize();
-    void pwrled_setVoltages(float v1, float v2, float v3, float v4);
+    void pwrled_Initialize(int verbose);
+    void pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose);
     void PulseT0();
 
     void SetDACValue(unsigned char channel, uint32_t value);
