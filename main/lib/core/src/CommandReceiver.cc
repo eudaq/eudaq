@@ -422,5 +422,5 @@ namespace eudaq {
       EUDAQ_WARN("CommandReceiver: Deamon catches an execption when it is in exiting");
     }
   }
-  
+  return 0;
 }

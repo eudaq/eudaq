@@ -250,4 +250,5 @@ namespace eudaq {
       EUDAQ_ERROR("DataReceiver: Execption from deamon exiting");
     }
   }
+  return 0;
 }
