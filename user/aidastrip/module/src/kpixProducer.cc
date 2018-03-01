@@ -204,9 +204,11 @@ void kpixProducer::DoStartRun(){
   std::string kpixfile(m_binaries_database+"kpix_output_run"+myname+".bin");
   std::cout<< kpixfile <<std::endl;
 
-  dataFileFd_ = ::open(kpixfile.c_str(),O_RDWR|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+  if (!m_noeudaqbin)
+    dataFileFd_ = ::open(kpixfile.c_str(),O_RDWR|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+  
   _enableDataThread=true;
-  if (_kpixQueue.size()!=0) _kpixQueue.clear();
+  //if (_kpixQueue.size()!=0) _kpixQueue.clear(); // some temp fix to run Ext Acq Trig from Nov/Dec 2017
   //m_thd_datarx = std::thread(&kpixProducer::KpixDataReceiver, this);
   m_thd_datatx = std::thread(&kpixProducer::SendKpixEvent, this);
   /* Core start to run*/
@@ -323,7 +325,7 @@ void kpixProducer::KpixDataReceiver(){
       _kpixQueue.push_front(datKpix);
       rxlock.unlock();
       m_nEvt++;
-      std::cout<< " @_@ COUNTER! Event #"<< m_nEvt <<std::endl;
+      std::cout<< " @_@ COUNTER! Event #"<< std::dec << m_nEvt <<std::endl;
     }
     delete datKpix;
   }
@@ -395,6 +397,7 @@ void kpixProducer::RunKpix(){
     kpixStatus = m_kpix->getVariable("RunState")->get();
     //std::cout<<"\t[KPiX:dev] Run State@mainLoop = "<<kpixStatus<<std::endl;
 
+    m_kpix->poll(NULL);
     auto dataOverEvt = m_kpix->getVariable("DataRxCount")->get();
     //std::cout<< "\t[KPiX:dev] Data/Event ==> " << dataOverEvt <<std::endl;
     m_dataOverEvt=dataOverEvt;
