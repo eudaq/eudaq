@@ -12,6 +12,7 @@ endif()
 file(GLOB_RECURSE CACTUS_UHAL_HEADER_FOUND
   ${CMAKE_CURRENT_LIST_DIR}/../extern/*/uhal.hpp)
 
+# Adjust location of installation
 if(NOT CACTUS_UHAL_HEADER_FOUND)
   file(GLOB_RECURSE CACTUS_UHAL_HEADER_FOUND
     /opt/cactus/*/uhal.hpp)
@@ -27,7 +28,6 @@ message(STATUS "Check for CACTUS/uhal header uhal.hpp: ${CACTUS_UHAL_HEADER_FOUN
 # using the 1st found file uhal.hpp.  
 list(GET CACTUS_UHAL_HEADER_FOUND 0 CACTUS_UHAL_HEADER_FILE)
 get_filename_component(CACTUS_UHAL_HEADER_FILE ${CACTUS_UHAL_HEADER_FILE} ABSOLUTE)
-
 get_filename_component(CACTUS_UHAL_INCLUDE_DIR ${CACTUS_UHAL_HEADER_FILE} DIRECTORY)
 get_filename_component(CACTUS_INCLUDE_DIR ${CACTUS_UHAL_INCLUDE_DIR} DIRECTORY)
 message(STATUS "Set CACTUS_INCLUDE_DIR to : ${CACTUS_INCLUDE_DIR}")

@@ -32,29 +32,6 @@ if(USER_BUILD_TLU OR USER_BUILD_FMCTLU OR USER_BUILD_NI)
 endif()
 # end library
 
-# executable
-# if(USER_BUILD_TLU)
-#   add_executable(TLUControl src/TLUControl.cxx)
-#   add_executable(TLUReset src/TLUReset.cxx)
-#   target_link_libraries(TLUControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-#   target_link_libraries(TLUReset ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-#   list(APPEND INSTALL_TARGETS TLUControl TLUReset)
-# endif()
-
-# if(USER_BUILD_FMCTLU)
-#   add_executable(MinitluController src/MinitluController.cxx)
-#   add_executable(FmctluController src/FmctluController.cxx)
-#   target_link_libraries(MinitluController ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-#   target_link_libraries(FmctluController ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-#   set_target_properties(MinitluController PROPERTIES INSTALL_RPATH
-#     ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
-#   set_target_properties(FmctluController PROPERTIES INSTALL_RPATH
-#     ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
-#   list(APPEND INSTALL_TARGETS MinitluController)
-#   list(APPEND INSTALL_TARGETS FmctluController)
-# endif()
-# end executable
-
 install(TARGETS ${INSTALL_TARGETS}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
