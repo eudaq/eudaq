@@ -19,9 +19,12 @@ namespace{
 
 bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
 
-  std::cout<<"[dev] I AM HERE!\n" ;
+  /* 
+   * It loops over [eudaq raw events] == [kpix acq. cycles]
+   */
     
   auto rawev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+  
   size_t nblocks= rawev->NumBlocks();
 
   std::cout<< "[dev] nblocks =  " << nblocks << std::endl;
@@ -29,8 +32,9 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
   auto block_n_list = rawev->GetBlockNumList();
   
   Data* data;
-  KpixEvent event;
-  
+  KpixEvent    event;
+  KpixSample   *sample;
+    
   for(auto &block_n: block_n_list){
     
     std::cout<< "[dev] block id listerning ==> " << block_n <<std::endl; ;
@@ -42,8 +46,7 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
      
       size_t size_of_kpix = block.size()/sizeof(uint32_t);
       std::cout<<"[dev] # of block.size()/sizeof(uint32_t) = " << block.size()/sizeof(uint32_t) << "\n"
-	       <<"\t sizeof(uint32_t) = " << sizeof(uint32_t) <<"\n"
-	       <<"\t size_of_kpixDT = "<< size_of_kpix << std::endl;
+	       <<"\t sizeof(uint32_t) = " << sizeof(uint32_t) << std::endl;
 
 
       uint32_t *kpixEvt = nullptr;
@@ -55,13 +58,20 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
       std::cout<<"\t Uint32_t  = " << kpixEvt <<"\n"
 	       <<"\t evtNum    = " << kpixEvt[0] <<std::endl;
 
-      std::cout <<"\t kpixEvent.evtNum = " << event.eventNumber()<<std::endl;
+      std::cout << "\t kpixEvent.evtNum = " << event.eventNumber() <<std::endl;
+      std::cout << "\t kpixEvent.timestamp = "<< event.timestamp() <<std::endl;
+      std::cout << "\t kpixEvent.count = "<< event.count() <<std::endl;
+
+
+      d2 -> SetEventN(event.eventNumber());
+      d2 -> SetTimestampe(event.timestampe());
       
       /* read kpix data */
       //data->copy(kpixEvt, size_of_kpix);
       
     }
-    
+
+    /* parts related to Ex0RawEvt commented out */
     /*    if(block.size() < 2)
       EUDAQ_THROW("Unknown data");
     uint8_t x_pixel = block[0];
@@ -78,7 +88,7 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
     }
     d2->AddPlane(plane);
   }
-    */ // parts related to Ex0RawEvt commented out
+    */ 
 
   }    
     
