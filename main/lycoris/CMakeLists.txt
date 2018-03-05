@@ -1,4 +1,9 @@
 
+
+set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+set(ROOT_DIR $ENV{ROOTSYS}/cmake)
+find_package(ROOT)
+
 cmake_dependent_option(EUDAQ_BUILD_LYCORIS_EXE "build aux. LYCORIS executables." ON
   "ROOT_FOUND" OFF)
 
@@ -6,7 +11,6 @@ if(NOT EUDAQ_BUILD_LYCORIS_EXE)
   message(STATUS "Disable the building of aux. LYCORIS executables (EUDAQ_BUILD_LYCORIS_EXE=OFF)")
   return()
 endif()
-
 
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
