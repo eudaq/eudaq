@@ -19,8 +19,8 @@ add_executable(${EXE_CLI_DATACOL} src/euCliConverter.cxx)
 target_link_libraries(${EXE_CLI_DATACOL} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_DATACOL})
 
-set(EXE_CLI_DATACON myeuCliConverter)
-add_executable(${EXE_CLI_DATACON} src/myeuCliConverter.cxx)
+set(EXE_CLI_DATACON tbscCliConverter)
+add_executable(${EXE_CLI_DATACON} src/tbscCliConverter.cxx)
 target_link_libraries(${EXE_CLI_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_DATACON})
 
