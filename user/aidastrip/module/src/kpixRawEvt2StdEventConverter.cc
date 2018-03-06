@@ -31,10 +31,17 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
     
   auto block_n_list = rawev->GetBlockNumList();
   
-  Data* data;
-  KpixEvent    event;
+  //Data*        data;
+  KpixEvent    CycleEvent;
   KpixSample   *sample;
-    
+  
+  std::vector<uint8_t> hit(1024,0);
+  std::vector<std::vector<uint8_t>> kpix_hit (32,
+					      std::vector<uint8_t>(1024,0) );
+  std::vector<bool> foundkpix(32, false);
+  uint kpix, channel, bucket;
+  KpixSample::SampleType type;
+  
   for(auto &block_n: block_n_list){
     
     std::cout<< "[dev] block id listerning ==> " << block_n <<std::endl; ;
@@ -53,21 +60,52 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
       if (size_of_kpix)
 	kpixEvt = reinterpret_cast<uint32_t *>(block.data());
 
-      event.copy(kpixEvt, size_of_kpix);
-      
-      std::cout<<"\t Uint32_t  = " << kpixEvt <<"\n"
-	       <<"\t evtNum    = " << kpixEvt[0] <<std::endl;
-
-      std::cout << "\t kpixEvent.evtNum = " << event.eventNumber() <<std::endl;
-      std::cout << "\t kpixEvent.timestamp = "<< event.timestamp() <<std::endl;
-      std::cout << "\t kpixEvent.count = "<< event.count() <<std::endl;
-
-
-      d2 -> SetEventN(event.eventNumber());
-      d2 -> SetTimestampe(event.timestampe());
-      
       /* read kpix data */
-      //data->copy(kpixEvt, size_of_kpix);
+      CycleEvent.copy(kpixEvt, size_of_kpix);
+      
+      std::cout << "\t Uint32_t  = " << kpixEvt << "\n"
+	        << "\t evtNum    = " << kpixEvt[0] << std::endl;
+
+      std::cout << "\t kpixEvent.evtNum = " << CycleEvent.eventNumber() <<std::endl;
+      std::cout << "\t kpixEvent.timestamp = "<< CycleEvent.timestamp() <<std::endl;
+      std::cout << "\t kpixEvent.count = "<< CycleEvent.count() <<std::endl;
+
+
+      d2 -> SetEventN(CycleEvent.eventNumber());
+      d2 -> SetTimestamp(CycleEvent.timestamp(), CycleEvent.timestamp());
+      d2 -> SetTag("eudaqEventN", std::to_string(rawev->GetEventN()));
+      
+      /* read kpix sample -> which is particle event */
+   
+      for (uint xx=0; xx<CycleEvent.count(); xx++){
+	//// Get sample
+	sample  = CycleEvent.sample(xx);  // check event subtructure
+	if (sample->getEmpty()) continue; // if empty jump over
+	
+	kpix    = sample->getKpixAddress();
+	channel = sample->getKpixChannel();
+	bucket  = sample->getKpixBucket();
+	type    = sample->getSampleType();
+	
+	if (type == KpixSample::Data) {
+	  //std::cout<<"[dev] kpix = "<<kpix<<", channel = " <<channel <<", bucket = " <<bucket <<"\n";
+
+	  foundkpix[kpix] = true;
+	  kpix_hit.at(kpix).at(channel)++;
+	  //channel_entries[kpix][bucket]->Fill(channel, weight);
+	  //channel_entries[kpix][4]->Fill(channel, weight);
+	}
+
+      }
+      
+      for (int fkpix=0; fkpix<32; fkpix++){
+	if (foundkpix[fkpix]){
+	  d2 -> AddBlock(fkpix, kpix_hit.at(fkpix));
+	  std::cout<<"kpix num = "<< fkpix<<std::endl;
+	}
+      }
+
+     
       
     }
 

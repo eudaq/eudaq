@@ -12,3 +12,11 @@ if(NOT USER_AIDASTRIP)
 endif()
 
 add_subdirectory(module)
+
+find_package(ROOT)
+cmake_dependent_option(USER_AIDASTRIP_EXE "build aux. AIDASTRIP executables." ON
+  "ROOT_FOUND" OFF)
+
+if(USER_AIDASTRIP_EXE)
+  add_subdirectory(exe)
+endif()
