@@ -10,15 +10,18 @@
 
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
 
-#include "TFile.h"
+#include "KpixEvent.h"
+//#include "KpixSample.h"
+#include "lycorisRootAnalyzer.h"
 
 int main(int /*argc*/, const char **argv) {
   eudaq::OptionParser op("EUDAQ Command Line DataConverter", "2.0", "The Data Converter launcher of EUDAQ");
   eudaq::Option<std::string> file_input(op, "i", "input", "", "string",
 					"input file");
   eudaq::Option<std::string> file_output(op, "o", "output", "", "string",
-					 "output file: .slcio, .csv");
+					 "output file: .slcio, .root");
   eudaq::OptionFlag iprint(op, "ip", "iprint", "enable print of input Event");
 
   try{
@@ -51,34 +54,32 @@ int main(int /*argc*/, const char **argv) {
   
   eudaq::FileReaderUP reader;
   eudaq::FileWriterUP writer;
-  TFile* rfile;
+  lycorisRootAnalyzer *RootAna;
+  stringstream           tmp;
     
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
 
   if(!type_out.empty()){
-    if (type_out=="root"){
-      rfile = new TFile(outfile_path.c_str(), "recreate");
-      std::cout << " Write to " << outfile_path << std::endl;
-    }
+    if (type_out=="root")
+      RootAna = new lycorisRootAnalyzer(outfile_path);
     else  
       writer = eudaq::Factory<eudaq::FileWriter>::MakeUnique(eudaq::str2hash(type_out), outfile_path);
   }
   
-  std::vector<bool> foundkpix(32, false);
   int evtCounting = 0;
-  while(1){
-    /* 
-     * ATTENTION! once empty evt in the middle, no evt to read after the EMPTY one!
-     */
-
-    auto ev = reader->GetNextEvent(); //--> when ev is empty, an error catched from throw;
-
-
+  KpixEvent    CycleEvent;
+  //KpixSample   *sample;
+  
+  std::vector<bool> kpixfound(32, false);
     
+  uint cycleEventN, timestamp, eudaqEventN;
+  uint kpix, channel, bucket, value, tstamp;
+  
+  while(1){
+    // loop over kpix cycle event
+    auto ev = reader->GetNextEvent(); //--> when ev is empty, an error catched from throw;
     if(!ev) {
-      /* 
-       * NAIVE protection to check if any evt existed after the empty one TAT;
-       */
+      /* NAIVE protection to check if any evt existed after the empty one TAT; */
       std::cout << " -- Empty event, check next one, if empty finish reading." << std::endl;
       auto ev2 = reader->GetNextEvent();
       if (!ev2) break;
@@ -91,30 +92,52 @@ int main(int /*argc*/, const char **argv) {
     if(writer)
       writer->WriteEvent(ev);
 
-    if(rfile){
+    if(RootAna){
       auto block_n_list = ev->GetBlockNumList();
-      std::cout<< "[dev] nblocks = "<< ev->NumBlocks() << std::endl;
+      // std::cout<< "[dev] nblocks = "<< ev->NumBlocks() << std::endl;
       for (auto &block_n: block_n_list){
-	std::vector<uint8_t> hit = ev -> GetBlock(block_n);
-	foundkpix.at(block_n)=true;
+	std::vector<uint8_t> block = ev -> GetBlock(block_n);
+	if (block.size()==0) EUDAQ_THROW("Empty data!");
+	else{
+	  
+	  size_t size_of_kpix = block.size()/sizeof(uint32_t);
+	 
+	  uint32_t *kpixEvt = nullptr;
+	  if (size_of_kpix)
+	    kpixEvt = reinterpret_cast<uint32_t *>(block.data());
+	  
+	  /* read kpix data */
+	  CycleEvent.copy(kpixEvt, size_of_kpix);
+	  cycleEventN = CycleEvent.eventNumber();
+	  timestamp = CycleEvent.timestamp();
+	  eudaqEventN = ev->GetEventN();
+ 
+	  if (eudaqEventN==0){
+	    std::cout<<"[dev] # of block.size()/sizeof(uint32_t) = " << size_of_kpix << "\n"
+		     <<"\t sizeof(uint32_t) = " << sizeof(uint32_t) << std::endl;
+	    
+	    std::cout << "\t Uint32_t  = " << kpixEvt << "\n"
+		      << "\t evtNum    = " << kpixEvt[0] << std::endl;
+	    
+	    std::cout << "\t kpixEvent.evtNum = " << CycleEvent.eventNumber() <<std::endl;
+	    std::cout << "\t kpixEvent.timestamp = "<< CycleEvent.timestamp() <<std::endl;
+	    std::cout << "\t kpixEvent.count = "<< CycleEvent.count() <<std::endl;
+	  }
+
+	  RootAna->Analyzing(CycleEvent, eudaqEventN);
+
+	}
       }
       
     }
-    
-    evtCounting++;    
+
+    evtCounting++;
   }
-  std::cout<<"[num of kpix]\t";
-  for (uint ff=0; ff<32; ff++){
-    if (foundkpix[ff])
-      std::cout<<ff<<", ";
-    
-  }
-  std::cout<<"\n";
-  
-  if (rfile)
-    rfile->Close();
-  
+
   std::cout<<"[Converter:info] # of Evt counting ==> "
 	   << evtCounting <<"\n";
+
+  RootAna->Closing();
+  
   return 0;
 }

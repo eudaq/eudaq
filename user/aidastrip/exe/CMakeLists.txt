@@ -12,8 +12,13 @@ target_link_libraries(${EXE_CLI_LYCORIS_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_T
   -L/usr/local/lib/kpix/ -lkpix )
 list(APPEND INSTALL_TARGETS ${EXE_CLI_LYCORIS_DATACON})
 
+include_directories(. include)
 include_directories(${ROOT_INCLUDE_DIR})
 include_directories(/usr/local/include/kpix)
+
+##--- set run path of the dynamic kpix lib
+set_target_properties(${INSTALL_TARGETS} PROPERTIES INSTALL_RPATH
+  ${EUDAQ_INSTALL_RPATH}:/usr/local/lib/kpix/)
 
 install(TARGETS ${INSTALL_TARGETS}
   DESTINATION bin
