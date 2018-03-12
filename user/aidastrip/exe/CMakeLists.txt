@@ -7,6 +7,8 @@ set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 
 set(EXE_CLI_LYCORIS_DATACON lycorisCliConverter)
+
+
 add_executable(${EXE_CLI_LYCORIS_DATACON} src/lycorisCliConverter.cxx)
 target_link_libraries(${EXE_CLI_LYCORIS_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES}
   -L/usr/local/lib/kpix/ -lkpix )

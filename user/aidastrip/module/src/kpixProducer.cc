@@ -201,7 +201,7 @@ void kpixProducer::DoStartRun(){
   std::string myname(6-len_run_n, '0');
   myname+=run_num;
     
-  std::string kpixfile(m_binaries_database+"kpix_output_run"+myname+".bin");
+  std::string kpixfile(m_binaries_database+"/kpix_output_run"+myname+".bin");
   std::cout<< kpixfile <<std::endl;
 
   if (!m_noeudaqbin)
