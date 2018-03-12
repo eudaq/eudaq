@@ -25,7 +25,12 @@ public:
   ~lycorisRootAnalyzer();
   int Analyzing (KpixEvent& CycleEvent, uint eudaqEventN);
   int Closing ();
+  
+  void Setdebug(){_debug=true;};
+  
 private:
+  bool               _debug;
+  
   stringstream       _tmp;
   KpixSample         *_sample;
   uint               _cycleCount;
@@ -63,7 +68,8 @@ lycorisRootAnalyzer::lycorisRootAnalyzer(std::string outfile_path){
   _kpixfound = std::vector<bool>(32, false);
   _cycleCount = 0;
   _tmp.str("");
-
+  _debug = false;
+  
   _kpix2strip = map_kpix_to_strip();
   
 }
@@ -88,17 +94,34 @@ lycorisRootAnalyzer::~lycorisRootAnalyzer(){
   
 }
 
-
 int lycorisRootAnalyzer::Closing (){
   cout << "\n[lycorisRootAna] # of Cycles counting ==> " << _cycleCount << endl;
 
-  for (auto& kv: _chn_entries_k ){
+  for (auto& kv: _chn_entries_k )
     kv.second->Scale(1./_cycleCount);
+  for (auto& sv: _strip_entries_k) sv.second->Scale(1./_cycleCount);
+  for (auto& sv0: _strip_entries_b0_k) sv0.second->Scale(1./_cycleCount);
+  
+  // debug for the duplicate channel to strip id:
+  if (_debug){
+    for (auto& dd: _strip_entries_k){
+      int nbins = dd.second->GetSize();
+      TAxis *xaxis = dd.second->GetXaxis();
+      for (int nbin = 1; nbin<nbins-1; nbin++){
+	auto strip_evts=dd.second->GetBinContent(nbin);
+	if (strip_evts>4) {
+	  auto strip_ID=xaxis->GetBinCenter(nbin);
+	  cout<< "[debug] stripId = "<< strip_ID
+	      << ", entries = "<<strip_evts<<endl;
+	}
+      }
+      
+    }
   }
-  
-  
+    
+    
   _rfile->Write();
-  cout << "[lycorisRootAna] Write to output file = " << _rfile->GetName() << "..." << endl;
+  cout << "[lycorisRootAna] Write to output file = " << _rfile->GetName() << " ..." << endl;
   _rfile->Close();
   
   return 1;
@@ -145,7 +168,7 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
 
 	_tmp.str("");
 	_tmp << "strip_entries_k" << kpix << "_allBucket";
-	_strip_entries_k.insert ({kpix, new TH1F(_tmp.str().c_str(), "Strip entries; Strip ID; #OfEvts/#acq.cycles", 1024, -0.5, 1023.5)});
+	_strip_entries_k.insert ({kpix, new TH1F(_tmp.str().c_str(), "Strip entries; Strip ID; #OfEvts/#acq.cycles", 920, 0.5, 920.5)});
 	std::cout<< " success in creating: " << _tmp.str() << std::endl;
 	
 	// bucket 0:
@@ -156,12 +179,12 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
 
 	_tmp.str("");
 	_tmp <<  "strip_entries_b0_k" << kpix ;
-	_strip_entries_b0_k.insert({kpix, new TH1F(_tmp.str().c_str(), "Strip entries; Strip ID; #OfEvts/#acq.cycles", 1024, -0.5, 1023.5)});
+	_strip_entries_b0_k.insert({kpix, new TH1F(_tmp.str().c_str(), "Strip entries; Strip ID; #OfEvts/#acq.cycles", 920, 0.5, 920.5)});
 	std::cout<< " success in creating: " << _tmp.str() << std::endl;
 
 	_tmp.str("");
 	_tmp << "strip_vs_adc_b0_k" << kpix;
-	_strip_vs_adc_b0_k.insert({kpix, new TH2F(_tmp.str().c_str(), "Strip vs ADC; Strip ID; Charge (ADC)", 920, -0.5, 919.5, 8192, -0.5, 8191.5)});
+	_strip_vs_adc_b0_k.insert({kpix, new TH2F(_tmp.str().c_str(), "Strip vs ADC; Strip ID; Charge (ADC)", 920, 0.5, 920.5, 8192, -0.5, 8191.5)});
 	
 	// bucket 1
 	_tmp.str("");
@@ -190,7 +213,8 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
       switch (bucket) {
       case 0:
 	_chn_vs_adc_b0_k.at(kpix)-> Fill(channel, value);
-	_strip_entries_b0_k.at(kpix)->Fill( _kpix2strip.at(channel) );
+	_strip_vs_adc_b0_k.at(kpix)-> Fill(_kpix2strip.at(channel), value);
+	_strip_entries_b0_k.at(kpix)-> Fill( _kpix2strip.at(channel) );
 	break;
 	
       case 1:
