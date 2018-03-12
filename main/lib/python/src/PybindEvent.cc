@@ -6,6 +6,7 @@ namespace py = pybind11;
 class PyEvent : public eudaq::Event {
 public:
   using eudaq::Event::Event;
+  
   void Print(std::ostream& os, size_t offset) const override {
     PYBIND11_OVERLOAD(void, /* Return type */
 		      eudaq::Event,
@@ -27,7 +28,8 @@ void  init_pybind_event(py::module &m){
     .value("FLAG_TIME", eudaq::Event::Flags::FLAG_TIME)
     .export_values();
 
-  event_.def(py::init(&eudaq::Event::MakeShared));
+  event_.def(py::init(&eudaq::Event::Make));
+  
   event_.def("__repr__",
 	     [](const eudaq::EventSP ev){
 	       std::ostringstream oss;
@@ -66,7 +68,7 @@ void  init_pybind_event(py::module &m){
   event_.def("GetNumSubEvent", &eudaq::Event::GetNumSubEvent);
   event_.def("GetSubEvent",&eudaq::Event::GetSubEvent,
 	     "Get sub Event", py::arg("i"));
-  event_.def("GetSubEvents", &eudaq::Event::GetSubEvents);
+  event_.def("GetSubEvents", &eudaq::Event::GetSubEvents);  
   event_.def("SetType", &eudaq::Event::SetType,
 	     "Set Event type", py::arg("id"));
   event_.def("SetVersion", &eudaq::Event::SetVersion,
@@ -87,7 +89,20 @@ void  init_pybind_event(py::module &m){
 	     "Set time stamp", py::arg("begin"), py::arg("end"), py::arg("flag")=true);
   event_.def("SetDescription", &eudaq::Event::SetDescription,
 	     "Set Description", py::arg("dspt"));
+
+
+  event_.def("GetType", &eudaq::Event::GetType);
+  event_.def("GetVersion", &eudaq::Event::GetVersion);
+  event_.def("GetFlag", &eudaq::Event::GetFlag);
+  event_.def("GetRunN", &eudaq::Event::GetRunN);
+  event_.def("GetEventN", &eudaq::Event::GetEventN);
+  event_.def("GetDeviceN", &eudaq::Event::GetDeviceN);
+  event_.def("GetTriggerN", &eudaq::Event::GetTriggerN);
+  event_.def("GetExtendWord", &eudaq::Event::GetExtendWord);
+  event_.def("GetTimestampBegin", &eudaq::Event::GetTimestampBegin);
+  event_.def("GetTimestampEnd", &eudaq::Event::GetTimestampEnd);
   event_.def("GetDescription", &eudaq::Event::GetDescription);
+  
   event_.def("GetBlock", &eudaq::Event::GetBlock,
 	     "Get block", py::arg("n"));
   event_.def("GetNumBlock", &eudaq::Event::GetNumBlock);
@@ -95,5 +110,13 @@ void  init_pybind_event(py::module &m){
   event_.def("AddBlock",
 	     (size_t (eudaq::Event::*)(uint32_t, const std::vector<uint8_t>&))
 	     &eudaq::Event::AddBlock<uint8_t>,
+	     "Add data block", py::arg("index"), py::arg("data"));
+  event_.def("AddBlock",
+	     [](const eudaq::EventSP ev,
+		uint32_t index, const std::string &data){
+	       std::vector<uint8_t> v;
+	       std::copy(data.begin(), data.end(), std::back_inserter(v));
+	       return ev->AddBlock(index,v);
+	     },
 	     "Add data block", py::arg("index"), py::arg("data"));
 }

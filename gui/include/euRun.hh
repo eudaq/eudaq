@@ -35,7 +35,10 @@ private slots:
   void on_btnLog_clicked();
   void on_btnLoadInit_clicked();
   void on_btnLoadConf_clicked();
+  void onCustomContextMenu(const QPoint &point);
 private:
+  bool loadInitFile();
+  bool loadConfigFile();
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
   eudaq::RunControlUP m_rc;
@@ -46,4 +49,5 @@ private:
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_map_conn_status_last;
   uint32_t m_run_n_qsettings;
   bool m_lastexit_success;
+  QMenu* contextMenu;
 };

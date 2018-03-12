@@ -11,10 +11,15 @@ namespace eudaq {
   std::map<uint32_t, typename Factory<FileReader>::UP (*)(std::string&&)>& Factory<FileReader>::Instance<std::string&&>();
 
   FileReader::FileReader(){
-    
   }
 
-  FileReader::~FileReader(){
+  FileReader::~FileReader(){ 
   }
- 
+
+  FileReaderSP FileReader::Make(std::string type, std::string path){
+      auto fw = eudaq::Factory<eudaq::FileReader>::MakeShared(eudaq::str2hash(type), path);
+      if(!fw)
+	EUDAQ_THROW("FileReader: There is no FileReader regiested by "+ type);
+      return fw;
+  }
 }

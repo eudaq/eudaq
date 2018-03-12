@@ -1,0 +1,98 @@
+#!/bin/sh
+export HOSTNAME=192.168.10.1
+export RCPORT=44000
+
+[ "$1" != "" ] && RCPORT=$1
+
+cd `dirname $0`
+
+printf '\033[1;32;48m \t STARTING DAQ \033[0m \n'
+echo $(date)
+printf '\033[22;33m\t Cleaning up first...  \033[0m \n'
+
+sh KILLRUN
+
+printf '\033[22;31m\t End of killall \033[0m \n'
+
+printf '\033[22;31m\t Starting ssh-agent \033[0m \n'
+eval $(ssh-agent)
+printf '\033[22;31m\t Adding ssh shared key to ssh agent ( enter teleuser password ) \033[0m \n'
+ssh-add
+
+sleep 1
+
+cd bin
+
+######################################################################
+#=====================================================================
+printf '\033[22;33m\t Starting Subprocesses \033[0m \n'
+#=====================================================================
+
+######################################################################
+# euRun
+###############
+printf '\033[22;33m\t RunControl \033[0m \n'
+./euRun &
+sleep 2
+
+######################################################################
+# euLog
+###############
+printf '\033[22;33m\t Logger  \033[0m \n'
+./euLog -r tcp://192.168.10.1 &
+sleep 2
+
+######################################################################
+# DataCollector TLU
+###############
+printf '\033[22;33m\t Ex0TgDataCollector TLU \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "CliCollector" -e './euCliCollector -n Ex0TgDataCollector -t tlu_dc -r tcp://192.168.10.1:44000' &
+sleep 2
+
+######################################################################
+# DataCollector NI
+###############
+printf '\033[22;33m\t Ex0TgDataCollector NI \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "CliCollector" -e './euCliCollector -n Ex0TgDataCollector -t ni_dc -r tcp://192.168.10.1:44000' &
+sleep 2
+
+######################################################################
+# Online Monitor
+###############
+printf '\033[22;33m\t  StdEvMonitor  \033[0m \n'
+#xterm -sb -sl 1000 -geom 80x10-480-1000 -fn fixed -T "CliMonitor" -e './euCliMonitor -n Ex0Monitor -t my_mon  -r tcp://192.168.10.1' &
+./StdEventMonitor -r tcp://192.168.10.1 &
+
+sleep 2
+
+######################################################################
+# Online Monitor
+###############
+printf '\033[22;33m\t  Ex0Monitor TLU \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-1000 -fn fixed -T "CliMonitor" -e './euCliMonitor -n Ex0Monitor -t tlu_mon  -r tcp://192.168.10.1' &
+#./StdEventMonitor -r tcp://192.168.10.1 &
+
+sleep 2
+
+######################################################################
+# NiProducer
+###############
+printf '\033[22;33m\t  NiProducer  \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-1100 -fn fixed -T "CliNiProducer" -e './euCliProducer -n NiProducer -t niproducer -r tcp://192.168.10.1' &
+
+######################################################################
+# FmctluProducer
+###############
+printf '\033[22;33m\t  FmctluProducer  \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-1100 -fn fixed -T "FmctluProducer" -e 'ssh 192.168.10.10 "cd eudaq2/eudaq/bin/; ./euCliProducer -n FmctluProducer -t fmctlu -r tcp://192.168.10.1:44000"' &
+
+
+
+#####################################################################
+printf '\033[22;33m\t  Please start the Anemone on the NI crate and the fmxproducer elsewhere \033[0m \n'
+
+printf ' \n'
+printf ' \n'
+printf ' \n'
+printf '\033[1;32;48m\t ...Done!\033[0m \n'
+#printf '\033[1;32;48mSTART OF DAQ COMPLETE\033[0m \n'

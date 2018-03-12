@@ -22,7 +22,6 @@ namespace eudaq {
       auto conf = GetInitConfiguration();
       if(!conf)
 	EUDAQ_THROW("No Configuration Section for OnInitialise");
-      EUDAQ_INFO("Initializing ...(" + conf->Name() + ")");
       DoInitialise();
       CommandReceiver::OnInitialise();
     }catch (const std::exception &e) {
@@ -60,8 +59,7 @@ namespace eudaq {
     try{
       if(!IsStatus(Status::STATE_CONF))
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
-      EUDAQ_INFO("Start Run: "+ std::to_string(GetRunNumber()));
-      m_evt_c = 0;
+      std::map<std::string, std::shared_ptr<DataSender>> senders;
       std::string dc_str = GetConfiguration()->Get("EUDAQ_DC", "");
       std::vector<std::string> col_dc_name = split(dc_str, ";,", true);
       std::string cur_backup = GetConfiguration()->GetCurrentSectionName();
@@ -69,12 +67,16 @@ namespace eudaq {
       for(auto &dc_name: col_dc_name){
 	std::string dc_addr =  GetConfiguration()->Get("DataCollector."+dc_name, "");
 	if(!dc_addr.empty()){
-	  m_senders[dc_addr]
+	  senders[dc_addr]
 	    = std::unique_ptr<DataSender>(new DataSender("Producer", GetName()));
-	  m_senders[dc_addr]->Connect(dc_addr);
+	  senders[dc_addr]->Connect(dc_addr);
 	}
       }
       GetConfiguration()->SetSection(cur_backup);
+      std::unique_lock<std::mutex> lk(m_mtx_sender);
+      m_senders = senders;
+      lk.unlock();
+      m_evt_c = 0;
       SetStatusTag("EventN", "0");
       DoStartRun();
       CommandReceiver::OnStartRun();
@@ -92,10 +94,10 @@ namespace eudaq {
     try{
       if(!IsStatus(Status::STATE_RUNNING))
 	EUDAQ_THROW("OnStopRun can not be called unless in STATE_RUNNING");
-      EUDAQ_INFO("Stopping Run");
-      DoStopRun();
-      m_senders.clear();
+      DoStopRun();      
       CommandReceiver::OnStopRun();
+      std::unique_lock<std::mutex> lk(m_mtx_sender);
+      m_senders.clear();
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Stop Error");
@@ -109,8 +111,9 @@ namespace eudaq {
     EUDAQ_INFO(GetFullName() + " is to be reset...");
     try{
       DoReset();
-      m_senders.clear();
       CommandReceiver::OnReset();
+      std::unique_lock<std::mutex> lk(m_mtx_sender);
+      m_senders.clear();
     } catch (const std::exception &e) {
       printf("Producer Reset:: Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Reset Error");
@@ -158,7 +161,10 @@ namespace eudaq {
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
     ev->SetDeviceN(m_pdc_n);
-    for(auto &e: m_senders){
+    std::unique_lock<std::mutex> lk(m_mtx_sender);
+    auto senders = m_senders; //hold on the ptrs
+    lk.unlock();
+    for(auto &e: senders){
       if(e.second)
 	e.second->SendEvent(ev);
       else

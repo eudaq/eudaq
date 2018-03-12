@@ -36,6 +36,9 @@ RunControlGUI::RunControlGUI()
   viewConn->setModel(&m_model_conns);
   viewConn->setItemDelegate(&m_delegate);
   
+  viewConn->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(viewConn, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onCustomContextMenu(const QPoint &)));
+  
   QRect geom(-1,-1, 150, 200);
   QRect geom_from_last_program_run;
   QSettings settings("EUDAQ collaboration", "EUDAQ");
@@ -319,3 +322,75 @@ std::map<int, QString> RunControlGUI::m_map_state_str ={
     {eudaq::Status::STATE_ERROR,
      "<font size=12 color='darkred'><b>Current State: Error </b></font>"}
 };
+
+
+void RunControlGUI::onCustomContextMenu(const QPoint &point)
+{
+    QModelIndex index = viewConn->indexAt(point);
+    if(index.isValid()) {
+    QMenu *contextMenu = new QMenu(viewConn);	
+
+    if(!m_rc->GetInitConfiguration()){
+	loadInitFile();
+    }
+    if(m_rc->GetInitConfiguration()){
+	QAction *initialiseAction = new QAction("Initialise", this);
+	connect(initialiseAction, &QAction::triggered, this, [this,index]() {m_rc->InitialiseSingleConnection(m_model_conns.getConnection(index));});
+	contextMenu->addAction(initialiseAction);		
+    } 
+
+    if(!m_rc->GetConfiguration()){
+	loadConfigFile();
+    }    
+    if(m_rc->GetConfiguration()){
+	QAction *configureAction = new QAction("Configure", this);
+	connect(configureAction, &QAction::triggered, this, [this,index]() {m_rc->ConfigureSingleConnection(m_model_conns.getConnection(index));});
+	contextMenu->addAction(configureAction);		
+    }
+    
+    QAction *startAction = new QAction("Start", this);
+    connect(startAction, &QAction::triggered, this, [this,index]() {m_rc->StartSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(startAction);	    
+    
+    QAction *stopAction = new QAction("Stop", this);
+    connect(stopAction, &QAction::triggered, this, [this,index]() {m_rc->StopSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(stopAction);	    
+    
+    QAction *resetAction = new QAction("Reset", this);
+    connect(resetAction, &QAction::triggered, this, [this,index]() {m_rc->ResetSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(resetAction);		
+    
+    QAction *terminateAction = new QAction("Terminate", this);
+    connect(terminateAction, &QAction::triggered, this, [this,index]() {m_rc->TerminateSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(terminateAction);	
+    
+    contextMenu->exec(viewConn->viewport()->mapToGlobal(point));
+    }
+    
+}
+
+bool RunControlGUI::loadInitFile() {
+  std::string settings = txtInitFileName->text().toStdString();
+  QFileInfo check_file(txtInitFileName->text());
+  if(!check_file.exists() || !check_file.isFile()){
+    QMessageBox::warning(NULL, "ERROR", "Init file does not exist.");
+    return false;
+  }
+  if(m_rc){
+    m_rc->ReadInitilizeFile(settings);
+  }
+  return true;  
+}
+
+bool RunControlGUI::loadConfigFile() {
+  std::string settings = txtConfigFileName->text().toStdString();
+  QFileInfo check_file(txtConfigFileName->text());
+  if(!check_file.exists() || !check_file.isFile()){
+    QMessageBox::warning(NULL, "ERROR", "Config file does not exist.");
+    return false;
+  }
+  if(m_rc){
+    m_rc->ReadConfigureFile(settings);
+  }
+  return true;
+}

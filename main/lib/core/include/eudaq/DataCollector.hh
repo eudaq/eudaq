@@ -61,9 +61,9 @@ namespace eudaq {
     void OnReceive(ConnectionSPC id, EventSP ev) override final;
   private:
     std::string m_data_addr;
-    FileWriterUP m_writer;
-    std::unique_ptr<DataReceiver> m_receiver;
-    std::map<std::string, std::unique_ptr<DataSender>> m_senders;
+    FileWriterSP m_writer;
+    std::mutex m_mtx_sender;
+    std::map<std::string, std::shared_ptr<DataSender>> m_senders;
     std::string m_fwpatt;
     std::string m_fwtype;
     uint32_t m_dct_n;
