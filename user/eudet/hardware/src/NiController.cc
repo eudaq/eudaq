@@ -106,9 +106,10 @@ void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len) {
   if (dbg)
     printf("size=%zu", len);
 
-  if (EUDAQ_SEND(sock_config, text, len, 0) == -1)
+  if (EUDAQ_SEND(sock_config, text, len, 0) == -1) {
     perror("Server-send() error lol!");
     EUDAQ_THROW("Server-send() error");
+  }
 }
 void NiController::ConfigClientSocket_Close() {
 
