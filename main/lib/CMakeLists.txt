@@ -1,16 +1,13 @@
-option(USE_ROOT "Compiling main library using ROOT" OFF)
+option(USE_ROOT "Compiling main library using ROOT" ON)
 if (USE_ROOT)
    FIND_PACKAGE( ROOT REQUIRED )
-else (USE_ROOT)
 
-   FIND_PACKAGE( ROOT )
+   if (ROOT_FOUND)
+     INCLUDE_DIRECTORIES( ${ROOT_INCLUDE_DIR} )
+     SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES}  ${ROOT_LIBRARIES})
+     ADD_DEFINITIONS(-DROOT_FOUND)
+   endif (ROOT_FOUND)
 
-endif (USE_ROOT)
-
-if (ROOT_FOUND)
-  INCLUDE_DIRECTORIES( ${ROOT_INCLUDE_DIR} )
-  SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES}  ${ROOT_LIBRARIES})
-  ADD_DEFINITIONS(-DROOT_FOUND)
 endif (ROOT_FOUND)
 
 option(USE_LCIO "Compiling main library using LCIO" OFF)
@@ -82,6 +79,8 @@ if (PROTOBUF_FOUND AND GEN_proto)
 
 endif()
 
+find_package(Threads)
+
 ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} ${plugins_sources})
 ADD_LIBRARY( EUDAQ::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
@@ -97,7 +96,7 @@ SOURCE_GROUP(TCPIP FILES src\\Serializable.cc src\\Producer.cc src\\SlowProducer
 SOURCE_GROUP(Event .*Event.*cc)
 SOURCE_GROUP(Utilities FILES src\\Utils.cc src\\Time.cc src\\Mutex.cc src\\EudaqThread.cc)
 
-target_link_libraries( ${PROJECT_NAME} ${ADDITIONAL_LIBRARIES})
+target_link_libraries( ${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} ${ADDITIONAL_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/main/include>
   $<INSTALL_INTERFACE:include>
