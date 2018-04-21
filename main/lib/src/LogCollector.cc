@@ -32,8 +32,6 @@ namespace eudaq {
                                            ") is there a logs directory?");
     m_logserver->SetCallback(
         TransportCallback(this, &LogCollector::LogHandler));
-    // pthread_attr_init(&m_threadattr);
-    // pthread_create(&m_thread, &m_threadattr, LogCollector_thread, this);
     m_thread = std::unique_ptr<std::thread>(
         new std::thread(LogCollector_thread, this));
     std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
@@ -50,7 +48,6 @@ namespace eudaq {
     m_file << "*** LogCollector stopped at " << Time::Current().Formatted()
            << " ***" << std::endl;
     m_done = true;
-    ///*if (m_thread)*/ pthread_join(m_thread, 0);
     m_thread->join();
     delete m_logserver;
   }
