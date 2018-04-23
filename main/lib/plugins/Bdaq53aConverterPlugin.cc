@@ -149,8 +149,8 @@ namespace eudaq
                     plane.SetSizeZS(NCOLS,NROWS,0,1);
                     const RawDataEvent::data_t & raw_data = ev_raw.GetBlock(i);
                     // XXX : Missing check of USER_K data 
-                    std::cout << " TRG " << std::setw(8) << trigger_number << std::setw(19) << " "
-                        << std::bitset<32>(getlittleendian<uint32_t>(&(ev_raw.GetBlock(0)[0]))) << std::endl;
+                    //std::cout << " TRG " << std::setw(8) << trigger_number << std::setw(19) << " "
+                    //    << std::bitset<32>(getlittleendian<uint32_t>(&(ev_raw.GetBlock(0)[0]))) << std::endl;
                     // First 32-bit word: the trigger number
                     plane.SetTLUEvent(trigger_number);
 
@@ -175,9 +175,9 @@ namespace eudaq
                             uint32_t trig_tag = BDAQ53A_TRG_TAG(data_word);
                             // Check if first event: check things
                             // 
-                            //std::cout << "EH  " << std::setw(9) << bcid 
-                            //   << std::setw(9) << trig_id << std::setw(9) 
-                            //   << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
+                            //std::cout << "EH  " << std::setw(9) << bcid
+                            //    << std::setw(9) << trig_id << std::setw(9) 
+                            //    << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
                         }
                         else
                         {
@@ -352,11 +352,11 @@ namespace eudaq
                 unsigned int data_hits_status = 0;
                 // [MulticolCol 6b][Row 9b][col side: 1b][ 4x(4bits ToT ]
                 const uint32_t multicol = (data_word >> 26) & 0x3F;
-                const uint32_t row      = (data_word >> 17) & 0x3FF;
-                const uint32_t side     = (data_word >> 16) & 0x1F;
+                const uint32_t row      = (data_word >> 17) & 0x1FF;
+                const uint32_t side     = (data_word >> 16) & 0x1;
                 unsigned int buffer_position = 0;
                 // Extract the 4 Tot per each pixel
-                // //std::cout << "HIT "; 
+                //std::cout << "HIT "; 
                 for(unsigned int pixid=0; pixid < 4; ++pixid)
                 { 
                     uint32_t col = (multicol*8+pixid)+4*side;
