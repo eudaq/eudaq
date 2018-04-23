@@ -19,26 +19,29 @@
 #define BDAQ53A_IS_TRIGGER(X)               \
   ((X & BDAQ53A_TRIGGER_ID) ? true : false)
 
-#define BDAQ53A_IS_HEADER(X)               \
-  ((X & BDAQ53A_HEADER_ID) ? true : false)
-
-// Data Masks
-#define BDAQ53A_DATA_HEADER_BCID_MASK 0x7FFF
-// Trigger data (number and/or time stamp)
+// Trigger data word (number and/or time stamp)
 #define BDAQ53A_TRG_MASK 0x7FFFFFFF
-
-#define BDAQ53A_DATA_HEADER_BCID(X)    \
-    (X & BDAQ53A_DATA_HEADER_BCID_MASK)
 
 // Trigger header 
 #define BDAQ53A_TRIGGER_NUMBER(X)    \
   (X & BDAQ53A_TRG_MASK)
 
-#define BDAQ53A_TRIGGER_ID_MACRO(X)    \
-  ((X >> 20) & BDAQ53A_TRIGGER_MASK)
-#define BDAQ53A_DATA_HEADER_TRIGGER_FLAG_MACRO(X)  \
-  ((X >> 15) & BDAQ53A_TRIGGER_MASK)
-// Data Header (DH)
+// -- deprecated half word check
+//#define BDAQ53A_IS_HEADER(X)               \
+//  ((X & BDAQ53A_HEADER_ID) ? true : false)
+
+// Mask and functions for reassambled 32bit word
+#define BDAQ53A_IS_HEADER(X)               \
+    (((X >> 25) & 0x1) ? true: false)
+    
+// Header data frame
+#define BDAQ53A_BCID_MASK 0x7FFF
+#define BDAQ53A_BCID(X)    \
+    (X & BDAQ53A_BCID_MASK)
+#define BDAQ53A_TRG_ID(X)                  \
+    ((X >> 20) & 0x1F)
+#define BDAQ53A_TRG_TAG(X)                 \
+    ((X >> 15) & 0x1F)
 
 
 // Event status bits (ES)
