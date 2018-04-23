@@ -149,24 +149,21 @@ namespace eudaq
                     plane.SetSizeZS(NCOLS,NROWS,0,1);
                     const RawDataEvent::data_t & raw_data = ev_raw.GetBlock(i);
                     // XXX : Missing check of USER_K data 
-                    // //std::cout << " TRG " << std::setw(8) << trigger_number << std::setw(19) << " " 
-                    //       << std::bitset<32>(getlittleendian<uint32_t>(&(ev_raw.GetBlock(0)[0]))) << std::endl;
-                    //
+                    std::cout << " TRG " << std::setw(8) << trigger_number << std::setw(19) << " "
+                        << std::bitset<32>(getlittleendian<uint32_t>(&(ev_raw.GetBlock(0)[0]))) << std::endl;
                     // First 32-bit word: the trigger number
                     plane.SetTLUEvent(trigger_number);
 
-//                    plane.Print(std::cout); std::cout << std::endl;
-
-                    
                     unsigned int buffer_pos = 0;
                     unsigned int hit_data_status = 0;
                     
                     // Reassemble full 32-bit FE data word: 
                     // The word is constructed using two 32b+32b words (High-Low) 
                     // In order to build the FE high and low words, you need
-                    // 4 blocks of uint8 (unsigned char) on little endian 
+                    // 4 blocks of uint8 (unsigned char) on little endian for the FE high word
+                    // and 4 blocks of uint8 more (on little endian) for the FE low word
                     // (see _reassemble_word)
-                    for(unsigned int it = start_bit; it < raw_data.size()-1; it+=4*sizeof(uint8_t))
+                    for(unsigned int it = start_bit; it < raw_data.size()-1; it+=8*sizeof(uint8_t))
                     {
                         // Build the 32-bit FE word 
                         uint32_t data_word = _reassemble_word(raw_data,it);
