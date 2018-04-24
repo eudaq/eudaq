@@ -53,8 +53,13 @@ namespace eudaq
     static const char* EVENT_TYPE   = "bdaq53a";
     static const unsigned int NCOLS = 400;
     static const unsigned int NROWS = 192;
+    
+    // Allowing to convert non-triggered data (DEBUG)
+    static int PSEUDO_TRIGGER_ID = 0;
 
-    static int pseudo_trigger_id = 0;
+    // Number of sub-triggers for each trigger data frame 
+    // (stored in the Trigger Table)
+    static unsigned int N_SUB_TRIGGERS = 32;
 
 #if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 20;
@@ -74,13 +79,11 @@ namespace eudaq
 #endif
                 // XXX: Is there any parameters? 
                 _get_bore_parameters(bore);
-                //eudaq::DataSender::SendEvent(RawDataEvent::BORE());
             }
             
             // This should return the trigger ID (as provided by the TLU)
             // if it was read out, otherwise it can either return (unsigned)-1,
             // or be left undefined as there is already a default version.
-            // [JDC XXX --> This function is called from DataCollector as well <-- TO BE DELETED]
             virtual unsigned GetTriggerID(const Event & ev) const 
             {
                 // Make sure the event is of class RawDataEvent
@@ -101,8 +104,10 @@ namespace eudaq
                     unsigned int trigger_number =_get_trigger(rev->GetBlock(0));
                     if( trigger_number == static_cast<unsigned>(-1) )
                     {
-                        ++pseudo_trigger_id;
-                        return pseudo_trigger_id;
+                        // [XXX WARNING or ERROR?]
+                        EUDAQ_WARNING("No trigger word found in the first 32-block.");
+                        ++PSEUDO_TRIGGER_ID;
+                        return PSEUDO_TRIGGER_ID;
                     }
                     else
                     {
@@ -123,8 +128,13 @@ namespace eudaq
                     // nothing to do
                     return true;
                 }
-
+                
+                // Number of event headers: must be, at maximum, the number of
+                // subtriggers of the Trigger Table (TT)
+                unsigned int n_event_headers = 0;
+                
                 uint32_t event_status = 0;
+
                 // If we get here it must be a data event
                 const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
                 // Trigger number is the same for all blocks (sensors)
@@ -133,11 +143,17 @@ namespace eudaq
                 {
                     return false;
                 }
-                unsigned int start_bit = sizeof(uint32_t);
-                // [XXX - DEBUG Allowing to read data without any trigger word]
-                if(pseudo_trigger_id != 0 )
+                else if(trigger_number != 0)
                 {
-                    start_bit = 0;
+                    // Got a trigger word
+                    event_status |= E_EXT_TRG;
+                }
+
+                unsigned int start_byte = sizeof(uint32_t);
+                // [XXX - DEBUG] Allowing to read data without any trigger word
+                if(PSEUDO_TRIGGER_ID != 0 )
+                {
+                    start_byte = 0;
                 }
                 // [JDC] each block could corresponds to one sensor attach to 
                 //       the card. So far, we are using only 1-sensor, but it 
@@ -148,10 +164,13 @@ namespace eudaq
                     StandardPlane plane(i, EVENT_TYPE,"rd53a");
                     plane.SetSizeZS(NCOLS,NROWS,0,1);
                     const RawDataEvent::data_t & raw_data = ev_raw.GetBlock(i);
-                    // XXX : Missing check of USER_K data 
-                    //std::cout << " TRG " << std::setw(8) << trigger_number << std::setw(19) << " "
-                    //    << std::bitset<32>(getlittleendian<uint32_t>(&(ev_raw.GetBlock(0)[0]))) << std::endl;
-                    // First 32-bit word: the trigger number
+                    // XXX : Missing check of USER_K data, needed?
+#if DEBUG_1
+                    std::cout << " TRG " << std::setw(8) << trigger_number << std::setw(19) << " " 
+                        << std::bitset<32>(getlittleendian<uint32_t>(&(ev_raw.GetBlock(0)[0]))) << std::endl;
+#endif
+                    //
+                    // First 32-bit word: the trigger number, already used (see start_byte)
                     plane.SetTLUEvent(trigger_number);
 
                     unsigned int buffer_pos = 0;
@@ -163,7 +182,7 @@ namespace eudaq
                     // 4 blocks of uint8 (unsigned char) on little endian for the FE high word
                     // and 4 blocks of uint8 more (on little endian) for the FE low word
                     // (see _reassemble_word)
-                    for(unsigned int it = start_bit; it < raw_data.size()-1; it+=8*sizeof(uint8_t))
+                    for(unsigned int it = start_byte; it < raw_data.size()-1; it+=8*sizeof(uint8_t))
                     {
                         // Build the 32-bit FE word 
                         uint32_t data_word = _reassemble_word(raw_data,it);
@@ -173,16 +192,31 @@ namespace eudaq
                             uint32_t bcid = BDAQ53A_BCID(data_word);
                             uint32_t trig_id  = BDAQ53A_TRG_ID(data_word);
                             uint32_t trig_tag = BDAQ53A_TRG_TAG(data_word);
-                            // Check if first event: check things
-                            // 
-                            //std::cout << "EH  " << std::setw(9) << bcid
-                            //    << std::setw(9) << trig_id << std::setw(9) 
-                            //    << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
+                            
+                            ++n_event_headers;
+
+                            // --| Check data-header validity 
+                            // ------------------------------
+                            // Number of events headers cannot be higher than the subtriggers
+                            // (by data-frame construction)
+                            /*if(n_event_headers > N_SUB_TRIGGERS)
+                            {
+                            }*/
+                            // Trigger word wrong
+                            if(bcid<0)
+                            {
+                                event_status |= E_STRUCT_WRONG;
+                            }
+#if DEBUG_1
+                            std::cout << "EH  " << std::setw(9) << bcid
+                                << std::setw(9) << trig_id << std::setw(9) 
+                                << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
+#endif
                         }
                         else
                         {
                             // otherwise is a hit data word
-                            auto bs = _add_hits(data_word,plane);
+                            const auto & bs = _add_hits(data_word,plane);
                             buffer_pos += bs.first;
                             hit_data_status |= bs.second;
                         }
@@ -315,7 +349,7 @@ namespace eudaq
 #endif
 
         private:
-            // Re-assemble the 32bit data word from the 2  32bits Front end words 
+            // Re-assemble the 32bit data word from the 2-32bits Front end words 
             uint32_t _reassemble_word(const RawDataEvent::data_t & rawdata,unsigned int init) const
             {
                 // FIXME -- No check in size of the rawdata!
@@ -327,6 +361,7 @@ namespace eudaq
                 return ( ((getlittleendian<uint32_t>(&(rawdata[init])) & 0xFFFF) << 16) 
                     | (getlittleendian<uint32_t>(&(rawdata[init+4*sizeof(uint8_t)])) & 0xFFFF));
             }
+
             void _get_bore_parameters(const Event & )
             {
                 // XXX Just if need to initialize paremeters from the BORE
@@ -356,7 +391,9 @@ namespace eudaq
                 const uint32_t side     = (data_word >> 16) & 0x1;
                 unsigned int buffer_position = 0;
                 // Extract the 4 Tot per each pixel
-                //std::cout << "HIT "; 
+#if DEBUG_1
+                std::cout << "HIT "; 
+#endif
                 for(unsigned int pixid=0; pixid < 4; ++pixid)
                 { 
                     uint32_t col = (multicol*8+pixid)+4*side;
@@ -368,13 +405,17 @@ namespace eudaq
                     }
                     else if( tot != 255 && tot != 15)
                     {
-                        //std::cout << std::setw(9) << col << std::setw(9) << row << std::setw(9) 
-                        //    << tot;
+#if DEBUG_1
+                        std::cout << std::setw(9) << col << std::setw(9) << row << std::setw(9) 
+                            << tot; 
+#endif
                         plane.PushPixel(col,row,tot);
                         ++buffer_position;
                     }
                 }
-                //std::cout << " " << std::bitset<32>(data_word) << std::endl;
+#if DEBUG_1
+                std::cout << " " << std::bitset<32>(data_word) << std::endl;
+#endif
                 return std::pair<unsigned int,unsigned int>(buffer_position,data_hits_status);
             }
 
@@ -392,6 +433,7 @@ namespace eudaq
 
             // The single instance of this converter plugin
             static Bdaq53aConverterPlugin m_instance;
+
     };
 
     // Instantiate the converter plugin instance
