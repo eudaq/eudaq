@@ -261,7 +261,8 @@ void SimpleStandardPlane::setPixelType(std::string name) {
     is_EXPLORER = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
-  } else if (name == "pALPIDEfs") {
+ } else if (name == "pALPIDEfs" ||
+	    name=="CLICpix" || name=="timepix3") {
     is_UNKNOWN = false;
   } else {
     is_UNKNOWN = true;
