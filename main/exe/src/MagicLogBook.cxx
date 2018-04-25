@@ -296,26 +296,7 @@ int main(int /*argc*/, char ** argv) {
         "EUDRBfw=eudrb:VERSION",
       };
       flds.insert(flds.end(), vals, vals + sizeof vals / sizeof *vals);
-    }
-    else if (pdef.Value() == "elog") {
-      std::string vals[] = {
-        "Run=bore:.Run",
-	//        "Config=config",
-       // "Mode=eudrb:MODE",
-        //"Det=eudrb:DET",
-        "Start=bore:STARTTIME",
-        "Events=events",
-        //"Unsync=config:Producer.EUDRB:Unsynchronized",
-        //"Planes=config:Producer.EUDRB:NumBoards",
-        //"TriggerInterval=tlu:TriggerInterval",
-        //"AndMask=tlu:AndMask",
-        //"DUTMask=tlu:DutMask",
-        //"TLUfw=tlu:FirmwareID",
-        //"EUDRBfw=eudrb:VERSION",
-      };
-      flds.insert(flds.end(), vals, vals + sizeof vals / sizeof *vals);
-    }
-    else if (pdef.Value() != "") {
+    } else if (pdef.Value() != "") {
       EUDAQ_THROW("Unknown predefined fields: " + pdef.Value());
     }
     flds.insert(flds.end(), fields.Value().begin(), fields.Value().end());
