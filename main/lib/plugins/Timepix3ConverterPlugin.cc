@@ -67,9 +67,9 @@ namespace eudaq {
             
       // Unpack data
       const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> ( &ev );
-      std::cout << "[Number of blocks] " << rev->NumBlocks() << std::endl;
+      //std::cout << "[Number of blocks] " << rev->NumBlocks() << std::endl;
       std::vector<unsigned char> data = rev->GetBlock( 1 ); // block 1 is pixel data
-      std::cout << "vector has size : " << data.size() << std::endl;
+      //std::cout << "vector has size : " << data.size() << std::endl;
 
       // Create a StandardPlane representing one sensor plane
       int id = 0;

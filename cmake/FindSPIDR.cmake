@@ -2,7 +2,7 @@
 
 MESSAGE(STATUS "Looking for SPIDR...")
 
-file(GLOB_RECURSE spidr_include $ENV{HOME}/SPIDR/software/SpidrTpx3Lib/SpidrController.h )
+file(GLOB_RECURSE spidr_include $ENV{HOME}/SPIDR/software/SpidrTpx3Lib/SpidrController.h $ENV{SPIDRPATH}/software/SpidrTpx3Lib/SpidrController.h)
 if(spidr_include)
     get_filename_component(spidr_lib_path "${spidr_include}" PATH)
     get_filename_component(spidr_lib_path "${spidr_lib_path}" PATH)

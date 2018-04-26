@@ -3,7 +3,8 @@ FIND_PACKAGE( SPIDR REQUIRED )
 
 set(name "Timepix3Producer.exe")
 set(sourcefiles src/Timepix3Producer.cxx src/Timepix3Config.cxx)
-set(ext_libraries "libSpidrTpx3Lib.so" "libKeithley.so" "libgpib.so" "libxerces-c.so")
+set(ext_libraries "libSpidrTpx3Lib.so" "libxerces-c.so")
+#set(ext_libraries ${ext_libraries} "libKeithley.so" "libgpib.so")
 set(ext_lib_paths ${SPIDR_LIB_PATH} "/home/vertextb/gpib_reader/lib")
 set(ext_inc_paths "./include" ${SPIDR_INCLUDE} ${ROOT_INCLUDE_DIR} "/home/vertextb/gpib_reader/include" )
 
