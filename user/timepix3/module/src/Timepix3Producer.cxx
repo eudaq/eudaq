@@ -431,6 +431,7 @@ void Timepix3Producer::DoStartRun() {
   // }
 
   double temp=getTpx3Temperature();
+  m_running = true;
 }
 
 void Timepix3Producer::DoStopRun() {
