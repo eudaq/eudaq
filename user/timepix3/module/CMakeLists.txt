@@ -1,9 +1,11 @@
-include_directories(include)
+LINK_DIRECTORIES(${SPIDR_LIB_PATH})
+INCLUDE_DIRECTORIES(include ${SPIDR_INCLUDE} ${ROOT_INCLUDE_DIRS})
 aux_source_directory(src MODULE_SRC)
 
+set(ext_libraries "libSpidrTpx3Lib.so" "libxerces-c.so")
+
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
-  ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} ${USER_HARDWARE_LIBRARY})
+target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} ${ext_libraries} ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
 
 install(TARGETS
   ${EUDAQ_MODULE}

@@ -12,6 +12,7 @@ endif()
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
-find_package(SPIDR)
+find_package(SPIDR REQUIRED)
+find_package(ROOT REQUIRED)
 
 add_subdirectory(module)
