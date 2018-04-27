@@ -145,6 +145,9 @@ class Timepix3Producer : public eudaq::Producer {
     // Reset Device
     if( !spidrctrl->reinitDevice( device_nr ) ) error_out( "###reinitDevice" );
 
+    // Make sure to run on internal clock:
+    if( !spidrctrl->setExtRefClk(false) ) error_out( "###setExtRefClk");
+    
     //Due to timing issue, set readout speed at 320 Mbps
     if( !spidrctrl->setReadoutSpeed( device_nr, 320) ) error_out( "###setReadoutSpeed");
     
@@ -558,7 +561,7 @@ class Timepix3Producer : public eudaq::Producer {
       if( !spidrctrl->openShutter() ) error_out( "###openShutter" );
 
       // Enable TLU
-      if( !spidrctrl->setTluEnable( device_nr, 1 ) ) error_out( "###setTluEnable" );
+      if( !spidrctrl->setTluEnable( device_nr, true ) ) error_out( "###setTluEnable" );
 
 #ifdef TPX3_STORE_TXT
       // Some output files for debugging
@@ -798,9 +801,9 @@ class Timepix3Producer : public eudaq::Producer {
 		for( int j = 0; j < pixel_vec.size(); ++j ) {
 		  uint64_t curr_pix_ts = pixel_vec[j].ts;
 		  if( curr_pix_ts < max_pixel_ts ) {
-		    
-#ifdef TPX3_STORE_TXT
+
 		    long long diff = (long long)curr_trg_ts - (long long)curr_pix_ts;
+#ifdef TPX3_STORE_TXT
 		    fprintf(fd,"%lld\n",diff);
 #endif
 #ifdef TPX3_VERBOSE
