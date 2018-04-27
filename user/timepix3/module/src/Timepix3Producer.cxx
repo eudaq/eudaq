@@ -36,6 +36,7 @@ public:
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("Timepix3Producer");
 private:
+  bool m_running;
   double getTpx3Temperature();
   uint64_t GetTimeus();
 
@@ -55,7 +56,7 @@ private:
   unsigned m_ev;
   int m_spidrPort;
   int device_nr = 0;
-  bool stopping, done,started;
+  bool stopping;
   string m_spidrIP, m_xmlfileName, m_time, m_chipID;
   Timepix3Config *myTimepix3Config;
   SpidrController *spidrctrl;
@@ -109,7 +110,7 @@ uint64_t Timepix3Producer::GetTimeus() {
 
 
 Timepix3Producer::Timepix3Producer(const std::string name, const std::string &runcontrol)
-: eudaq::Producer(name, runcontrol), m_ev(0), stopping(false), done(false), started(0) {
+: eudaq::Producer(name, runcontrol), m_ev(0), stopping(false), m_running(false) {
 
   myTimepix3Config = new Timepix3Config();
 }
@@ -430,14 +431,13 @@ void Timepix3Producer::DoStartRun() {
   // }
 
   double temp=getTpx3Temperature();
-
-  started=true;
 }
 
 void Timepix3Producer::DoStopRun() {
 
   std::cout << "Stopping run" << std::endl;
-  started = false;
+  m_running = false;
+
   // Set a flag to signal to the polling loop that the run is over
   stopping = true;
 
@@ -445,27 +445,41 @@ void Timepix3Producer::DoStopRun() {
   while( stopping ) {
     eudaq::mSleep( 20 );
   }
+
+  std::cout << "Stopped run" << std::endl;
 }
 
 void Timepix3Producer::DoTerminate() {
   std::cout << "Terminating..." << std::endl;
-  done = true;
+
+
+  #ifdef TPX3_STORE_TXT
+  fclose(ft);
+  fclose(fa);
+  fclose(fd);
+  #endif
+
+  // Guess what this does?
+  spidrctrl->closeShutter();
+
+  // Disble TLU
+  if( !spidrctrl->setTluEnable( device_nr, 0 ) ) error_out( "###setTluEnable" );
+
+  // Clean up
+  delete spidrdaq;
 }
 
 
 // This is just an example, adapt it to your hardware
 void Timepix3Producer::RunLoop() {
-  // Loop until Run Control tells us to terminate
-  while( !done ) {
+
+  while(1){
     if( stopping ) {
       cout << "Stopping..." << endl;
       // if so, signal that there are no events left
       stopping = false;
-    }
-
-    if(!started) {
-      eudaq::mSleep( 20 );
-      continue;
+    } else if(!m_running){
+      break;
     }
 
     unsigned int m_ev_next_update=0;
@@ -742,20 +756,5 @@ void Timepix3Producer::RunLoop() {
     //	  fflush( stdout );
   }
 }
-
-#ifdef TPX3_STORE_TXT
-fclose(ft);
-fclose(fa);
-fclose(fd);
-#endif
-
-// Guess what this does?
-spidrctrl->closeShutter();
-
-// Disble TLU
-if( !spidrctrl->setTluEnable( device_nr, 0 ) ) error_out( "###setTluEnable" );
-
-// Clean up
-delete spidrdaq;
 }
 }
