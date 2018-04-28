@@ -19,9 +19,9 @@ env:
       - ROOT6_FILENAME_LINUX=root_v6.10.04.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - ROOT6_FILENAME_MAC=root_v6.10.04.macosx64-10.10-clang70.tar.gz
       
-      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.9
-      - CMAKE_FILENAME_LINUX=cmake-3.9.2-Linux-x86_64.tar.gz
-      - CMAKE_FILENAME_MAC=cmake-3.9.2-Darwin-x86_64.tar.gz
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.11
+      - CMAKE_FILENAME_LINUX=cmake-3.11.1-Linux-x86_64.tar.gz
+      - CMAKE_FILENAME_MAC=cmake-3.11.1-Darwin-x86_64.tar.gz
             
       - PYTHON_VERSION_MODERN=3.6.5
       - PYTHON_VERSION_OLD=2.7.14
