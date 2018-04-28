@@ -14,18 +14,6 @@ if(NOT USER_BUILD_FMCTLU)
   list(REMOVE_ITEM MODULE_SRC src/FmctluProducer.cc)
 endif()
 
-if(NOT EUDAQ_LCIO_LIBRARY)
-  list(REMOVE_ITEM MODULE_SRC src/TluRawEvent2LCEventConverter.cc)
-  list(REMOVE_ITEM MODULE_SRC src/NiRawEvent2LCEventConverter.cc)
-  list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2LCEventConverter.cc)
-endif()
-
-if(WIN32)
-  list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2StdEventConverter.cc)
-  list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2LCEventConverter.cc)
-  list(REMOVE_ITEM MODULE_SRC src/UsbpixI4BRawEvent2LCEventConverter.cc)
-endif()
-
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
   ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} ${USER_HARDWARE_LIBRARY})
