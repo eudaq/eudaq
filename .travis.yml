@@ -77,9 +77,9 @@ before_cache:
 matrix:      
    include:   
       - os: linux    
-        env: OPTION=modern LLVM_VERSION=5.0 COMPILER=clang  
+        env: OPTION=modern LLVM_VERSION=6.0 COMPILER=clang  
       - os: linux  
-        env: OPTION=old  LLVM_VERSION=5.0 COMPILER=clang 
+        env: OPTION=old  LLVM_VERSION=6.0 COMPILER=clang 
       - os: linux
         env: OPTION=modern EUDAQ_BUILD_MANUAL=ON GCC_VERSION=7 COMPILER=gcc
       - os: linux            
