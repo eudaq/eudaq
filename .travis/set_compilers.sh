@@ -48,7 +48,7 @@ else
 			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-$LLVM_VERSION main"
 			sudo apt-get update
 			# removing libllvm-$LLVM_VERSION-ocaml-dev  as 5.0 version cannot be found 9.11.2017
-			sudo apt-get install g++-6 gcc-6 clang-6.0 clang-tools-6.0 clang-6.0-doc libclang-common-6.0-dev libclang-6.0-dev libclang1-6.0 libllvm-6.0-ocaml-dev libllvm6.0 lldb-6.0 llvm-6.0 llvm-6.0-dev llvm-6.0-doc llvm-6.0-examples llvm-6.0-runtime clang-format-6.0 python-clang-6.0 lldb-6.0-dev lld-6.0 libfuzzer-6.0-dev  -y
+			sudo apt-get install g++-6 gcc-6 clang-6.0 clang-tools-6.0 clang-6.0-doc libclang-common-6.0-dev libclang-6.0-dev libclang1-6.0 libllvm6.0 liblldb-6.0-dev llvm-6.0 llvm-6.0-dev llvm-6.0-doc llvm-6.0-examples llvm-6.0-runtime clang-format-6.0 python-clang-6.0 lldb-6.0-dev lld-6.0 libfuzzer-6.0-dev  -y
 			export CXX="clang++-"$LLVM_VERSION 
 			export CC="clang-"$LLVM_VERSION
 		elif [[ "${LLVM_VERSION}" != "" ]]; then
