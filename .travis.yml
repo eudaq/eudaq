@@ -23,7 +23,7 @@ env:
       - CMAKE_FILENAME_LINUX=cmake-3.9.2-Linux-x86_64.tar.gz
       - CMAKE_FILENAME_MAC=cmake-3.9.2-Darwin-x86_64.tar.gz
             
-      - PYTHON_VERSION_MODERN=3.6.2
+      - PYTHON_VERSION_MODERN=3.6.5
       - PYTHON_VERSION_OLD=2.7.14
       
       - CMAKE_BUILD_TYPE=RelWithDebInfo
