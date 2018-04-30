@@ -8,7 +8,7 @@ if (USE_ROOT)
      ADD_DEFINITIONS(-DROOT_FOUND)
    endif (ROOT_FOUND)
 
-endif (ROOT_FOUND)
+endif (USE_ROOT)
 
 option(USE_LCIO "Compiling main library using LCIO" OFF)
 IF(USE_LCIO)
