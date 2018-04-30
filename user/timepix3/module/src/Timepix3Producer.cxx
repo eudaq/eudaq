@@ -18,8 +18,6 @@
 //#include "gpib/ib.h"
 //#include "Keithley2450.h"
 
-#define error_out(str) cout<<str<<": "<<spidrctrl->errorString()<<endl
-
 //#define TPX3_VERBOSE
 
 class Timepix3Producer : public eudaq::Producer {
@@ -145,10 +143,14 @@ void Timepix3Producer::DoConfigure() {
   spidrctrl = new SpidrController( ip[0], ip[1], ip[2], ip[3], m_spidrPort );
 
   // Reset Device
-  if( !spidrctrl->reinitDevice( device_nr ) ) error_out( "###reinitDevice" );
+  if( !spidrctrl->reinitDevice( device_nr ) ) {
+    EUDAQ_ERROR("reinitDevice: " + spidrctrl->errorString());
+  }
 
   //Due to timing issue, set readout speed at 320 Mbps
-  if( !spidrctrl->setReadoutSpeed( device_nr, 320) ) error_out( "###setReadoutSpeed");
+  if( !spidrctrl->setReadoutSpeed( device_nr, 320) ) {
+    EUDAQ_ERROR("setReadoutSpeed: " + spidrctrl->errorString());
+  }
 
   // Are we connected to the SPIDR-TPX3 module?
   if( !spidrctrl->isConnected() ) {
@@ -157,27 +159,46 @@ void Timepix3Producer::DoConfigure() {
     std::cout << "\n------------------------------" << std::endl;
     std::cout << "SpidrController is connected!" << std::endl;
     std::cout << "Class version: " << spidrctrl->versionToString( spidrctrl->classVersion() ) << std::endl;
+    EUDAQ_USER("SPIDR Class:    " + spidrctrl->versionToString( spidrctrl->classVersion() ));
+
     int firmwVersion, softwVersion = 0;
-    if( spidrctrl->getFirmwVersion( &firmwVersion ) ) std::cout << "Firmware version: " << spidrctrl->versionToString( firmwVersion ) << std::endl;
-    if( spidrctrl->getSoftwVersion( &softwVersion ) ) std::cout << "Software version: " << spidrctrl->versionToString( softwVersion ) << std::endl;
+    if( spidrctrl->getFirmwVersion( &firmwVersion ) ) {
+      std::cout << "Firmware version: " << spidrctrl->versionToString( firmwVersion ) << std::endl;
+      EUDAQ_USER("SPIDR Firmware: " + spidrctrl->versionToString( firmwVersion ));
+    }
+    
+    if( spidrctrl->getSoftwVersion( &softwVersion ) ) {
+      std::cout << "Software version: " << spidrctrl->versionToString( softwVersion ) << std::endl;
+    EUDAQ_USER("SPIDR Software: " + spidrctrl->versionToString( softwVersion ));
+    }
     std::cout << "------------------------------\n" << std::endl;
   }
 
   // DACs configuration
-  if( !spidrctrl->setDacsDflt( device_nr ) ) error_out( "###setDacsDflt" );
+  if( !spidrctrl->setDacsDflt( device_nr ) ) {
+    EUDAQ_ERROR("setDacsDflt: " + spidrctrl->errorString());
+  }
 
   // Enable decoder
-  if( !spidrctrl->setDecodersEna( 1 ) )      error_out( "###setDecodersEna" );
+  if( !spidrctrl->setDecodersEna( 1 ) ) {
+    EUDAQ_ERROR("setDecodersEna: " + spidrctrl->errorString());
+  }
 
   // Pixel configuration
-  if( !spidrctrl->resetPixels( device_nr ) ) error_out( "###resetPixels" );
+  if( !spidrctrl->resetPixels( device_nr ) ) {
+    EUDAQ_ERROR("resetPixels: " + spidrctrl->errorString());
+  }
 
   // Device ID
   int device_id = -1;
-  if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) error_out( "###getDeviceId" );
+  if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
+    EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
+  }
+ 
   //cout << "Device ID: " << device_id << endl;
   m_chipID = myTimepix3Config->getChipID( device_id );
   cout << "[Timepix3] Chip ID: " << m_chipID << endl;
+  EUDAQ_USER("Timepix3 Chip ID: " + m_chipID);
 
   // Get DACs from XML config
   map< string, int > xml_dacs = myTimepix3Config->getDeviceDACs();
@@ -219,7 +240,7 @@ void Timepix3Producer::DoConfigure() {
 
     } else if( name == "GeneralConfig" ) {
       if ( !spidrctrl->setGenConfig( device_nr, val ) ) {
-        error_out( "###setGenConfig" );
+        EUDAQ_ERROR("setGenConfig: " + spidrctrl->errorString());
       } else {
         int config = -1;
 
@@ -231,7 +252,7 @@ void Timepix3Producer::DoConfigure() {
 
     } else if( name == "PllConfig" ) {
       if ( !spidrctrl->setPllConfig( device_nr, val ) ) {
-        error_out( "###setPllConfig" );
+        EUDAQ_ERROR("setPllConfig: " + spidrctrl->errorString());
       } else {
         int config = -1;
         spidrctrl->getPllConfig( device_nr, &config );
@@ -240,7 +261,7 @@ void Timepix3Producer::DoConfigure() {
 
     } else if( name == "OutputBlockConfig" ) {
       if ( !spidrctrl->setOutBlockConfig( device_nr, val ) ) {
-        error_out( "###setOutBlockConfig" );
+        EUDAQ_ERROR("setOutBlockConfig: " + spidrctrl->errorString());
       } else {
         int config = -1;
         spidrctrl->getOutBlockConfig( device_nr, &config );
@@ -296,7 +317,7 @@ void Timepix3Producer::DoConfigure() {
 
   // Actually set the pixel thresholds and mask
   if( !spidrctrl->setPixelConfig( device_nr ) ) {
-    error_out( "###setPixelConfig" );
+    EUDAQ_ERROR("setPixelConfig: " + spidrctrl->errorString());
   } else {
     cout << "Successfully set pixel configuration." << endl;
   }
@@ -315,8 +336,7 @@ void Timepix3Producer::DoConfigure() {
     }
     cout << "Pixels masked = " << cnt << endl;
   } else {
-    cout << "###getPixelConfig: " << spidrctrl->errorString() << endl;
-    //exit(0);
+    EUDAQ_ERROR("getPixelConfig: " + spidrctrl->errorString());
   }
 
   // Keithley stuff
@@ -366,11 +386,23 @@ void Timepix3Producer::DoConfigure() {
 double Timepix3Producer::getTpx3Temperature() {
   // Read band gap temperature, whatever that is
   int bg_temp_adc, bg_output_adc;
-  if( !spidrctrl->setSenseDac( device_nr, TPX3_BANDGAP_TEMP ) ) error_out( "###setSenseDac" );
-  if( !spidrctrl->getAdc( &bg_temp_adc, 64 ) ) error_out( "###getAdc" );
+  if( !spidrctrl->setSenseDac( device_nr, TPX3_BANDGAP_TEMP ) ) {
+    EUDAQ_ERROR("setSenseDac: " + spidrctrl->errorString());
+  }
+  
+  if( !spidrctrl->getAdc( &bg_temp_adc, 64 ) ) {
+    EUDAQ_ERROR("getAdc: " + spidrctrl->errorString());
+  }
+  
   float bg_temp_V = 1.5*( bg_temp_adc/64. )/4096;
-  if( !spidrctrl->setSenseDac( device_nr, TPX3_BANDGAP_OUTPUT ) ) error_out( "###setSenseDac" );
-  if( !spidrctrl->getAdc( &bg_output_adc, 64 ) ) error_out( "###getAdc" );
+  if( !spidrctrl->setSenseDac( device_nr, TPX3_BANDGAP_OUTPUT ) ) {
+    EUDAQ_ERROR("setSenseDac: " + spidrctrl->errorString());
+  }
+  
+  if( !spidrctrl->getAdc( &bg_output_adc, 64 ) ) {
+    EUDAQ_ERROR("getAdc: " + spidrctrl->errorString());
+  }
+  
   float bg_output_V = 1.5*( bg_output_adc/64. )/4096;
   m_temp = 88.75 - 607.3 * ( bg_temp_V - bg_output_V);
   //    cout << "[Timepix3] Temperature is " << m_temp << " C" << endl;
@@ -405,14 +437,22 @@ void Timepix3Producer::DoStartRun() {
     int coarse = newThreshold / 160;
     int fine = newThreshold - coarse*160 + 352;
     if( newThreshold <= m_threshold_max ) {
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) error_out( "###setDac" );
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) error_out( "###setDac" );
+      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
+	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
+      }
+      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
+	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
+      }
       m_threshold_count++;
     } else {
       int coarse = m_threshold_return / 160;
       int fine = m_threshold_return - coarse*160 + 352;
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) error_out( "###setDac" );
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) error_out( "###setDac" );
+      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
+	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
+      }
+      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
+	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
+      }
       newThreshold = 	m_threshold_return;
     }
   } else {
@@ -449,7 +489,9 @@ void Timepix3Producer::DoTerminate() {
   spidrctrl->closeShutter();
 
   // Disble TLU
-  if( !spidrctrl->setTluEnable( device_nr, 0 ) ) error_out( "###setTluEnable" );
+  if( !spidrctrl->setTluEnable( device_nr, 0 ) ) {
+    EUDAQ_ERROR("setTluEnable: " + spidrctrl->errorString());
+  }
 
   // Clean up
   delete spidrdaq;
@@ -466,20 +508,28 @@ void Timepix3Producer::RunLoop() {
   spidrdaq = new SpidrDaq( spidrctrl );
 
   // Restart timers to sync Timepix3 and TLU timestamps
-  if( !spidrctrl->restartTimers() ) error_out( "###restartTimers" );
+  if( !spidrctrl->restartTimers() ) {
+    EUDAQ_ERROR("restartTimers: " + spidrctrl->errorString());
+  }
 
   // Set Timepix3 acquisition mode
-  if( !spidrctrl->datadrivenReadout() ) error_out( "###datadrivenReadout" );
+  if( !spidrctrl->datadrivenReadout() ) {
+    EUDAQ_ERROR("datadrivenReadout: " + spidrctrl->errorString());
+  }
 
   // Sample pixel data
   spidrdaq->setSampling( true );
   spidrdaq->setSampleAll( true );
 
   // Open shutter
-  if( !spidrctrl->openShutter() ) error_out( "###openShutter" );
+  if( !spidrctrl->openShutter() ) {
+    EUDAQ_ERROR("openShutter: " + spidrctrl->errorString());
+  }
 
   // Enable TLU
-  if( !spidrctrl->setTluEnable( device_nr, 1 ) ) error_out( "###setTluEnable" );
+  if( !spidrctrl->setTluEnable( device_nr, 1 ) ) {
+    EUDAQ_ERROR("setTluEnable: " + spidrctrl->errorString());
+  }
 
   // Vectors to contain pixel and trigger structures
   vector< PIXEL > pixel_vec;
@@ -505,8 +555,8 @@ void Timepix3Producer::RunLoop() {
     next_sample = spidrdaq->getSample( BUF_SIZE, 1 );
 
     // Log some info
-    if( m_ev >= m_ev_next_update) {
-      EUDAQ_INFO( "Timepix3 temperature: " + std::to_string(getTpx3Temperature()) + "C");
+    if(m_ev >= m_ev_next_update) {
+      EUDAQ_USER("Timepix3 temperature: " + std::to_string(getTpx3Temperature()) + "°C");
       m_ev_next_update=m_ev+10000;
     }
 
