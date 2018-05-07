@@ -105,7 +105,7 @@ namespace eudaq
                     if( trigger_number == static_cast<unsigned>(-1) )
                     {
                         // [XXX WARNING or ERROR?]
-                        EUDAQ_WARNING("No trigger word found in the first 32-block.");
+                        EUDAQ_WARN("No trigger word found in the first 32-block.");
                         ++PSEUDO_TRIGGER_ID;
                         return PSEUDO_TRIGGER_ID;
                     }
