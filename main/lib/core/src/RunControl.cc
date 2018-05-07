@@ -114,7 +114,6 @@ namespace eudaq {
 	}
       }
     m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
-      std::cout << "sending command" << std::endl;
     SendCommand("INIT", to_string(*m_conf_init), id);	  
   }
   
@@ -278,7 +277,6 @@ namespace eudaq {
 
     auto tp_timeout = std::chrono::steady_clock::now()
       + std::chrono::seconds(60);
-    std::cout<< ">>>>>>>>>>>>>>>>>>>>>>>"<< producer_last_start<<std::endl;
     for(auto &conn :conn_to_run){
       if(conn->GetName() == producer_last_start){
 	continue;
@@ -292,7 +290,6 @@ namespace eudaq {
 	  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	  continue;
 	}else{
-	  std::cout<< ">>>>>>>>>>>>>>>>>>>>"<<conn->GetName() << "is running"<<std::endl;
 	  break;
 	}
       }
