@@ -30,6 +30,7 @@ optional_add_subdirectory(rpi-controller)
 optional_add_subdirectory(taki)
 optional_add_subdirectory(timepixdummy)
 optional_add_subdirectory(tlu)
+optional_add_subdirectory(timepix3)
 
 # empty directory for AHCAL and BIF_AHCAL
 add_subdirectory(calice)

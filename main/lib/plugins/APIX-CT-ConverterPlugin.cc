@@ -522,32 +522,29 @@ namespace eudaq {
     std::map<int, StandardPlane> planes; //sensor id to plane
     for(std::size_t i=0;i<m_sensorids.size();i++){
       for(int sm=0;sm<m_smult[i];sm++){
-	int sensorid=m_sensorids[i];
-	StandardPlane plane(sensorid+sm + chip_id_offset, "APIX", "APIX");
-	if(m_nFeSensor[sensorid]!=3){
-	  int colmult=1;
-	  int rowmult=1;
-	  if(m_nFeSensor[sensorid]>1)colmult=2; //2 or 4 chip module
-	  if(m_nFeSensor[sensorid]==4)rowmult=2; //4 chip module
-	  if(rowmult>1)
-	    plane.SetSizeZS(rowmult*NROW, colmult*NCOL, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-	  else
-	    plane.SetSizeZS(colmult*NCOL, NROW, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-	}else{
-	  plane.SetSizeZS(NCOLFEI3, NROWFEI3, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-	}
-	plane.SetTLUEvent(eudetTrig);
-	planes[sensorid+sm]=plane;
+        int sensorid=m_sensorids[i];
+        StandardPlane plane(sensorid+sm + chip_id_offset, "APIX", "APIX");
+        if(m_nFeSensor[sensorid]!=3){
+          int colmult=1;
+          int rowmult=1;
+          if(m_nFeSensor[sensorid]>1)colmult=2; //2 or 4 chip module
+          if(m_nFeSensor[sensorid]==4)rowmult=2; //4 chip module
+          plane.SetSizeZS(colmult*NCOL, rowmult*NROW, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+        }else{
+          plane.SetSizeZS(NCOLFEI3, NROWFEI3, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+        }
+        plane.SetTLUEvent(eudetTrig);
+        planes[sensorid+sm]=plane;
       }
     }
     ConvertPlanes(ev, planes);
     for (size_t i = 0; i < m_sensorids.size(); i++) {
       int sensorid=m_sensorids[i];
       for(int sm=0;sm<m_smult[i];sm++){
-	result.AddPlane(planes[sensorid+sm]);
+        result.AddPlane(planes[sensorid+sm]);
       }
     }
-   // std::cout << "End of GetStandardSubEvent" << std::endl;
+    // std::cout << "End of GetStandardSubEvent" << std::endl;
     return true;
   }
   
