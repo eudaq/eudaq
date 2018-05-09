@@ -13,7 +13,7 @@ if(USER_BUILD_TLU)
 endif()
 
 if(USER_BUILD_FMCTLU)
-  include_directories(${CACTUS_INCLUDE_DIRS})
+  include_directories(${CACTUS_INCLUDE_DIR})
   list(APPEND USER_HARDWARE_SRC src/MinitluController.cc)
   list(APPEND USER_HARDWARE_SRC src/FmctluController.cc)
   list(APPEND USER_HARDWARE_SRC src/FmctluHardware.cc)
