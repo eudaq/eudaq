@@ -123,7 +123,7 @@ void NiProducer::DoConfigure() {
   auto conf = GetConfiguration();  
   if (!m_configured) {
     ni_control = std::make_shared<NiController>();
-    ni_control->GetProduserHostInfo();
+    ni_control->GetProducerHostInfo();
     std::string addr = conf->Get("NiIPaddr", "localhost");
     uint16_t port = conf->Get("NiConfigSocketPort", 49248);
     ni_control->ConfigClientSocket_Open(addr, port);

@@ -35,11 +35,17 @@ namespace eudaq {
     
     //run in user thread
     virtual void Initialise();
+    virtual void InitialiseSingleConnection(ConnectionSPC id);  
     virtual void Configure();
+    virtual void ConfigureSingleConnection(ConnectionSPC id);  
     virtual void StartRun(); 
+    virtual void StartSingleConnection(ConnectionSPC id);
     virtual void StopRun();
+    virtual void StopSingleConnection(ConnectionSPC id);
     virtual void Reset();
+    virtual void ResetSingleConnection(ConnectionSPC id);  
     virtual void Terminate();
+    virtual void TerminateSingleConnection(ConnectionSPC id);
     
     //run in m_thd_server thread
     virtual void DoConnect(ConnectionSPC con) {}

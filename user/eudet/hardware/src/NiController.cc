@@ -47,7 +47,7 @@ unsigned char start[5] = "star";
 unsigned char stop[5] = "stop";
 
 
-void NiController::GetProduserHostInfo() {
+void NiController::GetProducerHostInfo() {
   /*** get Producer information, NAME and INET ADDRESS ***/
   char ThisHost[80];
   struct hostent *hclient;
@@ -75,17 +75,16 @@ void NiController::ConfigClientSocket_Open(const std::string& addr, uint16_t por
   // convert string in config into IPv4 address
   hostent *host = gethostbyname(addr.c_str());
   if (!host) {
-    EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
-                "IPv4 address!");
     perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 "
-           "address: ");
+           "address: ");	  
+    EUDAQ_THROW("ConfSocket: Bad NiIPaddr value in config file: must be legal "
+                "IPv4 address!");
   }
   memcpy((char *)&config.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
 
   if ((sock_config = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    EUDAQ_ERROR("ConfSocket: Error creating the TCP socket  ");
-    perror("ConfSocket Error: socket()");
-    exit(1);
+    perror("ConfSocket Error: socket()");	  
+    EUDAQ_THROW("ConfSocket: Error creating the TCP socket  ");
   } else
     printf("----TCP/NI crate: SOCKET is OK...\n");
 
@@ -97,11 +96,8 @@ void NiController::ConfigClientSocket_Open(const std::string& addr, uint16_t por
   memset(&(config.sin_zero), '\0', 8);
   if (connect(sock_config, (struct sockaddr *)&config,
               sizeof(struct sockaddr)) == -1) {
-    EUDAQ_ERROR("ConfSocket: National Instruments crate doesn't appear to be "
-                "running  ");
     perror("ConfSocket Error: connect()");
-    EUDAQ_Sleep(60);
-    exit(1);
+    EUDAQ_THROW("ConfSocket: National Instruments crate doesn't appear to be running");
   } else
     printf("----TCP/NI crate The CONNECT is OK...\n");
 }
@@ -110,8 +106,10 @@ void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len) {
   if (dbg)
     printf("size=%zu", len);
 
-  if (EUDAQ_SEND(sock_config, text, len, 0) == -1)
+  if (EUDAQ_SEND(sock_config, text, len, 0) == -1) {
     perror("Server-send() error lol!");
+    EUDAQ_THROW("Server-send() error");
+  }
 }
 void NiController::ConfigClientSocket_Close() {
 
@@ -170,9 +168,8 @@ NiController::ConfigClientSocket_ReadLength() {
   bool dbg = false;
   int numbytes;
   if ((numbytes = recv(sock_config, Buffer_length, 2, 0)) == -1) {
-    EUDAQ_ERROR("DataTransportSocket: Read length error ");
     perror("recv()");
-    exit(1);
+    EUDAQ_THROW("DataTransportSocket: Read length error ");
   } else {
     datalengthTmp = 0;
     datalengthTmp = 0xFF & Buffer_length[0];
@@ -196,9 +193,8 @@ NiController::ConfigClientSocket_ReadData(int datalength) {
   int numbytes;
   while (read_bytes_left > 0) {
     if ((numbytes = recv(sock_config, Buffer_data, read_bytes_left, 0)) == -1) {
-      EUDAQ_ERROR("|==ConfigClientSocket_ReadLength==| Read data error ");
-      perror("recv()");
-      exit(1);
+      perror("recv()");	    
+      EUDAQ_THROW("|==ConfigClientSocket_ReadLength==| Read data error ");
     } else {
       if (dbg)
         printf("|==ConfigClientSocket_ReadLength==|    numbytes=%u \n",
@@ -227,18 +223,17 @@ NiController::ConfigClientSocket_ReadData(int datalength) {
 void NiController::DatatransportClientSocket_Open(const std::string& addr, uint16_t port){
   hostent *host = gethostbyname(addr.c_str());
   if (!host) {
-    EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
-                "IPv4 address!");
     perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 "
            "address: ");
+    EUDAQ_THROW("ConfSocket: Bad NiIPaddr value in config file: must be legal "
+                "IPv4 address!");
   }
   memcpy((char *)&datatransport.sin_addr.s_addr, host->h_addr_list[0],
          host->h_length);
 
   if ((sock_datatransport = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    EUDAQ_ERROR("DataTransportSocket: Error creating socket ");
-    perror("DataTransportSocket Error: socket()");
-    exit(1);
+    perror("DataTransportSocket Error: socket()");	  
+    EUDAQ_THROW("DataTransportSocket: Error creating socket ");
   } else
     printf("----TCP/NI crate DATA TRANSPORT: The SOCKET is OK...\n");
 
@@ -251,11 +246,9 @@ void NiController::DatatransportClientSocket_Open(const std::string& addr, uint1
   memset(&(datatransport.sin_zero), '\0', 8);
   if (connect(sock_datatransport, (struct sockaddr *)&datatransport,
               sizeof(struct sockaddr)) == -1) {
-    EUDAQ_ERROR("DataTransportSocket: National Instruments crate doesn't "
-                "appear to be running  ");
     perror("DataTransportSocket: connect()");
-    EUDAQ_Sleep(60);
-    exit(1);
+    EUDAQ_THROW("DataTransportSocket: National Instruments crate doesn't "
+                "appear to be running  ");
   } else
     printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");
 }
@@ -265,9 +258,8 @@ NiController::DataTransportClientSocket_ReadLength() {
   unsigned int datalength;
   int numbytes;
   if ((numbytes = recv(sock_datatransport, Buffer_length, 2, 0)) == -1) {
-    EUDAQ_ERROR("DataTransportSocket: Read length error ");
     perror("recv()");
-    exit(1);
+    EUDAQ_THROW("DataTransportSocket: Read length error ");
   } else {
     datalengthTmp = 0;
     datalengthTmp = 0xFF & Buffer_length[0];
@@ -292,9 +284,8 @@ NiController::DataTransportClientSocket_ReadData(int datalength) {
   int numbytes;
   while (read_bytes_left > 0) {
     if ((numbytes = recv(sock_datatransport, Buffer_data, read_bytes_left, 0)) == -1) {
-      EUDAQ_ERROR("DataTransportSocket: Read data error ");
       perror("recv()");
-      exit(1);
+      EUDAQ_THROW("DataTransportSocket: Read data error ");
     } else {
       if (dbg)
         printf("|==DataTransportClientSocket_ReadData==|    numbytes=%u \n",

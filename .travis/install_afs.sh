@@ -56,10 +56,4 @@ else
 	sudo service openafs-client start	
 fi
 	
-if [[ -d "/afs/desy.de/group/telescopes" ]]; then
-	echo "Afs seems to work properly"
-elif [[ -d "/afs/cern.ch" ]]; then
-	echo "Afs seems to work properly, but desy afs down?"
-else
-	echo "Something wrong with the afs installation"	
-fi
+#.travis/./timeout3.sh "if [[ -d "/afs/desy.de/group/telescopes" ]]; then echo "Afs seems to work properly" elif [[ -d "/afs/cern.ch" ]]; then echo "Afs seems to work properly, but desy afs down?" else echo "Something wrong with the afs installation"	 fi"

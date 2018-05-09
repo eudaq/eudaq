@@ -142,7 +142,7 @@ void TluProducer::RunLoop(){
 void TluProducer::DoConfigure() {
   auto conf = GetConfiguration();  
   if(!conf)
-    EUDAQ_THROW("No configration exits for tlu");
+    EUDAQ_THROW("No configuration exists for tlu");
   trigger_interval = conf->Get("TriggerInterval", 0);
   dut_mask = conf->Get("DutMask", 2);
   and_mask = conf->Get("AndMask", 0xff);

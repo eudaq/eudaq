@@ -39,7 +39,7 @@ environment:
       USER_ITKSTRIP_BUILD: ON
       USER_ITKSTRIP_BUILD_ITSROOT: ON
       PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.1" 
+      PYTHON_VERSION: "3.6.5" 
       PYTHON_ARCH: "32"
     - build_type: minimum
       ROOTSYS: C:\root
@@ -60,7 +60,7 @@ environment:
       USER_ITKSTRIP_BUILD: ON
       USER_ITKSTRIP_BUILD_ITSROOT: ON
       PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.1" 
+      PYTHON_VERSION: "3.6.5" 
       PYTHON_ARCH: "32"
     - build_type: library_only
       ROOTSYS: C:\root
@@ -81,7 +81,7 @@ environment:
       USER_ITKSTRIP_BUILD: OFF
       USER_ITKSTRIP_BUILD_ITSROOT: OFF
       PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.1" 
+      PYTHON_VERSION: "3.6.5" 
       PYTHON_ARCH: "32"
 
 cache:
@@ -112,12 +112,12 @@ install:
 - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 # Upgrade to the latest version of pip to avoid it displaying warnings
 # about it being out of date.
-- "pip install --disable-pip-version-check --user --upgrade pip"
+- "python -m pip install --disable-pip-version-check --user --upgrade pip"
 # Install the build dependencies of the project. If some dependencies contain
 # compiled extensions and are not provided as pre-built wheel packages,
 # pip will build them from source using the MSVC compiler matching the
 # target Python version and architecture
-- "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
+- "%CMD_IN_ENV% python -m pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
 - ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.36.win32.vc12.zip'; 7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\; 
