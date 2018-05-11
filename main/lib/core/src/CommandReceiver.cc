@@ -48,6 +48,8 @@ namespace eudaq {
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
     : m_type(type), m_name(name), m_exit(false), m_exited(false){
+    if(runcontrol.empty())
+      return;
     uint64_t addr = static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(this));
     m_cmdrcv_id = static_cast<uint32_t>((addr>>32)+(addr<<32)+addr);
     int i = 0;
@@ -116,6 +118,22 @@ namespace eudaq {
 
   void CommandReceiver::OnIdle() { mSleep(500); }
 
+  void CommandReceiver::ReadConfigureFile(const std::string &path){
+    m_conf = Configuration::MakeUniqueReadFile(path);
+    std::string section  = m_type;
+    if(m_name != "")
+      section += "." + m_name;
+    m_conf->SetSection(section);
+  }
+  
+  void CommandReceiver::ReadInitializeFile(const std::string &path){
+    m_conf_init = Configuration::MakeUniqueReadFile(path);
+    std::string section  = m_type;
+    if(m_name != "")
+      section += "." + m_name;
+    m_conf_init->SetSection(section);
+  }
+  
   void CommandReceiver::CommandHandler(TransportEvent &ev) {
     if (ev.etype == TransportEvent::RECEIVE) {
       std::string cmd = ev.packet;
@@ -127,13 +145,12 @@ namespace eudaq {
       }
       if (cmd == "INIT") {
         std::string section = m_type;
-        if(m_name != "")
-          section += "." + m_name;
-	m_conf_init = std::make_shared<Configuration>(param, section);
 	std::stringstream ss;
 	m_conf_init->Print(ss, 4);
 	EUDAQ_INFO("Receive an INI section\n"+ ss.str());
-        OnInitialise();
+	
+       	m_conf_init = std::make_shared<Configuration>(param, section);
+	OnInitialise();
       } else if (cmd == "CONFIG"){
 	std::string section = m_type;
         if(m_name != "")
