@@ -1,2 +1,2 @@
 # Start TLU Producer remotely
-xterm -sb -sl 1000 -geom 80x10-480-1100 -fn fixed -T "FmctluProducer" -e 'ssh teleuser@192.168.22.10 "cd eudaq2/eudaq/bin/; ./euCliProducer -n FmctluProducer -t fmctlu -r tcp://192.168.22.1:44000"' & 
+# xterm -sb -sl 1000 -geom 80x10-480-1100 -fn fixed -T "FmctluProducer" -e 'ssh teleuser@192.168.22.10 "cd eudaq2/eudaq/bin/; ./euCliProducer -n FmctluProducer -t fmctlu -r tcp://192.168.22.1:44000"' & 

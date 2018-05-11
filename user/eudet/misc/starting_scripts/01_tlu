@@ -6,9 +6,10 @@ sleep 2
 xterm -T "Log Collector" -e 'euLog -r tcp://192.168.22.1' &
 sleep 1
 
-# Start TLU Producer remotely
-#xterm -sb -sl 1000 -geom 80x10-480-1100 -fn fixed -T "FmctluProducer" -e 'ssh teleuser@192.168.22.10 "cd eudaq2/eudaq/bin/; ./euCliProducer -n FmctluProducer -t fmctlu -r tcp://192.168.22.1:44000"' & 
+# Start TLU Producer
 xterm -T "FmctluProducer" -e 'euCliProducer -n FmctluProducer -t fmctlu -r tcp://192.168.22.1:44000' & 
 
-# Start one DataCollector, name (-t) in conf file, -n Ex0TgDataCollector
+# Start one DataCollector
+# name (-t) in conf file
+# or: -n Ex0TgDataCollector
 xterm -T "Data Collector TLU" -e 'euCliCollector -n DirectSaveDataCollector -t tlu_dc -r tcp://192.168.22.1:44000' &
