@@ -68,7 +68,7 @@ namespace eudaq
     static unsigned int start_byte = sizeof(uint32_t);
 
 #if USE_LCIO && USE_EUTELESCOPE
-    static const int chip_id_offset = 20;
+    static const int chip_id_offset = 30;
 #endif
 
     // Declare a new class that inherits from DataConverterPlugin
@@ -288,7 +288,7 @@ namespace eudaq
                         currentDetector->setMode("ZS");
                         setupDescription.push_back( new eutelescope::EUTelSetupDescription(currentDetector)) ;
                     }
-                    zsDataEncoder["sensorID"] = ev_raw.GetID(chip); // [JDC-XXX] probably will change that 
+                    zsDataEncoder["sensorID"] = ev_raw.GetID(chip)+chip_id_offset;  
                     zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
                     
                     // prepare a new TrackerData object for the ZS data
