@@ -14,7 +14,21 @@ using namespace eutelescope;
 
 EUTelAPIXMCDetector::EUTelAPIXMCDetector(unsigned short fetype)
     : EUTelPixelDetector() {
-  if (fetype == 2) {
+  // [ JDC - XXX : Provisional, probably a new class
+  if (fetype == 3) {
+      _xMin = 0;
+      _xMax = 399;
+
+      _yMin = 0;
+      _yMax = 191;
+
+      // [JDC -- XXX -- Provisional
+      _name = "rd53a"; 
+      
+      _xPitch = 0.05; // mm
+      _yPitch = 0.05; // mm
+  } 
+  else if (fetype == 2) {
     _xMin = 0;
     _xMax = 79;
 
