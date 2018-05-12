@@ -189,6 +189,8 @@ void CorrelationHistos::Reset() {
   _2dcorrY->Reset();
   _2dcorrXY->Reset();
   _2dcorrYX->Reset();
+  _2dcorrTimeX->Reset();
+  _2dcorrTimeY->Reset();
 }
 
 TH2I *CorrelationHistos::getCorrXHisto() { return _2dcorrX; }
