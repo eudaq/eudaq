@@ -14,7 +14,7 @@ env:
    global:
       - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.11-clang70.tar.gz
-      - ROOT6_FILENAME_LINUX=root_v6.10.02.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.12.06.Linux-ubuntu17-x86_64-gcc7.2.tar.gz
       - ROOT6_FILENAME_MAC=root_v6.10.02.macosx64-10.11-clang80.tar.gz
       
       - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.11
