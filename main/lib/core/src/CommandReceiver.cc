@@ -17,11 +17,46 @@
    EUDAQ_THROW("CommandReceiver: Connection refused by RunControl server: " + packet[position])
 
 namespace eudaq {
-  
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
-    : m_type(type), m_name(name), m_is_destructing(false), m_is_connected(false), m_is_runlooping(false), m_addr_runctrl(runcontrol){
-  }
+    : m_type(type), m_name(name), m_exit(false), m_exited(false), m_is_connected(false), m_is_runlooping(false), m_addr_runctrl(runcontrol){
+    if(runcontrol.empty())
+      return;
+    uint64_t addr = static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(this));
+    m_cmdrcv_id = static_cast<uint32_t>((addr>>32)+(addr<<32)+addr);
+    int i = 0;
+    while (true){
+      try {
+	m_cmdclient = std::unique_ptr<TransportClient>( TransportClient::CreateClient(runcontrol));
+	if (!m_cmdclient->IsNull()) {
+	  std::string packet;
+	  if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+	  auto splitted = split(packet, " ");
+	  if (splitted.size() < 5) {
+	    EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
+	  }
+	  CHECK_RECIVED_PACKET(splitted, 0, "OK");
+	  CHECK_RECIVED_PACKET(splitted, 1, "EUDAQ");
+	  CHECK_RECIVED_PACKET(splitted, 2, "CMD");
+	  CHECK_RECIVED_PACKET(splitted, 3, "RunControl");
+	  m_cmdclient->SendPacket("OK EUDAQ CMD " + type + " " + name);
+	  m_addr_client = splitted[4];
+	  packet = "";
+	  if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+
+	  auto splitted_res = split(packet, " ");
+	  CHECK_FOR_REFUSE_CONNECTION(splitted_res, 0, "OK");
+	}
+	break;
+      } catch (...) {
+	std::cout << "easdasdasd\n";
+	if (++i>10){
+	  throw;
+	}
+
+      /*      std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
+      m_qu_cmd.push(std::make_pair(cmd, param));
+      m_cv_not_empty.notify_all(); */
 
   CommandReceiver::~CommandReceiver(){
     m_is_destructing = true;
@@ -30,22 +65,6 @@ namespace eudaq {
     }
   }
   
-  void CommandReceiver::CommandHandler(TransportEvent &ev) {
-    if (ev.etype == TransportEvent::RECEIVE) {
-      std::string cmd = ev.packet;
-      std::string param;
-      size_t i = cmd.find('\0');
-      if (i != std::string::npos) {
-        param = std::string(cmd, i + 1);
-        cmd = std::string(cmd, 0, i);
-      }
-      
-      std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
-      m_qu_cmd.push(std::make_pair(cmd, param));
-      m_cv_not_empty.notify_all();
-    }
-  }
-
   void CommandReceiver::SendStatus(){
     BufferSerializer ser;
     std::unique_lock<std::mutex> lk_st(m_mtx_status);
@@ -263,6 +282,30 @@ namespace eudaq {
 	    return 0;
 	  }
 	}
+  void CommandReceiver::ReadConfigureFile(const std::string &path){
+    m_conf = Configuration::MakeUniqueReadFile(path);
+    std::string section  = m_type;
+    if(m_name != "")
+      section += "." + m_name;
+    m_conf->SetSection(section);
+  }
+  
+  void CommandReceiver::ReadInitializeFile(const std::string &path){
+    m_conf_init = Configuration::MakeUniqueReadFile(path);
+    std::string section  = m_type;
+    if(m_name != "")
+      section += "." + m_name;
+    m_conf_init->SetSection(section);
+  }
+  
+  void CommandReceiver::CommandHandler(TransportEvent &ev) {
+    if (ev.etype == TransportEvent::RECEIVE) {
+      std::string cmd = ev.packet;
+      std::string param;
+      size_t i = cmd.find('\0');
+      if (i != std::string::npos) {
+        param = std::string(cmd, i + 1);
+        cmd = std::string(cmd, 0, i);
       }
       auto cmd = m_qu_cmd.front().first;
       auto param = m_qu_cmd.front().second;
@@ -270,13 +313,11 @@ namespace eudaq {
       lk.unlock();
       if (cmd == "INIT") {
         std::string section = m_type;
-        if(m_name != "")
-          section += "." + m_name;
-	m_conf_init = std::make_shared<Configuration>(param, section);
 	std::stringstream ss;
 	m_conf_init->Print(ss, 4);
 	EUDAQ_INFO("Receive an INI section\n"+ ss.str());
-        OnInitialise();	
+       	m_conf_init = std::make_shared<Configuration>(param, section);
+	OnInitialise();
       } else if (cmd == "CONFIG"){
 	std::string section = m_type;
         if(m_name != "")

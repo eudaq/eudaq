@@ -74,7 +74,7 @@ namespace eudaq{
 	break;
       case 'i':
 	if(!line.empty())
-	  ReadInitilizeFile(line);
+	  ReadInitializeFile(line);
 	Initialise();
 	break;
       case 'c':

@@ -110,7 +110,7 @@ void RunControlGUI::on_btnInit_clicked(){
     return;
   }
   if(m_rc){
-    m_rc->ReadInitilizeFile(settings);
+    m_rc->ReadInitializeFile(settings);
     m_rc->Initialise();
   }
 }
