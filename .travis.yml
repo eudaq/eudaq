@@ -103,18 +103,22 @@ matrix:
         python: 2.7        
         env: OPTION=old
       - os: osx
+        osx_image: xcode9.3
         compiler: clang      
         python: 3.6        
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF       
       - os: osx      
+        osx_image: xcode9.3
         compiler: clang
         python: 2.7        
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF           
       - os: osx      
+        osx_image: xcode9.3
         compiler: gcc    
         python: 3.6        
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF        
       - os: osx
+        osx_image: xcode9.3
         compiler: gcc
         python: 2.7    
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
