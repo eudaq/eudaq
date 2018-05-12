@@ -145,7 +145,6 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, "Terminate Error");
     }
   }
-<<<<<<< HEAD
 
   void Producer::OnStatus(){
     try{
@@ -157,8 +156,8 @@ namespace eudaq {
     } catch (...) {
       printf("Unknown exception\n");
       SetStatus(Status::STATE_ERROR, "Status Error");
-=======
-  
+    }
+  }
   void Producer::Exec(){
     /*    StartCommandReceiver();
     while(IsActiveCommandReceiver()){
@@ -226,7 +225,6 @@ namespace eudaq {
 	}
       }
       
->>>>>>> sohail/ttreeconvert
     }
 
   }
@@ -242,14 +240,9 @@ namespace eudaq {
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
     ev->SetDeviceN(m_pdc_n);
-<<<<<<< HEAD
-    std::unique_lock<std::mutex> lk(m_mtx_sender);
-    auto senders = m_senders; //hold on the ptrs
-    lk.unlock();
-    for(auto &e: senders){
-      if(e.second)
-	e.second->SendEvent(ev);
-=======
+    /*    std::unique_lock<std::mutex> lk(m_mtx_sender);
+	  auto senders = m_senders; //hold on the ptrs
+	  lk.unlock();*/
     EventSP evsp(std::move(ev));
     if(m_cli_run){
     if(m_writer)
@@ -260,8 +253,7 @@ namespace eudaq {
 
     for(auto &e: m_senders){
       if(e.second)
-	e.second->SendEvent(*(evsp.get()));
->>>>>>> sohail/ttreeconvert
+	e.second->SendEvent(move(ev));
       else
 	EUDAQ_THROW("Producer::SendEvent, using a null pointer of DataSender");
     }

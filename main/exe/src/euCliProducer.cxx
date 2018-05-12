@@ -11,12 +11,14 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "", "address",
 				   "The address of the run control to connect to");
   
-  try{
-    op.Parse(argv);
+  /*  try{
+    op.Parse(argv);    
   }
   catch(...){
     std::ostringstream err;
     return op.HandleMainException(err);
+  */
+    op.Parse(argv);
     
     std::string app_name = name.Value();
     std::string rctrl_value = rctrl.Value();
@@ -32,7 +34,6 @@ int main(int /*argc*/, const char **argv) {
       }
       app->Exec();
     }
-    std::string app_name = name.Value();
     if(app_name.find("Producer") == std::string::npos){
       std::cout<<"unknown application"<<std::endl;
       return -1;
@@ -53,4 +54,6 @@ int main(int /*argc*/, const char **argv) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   return 0;
-}
+  }
+
+

@@ -377,7 +377,7 @@ bool RunControlGUI::loadInitFile() {
     return false;
   }
   if(m_rc){
-    m_rc->ReadInitilizeFile(settings);
+    m_rc->ReadInitializeFile(settings);
   }
   return true;  
 }

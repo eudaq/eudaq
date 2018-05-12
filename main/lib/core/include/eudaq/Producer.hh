@@ -43,13 +43,7 @@ namespace eudaq {
     virtual void DoTerminate(){};
     virtual void DoStatus(){};
 
-    void OnInitialise() override final;
-    void OnConfigure() override final;
-    void OnStartRun() override final;
-    void OnStopRun() override final;
-    void OnReset() override final;
-    void OnTerminate() override final;
-    void Exec() override;
+    void Exec();
     void WriteEvent(EventUP ev);
 
 

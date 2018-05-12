@@ -53,8 +53,10 @@ namespace eudaq {
 	if (++i>10){
 	  throw;
 	}
-
-      /*      std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
+      }
+    }
+  }
+  /*      std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
       m_qu_cmd.push(std::make_pair(cmd, param));
       m_cv_not_empty.notify_all(); */
 
@@ -106,12 +108,6 @@ namespace eudaq {
   }
 
   void CommandReceiver::OnInitialise(){
-    // std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
-    // GetInitConfiguration()->SetSection("");
-    // std::string log_addr = GetInitConfiguration()->Get("EUDAQ_LOG_ADDR", "");
-    // if(!log_addr.empty())
-    //   EUDAQ_LOG_CONNECT(m_type, m_name, log_addr);
-    // GetInitConfiguration()->SetSection(cur_backup);
     SetStatus(Status::STATE_UNCONF, "Initialized");
     EUDAQ_INFO(GetFullName() + " is initialised.");
   }
@@ -282,6 +278,11 @@ namespace eudaq {
 	    return 0;
 	  }
 	}
+      }
+    }
+  }
+  void CommandReceiver::OnIdle() { mSleep(500); }
+  
   void CommandReceiver::ReadConfigureFile(const std::string &path){
     m_conf = Configuration::MakeUniqueReadFile(path);
     std::string section  = m_type;
@@ -307,10 +308,10 @@ namespace eudaq {
         param = std::string(cmd, i + 1);
         cmd = std::string(cmd, 0, i);
       }
-      auto cmd = m_qu_cmd.front().first;
-      auto param = m_qu_cmd.front().second;
-      m_qu_cmd.pop();
-      lk.unlock();
+      //    auto cmd = m_qu_cmd.front().first;
+      //      auto param = m_qu_cmd.front().second;
+      //      m_qu_cmd.pop();
+      //      lk.unlock();
       if (cmd == "INIT") {
         std::string section = m_type;
 	std::stringstream ss;
@@ -346,7 +347,12 @@ namespace eudaq {
       }
       SendStatus();
     }
-    return 0;
+    BufferSerializer ser;
+    std::unique_lock<std::mutex> lk(m_mtx_status);
+    m_status.Serialize(ser);
+    // m_status.ResetTags();
+    lk.unlock();
+    m_cmdclient->SendPacket(ser);
   }
 
   
@@ -464,5 +470,40 @@ namespace eudaq {
     }
   return true;    
   }
+ void CommandReceiver::ProcessingCommand(){
+    try {
+      //TODO: create m_cmdclient here instead of inside constructor
+      while (!m_exit){
+	m_cmdclient->Process(-1);
+	OnIdle();
+      }
+      //TODO: SendDisconnect event;
+      OnTerminate();
+      m_exited = true;
+    } catch (const std::exception &e) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      OnTerminate();
+      m_exited = true;
+    } catch (...) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      OnTerminate();
+      m_exited = true;
+    }
+  }
+  
+ void CommandReceiver::StartCommandReceiver(){
+    if(m_exit){
+      EUDAQ_THROW("CommandReceiver can not be restarted after exit. (TODO)");
+    }
+    m_thd_client = std::thread(&CommandReceiver::ProcessingCommand, this);
+  }
 
+  void CommandReceiver::CloseCommandReceiver(){
+    m_exit = true;
+    if(m_thd_client.joinable()){
+      m_thd_client.join();
+    }
+  }
 }
