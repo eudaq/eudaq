@@ -23,10 +23,10 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
 	sudo hdiutil attach $OPENAFS_FILENAME_MAC
 	
-	#ls /Volumes/OpenAFS/
+	ls /Volumes/OpenAFS/
 	
-	sudo installer -package /Volumes/Auristor-Lite-ElCapitan/Auristor-Lite.pkg -target /
-	sudo hdiutil detach /Volumes/Auristor-Lite-ElCapitan
+	sudo installer -package /Volumes/Auristor-Lite-HighSierra/Auristor-Lite.pkg -target /
+	sudo hdiutil detach /Volumes/Auristor-Lite-HighSierra
 	#sudo launchctl start org.auristor.filesystems.afs
 	sudo launchctl list
 	sudo launchctl start com.auristor.yfs-client
@@ -54,6 +54,8 @@ else
 	echo "" >> ~/ThisCell
 	sudo cp ~/ThisCell /etc/openafs
 	sudo service openafs-client start	
+	sudo service openafs-client stop
+	sudo service openafs-client start
 fi
 	
 if [[ -d "/afs/desy.de/group/telescopes" ]]; then
