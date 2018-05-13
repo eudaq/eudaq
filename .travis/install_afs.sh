@@ -34,13 +34,13 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	touch ~/ThisCell
 	echo "desy.de" >> ~/ThisCell
 	echo "" >> ~/ThisCell
-	sudo cp ~/ThisCell /etc/openafs
+	sudo cp ~/ThisCell /var/db/openafs/etc/
 	
 	sudo launchctl list
 	sudo launchctl start com.auristor.yfs-client
 	sudo launchctl start com.auristor.XPCHelper
 	
-	ls /afs/
+	ls /afs/desy.de
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS
