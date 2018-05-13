@@ -28,6 +28,14 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	sudo installer -package /Volumes/Auristor-Lite-HighSierra/Auristor-Lite.pkg -target /
 	sudo hdiutil detach /Volumes/Auristor-Lite-HighSierra
 	#sudo launchctl start org.auristor.filesystems.afs
+	
+	echo "Location of ThisCell"
+	ls /var/db/openafs/etc/
+	touch ~/ThisCell
+	echo "desy.de" >> ~/ThisCell
+	echo "" >> ~/ThisCell
+	sudo cp ~/ThisCell /etc/openafs
+	
 	sudo launchctl list
 	sudo launchctl start com.auristor.yfs-client
 	sudo launchctl start com.auristor.XPCHelper
@@ -50,7 +58,7 @@ else
 	sudo apt-get install --force-yes -y linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5	
 	
 	touch ~/ThisCell
-	echo "cern.ch" >> ~/ThisCell
+	echo "desy.de" >> ~/ThisCell
 	echo "" >> ~/ThisCell
 	sudo cp ~/ThisCell /etc/openafs
 	sudo service openafs-client start	
