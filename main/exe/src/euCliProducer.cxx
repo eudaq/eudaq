@@ -10,20 +10,11 @@ int main(int /*argc*/, const char **argv) {
 				  "Runtime name of the eudaq application");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "", "address",
 				   "The address of the run control to connect to");
-  
-  /*  try{
     op.Parse(argv);    
-  }
-  catch(...){
-    std::ostringstream err;
-    return op.HandleMainException(err);
-  */
-    op.Parse(argv);
-    
     std::string app_name = name.Value();
     std::string rctrl_value = rctrl.Value();
     if(!rctrl_value.empty()) std::cout << "Online run, RC is at :  " << rctrl_value << std::endl;
-    else if(rctrl_value.empty()) std::cout << "Offline run : " << rctrl_value << std::endl;
+    else if(rctrl_value.empty()) std::cout << "Producer Standalone run started \n Start with init command or type help to see list of command " << rctrl_value << std::endl;
     
     if(app_name.find("Producer") != std::string::npos){
       auto app=eudaq::Factory<eudaq::Producer>::MakeShared<const std::string&,const std::string&>

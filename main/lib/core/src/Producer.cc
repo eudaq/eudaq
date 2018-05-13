@@ -159,10 +159,6 @@ namespace eudaq {
     }
   }
   void Producer::Exec(){
-    /*    StartCommandReceiver();
-    while(IsActiveCommandReceiver()){
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      }*/
     if(!m_cli_run){
       StartCommandReceiver();
       while(IsActiveCommandReceiver()){
@@ -184,16 +180,14 @@ namespace eudaq {
 	  cmd = std::string(cmd,0,i);
 	}
 	if (cmd == "init") {
-	  std::cout << " Path to Initialize file : " << std::endl;
+	  std::cout << " Type the name of Initialize file (.ini) with full path : " << std::endl;
 	  std::cin >> pathini;
 	  ReadInitializeFile(pathini);
-	  //  ReadInitializeFile("Ex0.ini");
 	  OnInitialise();
 	} else if (cmd == "config"){
-	  std::cout << " Path to Configure file : " << std::endl;
+	  std::cout << "Type the name of Configure file (.conf) with full path : " << std::endl;
 	  std::cin >> pathconfig;
 	  ReadConfigureFile(pathconfig);
-	  //  ReadConfigureFile("Ex0.conf");
 	  OnConfigure();
 	} else if (cmd == "start") {
 	  std::cout << "Please Enter Run Number " << std::endl;
@@ -240,9 +234,6 @@ namespace eudaq {
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
     ev->SetDeviceN(m_pdc_n);
-    /*    std::unique_lock<std::mutex> lk(m_mtx_sender);
-	  auto senders = m_senders; //hold on the ptrs
-	  lk.unlock();*/
     EventSP evsp(std::move(ev));
     if(m_cli_run){
     if(m_writer)
