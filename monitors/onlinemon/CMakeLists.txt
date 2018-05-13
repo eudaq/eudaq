@@ -1,4 +1,8 @@
-FIND_PACKAGE( ROOT REQUIRED COMPONENTS Gui)
+if(WIN32)
+  find_package(ROOT REQUIRED COMPONENTS libGui libCore libHist libRIO)
+else()
+  find_package(ROOT REQUIRED COMPONENTS Gui)
+endif()
 
 INCLUDE(${ROOT_USE_FILE})
 
