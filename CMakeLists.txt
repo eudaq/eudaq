@@ -82,6 +82,7 @@ INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+LIST(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
 
 # search for the packages needed for the main library when building the native reader library

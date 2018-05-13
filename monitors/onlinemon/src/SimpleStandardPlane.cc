@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include "include/SimpleStandardPlane.hh"
+#include "SimpleStandardPlane.hh"
 
 SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id,
                                          const int maxX, const int maxY,

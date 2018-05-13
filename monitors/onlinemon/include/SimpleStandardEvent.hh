@@ -27,7 +27,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 
-#include "include/SimpleStandardPlane.hh"
+#include "SimpleStandardPlane.hh"
 
     inline bool
     operator==(SimpleStandardPlane const &a, SimpleStandardPlane const &b) {
