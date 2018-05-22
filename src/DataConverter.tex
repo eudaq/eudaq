@@ -1,0 +1,50 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Writing a Data Converter}\label{sec:DataConverter}
+As a framework, EUDAQ itself is developed with no knowledge of how hardware data can be decoded. Only the user can know the specific details of the readout data from hardware, so users are required to write a data converter derived from eudaq::DataConverter to convert to another format. The converted data can then be stored on disk or used as input data for any non-EUDAQ software.\\
+
+Currently, as historical legacy, two different formats are provided along with the native raw eudaq::Event. They are eudaq::StandardEvent for pixel detectors, and eudaq::LCEvent as an EUDAQ wrapper for the LCIO format.
+
+\subsection{Event Structure}
+eudaq::Event is the most important data container in the EUDAQ system. eudaq::Event should be filled by detector data properly in order to transmit among eudaq clients, e.g.\ Producer and DataCollector. \autoref{tab:eventdata} lists all the member variables inside of eudaq::event. Not all of these variables have to be filled. For example, in case there is a trigger number but no timestamp information, the m\_ts\_begin and m\_ts\_end can be left untouched.
+
+%%\begin{table}[!h]
+%%{\footnotesize
+%%\begin{tabular}{l|l|p{2cm}|p{5.5cm}}
+%%Variable & Type & Default Value & Comment \\
+%% \hline
+%% m\_type & uint32\_t & - & Event type\\
+%% m\_version & uint32\_t & - & Version of EUDAQ\\
+%% m\_flag & uint32\_t & - & Event flag\\
+%% m\_stm\_n & uint32\_t & - & Stream/device number\\
+%% m\_run\_n & uint32\_t & - & Run number\\
+%% m\_ev\_n & uint32\_t & - & Event number\\
+%% m\_tg\_n & uint32\_t & - & Trigger number\\
+%% m\_extend & uint32\_t & - & Reserved word\\
+%% m\_ts\_begin & uint64\_t & - & Timestamp at the begin of trigger\\
+%% m\_ts\_end & uint64\_t & - & Timestamp at the end of trigger\\
+%% m\_dspt & std::string & - & Description String\\
+%% m\_tags & std::map$<$std::string, std::string$>$& - & Tag pairs\\
+%% m\_blocks & std::map$<$uint32\_t, std::vector$<$uint8\_t$>>$ & - & Raw data blocks\\
+%% m\_sub\_events & std::vector$<$EventSPC$>$& - & Sub events\\
+%% \end{tabular}
+%% \caption{All member variables in eudaq::Event.}
+%% \label{tab:eventvarialbe}
+%% }
+%% \end{table}
+%% 
+The eudaq::Event maye also have sub events. 
+
+\subsubsection{RawDataEvent}\label{sec:convrawdata}
+eudaq::RawDataEvent is derived from eudaq::Event with the m\_type always set to eudaq::cstr2hash(``RawDataEvent''). It has the same member variables and functions as the base eudaq::Event. However the member variable m\_extend is used as an identification number of the sub type of event.
+
+\subsubsection{StandardEvent}\label{sec:convstddata}
+eudaq::StandardEvent is derived from eudaq::Event with the m\_type always set to eudaq::cstr2hash(``StandardEvent''). Historically, it presents a beam telescope tracking-hit event with all hit information of sensor planes. The hit information is contained by eudaq::StandardPlane. The beam telescope planes are pixel sensors. The spatial position and signal amplitude of the fired pixels are zero-compressed inside eudaq::StandaredPlane.
+
+\subsection{Example Code: RawEvent2StdEvent}\label{sec:Ex0RawEvent2StdEventConverter_cc}
+This example DataConverter is named Ex0RawEvent2StdEventConverter. As indicated by the name, it converts the eudaq::RawDataEvent to eudaq::StandardEvent. The sub type of eudaq::RawDataEvent is ``my\_ex0'' which is also used to calculate the hash and register it to the eudaq::Factory. If an eudaq::RawDataEvent object announcing its sub-type by ``my\_ex0'' exists when doing the data converting, this object will be forwarded to that Ex0RawEvent2StdEventConverter.
+\lstinputlisting[label=ls:ex0raw2std, style=cpp]{../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc}
+
+
+\subsection{RawEventTTreeEvent Converter}\label{sec:Ex0RawEvent2TTreeEventConverter_cc}
+
+Another working example of converting the {\tt raw} event to {\tt ROOT TTree} format is also provided. The details and flow of converter is described in Annexe 1. 

@@ -1,0 +1,90 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Writing a Producer}\label{sec:ProducerWriting}
+Producers are the binding part between a user DAQ and the central EUDAQ Run Control. The base class of Producer is eudaq::Producer. The eudaq::Producer is an inherited class of eudaq::CommandReceiver which receives commands from the eudaq::RunControl. It also maintains a set of eudaq::DataSender comamnds which allow binary data (eudaq::Event) to be sent to each destination.\\
+
+\subsection{Producer Prototype}\label{sec:Producer_hh}
+
+\autoref{producerdef}, below, is part of the header file which declares the eudaq::Producer. You are required to write the user Producer derived from eudaq::Producer. According the the set of commands (\autoref{sec:command}) in the EUDAQ framework, there are six virtual functions which should be implemented in the user producer. They are DoInitialise(), DoConfigure(), DoStopRun(), DoStartRun(), DoReset() and DoTerminate(). These command-related functions should return as soon as possible since no further command can be execuseted until the current command is finished. \\
+
+\lstinputlisting[label=producerdef, style=cpp, linerange=BEGINDECLEAR-ENDDECLEAR]{../../main/lib/core/include/eudaq/Producer.hh}
+
+The virtual function Exec() can optionally be implemented in the user Producer. If this is not implemented, the default Exec() will connect to the RunControl and goes into an infinite loop and will only return when the Terminate command is executed. In case you are going to implement an Exec() function, please read the source code to find detailed information.
+
+\subsection{Example Source Code: Dummy Event Producer}\label{sec:Ex0Producer_cc}
+\subsubsection{Declaration}
+Here we outline an example implementation of a user Producer. The full source code is available at file path user/example/module/src/Ex0Producer.cc.  \autoref{ls:ex0producerdef}, below, is the declaration part. There are six command related functions, a constructor function and a \texttt{Mainloop} function. \\
+
+\lstinputlisting[label=ls:ex0producerdef, style=cpp, linerange=BEG*DEC-END*DEC]{../../user/example/module/src/Ex0Producer.cc}
+
+The line \lstinline[style=cpp]{static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Producer")}, defines a static number which is a hash from the name string. This number will be used later as a ID to register this \lstinline[style=cpp]{Ex0Producer} to the EUDAQ runtime environment.
+
+\subsubsection{Register to Factory}
+To make the EUDAQ framework know of the existence of \lstinline[style=cpp]{Ex0Producer}, this Producer should be registered to \lstinline[style=cpp]{eudaq::Factory<eudaq::Producer>} with its static ID number. The input parameter types of the constructor function are also provided to the Register function. See the example code:
+\lstinputlisting[label=ls:ex0producerdef, style=cpp, linerange=BEG*REG-END*REG]{../../user/example/module/src/Ex0Producer.cc}
+
+\subsubsection{Constructor}
+The Constructor function takes in two parameters, the runtime name of the instance of the Producer and the address of the RunControl. 
+\lstinputlisting[style=cpp, linerange=BEG*CON-BEG*INI]{../../user/example/module/src/Ex0Producer.cc}
+In this example of Ex0Producer, the constructor function does nothing beside passing parameters to the base constructor function of Producer and initializes the \lstinline[style=cpp]{m_exit_of_run} variable.
+
+\subsubsection{DoInitialise}
+This method is called whenever an initialize command is received from the RunControl. When this function is called, the correlated section of the initialization file have arrived to the Producer from the RunControl. This initialization section can be obtained by: \\
+\lstinline[style=cpp]{eudaq::ConfigurationSPC eudaq::CommandReceiver::GetInitConfiguration()} \\
+
+Here is an example \lstinline[style=cpp]{DoInitialise} of the Ex0Producer:
+\lstinputlisting[style=cpp, linerange=BEG*INI-BEG*CONF]{../../user/example/module/src/Ex0Producer.cc}
+The Configuration object \lstinline[style=cpp]{ini} is obtained. According to the value DUMMY\_STRING and DUMMY\_FILE\_PATH in \lstinline[style=cpp]{ini} object, a new file is opened and filled by dummy data. The path of the file is saved as a variable member for later access of this dummy data file.
+
+\subsubsection{DoConfigure}
+This method is called whenever a configure command is received from the RunControl. When this function is called, the correlated section of configuration file has arrived to the Producer from the RunControl. The configuration section named by the Producer runtime name can be obtained by:\\
+\lstinline[style=cpp]{eudaq::ConfigurationSPC eudaq::CommandReceiver::GetConfiguration()} \\
+
+Here is an example \lstinline[style=cpp]{DoConfigure} of Ex0Producer:
+\lstinputlisting[style=cpp, linerange=BEG*CONF-BEG*RUN]{../../user/example/module/src/Ex0Producer.cc}
+The variables \lstinline[style=cpp]{m_ms_busy}, \lstinline[style=cpp]{m_flag_ts} and \lstinline[style=cpp]{m_flag_tg} are set according to the Configuration object.
+
+\subsubsection{DoStartRun}\label{sec:ex0prdstart}
+This method is called whenever a StartRun command is received from the RunControl. When this function is called, the run-number has already been increased by 1. For a real hardware specific Producer, the hardware is told to startup.
+Here is an example \lstinline[style=cpp]{DoStartRun} of Ex0Producer:
+\lstinputlisting[style=cpp, linerange=BEG*RUN-BEG*STOP]{../../user/example/module/src/Ex0Producer.cc}
+Instead of talking to real hardware, a file is opened. Then, a new thread is started using the function \lstinline[style=cpp]{Mainloop}.
+
+\subsubsection{DoStopRun}
+This method is called whenever a StopRun command is received from the RunControl. Here is an example \lstinline[style=cpp]{DoStopRun} of Ex0Producer:
+\lstinputlisting[style=cpp, linerange=BEG*STOP-BEG*RST]{../../user/example/module/src/Ex0Producer.cc}
+
+\subsubsection{DoReset}
+When the Producer goes into an error state, only the Reset command is acceptable. It is recommended to reset all member variables to their original value when the producer object is instanced.\\
+Here is an example \lstinline[style=cpp]{DoReset} of Ex0Producer: 
+\lstinputlisting[style=cpp, linerange=BEG*RST-BEG*TER]{../../user/example/module/src/Ex0Producer.cc}
+For any case the data thread is running, it should be stopped.
+
+\subsubsection{DoTerminate}
+This method is called whenever a StopRun command is received from the RunControl. After the return of \lstinline[style=cpp]{DoTerminate}, the application will exit.\\
+Here is an example \lstinline[style=cpp]{DoStopRun} of Ex0Producer:
+\lstinputlisting[style=cpp, linerange=BEG*TER-BEG*LOOP]{../../user/example/module/src/Ex0Producer.cc}
+The data thread is then closed. 
+
+\subsubsection{Send Event}
+In \lstinline[style=cpp]{DoStartRun}, a data thread is created with the function \lstinline[style=cpp]{Mainloop}. Here is the implementation of this function. The generated data Event depends on the value set by \lstinline[style=cpp]{DoInitialise} and \lstinline[style=cpp]{DoConfigure}.
+\lstinputlisting[style=cpp, linerange=BEG*LOOP-END*IMP]{../../user/example/module/src/Ex0Producer.cc}
+In each loop, a new object of Event named Ex0Event is created. Trigger number and Timestamp are options to be set depending on the flags. A data block with 100 zeros is filled to the Event object by id 0. Another data block read from file is filled to some Event object by id 2. Then, this Event object is sent out by \lstinline[style=cpp]{SendEvent(std::move(ev))}. The first Event object has a flag BORE by the method \lstinline[style=cpp]{eudaq::Event::SetBORE()}
+
+\paragraph{Tags}\label{sec:Tags}
+The \texttt{Event} class also provide the option to store tags.
+Tags are name-value pairs containing additional information which does not qualify as regular DAQ data which is written in the binary blocks.
+Particularly in the \gls{BORE} this is very useful to store information about the exact sensor configuration which might be required in order to be able to decode the raw data stored.
+A tag is stored as follows:
+\begin{listing}
+event.SetTag("Temperature", 42);
+\end{listing}
+
+The value corresponding to the tag can be set as an arbitrary type (in this case an integer),
+it will be converted to a STL string internally.
+
+\subsubsection{Error}\label{sec:Tags}
+In the case when the Producer fails to run a command function an exception like this will be produced \\
+\lstinline[style=cpp]{EUDAQ_THROW("dummy data file (" + m_dummy_data_path +") can not open for writing")}\\
+An error message is then sent to the RunControl.
+
+

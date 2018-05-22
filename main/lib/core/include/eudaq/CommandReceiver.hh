@@ -46,6 +46,7 @@ namespace eudaq {
     
     void StartCommandReceiver();
     void CloseCommandReceiver();
+
     bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
     
     void SendStatus();

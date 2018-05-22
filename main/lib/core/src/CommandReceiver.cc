@@ -282,7 +282,7 @@ namespace eudaq {
     }
   }
   void CommandReceiver::OnIdle() { mSleep(500); }
-  
+
   void CommandReceiver::ReadConfigureFile(const std::string &path){
     m_conf = Configuration::MakeUniqueReadFile(path);
     std::string section  = m_type;

@@ -1,0 +1,177 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Installation}
+To install the EUDAQ on Linux, Windows or MacOS, you have a choice to download binary distribution package or build it from the source code.
+
+\subsection{Binary Package Installation}
+The portable precompiled packages are avaliable from EUDAQ website. You could unpack the installation package to any folder and run the example directly. Please note, not all features of EUDAQ are enabled in the precompiled package, since it is not sure at compiling time whether the end user have the necessary dependency package installed.
+
+\subsection{Building from Source Code}
+
+The installation is described in four steps:%
+\footnote{Quick installation instructions are also described on \url{http://eudaq.github.io/} or in the main \texttt{README.md} file of each branch, e.g. \url{https://github.com/eudaq/eudaq/blob/master/README.md}.}
+\begin{enumerate}
+\item Installation of (required) prerequisites
+\item Downloading the source code (GitHub)
+\item Configuration of the code (CMake)
+\item Compilation of the code
+\end{enumerate}
+
+If problems occur during the installation process, please have a look at the issue tracker on GitHub.%
+\footnote{Go to \url{https://github.com/eudaq/eudaq/issues}} 
+Here you can search whether your problem had already been experienced by someone else, or you can open a new issue (see \autoref{sec:reporting}).
+
+\subsubsection{Prerequisites}
+
+EUDAQ has some dependencies on other software, but some features do rely on other packages:
+\begin{itemize}
+\item To get the code and stay updated with the central repository on GitHub, git is used.
+\item To configure the EUDAQ build process, the CMake cross-platform, open-source build system is used.
+\item To compile EUDAQ from source code requires a compiler that implements the C++11 standard.
+\item Qt is required to build GUIs of e.g.\ the RunControl or LogCollector. 
+\item ROOT is required for the lagecy StdEventMonitor.
+\end{itemize}
+
+\paragraph{Git}
+Git is a free and open source distributed version control and is available for all of the usual platforms \cite{gitWWW}. 
+It allows local version control and provides repositories, but also enables communication with central online repositories like GitHub.
+   
+In order to get the EUDAQ code and stay updated with the central repository on GitHub, git is used (see \autoref{sec:downloadingEUDAQ}).
+For EUDAQ code development, requiring different versions (tags) or branches (development repositories), git is also used. %%%% (see \autoref{sec:contributing}).
+
+
+\paragraph{CMake (required)}
+In order to generate configuration files for building EUDAQ (makefiles) independently from the compiler and the operating platform, the CMake (at least version 3.1) build system is used.
+
+CMake is available for all major operating systems from \url{http://www.cmake.org/cmake/resources/software.html}. 
+On most Linux distributions, it can usually be installed via the built-in package manager (aptitude/apt-get/yum etc.) and on MacOS using packages provided by e.g. the MacPorts or Fink projects.
+
+\paragraph{C++11 compliant compiler (required)}
+The compilation of the EUDAQ source code requires a C++11 compliant compiler and has been tested with GCC (at least version 4.8.1), Clang (at least version 3.1), and MSVC (Visual Studio 2013 and later) on Linux, OS X and Windows.
+
+\paragraph{Qt (for GUI)}
+The graphical interface of EUDAQ uses the Qt graphical framework.
+In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
+It is available in most Linux distributions as the package \texttt{qt5-devel} or \texttt{qt5-dev}.
+It can also be downloaded and installed from \url{http://download.qt.io/archive/qt/}. 
+
+\paragraph{ROOT (for the StdEventMonitor)}
+\label{sec:Root}
+%%%% To enable the EUDAQ extensions library support to ROOT, EUDAQ needs to be compiled and linked to the ROOT library.
+The Online Monitor uses the ROOT package.
+It can be downloaded from \url{http://root.cern.ch}.
+
+Make sure ROOT's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
+This can be done by sourcing the \texttt{thisroot.sh} (or \texttt{thisroot.ch} for csh-like shells)
+script in the \texttt{bin} directory of the ROOT installation:
+\begin{listing}[mybash]
+source /path-to/root/bin/thisroot.sh
+\end{listing}
+
+\paragraph{LCIO (for LCIO extension)}
+\label{sec:LCIO}
+To enable the writing of \gls{LCIO} files, or the conversion of native files to \gls{LCIO} format,
+EUDAQ must be linked against the \gls{LCIO} libraries.
+When the LCIO option is enabled during the configuration step, source files will be download from the internet and compiled automatically.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Obtaining the source code}
+\label{sec:downloadingEUDAQ}
+
+The EUDAQ source code is hosted on GitHub \cite{githubEUDAQ}. 
+Here, we describe how to get the code and install a stable version release. 
+In order to get information about the work flow of developing EUDAQ code, please find the relevant information in see \autoref{sec:contributing}.
+
+\paragraph{Downloading the code (clone)}
+We recommend using git to download the software,
+since this will allow you to easily update to newer versions.
+The source code can be downloaded with the following command:
+\begin{listing}[mybash]
+git clone https://github.com/eudaq/eudaq.git eudaq
+\end{listing}
+This will create the directory \texttt{eudaq}, and download the latest
+version into it. 
+
+\textit{Note:} Alternatively and without version control, you can also download a zip/tar.gz file of EUDAQ releases (tags) from \url{https://github.com/eudaq/eudaq/releases}. 
+By downloading the code, you can skip the next two subsections. 
+
+\paragraph{Changing to a release version (checkout)}
+After cloning the code from GitHub, your local EUDAQ version is on the master branch (check with \texttt{git status}).  
+For using EUDAQ without development or for production environments (e.g. at test beams), we strongly recommend to use the latest release version. 
+Use 
+\begin{listing}[mybash]
+git tag 
+\end{listing}
+in the repository to find the newest stable version as the last entry.
+In order to change to this version in your local repository, execute e.g. 
+\begin{listing}[mybash]
+git checkout v2.0.0alpha
+\end{listing}
+to change to version v2.0.0alpha.
+
+\paragraph{Updating the code (fetch)}
+If you want to update your local code, e.g to get the newest release versions, execute in the \texttt{eudaq} directory: 
+\begin{listing}[mybash]
+git fetch
+\end{listing}
+and check for new versions with \texttt{git tag}. 
+
+
+\subsubsection{Configuration via CMake}
+\label{sec:cmake}
+CMake supports out-of-source configurations and generates building files for compilation (makefiles). 
+Enter the \texttt{build} directory and run CMake, i.e.
+\begin{listing}[mybash]
+cd build
+cmake ..
+\end{listing}
+CMake automatically searches for required packages and verifies that all dependencies are met using the \texttt{CMakeLists.txt} scripts in the main folder and in all sub directories. 
+
+You can modify this default behavior by passing the \texttt{-D[eudaq\_build\_option]} option to
+CMake where \texttt{[name]} refers to an optional component, e.g.
+\begin{listing}[mybash]
+cmake -DEUDAQ_BUILD_GUI=ON  ..
+\end{listing}
+to disable the GUI but enable additionally executable of the TLU producer.
+The most important building options are given in \autoref{tab:cmakeoptions}.
+
+If you are not familiar with cmake, cmake-gui is nice GUI tool to help you configure the project.
+
+\begin{table}[!h]
+{\footnotesize
+\begin{tabular}{l|l|p{2cm}|p{5.5cm}}
+option &  default &  dependency & comment \\
+\hline
+\texttt{EUDAQ\_BUILD\_EXECUTABLE} &  \texttt{<auto>} & none & Builds main EUDAQ executables.\\
+\texttt{EUDAQ\_BUILD\_GUI} & \texttt{<auto>} & Qt5 & Builds GUI executables, such as the RunControl (euRun) and LogCollector (euLog).\\
+\texttt{EUDAQ\_BUILD\_MANUAL} & \texttt{OFF} & LaTex &  Builds manual in pdf-format.  \\
+%% \texttt{EUDAQ\_BUILD\_NREADER} & \texttt{OFF} & EUTelescope, LCIO &  Builds native reader Marlin processor used for data conversion into LCIO.\\
+\texttt{EUDAQ\_BUILD\_STDEVENT\_MONITOR} & \texttt{auto} & ROOT6 &  Builds lagecy standardevent monitor.  \\
+\texttt{EUDAQ\_INSTALL\_PREFIX} & \texttt{<source\_folder>} & none & In order to install the executables into \texttt{bin} and the library into \texttt{lib} of a specific path, instead of into the \texttt{<source\_folder>} path.\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_CLI} & \texttt{ON} & none & Builds extension library of command line interface.\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_LCIO} & \texttt{<auto>} & LCIO & Builds LCIO extension library.\\
+%% \texttt{EUDAQ\_LIBRARY\_BUILD\_ROOT} & \texttt{<auto>} & ROOT & Builds ROOT extension library.\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_TEST} & \texttt{ON} & none & Builds extension library for develop test.\\
+\texttt{USER\_EXAMPLE\_BUILD} & \texttt{ON} & none & Builds example user code.\\
+\texttt{USER\_\{user\_name\}\_BUILD} & \texttt{<unknown>} & \texttt{<unknown>} & Builds user code inside user folder \{user\_name\}.\\
+\texttt{CMAKE\_BUILD\_TYPE} & \texttt{RelWithDebInfo} & \texttt{none} & Only affect the building on Linux/MacOS, see CMake manual.\\
+\end{tabular}
+\caption{Options for CMake.}
+\label{tab:cmakeoptions}
+}
+\end{table}
+
+\textit{Note:} After building files by running \texttt{cmake ..}, you can list all possible options and their status by running \texttt{cmake -L}. 
+Using a GUI version of CMake shows also all of the possible options.   
+
+Corresponding settings are cached, thus they will be used again next time CMake is run.
+If you encounter a problem during installation, it is recommended to clean the cache by just removing all files from the build folder, since it only contains automatically generated files. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+\subsubsection{Compilation}
+Universal command for all systems:
+\begin{listing}[mybash]
+cmake --build {source_folder}/build --target install
+\end{listing}
+
+Done!

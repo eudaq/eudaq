@@ -66,8 +66,8 @@ namespace eudaq {
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
+
     void OnStatus() override;
-    
   private:
     bool m_exit;
     bool m_cli_run; 
@@ -77,12 +77,14 @@ namespace eudaq {
     std::string m_name;
     std::string m_fwpatt;
     std::string m_fwtype;
+
     uint32_t m_pdc_n;
     uint32_t m_evt_c;
     std::mutex m_mtx_sender;
     std::map<std::string, std::shared_ptr<DataSender>> m_senders;
     //    uint32_t m_run_number;
     FileWriterUP m_writer;
+
   };
   //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
 }

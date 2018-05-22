@@ -1,0 +1,129 @@
+\select@language {british}
+\contentsline {section}{\numberline {1}License}{4}{section.1}
+\contentsline {section}{\numberline {2}Introduction}{5}{section.2}
+\contentsline {subsection}{\numberline {2.1}Architecture}{5}{subsection.2.1}
+\contentsline {subsubsection}{\numberline {2.1.1}Run Control}{6}{subsubsection.2.1.1}
+\contentsline {subsubsection}{\numberline {2.1.2}Producer}{6}{subsubsection.2.1.2}
+\contentsline {subsubsection}{\numberline {2.1.3}Data Collector}{6}{subsubsection.2.1.3}
+\contentsline {subsubsection}{\numberline {2.1.4}Log Collector}{6}{subsubsection.2.1.4}
+\contentsline {subsubsection}{\numberline {2.1.5}Monitor}{6}{subsubsection.2.1.5}
+\contentsline {subsection}{\numberline {2.2}Directory and File Structure}{7}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Executables}{8}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Libraries}{8}{subsection.2.4}
+\contentsline {section}{\numberline {3}Installation}{10}{section.3}
+\contentsline {subsection}{\numberline {3.1}Binary Package Installation}{10}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Building from Source Code}{10}{subsection.3.2}
+\contentsline {subsubsection}{\numberline {3.2.1}Prerequisites}{10}{subsubsection.3.2.1}
+\contentsline {paragraph}{\nonumberline Git}{11}{section*.2}
+\contentsline {paragraph}{\nonumberline CMake (required)}{11}{section*.3}
+\contentsline {paragraph}{\nonumberline C++11 compliant compiler (required)}{11}{section*.4}
+\contentsline {paragraph}{\nonumberline Qt (for GUI)}{11}{section*.5}
+\contentsline {paragraph}{\nonumberline ROOT (for the StdEventMonitor)}{11}{section*.6}
+\contentsline {paragraph}{\nonumberline LCIO (for LCIO extension)}{11}{section*.7}
+\contentsline {subsubsection}{\numberline {3.2.2}Obtaining the source code}{11}{subsubsection.3.2.2}
+\contentsline {paragraph}{\nonumberline Downloading the code (clone)}{12}{section*.8}
+\contentsline {paragraph}{\nonumberline Changing to a release version (checkout)}{12}{section*.9}
+\contentsline {paragraph}{\nonumberline Updating the code (fetch)}{12}{section*.10}
+\contentsline {subsubsection}{\numberline {3.2.3}Configuration via CMake}{12}{subsubsection.3.2.3}
+\contentsline {subsubsection}{\numberline {3.2.4}Compilation}{13}{subsubsection.3.2.4}
+\contentsline {section}{\numberline {4}Run an Example Setup}{14}{section.4}
+\contentsline {subsection}{\numberline {4.1}Target Setup}{14}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Preparation}{14}{subsection.4.2}
+\contentsline {subsubsection}{\numberline {4.2.1}Directories}{14}{subsubsection.4.2.1}
+\contentsline {subsubsection}{\numberline {4.2.2}Init/Config-Files}{14}{subsubsection.4.2.2}
+\contentsline {subsubsection}{\numberline {4.2.3}Ports and Firewall}{16}{subsubsection.4.2.3}
+\contentsline {subsection}{\numberline {4.3}Startup}{16}{subsection.4.3}
+\contentsline {subsubsection}{\numberline {4.3.1}RunControl}{16}{subsubsection.4.3.1}
+\contentsline {paragraph}{\nonumberline Initialization Section}{17}{lstlisting.-13}
+\contentsline {paragraph}{\nonumberline Configuration Section}{17}{lstlisting.-14}
+\contentsline {subsubsection}{\numberline {4.3.2}LogCollector}{17}{subsubsection.4.3.2}
+\contentsline {paragraph}{\nonumberline Initialization Section}{18}{lstlisting.-17}
+\contentsline {paragraph}{\nonumberline Configuration Section}{18}{lstlisting.-18}
+\contentsline {subsubsection}{\numberline {4.3.3}DataCollector}{18}{subsubsection.4.3.3}
+\contentsline {paragraph}{\nonumberline Initialization Section}{19}{lstlisting.-21}
+\contentsline {paragraph}{\nonumberline Configuration Section}{19}{lstlisting.-22}
+\contentsline {subsubsection}{\numberline {4.3.4}Producer}{19}{subsubsection.4.3.4}
+\contentsline {paragraph}{\nonumberline Initialization Section}{20}{lstlisting.-25}
+\contentsline {paragraph}{\nonumberline Configuration Section}{20}{lstlisting.-26}
+\contentsline {subsubsection}{\numberline {4.3.5}Monitor}{20}{subsubsection.4.3.5}
+\contentsline {paragraph}{\nonumberline Initialization Section}{21}{lstlisting.-29}
+\contentsline {paragraph}{\nonumberline Configuration Section}{21}{lstlisting.-30}
+\contentsline {subsection}{\numberline {4.4}Operating}{21}{subsection.4.4}
+\contentsline {subsection}{\numberline {4.5}After data taking}{22}{subsection.4.5}
+\contentsline {subsubsection}{\numberline {4.5.1}Dump data}{22}{subsubsection.4.5.1}
+\contentsline {subsubsection}{\numberline {4.5.2}Convert data format}{23}{subsubsection.4.5.2}
+\contentsline {section}{\numberline {5}Integration with User Hardware}{24}{section.5}
+\contentsline {subsection}{\numberline {5.1}Announcement of Derived Class}{24}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}Serializable}{24}{subsection.5.2}
+\contentsline {subsubsection}{\numberline {5.2.1}Event}{25}{subsubsection.5.2.1}
+\contentsline {subsection}{\numberline {5.3}Ownership}{26}{subsection.5.3}
+\contentsline {subsection}{\numberline {5.4}Command/Status Handling}{26}{subsection.5.4}
+\contentsline {subsubsection}{\numberline {5.4.1}RunControl and CommandReceiver}{26}{subsubsection.5.4.1}
+\contentsline {paragraph}{\nonumberline RunControl}{26}{section*.21}
+\contentsline {paragraph}{\nonumberline CommandReceiver}{26}{section*.22}
+\contentsline {subsubsection}{\numberline {5.4.2}State Model}{26}{subsubsection.5.4.2}
+\contentsline {subsubsection}{\numberline {5.4.3}Command}{27}{subsubsection.5.4.3}
+\contentsline {paragraph}{\nonumberline Initialise}{27}{section*.23}
+\contentsline {paragraph}{\nonumberline Configure}{27}{section*.24}
+\contentsline {paragraph}{\nonumberline StartRun}{27}{section*.25}
+\contentsline {paragraph}{\nonumberline StopRun}{27}{section*.26}
+\contentsline {paragraph}{\nonumberline Reset}{28}{section*.27}
+\contentsline {paragraph}{\nonumberline Terminate}{28}{section*.28}
+\contentsline {section}{\numberline {6}Writing a Producer}{29}{section.6}
+\contentsline {subsection}{\numberline {6.1}Producer Prototype}{29}{subsection.6.1}
+\contentsline {subsection}{\numberline {6.2}Example Source Code: Dummy Event Producer}{30}{subsection.6.2}
+\contentsline {subsubsection}{\numberline {6.2.1}Declaration}{30}{subsubsection.6.2.1}
+\contentsline {subsubsection}{\numberline {6.2.2}Register to Factory}{30}{subsubsection.6.2.2}
+\contentsline {subsubsection}{\numberline {6.2.3}Constructor}{31}{subsubsection.6.2.3}
+\contentsline {subsubsection}{\numberline {6.2.4}DoInitialise}{31}{subsubsection.6.2.4}
+\contentsline {subsubsection}{\numberline {6.2.5}DoConfigure}{32}{subsubsection.6.2.5}
+\contentsline {subsubsection}{\numberline {6.2.6}DoStartRun}{32}{subsubsection.6.2.6}
+\contentsline {subsubsection}{\numberline {6.2.7}DoStopRun}{32}{subsubsection.6.2.7}
+\contentsline {subsubsection}{\numberline {6.2.8}DoReset}{33}{subsubsection.6.2.8}
+\contentsline {subsubsection}{\numberline {6.2.9}DoTerminate}{33}{subsubsection.6.2.9}
+\contentsline {subsubsection}{\numberline {6.2.10}Send Event}{33}{subsubsection.6.2.10}
+\contentsline {paragraph}{\nonumberline Tags}{34}{section*.29}
+\contentsline {subsubsection}{\numberline {6.2.11}Error}{35}{subsubsection.6.2.11}
+\contentsline {section}{\numberline {7}Writing a DataCollector}{36}{section.7}
+\contentsline {subsection}{\numberline {7.1}DataCollector Prototype}{36}{subsection.7.1}
+\contentsline {subsection}{\numberline {7.2}Example Code: DirectSave}{37}{subsection.7.2}
+\contentsline {subsection}{\numberline {7.3}Example Code: SyncTrigger}{38}{subsection.7.3}
+\contentsline {section}{\numberline {8}Writing a Data Converter}{41}{section.8}
+\contentsline {subsection}{\numberline {8.1}Event Structure}{41}{subsection.8.1}
+\contentsline {subsubsection}{\numberline {8.1.1}RawDataEvent}{41}{subsubsection.8.1.1}
+\contentsline {subsubsection}{\numberline {8.1.2}StandardEvent}{41}{subsubsection.8.1.2}
+\contentsline {subsection}{\numberline {8.2}Example Code: RawEvent2StdEvent}{41}{subsection.8.2}
+\contentsline {subsection}{\numberline {8.3}RawEventTTreeEvent Converter}{42}{subsection.8.3}
+\contentsline {section}{\numberline {9}Writing a Monitor}{43}{section.9}
+\contentsline {subsection}{\numberline {9.1}Monitor Prototype}{43}{subsection.9.1}
+\contentsline {subsection}{\numberline {9.2}Example Code}{44}{subsection.9.2}
+\contentsline {subsection}{\numberline {9.3}Graphical User Interface}{46}{subsection.9.3}
+\contentsline {subsubsection}{\numberline {9.3.1}StdEventMonitor}{46}{subsubsection.9.3.1}
+\contentsline {section}{\numberline {10}Writing a RunControl}{47}{section.10}
+\contentsline {subsection}{\numberline {10.1}RunControl Prototype}{47}{subsection.10.1}
+\contentsline {subsection}{\numberline {10.2}Example Code: auto stop}{47}{subsection.10.2}
+\contentsline {subsection}{\numberline {10.3}RunControl Mode}{48}{subsection.10.3}
+\contentsline {subsubsection}{\numberline {10.3.1}EUDAQ Working as Master DAQ}{49}{subsubsection.10.3.1}
+\contentsline {subsubsection}{\numberline {10.3.2}EUDAQ Working as Slaver DAQ}{49}{subsubsection.10.3.2}
+\contentsline {section}{\numberline {11}Support User Defined Event Type}{50}{section.11}
+\contentsline {subsection}{\numberline {11.1}Event}{50}{subsection.11.1}
+\contentsline {subsection}{\numberline {11.2}FileWriter}{50}{subsection.11.2}
+\contentsline {subsubsection}{\numberline {11.2.1}FileWriter Prototype}{50}{subsubsection.11.2.1}
+\contentsline {subsubsection}{\numberline {11.2.2}Example Code: NativeFileWriter}{51}{subsubsection.11.2.2}
+\contentsline {subsection}{\numberline {11.3}FileReader}{52}{subsection.11.3}
+\contentsline {subsubsection}{\numberline {11.3.1}FileReader Prototype}{52}{subsubsection.11.3.1}
+\contentsline {subsubsection}{\numberline {11.3.2}Example Code: NativeFileReader}{52}{subsubsection.11.3.2}
+\contentsline {section}{\numberline {12}Contributing to EUDAQ}{54}{section.12}
+\contentsline {subsection}{\numberline {12.1}Reporting Issues}{54}{subsection.12.1}
+\contentsline {subsection}{\numberline {12.2}Regression Testing}{54}{subsection.12.2}
+\contentsline {subsection}{\numberline {12.3}Commiting Code to the Main Repository}{54}{subsection.12.3}
+\contentsline {section}{\numberline {A}Platform Dependent Issues/ Solutions}{57}{appendix.A}
+\contentsline {subsection}{\numberline {A.1}Linux}{57}{subsection.A.1}
+\contentsline {subsubsection}{\numberline {A.1.1}GCC Compiler}{57}{subsubsection.A.1.1}
+\contentsline {subsubsection}{\numberline {A.1.2}LLVM/Clang}{57}{subsubsection.A.1.2}
+\contentsline {subsection}{\numberline {A.2}MacOS}{57}{subsection.A.2}
+\contentsline {subsubsection}{\numberline {A.2.1}Qt}{57}{subsubsection.A.2.1}
+\contentsline {subsection}{\numberline {A.3}Windows}{57}{subsection.A.3}
+\contentsline {subsubsection}{\numberline {A.3.1}Release/Debug Version}{57}{subsubsection.A.3.1}
+\contentsline {subsubsection}{\numberline {A.3.2}Qt}{57}{subsubsection.A.3.2}
+\contentsline {section}{Glossary}{58}{section*.30}

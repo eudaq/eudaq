@@ -1,0 +1,48 @@
+\begin{thebibliography}{1}
+\newcommand{\enquote}[1]{``#1''}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+
+\bibitem{telescopesWiki}
+J.~Dreyling-Eschweiler and H.~Jansen, \enquote{EUDET-type beam telescopes},
+  \emph{Online Wiki}.
+\newline\urlprefix\url{https://telescopes.desy.de/}
+
+\bibitem{Roloff:2009zza}
+P.~Roloff, \enquote{{The EUDET high resolution pixel telescope}}, \emph{Nucl.
+  Instrum. Meth.}, \textbf{A604}, (2009), 265--268.
+
+\bibitem{Jansen:2016}
+H.~Jansen, S.~Spannagel, J.~Behr, A.~Bulgheroni, G.~Claus \emph{et~al.},
+  \enquote{Performance of the EUDET-type beam telescopes}, \emph{EPJ Techniques
+  and Instrumentation}, \textbf{3}~(1), (2016), 7.
+\newline\urlprefix\url{http://dx.doi.org/10.1140/epjti/s40485-016-0033-2}
+
+\bibitem{eutel2008}
+A.~Bulgheroni, \enquote{EUTelescope, the {JRA1} tracking and reconstruction
+  software: a status report}, \emph{EUDET-Memo-2008-48}.
+\newline\urlprefix\url{http://www.eudet.org/e26/e28/e615/e835/eudet-memo-2008-48.pdf}
+
+\bibitem{Spannagel:2016}
+S.~Spannagel, \enquote{{Test Beam Measurements for the Upgrade of the CMS Pixel
+  Detector and Measurement of the Top Quark Mass from Differential Cross
+  Sections}}, Ph.D. thesis, U. Hamburg, Dept. Phys., Hamburg (2016).
+\newline\urlprefix\url{http://bib-pubdb1.desy.de/search?cc=Publication+Database&of=hd&p=reportnumber:DESY-THESIS-2016-010}
+
+\bibitem{markdownWWW}
+GitHub, \enquote{Mastering Markdown}, \emph{GitHub}.
+\newline\urlprefix\url{https://guides.github.com/features/mastering-markdown/}
+
+\bibitem{gitWWW}
+Git, \enquote{Git -- local-branching-on-the-cheap}, \emph{Online Article}.
+\newline\urlprefix\url{https://git-scm.com/}
+
+\bibitem{githubEUDAQ}
+E.~Developers, \enquote{EUDAQ code on GutHub}, \emph{GitHub}.
+\newline\urlprefix\url{https://github.com/eudaq/eudaq}
+
+\bibitem{Shirokova:2016}
+D.~Shirokova, \enquote{Software Development for a common DAQ at test},
+  \emph{DESY Summerstudetnts}.
+
+\end{thebibliography}

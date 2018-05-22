@@ -158,70 +158,7 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, "Status Error");
     }
   }
-  void Producer::Exec(){
-    if(!m_cli_run){
-      StartCommandReceiver();
-      while(IsActiveCommandReceiver()){
-	std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      }
-    }
-    else{
-      m_exit=false;
-      while(!m_exit){
-	std::string pathini;
-	std::string pathconfig;
-	uint32_t nrun;
-	std::string param;
-	std::string cmd;
-	std::getline(std::cin, cmd);
-	size_t i = cmd.find('\0');
-	if (i != std::string::npos) {
-	  param = std::string(cmd, i + 1);
-	  cmd = std::string(cmd,0,i);
-	}
-	if (cmd == "init") {
-	  std::cout << " Type the name of Initialize file (.ini) with full path : " << std::endl;
-	  std::cin >> pathini;
-	  ReadInitializeFile(pathini);
-	  OnInitialise();
-	} else if (cmd == "config"){
-	  std::cout << "Type the name of Configure file (.conf) with full path : " << std::endl;
-	  std::cin >> pathconfig;
-	  ReadConfigureFile(pathconfig);
-	  OnConfigure();
-	} else if (cmd == "start") {
-	  std::cout << "Please Enter Run Number " << std::endl;
-	  std::cin >> nrun; 
-	  SetRunN(from_string(param,nrun));
-	  OnStartRun();
-	} else if (cmd == "stop") {
-	  OnStopRun();
-	} else if (cmd == "quit") {
-	  OnTerminate();
-	  m_exit = true;
-	} else if (cmd == "reset") {
-	  OnReset();
-	  std::cout << " Status reset to UnInitialized." << std::endl;
-	} else if (cmd == "help") {
-	  std::cout << "--- Commands ---\n"
-		    << "init [file] Initialize clients (with file 'file')\n"
-		    << "config [file] Configure clients (with file 'file')\n"
-		    << "reset        Reset\n"
-		    << "start [n]    Begin Run (with run number)\n"
-		    << "stop        End Run\n"
-		    << "quit        Quit\n"
-		    << "help        Display this help\n"
-		    << "----------------" << std::endl;
-	} else if (cmd == "status") {
-	  // TODO. 
-	} else {
-	  OnUnrecognised(cmd, param);
-	}
-      }
-      
-    }
 
-  }
   
   void Producer::SendEvent(EventSP ev){
     if(ev->IsBORE()){
@@ -234,14 +171,9 @@ namespace eudaq {
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
     ev->SetDeviceN(m_pdc_n);
-    EventSP evsp(std::move(ev));
-    if(m_cli_run){
-    if(m_writer)
-      m_writer->WriteEvent(evsp);
-    else
-      EUDAQ_THROW("FileWriter is not created before writing.");
-    }
-
+    std::unique_lock<std::mutex> lk(m_mtx_sender);
+    auto senders = m_senders; //hold on the ptrs
+    lk.unlock();
     for(auto &e: m_senders){
       if(e.second)
 	e.second->SendEvent(move(ev));

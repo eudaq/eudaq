@@ -1,0 +1,20 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Writing a Monitor}\label{sec:MonitorWriting}
+eudaq::Monitor provides the the base class and common methods to monitor the data quality online. The internal implementation of eudaq::Monitor is very similar to eudaq::DataCollector. The only difference between them is that eudaq::Monitor accepts only a single connection from an eudaq::DataCollector or eudaq::Producer. (not implemented)\\
+
+\subsection{Monitor Prototype}\label{sec:monitor_hh}
+
+\lstinputlisting[label=ls:monitordef, style=cpp, linerange=BEG*DEC-END*DEC]{../../main/lib/core/include/eudaq/Monitor.hh}
+
+\subsection{Example Code}
+Here is an example code of a derived Monitor, named Ex0Monitor. It gets configration paratmeter at configration time and do print out the infomation of the received Events. It might do an Event converting depending on how it is configured.
+\lstinputlisting[label=ls:ex0monitorcc, style=cpp]{../../user/example/module/src/Ex0Monitor.cc}
+Two virtual methods are implemented in Ex0Monitor, \lstinline[style=cpp]{DoConfigure()} and \lstinline[style=cpp]{DoReceive(eudaq::EventUP ev)}. It registers itself to the correlated \lstinline[style=cpp]{eudaq::factory} by the hash number from the name string \lstinline[style=cpp]{Ex0Monitor}.
+
+\subsection{Graphical User Interface}
+Normally, to monitoring the data quality, graphic plots are required. It means that an external graphic library is required. ROOT, Qt
+and gnuplot can be the possible graphic library.
+
+\subsubsection{StdEventMonitor}
+StdEventMonitor is an EUDAQ version 1 legacy. It was named as OnlineMonitor. Actually, it can only display the plots from StandardEvent. If the Converter to StandardEvent of the incoming Event exists, StdEventMonitor will call the correlated Converter and do the converting itself.
+StdEventMonitor depends ROOT to generate and plot graph.
