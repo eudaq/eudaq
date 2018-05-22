@@ -112,8 +112,10 @@ void NiProducer::RunLoop(){
     }
     auto tp_now = std::chrono::steady_clock::now();
     if(tp_now>tp_end){
-      if(ni_control->DataTransportClientSocket_Select())
+      if(ni_control->DataTransportClientSocket_Select()){
 	EUDAQ_WARN("There are more events which are not dumpped from labview.");
+      }
+      EUDAQ_INFO("End of dump from labview.");
       break;
     }
   }

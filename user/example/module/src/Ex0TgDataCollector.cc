@@ -10,6 +10,7 @@ public:
 		   const std::string &rc);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
+  void DoConfigure() override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TgDataCollector");
@@ -17,6 +18,7 @@ private:
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
   std::set<eudaq::ConnectionSPC> m_conn_inactive;
+  uint32_t m_noprint;
 };
 
 namespace{
@@ -42,6 +44,15 @@ void Ex0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   if(m_conn_inactive.size() == m_conn_evque.size()){
     m_conn_inactive.clear();
     m_conn_evque.clear();
+  }
+}
+
+void Ex0TgDataCollector::DoConfigure(){
+  m_noprint = 0;
+  auto conf = GetConfiguration();
+  if(conf){
+    conf->Print();
+    m_noprint = conf->Get("DISABLE_PRINT", 0);
   }
 }
 
@@ -87,6 +98,7 @@ void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp
       m_conn_inactive.erase(conn);
     }
   }
-  ev_sync->Print(std::cout);
+  if(!m_noprint)
+    ev_sync->Print(std::cout);
   WriteEvent(std::move(ev_sync));
 }
