@@ -19,15 +19,6 @@ int main(int /*argc*/, const char **argv) {
   }
   std::string app_name = name.Value();
 
-    if(app_name.find("Producer") != std::string::npos){
-      auto app=eudaq::Factory<eudaq::Producer>::MakeShared<const std::string&,const std::string&>
-	(eudaq::str2hash(name.Value()), tname.Value(), rctrl.Value());
-      if(!app){
-	std::cout<<"unknown Producer"<<std::endl;
-	return -1;
-      }
-      app->Exec();
-    }
     if(app_name.find("Producer") == std::string::npos){
       std::cout<<"unknown application"<<std::endl;
       return -1;
