@@ -1,0 +1,34 @@
+# Start Run Control
+xterm -T "Run Control" -e 'euRun' &
+sleep 2 
+
+# Start Logger
+xterm -T "Log Collector" -e 'euLog -r tcp://192.168.22.1' &
+sleep 1
+
+# Start one DataCollector
+# name (-t) in conf file
+# or: -n Ex0TgDataCollector
+xterm -T "Data Collector TLU" -e 'euCliCollector -n DirectSaveDataCollector -t tlu_dc -r tcp://192.168.22.1:44000' &
+sleep 1
+
+xterm -T "Data Collector NI/Mimosa" -e 'euCliCollector -n DirectSaveDataCollector -t ni_dc -r tcp://192.168.22.1:44000' &
+sleep 1
+
+xterm -T "Data Collector FEI4/USBpix" -e 'euCliCollector -n DirectSaveDataCollector -t fei4_dc -r tcp://192.168.22.1:44000' &
+sleep 1
+
+# Start TLU Producer
+xterm -T "FmctluProducer" -e 'euCliProducer -n FmctluProducer -t fmctlu -r tcp://192.168.22.1:44000' & 
+sleep 1
+
+# Start NI Producer locally connect to LV via TCP/IP
+xterm -T "NI/Mimosa Producer" -e 'euCliProducer -n NiProducer -t niproducer -r tcp://192.168.22.1:44000' &
+sleep 1
+
+# Start STcontrol Producer 
+xterm -T "STcontrol" -e 'sudo /opt/USBpix/bin/STcontrol_eudaq -r 192.168.22.1' &
+sleep 1
+
+# OnlineMonitor
+xterm -T "Online Monitor" -e 'StdEventMonitor -t StdEventMonitor -r tcp://192.168.22.1' & 

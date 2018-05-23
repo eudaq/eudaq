@@ -407,7 +407,7 @@ namespace eudaq {
   void RunControl::StatusThread(){
     while(!m_exit){
       SendCommand("STATUS", "");
-      std::this_thread::sleep_for(std::chrono::milliseconds(300));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // status/request update time of RunControl
     }
   }
   

@@ -35,8 +35,6 @@ int main(int /*argc*/, const char **argv) {
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
   uint32_t event_count = 0;
 
-  std::cout<< "runNumber,eventNumber,triggerNumber,timeStampBegin,triggersFired" <<std::endl;
-
   while(1){
     auto ev = reader->GetNextEvent();
     if(!ev)
@@ -74,28 +72,11 @@ int main(int /*argc*/, const char **argv) {
 
 
     if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
-        auto subevents = ev->GetSubEvents();
-        for (auto &subev: subevents){
-            auto subeventDescription = subev->GetDescription();
-            // std::cout<< subeventDescription << std::endl;
-            if (subeventDescription=="TluRawDataEvent") {
-		auto eventNumber = subev->GetEventNumber();
-		auto runNumber = subev->GetRunNumber();
-		auto triggerNumber = subev->GetTriggerN();
-		auto triggersFired = subev->GetTag("TRIGGER" , "NAN");
-		auto timeStampBegin = subev->GetTimestampBegin();
-		uint32_t scalers [6] = { static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER0" , "NAN"))), static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER1" , "NAN"))) , static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER2" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER3" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER4" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER5" , "NAN")))    };
-		uint32_t fine_ts [6] = { static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS0" , "NAN"))), static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS1" , "NAN"))) , static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS2" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS3" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS4" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS5" , "NAN")))    };
-		std::cout<< runNumber << " " << eventNumber << " " << triggerNumber << " " << timeStampBegin << " " << triggersFired <<std::endl;
-                //subev->Print(std::cout);
-            }
-
-        }
-      // ev->Print(std::cout);
+        ev->Print(std::cout);
     }
 
     event_count ++;
   }
-  // std::cout<< "There are "<< event_count << "Events"<<std::endl;
+  std::cout<< "There are "<< event_count << "Events"<<std::endl;
   return 0;
 }

@@ -1,6 +1,0 @@
-# DataCollector
-xterm -T "Data Collector FEI4/USBpix" -e 'euCliCollector -n DirectSaveDataCollector -t fei4_dc -r tcp://192.168.22.1:44000' &
-sleep 2
-
-# Start USBPix
-echo "/opt/USBpix/bin/STcontrol_eudaq -r 192.168.22.1 &"
