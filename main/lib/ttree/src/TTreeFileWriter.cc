@@ -52,7 +52,6 @@ namespace eudaq {
 	TBranch* trigger_n = ttree->Branch("trigger_n",0, "trign/i");
 	TBranch* tsb = ttree->Branch("timestampbegin",0, "tsb/l");
 	TBranch* tse = ttree->Branch("timestampend",0, "tse/l");
-	//	TBranch* block = ttree->Branch("block",0, "block/b");
   }
   TTreeFileWriter::~TTreeFileWriter () {
     m_tfile->Write();    
