@@ -36,7 +36,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
   }
     
   auto &rawev = *ev;
-  if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
+  if (rawev.NumBlocks() < 2 || rawev.GetBlock(0).size() < 20 ||
       rawev.GetBlock(1).size() < 20) {
     EUDAQ_WARN("Ignoring bad event " + std::to_string(rawev.GetEventNumber()));
     return false;
