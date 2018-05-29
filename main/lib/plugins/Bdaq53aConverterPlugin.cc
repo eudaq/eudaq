@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <array>
+#include <memory>
 
 
 #ifdef DEBUG_1
@@ -137,7 +138,18 @@ namespace eudaq
             const std::vector<uint32_t> & trig_id() const { return _trig_id; }
             const std::vector<uint32_t> & trig_tag() const { return _trig_tag; }
             unsigned int n_event_headers() const { return _n_event_headers; } 
-            const std::vector<std::array<uint32_t,3> > & hits(unsigned int i) const { return _hits.at(i); }
+            const std::vector<std::array<uint32_t,3> >  hits(unsigned int i) const 
+            {
+                if( _hits.find(i) == _hits.end() )
+                {
+                    return {};
+                }
+                else
+                {
+
+                    return _hits.at(i);
+                }
+            }
             
         private:
             std::vector<uint32_t> _bcid;
@@ -166,7 +178,7 @@ namespace eudaq
 
 
     // Declare a new class that inherits from DataConverterPlugin
-    class Bdaq53aConverterPlugin : public DataConverterPlugin
+    class Bdaq53aConverterPlugin : public DataConverterPlugin 
     {
         public:
             // This is called once at the beginning of each run.
@@ -221,9 +233,8 @@ namespace eudaq
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
             // The return value indicates whether the conversion was successful.
             // Again, this is just an example, adapted it for the actual data layout.
-            virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) 
+            virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const 
             {
-std::cout << "HOLAAAAAAAAAA" << std::endl;
                 if(ev.IsBORE() || ev.IsEORE())
                 {
                     // nothing to do
@@ -231,7 +242,7 @@ std::cout << "HOLAAAAAAAAAA" << std::endl;
                 }
                 
                 // Clear memory
-                _data_map.clear();
+                _data_map->clear();
                 
                 // Number of event headers: must be, at maximum, the number of
                 // subtriggers of the Trigger Table (TT)
@@ -305,7 +316,7 @@ std::cout << "HOLAAAAAAAAAA" << std::endl;
                 return 0;
             }
             
-            virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent)
+            virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const
             {
                 //std::cout << "getlciosubevent (I4) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
                 if(eudaqEvent.IsBORE()) 
@@ -320,7 +331,7 @@ std::cout << "HOLAAAAAAAAAA" << std::endl;
                 }
 
                 // Clear the memory
-                _data_map.clear();
+                _data_map->clear();
                 
                 // set type of the resulting lcio event
                 lcioEvent.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE);
@@ -423,7 +434,6 @@ std::cout << "HOLAAAAAAAAAA" << std::endl;
 #endif
 
         private:
-
             void _get_bore_parameters(const Event & )
             {
                 // XXX Just if need to initialize paremeters from the BORE
@@ -442,24 +452,28 @@ std::cout << "HOLAAAAAAAAAA" << std::endl;
                 return (unsigned)-1;
             }
 
-            const RD53A_DecodedData & get_decoded_data(const RawDataEvent::data_t & raw_data,const int & chip)
+            const RD53A_DecodedData & get_decoded_data(const RawDataEvent::data_t & raw_data,const int & chip) const
             {
                 // memorize if not there
-                if(_data_map.find(chip) == _data_map.end())
+                if(_data_map->find(chip) == _data_map->end())
                 {
-                    _data_map.emplace(chip,RD53A_DecodedData(raw_data));
+                    _data_map->emplace(chip,RD53A_DecodedData(raw_data));
                 }
-                return _data_map.at(chip);
+                return _data_map->at(chip); //_data_map->find(chip)->second;
             }
             
-            // The decoded data memory
-            std::map<int,RD53A_DecodedData> _data_map;
+            // The decoded data memory (pointer to avoid constantness of the Get** functions)
+            std::unique_ptr<std::map<int,RD53A_DecodedData> >  _data_map;
 
             // The constructor can be private, only one static instance is created
             // The DataConverterPlugin constructor must be passed the event type
             // in order to register this converter for the corresponding conversions
             // Member variables should also be initialized to default values here.
-            Bdaq53aConverterPlugin() : DataConverterPlugin(EVENT_TYPE) {}
+            Bdaq53aConverterPlugin() : 
+                DataConverterPlugin(EVENT_TYPE),
+                _data_map(std::unique_ptr<std::map<int,RD53A_DecodedData>>(new std::map<int,RD53A_DecodedData>)) 
+            {
+            }
 
             // The single instance of this converter plugin
             static Bdaq53aConverterPlugin m_instance;
