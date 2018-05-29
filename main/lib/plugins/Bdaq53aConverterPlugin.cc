@@ -17,6 +17,10 @@
 
 #include <stdlib.h>
 #include <cstdint>
+#include <map>
+#include <vector>
+#include <array>
+
 
 #ifdef DEBUG_1
 #include <bitset>
@@ -52,7 +56,7 @@ namespace eudaq
 {
     // The event type for which this converter plugin will be registered
     // Modify this to match your actual event type (from the Producer)
-    static const char* EVENT_TYPE   = "bdaq53a";
+    static const char* EVENT_TYPE   = "bdaq53a"; // XXX to be changed: rd53a
     static const unsigned int NCOLS = 400;
     static const unsigned int NROWS = 192;
     
@@ -70,6 +74,96 @@ namespace eudaq
 #if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 30;
 #endif
+    
+    //XXX TO BE PROMOTED?
+    class RD53A_DecodedData
+    {
+        public:
+            RD53A_DecodedData() = delete;
+            RD53A_DecodedData(const RawDataEvent::data_t & raw_data) :
+                _bcid(),
+                _trig_id(),
+                _trig_tag(),
+                _n_event_headers(0),
+                _hits()
+            {
+                _bcid.reserve(N_SUB_TRIGGERS);
+                _trig_id.reserve(N_SUB_TRIGGERS);
+                _trig_tag.reserve(N_SUB_TRIGGERS);
+
+                // Assuming proper format DH - HITS 
+                for(unsigned int it = start_byte; it < raw_data.size()-1; it+=8*sizeof(uint8_t))
+                {
+                    // XXX PROVISIONAL, allowing not well formed data, to be 
+                    // removed eventually
+                    if(PSEUDO_TRIGGER_ID != 0 )
+                    {
+                        start_byte = 0;
+                    }
+
+                    // Build the 32-bit FE word 
+                    uint32_t data_word = _reassemble_word(raw_data,it);
+                    if( BDAQ53A_IS_HEADER(data_word) )
+                    {
+                        _bcid.push_back(BDAQ53A_BCID(data_word));
+                        _trig_id.push_back(BDAQ53A_TRG_ID(data_word));
+                        _trig_tag.push_back(BDAQ53A_TRG_TAG(data_word));
+                        ++_n_event_headers; // XXX Not NEEDED
+                    }
+                    else
+                    {
+                        _hits[_n_event_headers] = std::vector<std::array<uint32_t,3> >();
+                        // [MulticolCol 6b][Row 9b][col side: 1b][ 4x(4bits ToT ]
+                        const uint32_t multicol = (data_word >> 26) & 0x3F;
+                        const uint32_t row      = (data_word >> 17) & 0x1FF;
+                        const uint32_t side     = (data_word >> 16) & 0x1;
+                        
+                        for(unsigned int pixid=0; pixid < 4; ++pixid)
+                        { 
+                            uint32_t col = (multicol*8+pixid)+4*side;
+                            const uint32_t tot = (data_word >> (pixid*4)) & 0xF;
+                            if( (col < NCOLS && row < NROWS) \
+                                    && tot != 255 && tot != 15)
+                            {
+                                _hits[_n_event_headers].push_back({ {col,row,tot} });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Getters
+            const std::vector<uint32_t> & bcid() const { return _bcid; }
+            const std::vector<uint32_t> & trig_id() const { return _trig_id; }
+            const std::vector<uint32_t> & trig_tag() const { return _trig_tag; }
+            unsigned int n_event_headers() const { return _n_event_headers; } 
+            const std::vector<std::array<uint32_t,3> > & hits(unsigned int i) const { return _hits.at(i); }
+            
+        private:
+            std::vector<uint32_t> _bcid;
+            std::vector<uint32_t> _trig_id;
+            std::vector<uint32_t> _trig_tag;
+            unsigned int _n_event_headers;
+
+            // XXX reading status and so..
+            
+            // data-header - { col, row, ToT }
+            std::map<unsigned int,std::vector<std::array<uint32_t,3> > > _hits;
+            
+            // Re-assemble the 32bit data word from the 2-32bits Front end words 
+            uint32_t _reassemble_word(const RawDataEvent::data_t & rawdata,unsigned int init) const
+            {
+                // FIXME -- No check in size of the rawdata!
+                //
+                // Contruct the FE High word from the first 4bytes [0-3] in little endian, 
+                // i.e  [0][1][2][3] --> [3][2][1][0][16b Low word]
+                // And add the FE Low word from the second set of 4 bytes [4-7] in little endian
+                // i.e [4][5][6][7] ->  [3][2][1][0][7][6][5][4] 
+                return ( ((getlittleendian<uint32_t>(&(rawdata[init])) & 0xFFFF) << 16) 
+                    | (getlittleendian<uint32_t>(&(rawdata[init+4*sizeof(uint8_t)])) & 0xFFFF));
+            }
+    };
+
 
     // Declare a new class that inherits from DataConverterPlugin
     class Bdaq53aConverterPlugin : public DataConverterPlugin
@@ -127,13 +221,17 @@ namespace eudaq
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
             // The return value indicates whether the conversion was successful.
             // Again, this is just an example, adapted it for the actual data layout.
-            virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const 
+            virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) 
             {
+std::cout << "HOLAAAAAAAAAA" << std::endl;
                 if(ev.IsBORE() || ev.IsEORE())
                 {
                     // nothing to do
                     return true;
                 }
+                
+                // Clear memory
+                _data_map.clear();
                 
                 // Number of event headers: must be, at maximum, the number of
                 // subtriggers of the Trigger Table (TT)
@@ -147,6 +245,10 @@ namespace eudaq
                 uint32_t const trigger_number = GetTriggerID(ev);
                 if(static_cast<uint32_t>(trigger_number) == -1)
                 {
+                    // Dummy plane
+                    StandardPlane plane(0, EVENT_TYPE,"rd53a");
+                    plane.SetSizeZS(NCOLS,NROWS,0,1);
+                    sev.AddPlane(plane);
                     return false;
                 }
                 else if(trigger_number != 0)
@@ -161,6 +263,7 @@ namespace eudaq
                 {
                     start_byte = 0;
                 }
+
                 // [JDC] each block could corresponds to one sensor attach to 
                 //       the card. So far, we are using only 1-sensor, but it 
                 //       could be extended at some point
@@ -169,62 +272,25 @@ namespace eudaq
                     // Create a standard plane representing one sensor plane
                     StandardPlane plane(i, EVENT_TYPE,"rd53a");
                     plane.SetSizeZS(NCOLS,NROWS,0,1);
-                    const RawDataEvent::data_t & raw_data = ev_raw.GetBlock(i);
-                    // XXX : Missing check of USER_K data, needed?
-#if DEBUG_1
-                    std::cout << " TRG " << std::setw(8) << trigger_number << std::setw(19) << " " 
-                        << std::bitset<32>(getlittleendian<uint32_t>(&(ev_raw.GetBlock(0)[0]))) << std::endl;
-#endif
-                    //
-                    // First 32-bit word: the trigger number, already used (see start_byte)
+
+                    const auto & decoded_data = get_decoded_data(ev_raw.GetBlock(i),i);
                     plane.SetTLUEvent(trigger_number);
-
-                    unsigned int buffer_pos = 0;
-                    unsigned int hit_data_status = 0;
-                    
-                    // Reassemble full 32-bit FE data word: 
-                    // The word is constructed using two 32b+32b words (High-Low) 
-                    // In order to build the FE high and low words, you need
-                    // 4 blocks of uint8 (unsigned char) on little endian for the FE high word
-                    // and 4 blocks of uint8 more (on little endian) for the FE low word
-                    // (see _reassemble_word)
-                    for(unsigned int it = start_byte; it < raw_data.size()-1; it+=8*sizeof(uint8_t))
+                    // fill data-header (be used?)
+                    for(unsigned int dh=0; dh < decoded_data.n_event_headers(); ++dh)
                     {
-                        // Build the 32-bit FE word 
-                        uint32_t data_word = _reassemble_word(raw_data,it);
-                        if( BDAQ53A_IS_HEADER(data_word) )
-                        {
-                            // [0000001] [TRIGGER ID  (5 bits)][TRIGGER TAG (5bits)][BCID (15bits)]
-                            uint32_t bcid = BDAQ53A_BCID(data_word);
-                            uint32_t trig_id  = BDAQ53A_TRG_ID(data_word);
-                            uint32_t trig_tag = BDAQ53A_TRG_TAG(data_word);
-                            
-                            ++n_event_headers;
-
-                            // --| Check data-header validity 
-                            // ------------------------------
-                            // Number of events headers cannot be higher than the subtriggers
-                            // (by data-frame construction)
-                            /*if(n_event_headers > N_SUB_TRIGGERS)
-                            {
-                            }*/
-                            // Trigger word wrong
-                            if(bcid<0)
-                            {
-                                event_status |= E_STRUCT_WRONG;
-                            }
+                        uint32_t bcid = decoded_data.bcid()[dh];
+                        uint32_t trig_id = decoded_data.trig_id()[dh];
+                        uint32_t trig_tag = decoded_data.trig_tag()[dh];
+                        //decoded_data->header_number;
 #if DEBUG_1
-                            std::cout << "EH  " << std::setw(9) << bcid
-                                << std::setw(9) << trig_id << std::setw(9) 
-                                << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
+                        std::cout << "EH  " << std::setw(9) << bcid
+                            << std::setw(9) << trig_id << std::setw(9) 
+                            << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
 #endif
-                        }
-                        else
+                        for(const auto & hits: decoded_data.hits(dh))
                         {
-                            // otherwise is a hit data word
-                            const auto & bs = _add_hits(data_word,plane);
-                            buffer_pos += bs.first;
-                            hit_data_status |= bs.second;
+                            // hits[i] = {col, row, ToT}
+                            plane.PushPixel(hits[0],hits[1],hits[2]);
                         }
                     }
                     sev.AddPlane(plane);
@@ -239,7 +305,7 @@ namespace eudaq
                 return 0;
             }
             
-            virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const 
+            virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent)
             {
                 //std::cout << "getlciosubevent (I4) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
                 if(eudaqEvent.IsBORE()) 
@@ -252,8 +318,11 @@ namespace eudaq
                     // nothing to do
                     return true;
                 }
+
+                // Clear the memory
+                _data_map.clear();
                 
-               // set type of the resulting lcio event
+                // set type of the resulting lcio event
                 lcioEvent.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE);
                 // pointer to collection which will store data
                 LCCollectionVec * zsDataCollection = nullptr;
@@ -303,28 +372,18 @@ namespace eudaq
                     std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel> >
                         sparseFrame(new eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>(zsFrame.get()));
 
-                    // [JDC --XXX PRobably not needed
-                    unsigned int lvl1 = 0;
-
                     // Reassemble full 32-bit FE data word: 
                     // The word is constructed using two 32b+32b words (High-Low) 
                     // In order to build the FE high and low words, you need
                     // 4 blocks of uint8 (unsigned char) on little endian for the FE high word
                     // and 4 blocks of uint8 more (on little endian) for the FE low word
                     // (see _reassemble_word)
-                    for(unsigned int it = start_byte; it < raw_data.size()-1; it+=8*sizeof(uint8_t))
+                    const auto & decoded_data = get_decoded_data(ev_raw.GetBlock(chip),chip);
+                    for(unsigned int dh=0; dh < decoded_data.n_event_headers(); ++dh)
                     {
-                        // Build the 32-bit FE word 
-                        uint32_t data_word = _reassemble_word(raw_data,it);
-                        if(BDAQ53A_IS_HEADER(data_word))
+                        for(const auto & hits: decoded_data.hits(dh))
                         {
-                            ++lvl1;
-                        }
-                        // First Hit
-                        else
-                        {
-                            // otherwise is a hit data word
-                            _add_hits(data_word,sparseFrame.get(),lvl1);
+                            sparseFrame->emplace_back(hits[0],hits[0],hits[2],decoded_data.bcid()[dh]);
                         }
                     }
                     // write TrackerData object that contains info from one sensor to LCIO collection
@@ -364,18 +423,6 @@ namespace eudaq
 #endif
 
         private:
-            // Re-assemble the 32bit data word from the 2-32bits Front end words 
-            uint32_t _reassemble_word(const RawDataEvent::data_t & rawdata,unsigned int init) const
-            {
-                // FIXME -- No check in size of the rawdata!
-                //
-                // Contruct the FE High word from the first 4bytes [0-3] in little endian, 
-                // i.e  [0][1][2][3] --> [3][2][1][0][16b Low word]
-                // And add the FE Low word from the second set of 4 bytes [4-7] in little endian
-                // i.e [4][5][6][7] ->  [3][2][1][0][7][6][5][4] 
-                return ( ((getlittleendian<uint32_t>(&(rawdata[init])) & 0xFFFF) << 16) 
-                    | (getlittleendian<uint32_t>(&(rawdata[init+4*sizeof(uint8_t)])) & 0xFFFF));
-            }
 
             void _get_bore_parameters(const Event & )
             {
@@ -394,84 +441,19 @@ namespace eudaq
                 }
                 return (unsigned)-1;
             }
+
+            const RD53A_DecodedData & get_decoded_data(const RawDataEvent::data_t & raw_data,const int & chip)
+            {
+                // memorize if not there
+                if(_data_map.find(chip) == _data_map.end())
+                {
+                    _data_map.emplace(chip,RD53A_DecodedData(raw_data));
+                }
+                return _data_map.at(chip);
+            }
             
-            // [JDC -- XXX PROV repeated ] Add hits into the hit vector 
-            std::pair<unsigned int,unsigned int> _add_hits(const uint32_t & data_word, \
-                    eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel> * hitvect, \
-                    const unsigned int lvl1) const
-            {
-                unsigned int data_hits_status = 0;
-                // [MulticolCol 6b][Row 9b][col side: 1b][ 4x(4bits ToT ]
-                const uint32_t multicol = (data_word >> 26) & 0x3F;
-                const uint32_t row      = (data_word >> 17) & 0x1FF;
-                const uint32_t side     = (data_word >> 16) & 0x1;
-                unsigned int buffer_position = 0;
-                // Extract the 4 Tot per each pixel
-#if DEBUG_1
-                std::cout << "HIT "; 
-#endif
-                for(unsigned int pixid=0; pixid < 4; ++pixid)
-                { 
-                    uint32_t col = (multicol*8+pixid)+4*side;
-                    const uint32_t tot = (data_word >> (pixid*4)) & 0xF;
-                    if( !(col < NCOLS && row < NROWS) )
-                    {
-                        data_hits_status |= E_UNKNOWN_WORD;
-                        ++buffer_position;
-                    }
-                    else if( tot != 255 && tot != 15)
-                    {
-#if DEBUG_1
-                        std::cout << std::setw(9) << col << std::setw(9) << row << std::setw(9) 
-                            << tot; 
-#endif
-                        hitvect->emplace_back(col,row,tot,lvl1);
-                        ++buffer_position;
-                    }
-                }
-#if DEBUG_1
-                std::cout << " " << std::bitset<32>(data_word) << std::endl;
-#endif
-                return std::pair<unsigned int,unsigned int>(buffer_position,data_hits_status);
-            }
-            // Add hits into the plane
-            std::pair<unsigned int,unsigned int> _add_hits(const uint32_t & data_word, \
-                    StandardPlane & plane ) const 
-            {
-                unsigned int data_hits_status = 0;
-                // [MulticolCol 6b][Row 9b][col side: 1b][ 4x(4bits ToT ]
-                const uint32_t multicol = (data_word >> 26) & 0x3F;
-                const uint32_t row      = (data_word >> 17) & 0x1FF;
-                const uint32_t side     = (data_word >> 16) & 0x1;
-                unsigned int buffer_position = 0;
-                // Extract the 4 Tot per each pixel
-#if DEBUG_1
-                std::cout << "HIT "; 
-#endif
-                for(unsigned int pixid=0; pixid < 4; ++pixid)
-                { 
-                    uint32_t col = (multicol*8+pixid)+4*side;
-                    const uint32_t tot = (data_word >> (pixid*4)) & 0xF;
-                    if( !(col < NCOLS && row < NROWS) )
-                    {
-                        data_hits_status |= E_UNKNOWN_WORD;
-                        ++buffer_position;
-                    }
-                    else if( tot != 255 && tot != 15)
-                    {
-#if DEBUG_1
-                        std::cout << std::setw(9) << col << std::setw(9) << row << std::setw(9) 
-                            << tot; 
-#endif
-                        plane.PushPixel(col,row,tot);
-                        ++buffer_position;
-                    }
-                }
-#if DEBUG_1
-                std::cout << " " << std::bitset<32>(data_word) << std::endl;
-#endif
-                return std::pair<unsigned int,unsigned int>(buffer_position,data_hits_status);
-            }
+            // The decoded data memory
+            std::map<int,RD53A_DecodedData> _data_map;
 
             // The constructor can be private, only one static instance is created
             // The DataConverterPlugin constructor must be passed the event type
