@@ -37,7 +37,11 @@ RD53ADecoder::RD53ADecoder(const RawDataEvent::data_t & raw_data) :
         }
         else
         {
-            _hits[_n_event_headers] = std::vector<std::array<uint32_t,3> >();
+            // Initialize hits vector only if doesn't exist
+            if(_hits.find(_n_event_headers) == _hits.end())
+            {
+                _hits[_n_event_headers] = std::vector<std::array<uint32_t,3> >();
+            }
             // [MulticolCol 6b][Row 9b][col side: 1b][ 4x(4bits ToT ]
             const uint32_t multicol = (data_word >> 26) & 0x3F;
             const uint32_t row      = (data_word >> 17) & 0x1FF;
