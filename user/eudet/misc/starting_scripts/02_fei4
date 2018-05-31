@@ -20,8 +20,10 @@ xterm -T "FmctluProducer" -e 'euCliProducer -n FmctluProducer -t fmctlu -r tcp:/
 sleep 1
 
 # Start STcontrol Producer 
-xterm -T "STcontrol" -e 'sudo /opt/USBpix/bin/STcontrol_eudaq -r 192.168.22.1' &
+#xterm -T "STcontrol" -e 'sudo /opt/USBpix/bin/STcontrol_eudaq -r 192.168.22.1' &
+xterm -T "STcontrol" -e 'sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH /opt/STcontrol_5.3/bin/STcontrol_eudaq -r 192.168.22.1' &
 sleep 1
 
 # OnlineMonitor
-xterm -T "Online Monitor" -e 'StdEventMonitor -t StdEventMonitor -r tcp://192.168.22.1' & 
+#xterm -T "Online Monitor" -e 'StdEventMonitor -t StdEventMonitor -r tcp://192.168.22.1' & 
+
