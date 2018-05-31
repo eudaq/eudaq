@@ -11,8 +11,8 @@
 echo "Entered install_afs.sh"
 echo "Installing afs"
 
-export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.11
-export OPENAFS_FILENAME_MAC=AuriStor-client-0.159-ElCapitan.dmg
+export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.13
+export OPENAFS_FILENAME_MAC=AuriStor-client-0.170-HighSierra.dmg
 
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
@@ -23,16 +23,24 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
 	sudo hdiutil attach $OPENAFS_FILENAME_MAC
 	
-	#ls /Volumes/OpenAFS/
+	ls /Volumes/OpenAFS/
 	
-	sudo installer -package /Volumes/Auristor-Lite-ElCapitan/Auristor-Lite.pkg -target /
-	sudo hdiutil detach /Volumes/Auristor-Lite-ElCapitan
+	sudo installer -package /Volumes/Auristor-Lite-HighSierra/Auristor-Lite.pkg -target /
+	sudo hdiutil detach /Volumes/Auristor-Lite-HighSierra
 	#sudo launchctl start org.auristor.filesystems.afs
+	
+	echo "Location of ThisCell"
+	ls /var/db/openafs/etc/
+	touch ~/ThisCell
+	echo "desy.de" >> ~/ThisCell
+	echo "" >> ~/ThisCell
+	sudo cp ~/ThisCell /var/db/openafs/etc/
+	
 	sudo launchctl list
 	sudo launchctl start com.auristor.yfs-client
 	sudo launchctl start com.auristor.XPCHelper
 	
-	ls /afs/
+	ls /afs/desy.de
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS
@@ -50,10 +58,12 @@ else
 	sudo apt-get install --force-yes -y linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5	
 	
 	touch ~/ThisCell
-	echo "cern.ch" >> ~/ThisCell
+	echo "desy.de" >> ~/ThisCell
 	echo "" >> ~/ThisCell
 	sudo cp ~/ThisCell /etc/openafs
 	sudo service openafs-client start	
+	sudo service openafs-client stop
+	sudo service openafs-client start
 fi
 	
 if [[ -d "/afs/desy.de/group/telescopes" ]]; then

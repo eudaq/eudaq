@@ -14,12 +14,12 @@ env:
    global:
       - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.11-clang70.tar.gz
-      - ROOT6_FILENAME_LINUX=root_v6.10.02.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT6_FILENAME_MAC=root_v6.10.02.macosx64-10.11-clang80.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.12.06.Linux-ubuntu17-x86_64-gcc7.2.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.12.06.macosx64-10.13-clang90.tar.gz
       
-      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.8
-      - CMAKE_FILENAME_LINUX=cmake-3.8.2-Linux-x86_64.tar.gz
-      - CMAKE_FILENAME_MAC=cmake-3.8.2-Darwin-x86_64.tar.gz
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.11
+      - CMAKE_FILENAME_LINUX=cmake-3.11.1-Linux-x86_64.tar.gz
+      - CMAKE_FILENAME_MAC=cmake-3.11.1-Darwin-x86_64.tar.gz
             
 #      - PYTHON_VERSION_MODERN=3.5.1
 #      - PYTHON_VERSION_OLD=2.7.10
@@ -103,18 +103,22 @@ matrix:
         python: 2.7        
         env: OPTION=old
       - os: osx
+        osx_image: xcode9.3
         compiler: clang      
         python: 3.6        
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF       
       - os: osx      
+        osx_image: xcode9.3
         compiler: clang
         python: 2.7        
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF           
       - os: osx      
+        osx_image: xcode9.3
         compiler: gcc    
         python: 3.6        
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF        
       - os: osx
+        osx_image: xcode9.3
         compiler: gcc
         python: 2.7    
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
