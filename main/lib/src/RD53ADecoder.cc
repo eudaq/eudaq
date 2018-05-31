@@ -16,7 +16,7 @@ RD53ADecoder::RD53ADecoder(const RawDataEvent::data_t & raw_data) :
     _bcid(),
     _trig_id(),
     _trig_tag(),
-    _n_event_headers(0),
+    _n_event_headers(-1),
     _hits()
 {
     _bcid.reserve(RD53A_SUB_TRIGGERS);
@@ -33,7 +33,7 @@ RD53ADecoder::RD53ADecoder(const RawDataEvent::data_t & raw_data) :
             _bcid.push_back(RD53A_BCID(data_word));
             _trig_id.push_back(RD53A_TRG_ID(data_word));
             _trig_tag.push_back(RD53A_TRG_TAG(data_word));
-            ++_n_event_headers; // XXX Not NEEDED
+            ++_n_event_headers;
         }
         else
         {
