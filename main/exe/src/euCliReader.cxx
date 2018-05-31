@@ -23,6 +23,9 @@ int main(int /*argc*/, const char **argv) {
   if(type_in=="raw")
     type_in = "native";
 
+  bool stdev_v = stdev.Value();
+
+  
   uint32_t eventl_v = eventl.Value();
   uint32_t eventh_v = eventh.Value();
   uint32_t triggerl_v = triggerl.Value();
@@ -73,6 +76,11 @@ int main(int /*argc*/, const char **argv) {
 
     if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
         ev->Print(std::cout);
+	if(stdev_v){
+	  auto evstd = eudaq::StandardEvent::MakeShared();
+	  eudaq::StdEventConverter::Convert(ev, evstd, nullptr);
+	  std::cout<< ">>>>>"<< evstd->NumPlanes() <<"<<<<"<<std::endl;
+	}
     }
 
     event_count ++;
