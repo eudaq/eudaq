@@ -22,7 +22,7 @@ class PyProducer : public eudaq::Producer {
       : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) {}
   
     void SendEvent(uint8_t* data, size_t size) {
-      RawDataEvent ev(m_name, m_run, ++m_evt);
+      RawDataEvent ev(m_name, m_run, m_evt++);
       ev.AddBlock(0, data, size);
       eudaq::DataSender::SendEvent(ev);
     }
