@@ -36,6 +36,7 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id,
   is_USBPIXI4 = false;
   is_FORTIS = false;
   is_EXPLORER = false;
+  is_RD53A = false;
   is_UNKNOWN = true; // per default we don't know this plane
   isRotated = false;
   setPixelType(name); // set the pixel type
@@ -61,6 +62,7 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id)
   is_USBPIXI4 = false;
   is_FORTIS = false;
   is_EXPLORER = false;
+  is_RD53A = false;
   is_UNKNOWN = true; // per default we don't know this plane
   isRotated = false;
   setPixelType(name); // set the pixel type
@@ -250,7 +252,12 @@ void SimpleStandardPlane::setPixelType(std::string name) {
     is_USBPIXI4 = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
+  } else if(name == "RD53A") {
+    is_RD53A = true;
+    is_UNKNOWN = false;
+    AnalogPixelType = true;
   }
+  
 
  else if (name.find("USBPIX_GEN") != std::string::npos ) {
     is_USBPIXI4 = true;
