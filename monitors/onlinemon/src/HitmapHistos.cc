@@ -94,7 +94,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     //ToT spatially resolved
     sprintf(out, "%s %i ToT Heatmap", _sensor.c_str(), _id);
     sprintf(out2, "h_totheat_%s_%i", _sensor.c_str(), _id);
-    _totHeat = new TProfile2D(out2, out, 80, 0, 80, 336, 0, 336, 0, 14);
+    _totHeat = new TProfile2D(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY, 0, 14);
     SetHistoAxisLabels(_totHeat, "X", "Y");
 
 
