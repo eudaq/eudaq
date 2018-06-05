@@ -1,4 +1,4 @@
-/* Raw data conversion for the Bdaq53a producer
+/* Raw data conversion for the BDAQ53 producer
  *
  *
  * jorge.duarte.campderros@cern.ch
@@ -58,14 +58,14 @@ namespace eudaq
 {
     // The event type for which this converter plugin will be registered
     // Modify this to match your actual event type (from the Producer)
-    static const char* EVENT_TYPE   = "bdaq53a";
+    static const char* EVENT_TYPE   = "BDAQ53";
     
 #if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 30;
 #endif
 
     // Declare a new class that inherits from DataConverterPlugin
-    class Bdaq53aConverterPlugin : public DataConverterPlugin 
+    class BDAQ53ConverterPlugin : public DataConverterPlugin 
     {
         public:
             // This is called once at the beginning of each run.
@@ -335,18 +335,18 @@ namespace eudaq
             // The DataConverterPlugin constructor must be passed the event type
             // in order to register this converter for the corresponding conversions
             // Member variables should also be initialized to default values here.
-            Bdaq53aConverterPlugin() : 
+            BDAQ53ConverterPlugin() : 
                 DataConverterPlugin(EVENT_TYPE),
                 _data_map(std::unique_ptr<std::map<int,RD53ADecoder>>(new std::map<int,RD53ADecoder>)) 
             {
             }
 
             // The single instance of this converter plugin
-            static Bdaq53aConverterPlugin m_instance;
+            static BDAQ53ConverterPlugin m_instance;
 
     };
 
     // Instantiate the converter plugin instance
-    Bdaq53aConverterPlugin Bdaq53aConverterPlugin::m_instance;
+    BDAQ53ConverterPlugin BDAQ53ConverterPlugin::m_instance;
 
 } // namespace eudaq
