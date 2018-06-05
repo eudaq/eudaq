@@ -53,12 +53,18 @@ using eutelescope::EUTELESCOPE;
 #include <iomanip>
 #endif 
 
+// XXX Provisional, to be deleted
+#define PROCESS_FILE_BEFORE_201806 1
 
 namespace eudaq 
 {
     // The event type for which this converter plugin will be registered
     // Modify this to match your actual event type (from the Producer)
+#ifdef PROCESS_FILE_BEFORE_201806
+    static const char* EVENT_TYPE   = "bdaq53a";
+#else
     static const char* EVENT_TYPE   = "BDAQ53";
+#endif
     
 #if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 30;
@@ -142,7 +148,8 @@ namespace eudaq
                 {
                     // Dummy plane
                     StandardPlane plane(0, EVENT_TYPE,"RD53A");
-                    plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,1);
+                    plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,RD53A_MAX_TRG_ID,
+                            StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
                     sev.AddPlane(plane);
                     return false;
                 }
@@ -159,7 +166,9 @@ namespace eudaq
                 {
                     // Create a standard plane representing one sensor plane
                     StandardPlane plane(i, EVENT_TYPE,"RD53A");
-                    plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,1);
+                    // FIXME: Understand what is the meaning of those flags!! 
+                    plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,RD53A_MAX_TRG_ID,
+                            StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
                     const auto & decoded_data = get_decoded_data(ev_raw.GetBlock(i),i);
                     plane.SetTLUEvent(trigger_number);
@@ -178,7 +187,7 @@ namespace eudaq
                         for(const auto & hits: decoded_data.hits(dh))
                         {
                             // hits[i] = {col, row, ToT}
-                            plane.PushPixel(hits[0],hits[1],hits[2]);
+                            plane.PushPixel(hits[0],hits[1],hits[2],false,trig_id);
                         }
                     }
                     sev.AddPlane(plane);

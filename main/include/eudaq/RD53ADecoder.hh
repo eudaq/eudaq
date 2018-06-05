@@ -53,6 +53,7 @@
 namespace eudaq
 {
     static unsigned int RD53A_START_BYTE = sizeof(uint32_t);
+    static const unsigned int RD53A_MAX_TRG_ID = 32;
     // Chip morphology
     static const unsigned int RD53A_NCOLS = 400;
     static const unsigned int RD53A_NROWS = 192;
