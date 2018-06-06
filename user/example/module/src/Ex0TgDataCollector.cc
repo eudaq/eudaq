@@ -1,4 +1,5 @@
 #include "eudaq/DataCollector.hh"
+
 #include <mutex>
 #include <deque>
 #include <map>
@@ -11,6 +12,7 @@ public:
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoConfigure() override;
+  void DoReset() override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TgDataCollector");
@@ -52,11 +54,18 @@ void Ex0TgDataCollector::DoConfigure(){
   auto conf = GetConfiguration();
   if(conf){
     conf->Print();
-    m_noprint = conf->Get("DISABLE_PRINT", 0);
+    m_noprint = conf->Get("EX0_DISABLE_PRINT", 0);
   }
 }
 
-void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp){  
+void Ex0TgDataCollector::DoReset(){
+  std::unique_lock<std::mutex> lk(m_mtx_map);
+  m_noprint = 0;
+  m_conn_evque.clear();
+  m_conn_inactive.clear();
+}
+
+void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   if(!evsp->IsFlagTrigger()){
     EUDAQ_THROW("!evsp->IsFlagTrigger()");
