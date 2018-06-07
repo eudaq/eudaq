@@ -89,13 +89,27 @@ ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
       lvl1++;
     }
     else{
-      //First Hit
-      if(getHitData(Word, false, Col, Row, ToT)){
-	plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+      bool swap_xy = true;
+      if(swap_xy){
+	//First Hit
+	if(getHitData(Word, false, Col, Row, ToT)){
+	  plane.PushPixel(Row, Col, ToT, false, lvl1 - 1);
+	}
+	//Second Hit
+	if(getHitData(Word, true, Col, Row, ToT)){
+	  plane.PushPixel(Row, Col, ToT, false, lvl1 - 1);
+	}
       }
-      //Second Hit
-      if(getHitData(Word, true, Col, Row, ToT)){
-	plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+
+      else{
+	//First Hit
+	if(getHitData(Word, false, Col, Row, ToT)){
+	  plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+	}
+	//Second Hit
+	if(getHitData(Word, true, Col, Row, ToT)){
+	  plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+	}
       }
     }
   }
