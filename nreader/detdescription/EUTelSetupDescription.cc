@@ -65,10 +65,8 @@ EUTelSetupDescription::EUTelSetupDescription(EUTelPixelDetector *detector)
     typeE = kAPIX;
   else if (typeS == "CMSPixel")
     typeE = kCMSPixel;
-  // [JDC-- XXX Provisonal, should be defined a proper class, 
-  // but this will introduce changes in the eutelescope package...
-  else if (typeS == "rd53a")
-    typeE = kAPIX;
+  else if (typeS == "RD53A")
+    typeE = kRD53A;
   else {
     throw UnknownDataTypeException(typeS + " is not a valid detector type.");
   }

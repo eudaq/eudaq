@@ -16,8 +16,6 @@
 #include "eudaq/Timer.hh"
 #include "eudaq/Logger.hh"
 
-// All LCIO-specific parts are put in conditional compilation blocks
-// so that the other parts may still be used if LCIO is not available.
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
 #  include "IMPL/TrackerRawDataImpl.h"
@@ -29,15 +27,15 @@
 #endif
 
 #if USE_EUTELESCOPE
+// Eudaq
+#  include "EUTelRD53ADetector.h"
+#  include "EUTelRunHeaderImpl.h"
 // Eutelescope
 #  include "EUTELESCOPE.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelTrackerDataInterfacerImpl.h"
 #  include "EUTelGenericSparsePixel.h"
-// Eudaq
-#  include "EUTelAPIXMCDetector.h"
-#  include "EUTelRunHeaderImpl.h"
 using eutelescope::EUTELESCOPE;
 #endif
 
@@ -53,18 +51,11 @@ using eutelescope::EUTELESCOPE;
 #include <iomanip>
 #endif 
 
-// XXX Provisional, to be deleted
-#define PROCESS_FILE_BEFORE_201806 1
-
 namespace eudaq 
 {
     // The event type for which this converter plugin will be registered
     // Modify this to match your actual event type (from the Producer)
-#ifdef PROCESS_FILE_BEFORE_201806
-    static const char* EVENT_TYPE   = "bdaq53a";
-#else
     static const char* EVENT_TYPE   = "BDAQ53";
-#endif
     
 #if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 30;
@@ -227,7 +218,7 @@ namespace eudaq
                 bool zsDataCollectionExists = false;
                 try 
                 {
-                    zsDataCollection = static_cast<LCCollectionVec*>(lcioEvent.getCollection("zsdata_apix"));
+                    zsDataCollection = static_cast<LCCollectionVec*>(lcioEvent.getCollection("zsdata_rd53a"));
                     zsDataCollectionExists = true;
                 } 
                 catch(lcio::DataNotAvailableException& e) 
@@ -249,8 +240,8 @@ namespace eudaq
                     const RawDataEvent::data_t & raw_data = ev_raw.GetBlock(chip);
                     if (lcioEvent.getEventNumber() == 0) 
                     {
-                        // [JDC - XXX : Provisional, needed a dedicated one?
-                        eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelAPIXMCDetector(3);
+                        // XXX - Hardcoded pitch (50x50 um)
+                        eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelRD53ADetector(0.05,0.05);
                         currentDetector->setMode("ZS");
                         setupDescription.push_back( new eutelescope::EUTelSetupDescription(currentDetector)) ;
                     }
@@ -289,7 +280,7 @@ namespace eudaq
                 // add this collection to lcio event
                 if( (!zsDataCollectionExists )  && (zsDataCollection->size() != 0) )
                 {
-                    lcioEvent.addCollection( zsDataCollection, "zsdata_apix" );
+                    lcioEvent.addCollection( zsDataCollection, "zsdata_rd53a" );
                 }
                 if (lcioEvent.getEventNumber() == 0) 
                 {
@@ -298,7 +289,7 @@ namespace eudaq
                     bool apixSetupExists = false;
                     try 
                     {
-                        apixSetupCollection=static_cast<LCCollectionVec*>(lcioEvent.getCollection("apix_setup"));
+                        apixSetupCollection=static_cast<LCCollectionVec*>(lcioEvent.getCollection("rd53a_setup"));
                         apixSetupExists = true;
                     }
                     catch(...) 
@@ -312,7 +303,7 @@ namespace eudaq
                     }
                     if(!apixSetupExists)
                     {
-                        lcioEvent.addCollection(apixSetupCollection, "apix_setup");
+                        lcioEvent.addCollection(apixSetupCollection, "rd53a_setup");
                     }
                 }
                 return true;
