@@ -133,6 +133,24 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
       } */
     }
 
+   virtual int IsSyncWithTLU(eudaq::Event const &ev,
+                              eudaq::TLUEvent const &tluEvent) const {
+      unsigned triggerID = GetTriggerID(ev);
+      auto tlu_triggerID = tluEvent.GetEventNumber();
+	// until the fix of STcontrol
+	//if((tlu_triggerID - (tlu_triggerID % 32768)) < 1) {
+		//std::cout << compareTLU2DUT(tlu_triggerID % 32767, triggerID-1) << std::endl;
+	//	if((compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID))!=Event_IS_Sync) std::cout << "DESYNCH! ...  ";
+	//	std::cout << "tlu_triggerID = " << tlu_triggerID << " (tlu_triggerID+1) % 32768 = " << (tlu_triggerID+1) % 32768 << " triggerID = " << triggerID << std::endl;
+	//	return compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID);
+	//} else {
+	//	//std::cout << compareTLU2DUT(tlu_triggerID % 32767, triggerID) << std::endl;
+		if((compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID % 32768))!=Event_IS_Sync) std::cout << "DESYNCH! in USBPIXGen2 plane detected ...  " << std::endl;
+		//std::cout << "tlu_triggerID = "  << tlu_triggerID << " (tlu_triggerID+1) % 32768 = " << (tlu_triggerID+1) % 32768 << " triggerID % 32768 = " << triggerID % 32768 << std::endl;
+		return compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID % 32768);
+	//}
+    }
+
     /** Returns the StandardEvent version of the event.
      */
     virtual bool GetStandardSubEvent(StandardEvent& sev, eudaq::Event const & ev) const {
