@@ -27,7 +27,7 @@ class UsbpixrefRawEvent2StdEventConverter: public eudaq::StdEventConverter{
     private:
 
     uint32_t getWord(const std::vector<uint8_t>& data, size_t index) const;
-    eudaq::StandardPlane ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const;
+  eudaq::StandardPlane ConvertPlane(const std::vector<uint8_t> & data, uint32_t id, bool swap_xy) const;
     bool isEventValid(const std::vector<uint8_t> & data) const;
     bool getHitData(uint32_t &Word, bool second_hit,
             uint32_t &Col, uint32_t &Row, uint32_t &ToT) const;
@@ -55,15 +55,16 @@ ATLASFEI4Interpreter<0x00007F00, 0x000000FF> UsbpixrefRawEvent2StdEventConverter
 bool UsbpixrefRawEvent2StdEventConverter::
 Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
     auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+    bool swap_xy = ev_raw->GetTag("SWAP_XY", 0);
     auto block_n_list = ev_raw->GetBlockNumList();
     for(auto &bn: block_n_list){
-        d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn+10));//offset 10
+      d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn+10), swap_xy);//offset 10
     }
     return true;
 }
 
 eudaq::StandardPlane UsbpixrefRawEvent2StdEventConverter::
-ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
+ConvertPlane(const std::vector<uint8_t> & data, uint32_t id, bool swap_xy) const{
     eudaq::StandardPlane plane(id, "USBPIXI4", "USBPIXI4");
     bool valid = isEventValid(data);
     uint32_t ToT = 0;
@@ -74,8 +75,6 @@ ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
     int colMult = 1;
     int rowMult = 1;
     // TODO: use this as a conf-parameter 
-    bool swap_xy = true;
-
     if(swap_xy){
         plane.SetSizeZS((CHIP_MAX_ROW_NORM + 1)*rowMult, (CHIP_MAX_COL_NORM + 1)*colMult, 
                 0, consecutive_lvl1,
