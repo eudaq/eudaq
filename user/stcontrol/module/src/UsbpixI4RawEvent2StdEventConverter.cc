@@ -58,7 +58,7 @@ Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSP
     bool swap_xy = ev_raw->GetTag("SWAP_XY", 0);
     auto block_n_list = ev_raw->GetBlockNumList();
     for(auto &bn: block_n_list){
-      d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn+10), swap_xy);//offset 10
+      d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn+10, swap_xy));//offset 10
     }
     return true;
 }
