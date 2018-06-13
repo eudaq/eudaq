@@ -21,7 +21,7 @@ endif(spidr_include)
 
 if (NOT SPIDR_ROOT)
    MESSAGE(ERROR " Could not find SPIDR package required by Timepix3 producer. Please copy 'https://svn.cern.ch/reps/SPIDR/software/trunk/SpidrTpx3Lib' either to $HOME/SPIDR or '../extern/SPIDR' directory")
- endif()
+endif()
 
 set( SPIDR_INCLUDE ${SPIDR_ROOT}/SpidrTpx3Lib )
 set( SPIDR_LIB_PATH ${SPIDR_ROOT}/Release )
