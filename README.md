@@ -46,7 +46,6 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build GUIs. 
 We recommend a gcc version 4.9 or later.
 ROOT 6 is required for the Online Monitor GUI.
-``` 
 
 ### For user modules
 
@@ -97,6 +96,19 @@ make install
 cd ../user/example/misc
 ./example_startrun.sh
 ```
+The startrun script assembles the new command line syntax: Core executables are started by loading a specific module with the name option ```-n``` assigning a unique tag by the option ```-t```:
+```
+cd bin
+./euRun -n Ex0RunControl -a tcp://44000 &
+sleep 1
+./euLog -a tcp://44001&
+sleep 1
+./euCliMonitor -n Ex0Monitor -t my_mon  -a tcp://45001 &
+./euCliCollector -n Ex0TgDataCollector -t my_dc -a tcp://45002 &
+./euCliProducer -n Ex0Producer -t my_pd0 &
+./euCliProducer -n Ex0Producer -t my_pd1 &
+```
+
 Play around with Init, Configure, Start, Stop, Re-Start or Re-Configure and Start or Reset and Re-Init and repeat -- or Terminate. 
 
 For Initialising and Configuring you have to Load to set the path to the the ini or conf file:
