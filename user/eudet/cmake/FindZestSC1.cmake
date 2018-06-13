@@ -5,12 +5,14 @@
 #  ZESTSC1_LIBRARIES - The libraries needed to use ZestSC1
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
+###
 macro(find_zestsc1_in_extern arg)
 # disable a warning about changed behaviour when traversing directories recursively (wrt symlinks)
 IF(COMMAND cmake_policy)
   CMAKE_POLICY(SET CMP0009 NEW)
   CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
 ENDIF(COMMAND cmake_policy)
+
 # determine path to zestsc1 package in ./extern folder
 file(GLOB_RECURSE extern_file ${CMAKE_CURRENT_LIST_DIR}/../extern/*ZestSC1.h)
 if (extern_file)
@@ -56,7 +58,7 @@ if (WIN32)
       ${arg})
   endif()
 elseif (UNIX)
-    MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
+    #MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
     
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
@@ -67,12 +69,13 @@ elseif (UNIX)
 	      "${extern_lib_path}/linux/Lib" 
         ${arg})
     endif()
-  else()
-    MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
-    find_library(ZESTSC1_LIBRARY NAMES ZestSC1
+else()
+  MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
+  find_library(ZESTSC1_LIBRARY NAMES ZestSC1
       HINTS "${extern_lib_path}/linux" ${arg})
-  endif()
+endif()
 endmacro()
+###
 
 find_zestsc1_in_extern("")
 
@@ -94,7 +97,8 @@ if (NOT ZESTSC1_LIBRARY)
     endif()
     find_zestsc1_in_extern(NO_DEFAULT_PATH)
   ELSE()
-    MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+      MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+      return()
   ENDIF()
 endif()
 
