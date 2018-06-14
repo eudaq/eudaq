@@ -125,6 +125,7 @@ cmake --build . --target install --config Release
 
 ## Execution
 
+In UNIX:
 ```
 cd ../user/example/misc
 ./example_startrun.sh
