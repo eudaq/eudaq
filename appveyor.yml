@@ -136,9 +136,9 @@ init:
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
-- '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
+- '"C:\Program Files\Microsoft SDKs\Windows\vb.1\Bin\SetEnv.cmd" /x86'
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
-- cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+# - cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
 # Install Python (from the official .msi of http://python.org) and pip when not already installed.
 # This was copied from 
