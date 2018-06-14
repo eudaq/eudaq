@@ -184,15 +184,16 @@ namespace eudaq {
 
       ReturnValue = PluginManager::IsSyncWithTLU(*currentEvent, *tlu);
       if (ReturnValue == Event_IS_Sync) {
-
+	//std::cout << "event on time" << std::endl;
         return true;
 
       } else if (ReturnValue == Event_IS_LATE) {
-
+	//std::cout << "event late" << std::endl; 
         isAsync_ = true;
         event_queue.pop();
 
       } else if (ReturnValue == Event_IS_EARLY) {
+	//std::cout << "event early" << std::endl;
         isAsync_ = true;
         return false;
       }

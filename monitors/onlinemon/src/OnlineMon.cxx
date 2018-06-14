@@ -1,5 +1,7 @@
 #ifdef WIN32
+#define NOMINMAX
 #include <Windows4Root.h>
+#undef NOMINMAX
 #endif
 
 // ROOT includes

@@ -26,7 +26,9 @@ typedef int int32_t
 
 #if ROOT_FOUND
 #if (defined WIN32)
+#define NOMINMAX
 #include "Windows4Root.h"
+#undef NOMINMAX
 #endif
 #include "TF1.h"
 #include "TGraph.h"

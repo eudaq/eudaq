@@ -1,7 +1,9 @@
 #ifdef WIN32
 
+#define NOMINMAX
 #include <windows.h>
 #include "tlu/win_Usleep.h"
+#undef NOMINMAX
 
 void uSleep(int waitTime) {
   __int64 time1 = 0, time2 = 0, freq = 0;
