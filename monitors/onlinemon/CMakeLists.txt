@@ -1,5 +1,5 @@
 if(WIN32)
-  find_package(ROOT REQUIRED COMPONENTS libGui libCore libHist libRIO)
+  find_package(ROOT REQUIRED COMPONENTS Gui Core Hist RIO)
 else()
   find_package(ROOT REQUIRED COMPONENTS Gui)
 endif()
