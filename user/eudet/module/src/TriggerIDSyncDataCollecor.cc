@@ -55,7 +55,7 @@ namespace eudaq {
     auto conf = GetConfiguration();
     if(conf){
       conf->Print();
-      m_noprint = conf->Get("EX0_DISABLE_PRINT", 0);
+      m_noprint = conf->Get("DISABLE_PRINT", 0);
     }
   }
 
