@@ -10,7 +10,13 @@ Description of config files and usage (scripts)
 
 ### EUDET TLU 
 
+- tlufirmware
+- ZestSC1
+- libusb (Ubuntu: ```sudo apt install libusb-dev```)
+
 ### AIDA TLU
+
+- Cactus Ipbus
 
 ## Running modes
 
