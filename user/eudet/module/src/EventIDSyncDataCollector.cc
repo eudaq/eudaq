@@ -1,12 +1,12 @@
 #include "eudaq/DataCollector.hh"
-#include "eudaq/Event.hh"
+//#include "eudaq/Event.hh"
 
-#include <deque>
-#include <map>
-#include <string>
+//#include <deque>
+//#include <map>
+//#include <string>
 
 namespace eudaq {
-  class EventIDSyncDataCollector :public DataCollector{
+  class EventIDSyncDataCollector:public DataCollector{
   public:
     using DataCollector::DataCollector;
     void DoStartRun() override;
@@ -14,6 +14,7 @@ namespace eudaq {
     void DoDisconnect(ConnectionSPC /*id*/) override;
     void DoReceive(ConnectionSPC id, EventSP ev) override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("EventIDSyncDataCollector");
+
   private:
     std::map<std::string, std::deque<EventSPC>> m_que_event;
     std::mutex m_mtx_map;

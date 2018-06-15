@@ -1,5 +1,7 @@
 #include "eudaq/DataCollector.hh"
-#include <iostream>
+//#include <iostream>
+
+
 class DirectSaveDataCollector :public eudaq::DataCollector{
 public:
   using eudaq::DataCollector::DataCollector;

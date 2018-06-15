@@ -1,8 +1,8 @@
 #include "eudaq/DataCollector.hh"
 
-#include <mutex>
-#include <deque>
-#include <map>
+//#include <mutex>
+//#include <deque>
+//#include <map>
 #include <set>
 
 class TriggerIDSyncDataCollector:public eudaq::DataCollector{
@@ -14,8 +14,8 @@ public:
   void DoConfigure() override;
   void DoReset() override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
-
   static const uint32_t m_id_factory = eudaq::cstr2hash("TriggerIDSyncDataCollector");
+
 private:
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
