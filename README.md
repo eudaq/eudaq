@@ -49,14 +49,14 @@ ROOT 6 is required for the Online Monitor GUI.
 
 ### User projects and modules
 
-- user/example: run the example without hardware, see below Execution
-- user/eudet: Required: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
-- user/timepix3: Required: Spidr
-- user/torch: test beam user
-- user/calice: test beam user
-- user/stcontrol: USBPix/FEI4 
-- user/itkstrip: test beam user
-- user/experimental: developed, not tested with hardware
+- [example](user/example/README.md): run the example without hardware, see below Execution
+- [eudet](user/eudet/README.md): EUDET-type beam telescopes and EUDET and AIDA TLU, required: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
+- [timepix3](user/timepix3/README.md): Timepix3 read out, required: Spidr
+- [torch](user/torch/README.md): test beam user
+- [calice](user/calice/README.md): test beam user
+- [stcontrol](user/stcontrol/README.md): USBPix/FEI4 
+- [itkstrip](user/itkstrip/README.md): test beam user
+- [experimental](user/experimental/README.md): developed, not tested with hardware
 
 
 ## Compiling and installation
