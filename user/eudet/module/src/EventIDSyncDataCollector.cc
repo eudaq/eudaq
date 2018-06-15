@@ -7,17 +7,17 @@
 
 namespace eudaq {
   class EventIDSyncDataCollector:public DataCollector{
-  public:
-    using DataCollector::DataCollector;
-    void DoStartRun() override;
-    void DoConnect(ConnectionSPC /*id*/) override;
-    void DoDisconnect(ConnectionSPC /*id*/) override;
-    void DoReceive(ConnectionSPC id, EventSP ev) override;
-    static const uint32_t m_id_factory = eudaq::cstr2hash("EventIDSyncDataCollector");
+    public:
+      using DataCollector::DataCollector;
+      void DoStartRun() override;
+      void DoConnect(ConnectionSPC /*id*/) override;
+      void DoDisconnect(ConnectionSPC /*id*/) override;
+      void DoReceive(ConnectionSPC id, EventSP ev) override;
+      static const uint32_t m_id_factory = eudaq::cstr2hash("EventIDSyncDataCollector");
 
-  private:
-    std::map<std::string, std::deque<EventSPC>> m_que_event;
-    std::mutex m_mtx_map;
+    private:
+      std::map<std::string, std::deque<EventSPC>> m_que_event;
+      std::mutex m_mtx_map;
   };
 
   namespace{
@@ -32,7 +32,7 @@ namespace eudaq {
       que.second.clear();
     }
   }
-  
+
   void EventIDSyncDataCollector::DoConnect(ConnectionSPC id){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     std::string pdc_name = id->GetName();
@@ -41,7 +41,7 @@ namespace eudaq {
       EUDAQ_THROW("DataCollector::Doconnect, multiple producers are sharing a same name");
     m_que_event[pdc_name];
   }
-  
+
   void EventIDSyncDataCollector::DoDisconnect(ConnectionSPC id){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     std::string pdc_name = id->GetName();
@@ -50,7 +50,7 @@ namespace eudaq {
     EUDAQ_WARN("Producer."+pdc_name+" is disconnected, the remaining events are erased. ("+std::to_string(m_que_event[pdc_name].size())+ " Events)");
     m_que_event.erase(pdc_name);
   }
-  
+
   void EventIDSyncDataCollector::DoReceive(ConnectionSPC id, EventSP ev){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     std::string pdc_name = id->GetName();
@@ -58,7 +58,7 @@ namespace eudaq {
     uint32_t n = 0;
     for(auto &que :m_que_event){
       if(!que.second.empty())
-	n++;
+        n++;
     }
     if(n==m_que_event.size()){
       auto ev_wrap = Event::MakeUnique(GetFullName());
@@ -66,13 +66,13 @@ namespace eudaq {
       uint32_t ev_c = m_que_event.begin()->second.front()->GetEventN();
       bool match = true;
       for(auto &que :m_que_event){
-	if(ev_c != que.second.front()->GetEventN())
-	  match = false;
-	ev_wrap->AddSubEvent(que.second.front());
-	que.second.pop_front();
+        if(ev_c != que.second.front()->GetEventN())
+          match = false;
+        ev_wrap->AddSubEvent(que.second.front());
+        que.second.pop_front();
       }
       if(!match){
-	EUDAQ_WARN("EventNumbers are Mismatched");
+        EUDAQ_WARN("EventNumbers are Mismatched");
       }
       WriteEvent(std::move(ev_wrap));
     }
