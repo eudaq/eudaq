@@ -5,9 +5,9 @@
 #include <map>
 #include <set>
 
-class Ex0TgDataCollector:public eudaq::DataCollector{
+class TriggerIDSyncDataCollector:public eudaq::DataCollector{
 public:
-  Ex0TgDataCollector(const std::string &name,
+  TriggerIDSyncDataCollector(const std::string &name,
 		   const std::string &rc);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
@@ -15,7 +15,7 @@ public:
   void DoReset() override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TgDataCollector");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("TriggerIDSyncDataCollector");
 private:
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
@@ -25,22 +25,22 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::DataCollector>::
-    Register<Ex0TgDataCollector, const std::string&, const std::string&>
-    (Ex0TgDataCollector::m_id_factory);
+    Register<TriggerIDSyncDataCollector, const std::string&, const std::string&>
+    (TriggerIDSyncDataCollector::m_id_factory);
 }
 
-Ex0TgDataCollector::Ex0TgDataCollector(const std::string &name,
+TriggerIDSyncDataCollector::TriggerIDSyncDataCollector(const std::string &name,
 				       const std::string &rc):
   DataCollector(name, rc){
 }
 
-void Ex0TgDataCollector::DoConnect(eudaq::ConnectionSPC idx){
+void TriggerIDSyncDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_evque[idx].clear();
   m_conn_inactive.erase(idx);
 }
 
-void Ex0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
+void TriggerIDSyncDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_inactive.insert(idx);
   if(m_conn_inactive.size() == m_conn_evque.size()){
@@ -49,7 +49,7 @@ void Ex0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   }
 }
 
-void Ex0TgDataCollector::DoConfigure(){
+void TriggerIDSyncDataCollector::DoConfigure(){
   m_noprint = 0;
   auto conf = GetConfiguration();
   if(conf){
@@ -58,14 +58,14 @@ void Ex0TgDataCollector::DoConfigure(){
   }
 }
 
-void Ex0TgDataCollector::DoReset(){
+void TriggerIDSyncDataCollector::DoReset(){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_noprint = 0;
   m_conn_evque.clear();
   m_conn_inactive.clear();
 }
 
-void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp){
+void TriggerIDSyncDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   if(!evsp->IsFlagTrigger()){
     EUDAQ_THROW("!evsp->IsFlagTrigger()");
