@@ -1,4 +1,4 @@
-# EUDET-type telescopes using EUDAQ2 and AIDA TLU
+# EUDET-type beam telescopes using EUDAQ2 and AIDA TLU and EUDET TLU
 
 Description of config files and usage (scripts)
 
