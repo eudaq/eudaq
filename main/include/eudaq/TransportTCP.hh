@@ -7,7 +7,9 @@
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 #ifndef __CINT__
+#define NOMINMAX
 #include <winsock.h> // using winsock2.h here would cause conflicts when including Windows4Root.h
+#undef NOMINMAX
                      // required e.g. by the ROOT online monitor
 #endif
 #else
