@@ -59,10 +59,10 @@ class PyRunControl(object):
 
 lib.PyProducer_SendEvent.argtypes = [c_void_p,POINTER(c_uint8), c_size_t]
 class PyProducer(object):
-    def __init__(self, name, rcaddr = "tcp://localhost:44000"):
+    def __init__(self, name, rcaddr = "tcp://localhost:44000",board_id=0):
         lib.PyProducer_new.restype = c_void_p # Needed
         self.obj = lib.PyProducer_new(create_string_buffer(name), 
-                                      create_string_buffer(rcaddr))
+                                      create_string_buffer(rcaddr),board_id)
     def SendEvent(self,data):
         data_p = data.ctypes.data_as(POINTER(c_uint8))
         lib.PyProducer_SendEvent(c_void_p(self.obj),data_p,data.nbytes)
