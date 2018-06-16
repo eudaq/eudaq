@@ -19,7 +19,7 @@ using eudaq::AidaPacket;
 class PyProducer : public eudaq::Producer {
   public:
     PyProducer(const std::string & name, const std::string & runcontrol, unsigned int boardID =0) : 
-      eudaq::Producer(name, runcontrol), 
+      eudaq::Producer(name+"_"+std::to_string(boarID), runcontrol), 
       m_internalstate(Init), 
       m_name(name), 
       m_run(0), 
