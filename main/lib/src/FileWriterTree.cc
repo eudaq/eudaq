@@ -6,6 +6,9 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/FileSerializer.hh"
 
+//TODO This is an ugly workaround to re-enable windows compilation after change to VS2017. Somewhere a windows.h gets drawn in and the usual min/max macro problem occurs. Find the origin.
+#undef min
+#undef max
 //# include<inttypes.h>
 #include "TFile.h"
 #include "TTree.h"
