@@ -55,7 +55,8 @@ namespace eudaq
 {
     // The event type for which this converter plugin will be registered
     // Modify this to match your actual event type (from the Producer)
-    static const char* EVENT_TYPE   = "BDAQ53";
+    //static const char* EVENT_TYPE   = "BDAQ53";
+    static const char* EVENT_TYPE   = "bdaq53a";
     
 #if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 30;
@@ -70,12 +71,20 @@ namespace eudaq
             // and store it in member variables to use during the decoding later.
             virtual void Initialize(const Event & bore, const Configuration & cnf) 
             {
-#ifndef WIN32
+//#ifndef WIN32
                 (void)cnf; // just to suppress a warning about unused parameter cnf
-#endif
-                // XXX: Is there any parameters? 
-                _get_bore_parameters(bore);
-                //bore.Print(std::cout);
+//#endif
+                // Extract board id
+                const unsigned int board_id = bore.GetTag("board", -999);
+                
+                if(board_id != -999)
+                {
+                    _boards.emplace_back(board_id);
+                    _board_channels[board_id] = std::vector<int>();
+                    _board_initialized[board_id] = false;
+                    EUDAQ_INFO("New Kintex KC705 board added. Board ID: "+std::to_string(board_id));
+                }
+
             }
             
             // This should return the trigger ID (as provided by the TLU)
@@ -135,10 +144,14 @@ namespace eudaq
                 const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
                 // Trigger number is the same for all blocks (sensors)
                 uint32_t const trigger_number = GetTriggerID(ev);
+                const unsigned int board_id = ev_raw.GetTag("board",int());
+                
+                const std::string plane_name("KC705_"+std::to_string(board_id)+":RD53A");
+        //std::cout << "EL PLANE:" << plane_name << " Trigger number: " << trigger_number << std::endl;
                 if(static_cast<uint32_t>(trigger_number) == -1)
                 {
                     // Dummy plane
-                    StandardPlane plane(0, EVENT_TYPE,"RD53A");
+                    StandardPlane plane(board_id, EVENT_TYPE,plane_name);
                     plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,RD53A_MAX_TRG_ID,
                             StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
                     sev.AddPlane(plane);
@@ -156,7 +169,8 @@ namespace eudaq
                 for(size_t i = 0; i < ev_raw.NumBlocks(); ++i) 
                 {
                     // Create a standard plane representing one sensor plane
-                    StandardPlane plane(i, EVENT_TYPE,"RD53A");
+                    StandardPlane plane(i, EVENT_TYPE,plane_name);
+        //std::cout << "INSIDE LOOP: EL PLANE:" << plane_name << " sensor: " << i << " Trigger number: " << trigger_number << std::endl;
                     // FIXME: Understand what is the meaning of those flags!! 
                     plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,RD53A_MAX_TRG_ID,
                             StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
@@ -183,6 +197,7 @@ namespace eudaq
                     }
                     sev.AddPlane(plane);
                 }
+        //std::cout << "INSIDE LOOP: END----------------------------" << std::endl;
                 return true;
             }
 
@@ -311,13 +326,6 @@ namespace eudaq
 #endif
 
         private:
-            void _get_bore_parameters(const Event & )
-            {
-                // XXX Just if need to initialize paremeters from the BORE
-                //std::cout << bore << std::endl;
-            }
-
-
             const RD53ADecoder & get_decoded_data(const RawDataEvent::data_t & raw_data,const int & chip) const
             {
                 // memorize if not there
@@ -330,6 +338,13 @@ namespace eudaq
             
             // The decoded data memory (pointer to avoid constantness of the Get** functions)
             std::unique_ptr<std::map<int,RD53ADecoder> >  _data_map;
+            
+            // The number of BDAQ/Kintex boards present
+            std::vector<unsigned int> _boards;
+            // I dont' know yet
+            std::map<unsigned int,std::vector<int> > _board_channels;
+            // i
+            std::map<unsigned int,bool> _board_initialized;
 
             // The constructor can be private, only one static instance is created
             // The DataConverterPlugin constructor must be passed the event type
