@@ -47,10 +47,17 @@ EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build 
 We recommend a gcc version 4.9 or later.
 ROOT 6 is required for the Online Monitor GUI.
 
-### For user modules
+### User projects and modules
 
-- user/eudet: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
-- user/timepix3: Spidr
+- [example](user/example/README.md): run the example without hardware, see below Execution
+- [eudet](user/eudet/README.md): EUDET-type beam telescopes and EUDET and AIDA TLU, required: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
+- [timepix3](user/timepix3/README.md): Timepix3 read out, required: Spidr
+- [torch](user/torch/README.md): test beam user
+- [calice](user/calice/README.md): test beam user
+- [stcontrol](user/stcontrol/README.md): USBPix/FEI4 
+- [itkstrip](user/itkstrip/README.md): test beam user
+- [experimental](user/experimental/README.md): developed, not tested with hardware
+
 
 ## Compiling and installation
 

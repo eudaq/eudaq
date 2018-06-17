@@ -1,4 +1,4 @@
-# EUDET-type telescopes using EUDAQ2 and AIDA TLU
+# EUDET-type beam telescopes using EUDAQ2 and AIDA TLU and EUDET TLU
 
 Description of config files and usage (scripts)
 
@@ -10,7 +10,13 @@ Description of config files and usage (scripts)
 
 ### EUDET TLU 
 
+- tlufirmware
+- ZestSC1
+- libusb (Ubuntu: ```sudo apt install libusb-dev```)
+
 ### AIDA TLU
+
+- Cactus Ipbus
 
 ## Running modes
 
