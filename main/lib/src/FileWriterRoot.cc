@@ -5,6 +5,9 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Logger.hh"
 
+//TODO This is an ugly workaround to re-enable windows compilation after change to VS2017. Somewhere a windows.h gets drawn in and the usual min/max macro problem occurs. Find the origin.
+#undef min
+#undef max
 #include "TFile.h"
 #include "TTree.h"
 #include "TRandom.h"

@@ -1,6 +1,8 @@
 #ifdef WIN32
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif //NOMINMAX
 #include <windows.h>
 #include "tlu/win_Usleep.h"
 #undef NOMINMAX
