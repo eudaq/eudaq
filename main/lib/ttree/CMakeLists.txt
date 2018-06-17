@@ -6,6 +6,8 @@ endif()
 
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
+#set(CMAKE_PREFIX_PATH ${ROOTSYS})
+#set(ROOT_DIR ${ROOTSYS}/etc/)
 find_package(ROOT)
 
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
