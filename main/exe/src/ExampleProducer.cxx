@@ -40,7 +40,7 @@ class ExampleProducer : public eudaq::Producer {
         // Message as cout in the terminal of your producer
         std::cout << "Initialise with parameter = " << m_exampleInitParam << std::endl;
         // or to the LogCollector, depending which log level you want. These are the possibilities just as an example here:
-        EUDAQ_INFO("Initialise with parameter = " + m_exampleInitParam);
+        EUDAQ_INFO("Initialise with parameter = " + std::to_string(m_exampleInitParam));
         //EUDAQ_DEBUG("Debug Message to the LogCollector from ExampleProducer");
         //EUDAQ_EXTRA("Extra Message to the LogCollector from ExampleProducer");
         //EUDAQ_INFO("Info Message to the LogCollector from ExampleProducer");
@@ -76,8 +76,12 @@ class ExampleProducer : public eudaq::Producer {
         // Do any configuration of the hardware here
         // Configuration file values are accessible as config.Get(name, default)
         m_exampleConfParam = config.Get("ConfParameter", 0);
-        std::cout << "Example Configuration Parameter = " << m_exampleConfParam << std::endl;
         hardware.Setup(m_exampleConfParam);
+        
+        // Message as cout in the terminal of your producer
+        std::cout << "Example Configuration Parameter = " << m_exampleConfParam << std::endl;
+        // Message to the LogCollector
+        EUDAQ_INFO("Configuring with parameter = " + std::to_string(m_exampleConfParam));
 
         // At the end, set the ConnectionState that will be displayed in the Run Control.
         // and set the state of the machine.

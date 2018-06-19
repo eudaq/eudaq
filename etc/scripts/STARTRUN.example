@@ -1,0 +1,78 @@
+#!/bin/sh
+
+printf "\033[1;32;48mSTARTING EUDAQ, %s \033[0m \n" "$(date)"
+
+# set the host IP of RunControl PC
+export HOSTIP=127.0.0.1
+
+# set the port by default or as first argument
+export RCPORT=44000
+[ "$1" != "" ] && RCPORT=$1
+
+cd `dirname $0`
+
+# killing old processes
+printf '\033[22;33m\t Cleaning up first...  \033[0m \n'
+sh KILLRUN.local
+sleep 1
+
+# binary folder
+cd ../../bin
+
+######################################################################
+#=====================================================================
+printf '\033[1;32;48mStarting Subprocesses \033[0m \n'
+#=====================================================================
+
+######################################################################
+# euRun
+###############
+printf '\033[22;33m\t Run Control \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Run Control" -e './euRun.exe -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT' &
+sleep 1
+
+######################################################################
+# euLog
+###############
+printf '\033[22;33m\t Log Collector  \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Log Collector" -e './euLog.exe -x 0 -y 550 -w 1500 -g 450 -r tcp://$HOSTIP:44000' &
+sleep 2
+
+######################################################################
+# DataCollector
+###############
+printf '\033[22;33m\t Data Collector \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
+sleep 2
+
+######################################################################
+# Example Producer
+###############
+printf '\033[22;33m\t Example Producer \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-480-700 -T 'Example Producer' -e './ExampleProducer.exe -r tcp://$HOSTIP:$RCPORT' &
+sleep 1
+
+######################################################################
+# Example Slow Producer
+###############
+#printf '\033[22;33m\t Example SlowProducer \033[0m \n'
+#xterm -sb -sl 1000 -geom 80x10-480-700 -T 'Example SlowProducer' -e './ExampleSlowProducer.exe -r tcp://$HOSTIP:$RCPORT' &
+#sleep 1
+
+#####################################################################
+######################################################################
+# Online Monitor
+###############
+if [ -f "OnlineMon.exe" ]
+then
+    printf '\033[22;33m\t Online Monitor  \033[0m \n'
+    xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Online Monitor" -e './OnlineMon.exe  -sc 10 -s 0 -tc 0 -r tcp://$HOSTIP:$RCPORT' &
+    sleep 1
+else
+    printf '\033[22;31m\t Online monitor not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_onlinemon=ON" and re-run "make install" to install.'
+fi
+#####################################################################
+
+printf '\033[1;32;48m...Done!\033[0m \n'
+printf '\033[1;32;48mSTART OF DAQ COMPLETE\033[0m \n'
