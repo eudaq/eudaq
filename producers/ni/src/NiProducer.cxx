@@ -61,17 +61,18 @@ public:
         configure = true;
       }
 
-      TriggerType = param.Get("TriggerType", 255);
+      // Default parameters
+      TriggerType = param.Get("TriggerType", 1);
       Det = param.Get("Det", 255);
       Mode = param.Get("Mode", 255);
-      NiVersion = param.Get("NiVersion", 255);
-      NumBoards = param.Get("NumBoards", 255);
+      NiVersion = param.Get("NiVersion", 1);
+      NumBoards = param.Get("NumBoards", 6);
       FPGADownload = param.Get("FPGADownload", 1);
       for (unsigned char i = 0; i < 6; i++) {
-        MimosaID[i] = param.Get("MimosaID_" + to_string(i + 1), 255);
-        MimosaEn[i] = param.Get("MimosaEn_" + to_string(i + 1), 255);
+        MimosaID[i] = param.Get("MimosaID_" + to_string(i + 1), i+1);
+        MimosaEn[i] = param.Get("MimosaEn_" + to_string(i + 1), 1);
       }
-      OneFrame = param.Get("OneFrame", 255);
+      OneFrame = param.Get("OneFrame", 0);
 
       std::cout << "Configuring ...(" << param.Name() << ")" << std::endl;
 
