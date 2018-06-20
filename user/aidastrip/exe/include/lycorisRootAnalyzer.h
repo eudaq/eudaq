@@ -41,19 +41,23 @@ private:
   
   // Global histogram definitions:
   std::unordered_map< uint, TH1F*>  _chn_entries_k; // key is kpix, entries for all buckets
- 
+  std::unordered_map< uint, TH1F*>  _strip_entries_k;
+  
   // Event-by-event histograms:
+  std::unordered_map< uint, TH2F*> _chn_vs_adc_b;
+    
   std::unordered_map< uint, TH2F*>  _chn_vs_adc_b0_k; // key is k-kpix
   std::unordered_map< uint, TH2F*>  _chn_vs_adc_b1_k; // key is k-kpix
   std::unordered_map< uint, TH2F*>  _chn_vs_adc_b2_k; // key is k-kpix
   std::unordered_map< uint, TH2F*>  _chn_vs_adc_b3_k; // key is k-kpix
 
-  std::unordered_map< uint, TH1F*>  _strip_entries_k;
   std::unordered_map< uint, TH1F*>  _strip_entries_b0_k;
-  //std::unordered_map< uint, TH1F*>  _strip_entries_b1_k;
+  std::unordered_map< uint, TH1F*>  _strip_entries_b1_k;
   //std::unordered_map< uint, TH1F*>  _strip_entries_b2_k;
   
-  std::unordered_map< uint, TH2F*>  _strip_vs_adc_b0_k;  
+  std::unordered_map< uint, TH2F*>  _strip_vs_adc_b0_k;
+  std::unordered_map< uint, TH2F*>  _strip_vs_adc_b1_k; 
+
 };
 //---header finished----//
 
@@ -157,6 +161,7 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
     
     if (type == KpixSample::Data) {
 
+      //-- Prepare Hists:
       if ( !_kpixfound.at(kpix) ) {
 	_kpixfound.at(kpix) = true;
 	std::cout<<"[dev] kpix = "<<kpix<<", channel = " <<channel <<", bucket = " <<bucket <<"\n";
@@ -192,6 +197,15 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
 	_chn_vs_adc_b1_k.insert({kpix, new TH2F(_tmp.str().c_str(), "Channel vs ADC; kpix channel addr.; Charge (ADC)", 1024, -0.5, 1023.5, 8192, -0.5,8191.5)});
 	std::cout<< " success in creating: " << _tmp.str() << std::endl;
 
+	_tmp.str("");
+	_tmp <<  "strip_entries_b1_k" << kpix ;
+	_strip_entries_b1_k.insert({kpix, new TH1F(_tmp.str().c_str(), "Strip entries; Strip ID; #OfEvts/#acq.cycles", 920, 0.5, 920.5)});
+	std::cout<< " success in creating: " << _tmp.str() << std::endl;
+	
+	_tmp.str("");
+	_tmp << "strip_vs_adc_b1_k" << kpix;
+	_strip_vs_adc_b1_k.insert({kpix, new TH2F(_tmp.str().c_str(), "Strip vs ADC; Strip ID; Charge (ADC)", 920, 0.5, 920.5, 8192, -0.5, 8191.5)});
+	
 	// bucket 2
 	_tmp.str("");
 	_tmp <<  "chn_vs_adc_b2_k" << kpix ;
@@ -206,7 +220,7 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
 
       }
 
-      // fill hists:
+      //-- fill hists:
       _chn_entries_k.at(kpix)->Fill(channel);
       _strip_entries_k.at(kpix)->Fill( _kpix2strip.at(channel) );
 	
@@ -219,6 +233,8 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
 	
       case 1:
 	_chn_vs_adc_b1_k.at(kpix)-> Fill(channel, value);
+	_strip_vs_adc_b1_k.at(kpix)-> Fill(_kpix2strip.at(channel), value);
+	_strip_entries_b1_k.at(kpix)-> Fill( _kpix2strip.at(channel) );
 	break;
 	
       case 2:
@@ -226,6 +242,8 @@ int lycorisRootAnalyzer::Analyzing (KpixEvent& CycleEvent, uint eudaqEventN){
 	break;
 	
       case 3:
+	_chn_vs_adc_b3_k.at(kpix)-> Fill(channel, value);
+
 	break;
 	
       default:
