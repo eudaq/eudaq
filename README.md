@@ -47,10 +47,17 @@ EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build 
 We recommend a gcc version 4.9 or later.
 ROOT 6 is required for the Online Monitor GUI.
 
-### For user modules
+### User projects and modules
 
-- user/eudet: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
-- user/timepix3: Spidr
+- [example](user/example/README.md): run the example without hardware, see below Execution
+- [eudet](user/eudet/README.md): EUDET-type beam telescopes and EUDET and AIDA TLU, required: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
+- [timepix3](user/timepix3/README.md): Timepix3 read out, required: Spidr
+- [torch](user/torch/README.md): test beam user
+- [calice](user/calice/README.md): test beam user
+- [stcontrol](user/stcontrol/README.md): USBPix/FEI4 
+- [itkstrip](user/itkstrip/README.md): test beam user
+- [experimental](user/experimental/README.md): developed, not tested with hardware
+
 
 ## Compiling and installation
 
@@ -82,7 +89,8 @@ cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deact
 If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder by ```rm -rf *``` before a new try.
 If problems occur during installation, please have a look in the issues, if a similiar problem already occured. If not, feel free to create a new ticket: https://github.com/eudaq/eudaq/issues
 
-### Quick installation
+### Quick installation for UNIX
+
 
 ```
 git clone -b master https://github.com/eudaq/eudaq.git
@@ -92,8 +100,41 @@ cmake ..
 make install
 ```
 
+
+
+
+### Notes for Windows
+
+#### Visual Studio for compiling (MSVC)
+
+- The recommended windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 2013 and later
+- Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
+
+#### Compiling using cmake syntax
+
+Start the Visual Studio "Developer Command Prompt" from the Start Menu entries for Visual Studio (Tools subfolder) which opens a cmd.exe session with the necessary environment variables already set. 
+If your Qt installation path has not been added to the global %PATH% variable, you need to execute the "qtenv2.bat" batch file in the Qt folder, e.g. and replace "5.1.1" with the version string of your Qt installation:
+```
+C:\Qt\Qt5.1.1\5.1.1\msvc2013\bin\qtenv2.bat
+```
+Go to the EUDAQ folder and configure, as describe above:
+```
+cd c:\[...]\eudaq\build
+cmake ..
+```
+This generates the VS project files. Installing into eudaq\bin by:
+```
+cmake --build . --target install --config Release
+```
+### Notes for OS X
+
+- Compiler: Clang (at least version 3.1)
+- Install Qt5 or later, e.g. by using MacPorts (http://www.macports.org/): sudo port install qt5-mac-devel
+
+
 ## Execution
 
+In UNIX:
 ```
 cd ../user/example/misc
 ./example_startrun.sh

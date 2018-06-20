@@ -6,5 +6,8 @@ $BINPATH/euLog -a tcp://44001&
 sleep 1
 $BINPATH/euCliMonitor -n Ex0Monitor -t my_mon  -a tcp://45001 &
 $BINPATH/euCliCollector -n Ex0TgDataCollector -t my_dc -a tcp://45002 &
+#$BINPATH/euCliCollector -n DirectSaveDataCollector -t my_dc -a tcp://45002 &
+#$BINPATH/euCliCollector -n EventIDSyncDataCollector -t my_dc -a tcp://45002 &
+#$BINPATH/euCliCollector -n TriggerIDSyncDataCollector -t my_dc -a tcp://45002 &
 $BINPATH/euCliProducer -n Ex0Producer -t my_pd0 &
 $BINPATH/euCliProducer -n Ex0Producer -t my_pd1 &

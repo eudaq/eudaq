@@ -141,6 +141,11 @@ void LogCollectorGUI::closeEvent(QCloseEvent *) {
   QApplication::quit();
 }
 
+void LogCollectorGUI::DoTerminate() {
+  std::cout << "Closing!" << std::endl;
+  QApplication::quit();
+}
+
 void LogCollectorGUI::AddSender(const std::string &type,
                                 const std::string &name) {
   bool foundtype = false;
