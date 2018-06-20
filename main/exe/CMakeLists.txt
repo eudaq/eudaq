@@ -8,7 +8,7 @@ add_executable(IPHCConverter.exe        src/IPHCConverter.cxx     )
 add_executable(MagicLogBook.exe         src/MagicLogBook.cxx      )
 add_executable(OptionExample.exe        src/OptionExample.cxx     )
 add_executable(RunListener.exe          src/RunListener.cxx       )
-add_executable(TestDataCollector.exe    src/TestDataCollector.cxx )
+add_executable(DataCollector.exe        src/DataCollector.cxx )
 add_executable(TestLogCollector.exe     src/TestLogCollector.cxx  )
 add_executable(TestMonitor.exe          src/TestMonitor.cxx       )
 add_executable(TestProducer.exe         src/TestProducer.cxx      )
@@ -26,14 +26,14 @@ target_link_libraries(IPHCConverter.exe      EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(MagicLogBook.exe       EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(OptionExample.exe      EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(RunListener.exe        EUDAQ ${ADDITIONAL_LIBRARIES})
-target_link_libraries(TestDataCollector.exe  EUDAQ ${ADDITIONAL_LIBRARIES})
+target_link_libraries(DataCollector.exe      EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestLogCollector.exe   EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestMonitor.exe        EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestProducer.exe       EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestReader.exe         EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestRunControl.exe     EUDAQ ${ADDITIONAL_LIBRARIES})
 
-INSTALL(TARGETS ClusterExtractor.exe Converter.exe ExampleProducer.exe ExampleSlowProducer.exe ExampleReader.exe FileChecker.exe IPHCConverter.exe MagicLogBook.exe OptionExample.exe RunListener.exe TestDataCollector.exe TestLogCollector.exe TestMonitor.exe TestProducer.exe TestReader.exe TestRunControl.exe
+INSTALL(TARGETS ClusterExtractor.exe Converter.exe ExampleProducer.exe ExampleSlowProducer.exe ExampleReader.exe FileChecker.exe IPHCConverter.exe MagicLogBook.exe OptionExample.exe RunListener.exe DataCollector.exe TestLogCollector.exe TestMonitor.exe TestProducer.exe TestReader.exe TestRunControl.exe
   EXPORT ${PROJECT_NAME}
   RUNTIME DESTINATION bin COMPONENT MAIN_EXE
   LIBRARY DESTINATION lib COMPONENT MAIN_EXE
