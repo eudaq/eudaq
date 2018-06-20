@@ -20,7 +20,7 @@ the Free Software Foundation, either version 3 of the License, or
 Please check out the online documentation at 
 - http://eudaq.github.io/ or 
 - the manual, see below
-- (https://telescopes.desy.de/EUDAQ or)
+- (https://telescopes.desy.de/EUDAQ for the use with the EUDET-type beam telescopes)
 
 ### Sources of documentation within the framework
 
@@ -54,8 +54,10 @@ ROOT 6 is required for the Online Monitor GUI.
 
 ## Compiling and installation
 
-cmake will configure the installation and prepare the makefiles. It searches for all the required files. 
-It has to be executed in a ```build``` folder, however the relevant CMakeLists.txt is in the main level, thus, the command is ```cmake ..```. 
+```cmake``` will configure the installation and prepare the makefiles. 
+It searches for all the required files. 
+As a standard, it is executed in the ```build``` folder. 
+Since the relevant CMakeLists.txt is in the main level, thus, the command is ```cmake ..```. 
 If cmake is successful, EUDAQ can be installed. 
 Variables set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
