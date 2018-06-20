@@ -67,38 +67,39 @@ Since the relevant CMakeLists.txt is in the main level, thus, the command is ```
 If cmake is successful, EUDAQ can be installed. 
 Variables set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
-cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deactivate programs which will be built, here printed with their default value:  
-- ```BUILD_AHCAL:BOOL=OFF
-- ```BUILD_BIFAHCAL:BOOL=OFF```
-- ```BUILD_TESTING:BOOL=ON```
-- ```BUILD_WITH_QT4:BOOL=OFF```
-- ```BUILD_allproducer:BOOL=OFF```
-- ```BUILD_altro:BOOL=OFF```
-- ```BUILD_altroUSB:BOOL=OFF```
-- ```BUILD_cmspixel:BOOL=OFF```
-- ```BUILD_depfet:BOOL=OFF```
-- ```BUILD_drs4:BOOL=OFF```
-- ```BUILD_fortis:BOOL=OFF```
-- ```BUILD_gui:BOOL=ON```
-- ```BUILD_main:BOOL=ON```
-- ```BUILD_manual:BOOL=OFF```
-- ```BUILD_mimoroma:BOOL=OFF```
-- ```BUILD_miniTLU:BOOL=OFF```
-- ```BUILD_ni:BOOL=ON```
-- ```BUILD_nreader:BOOL=OFF```
-- ```BUILD_offlinemon:BOOL=OFF```
-- ```BUILD_onlinemon:BOOL=ON```
-- ```BUILD_palpidefs:BOOL=OFF```
-- ```BUILD_pi:BOOL=OFF```
-- ```BUILD_pixelmanproducer:BOOL=OFF```
-- ```BUILD_python:BOOL=OFF```
-- ```BUILD_root:BOOL=OFF```
-- ```BUILD_rpi-controller:BOOL=OFF```
-- ```BUILD_runsplitter:BOOL=ON```
-- ```BUILD_taki:BOOL=OFF```
-- ```BUILD_timepix3:BOOL=OFF```
-- ```BUILD_timepixdummy:BOOL=OFF```
-- ```BUILD_tlu:BOOL=OFF```
+cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deactivate programs which will be built, here printed with their default value:
+
+- ```BUILD_AHCAL=OFF```
+- ```BUILD_BIFAHCAL=OFF```
+- ```BUILD_TESTING=ON```
+- ```BUILD_WITH_QT4=OFF```
+- ```BUILD_allproducer=OFF```
+- ```BUILD_altro=OFF```
+- ```BUILD_altroUSB=OFF```
+- ```BUILD_cmspixel=OFF```
+- ```BUILD_depfet=OFF```
+- ```BUILD_drs4=OFF```
+- ```BUILD_fortis=OFF```
+- ```BUILD_gui=ON```
+- ```BUILD_main=ON```
+- ```BUILD_manual=OFF```
+- ```BUILD_mimoroma=OFF```
+- ```BUILD_miniTLU=OFF```
+- ```BUILD_ni=ON```
+- ```BUILD_nreader=OFF```
+- ```BUILD_offlinemon=OFF```
+- ```BUILD_onlinemon=ON```
+- ```BUILD_palpidefs=OFF```
+- ```BUILD_pi=OFF```
+- ```BUILD_pixelmanproducer=OFF```
+- ```BUILD_python=OFF```
+- ```BUILD_root=OFF```
+- ```BUILD_rpi-controller=OFF```
+- ```BUILD_runsplitter=ON```
+- ```BUILD_taki=OFF```
+- ```BUILD_timepix3=OFF```
+- ```BUILD_timepixdummy=OFF```
+- ```BUILD_tlu=OFF```
 
 If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder by ```rm -rf *``` before a new try.
 If problems occur during installation, please have a look in the issues, if a similiar problem already occured. If not, feel free to create a new ticket: https://github.com/eudaq/eudaq/issues
@@ -128,16 +129,16 @@ If your Qt installation path has not been added to the global %PATH% variable, y
 ```
 C:\Qt\Qt5.1.1\5.1.1\msvc2013\bin\qtenv2.bat
 ```
-Go to the EUDAQ folder and configure, as describe above:
+Go to the EUDAQ-build folder and generate the VS project files:
 ```
 cd c:\[...]\eudaq\build
 cmake ..
 ```
-This generates the VS project files. Installing into eudaq\bin by:
+Installing into eudaq\bin by:
 ```
 cmake --build . --target install --config Release
 ```
-Or in the Visual Studio style:
+Or by using Visual Studio style:
 ```
 MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
 ```
