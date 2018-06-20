@@ -4,12 +4,11 @@ EUDAQ version 2
 [![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=master)](https://travis-ci.org/eudaq/eudaq)
 [![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/master?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/master)
 
-
-
 EUDAQ is a Generic Multi-platform Data Acquisition Framework.
 Version 2 comes with more flexible cross connectivity between components, multiple data collectors, and a cleaner seperation between core functionalities and user modules. 
 
 ### License
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the Lesser GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -100,9 +99,6 @@ cmake ..
 make install
 ```
 
-
-
-
 ### Notes for Windows
 
 #### Visual Studio for compiling (MSVC)
@@ -126,6 +122,11 @@ This generates the VS project files. Installing into eudaq\bin by:
 ```
 cmake --build . --target install --config Release
 ```
+Or in the Visual Studio style:
+```
+MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
+```
+
 ### Notes for OS X
 
 - Compiler: Clang (at least version 3.1)
