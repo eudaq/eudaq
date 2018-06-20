@@ -40,7 +40,7 @@ if(GIT_FOUND AND (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git))
     set(EUDAQ_LIB_VERSION ${EUDAQ_GIT_VERSION})
   endif()
 endif()
-message(STATUS "-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
+message(STATUS "Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
 configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/Config.hh" @ONLY)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")

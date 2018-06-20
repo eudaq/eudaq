@@ -68,6 +68,7 @@ namespace eudaq {
     std::string m_fwtype;
     uint32_t m_dct_n;
     uint32_t m_evt_c;
+    uint32_t m_fraction;
     ConfigurationSPC m_conf;
   };
   //----------DOC-MARK-----END*DEC-----DOC-MARK----------

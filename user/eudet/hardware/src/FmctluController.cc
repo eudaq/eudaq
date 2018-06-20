@@ -1,5 +1,6 @@
 #include "FmctluController.hh"
 #include "FmctluHardware.hh"
+#include "FmctluPowerModule.hh"
 #include "FmctluI2c.hh"
 #include <iomanip>
 #include <thread>
@@ -318,6 +319,15 @@ namespace tlu {
         else if (myaddr==m_I2C_address.expander2){
           std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
+        else if (myaddr==m_I2C_address.ledxp1addr){
+          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+        }
+        else if (myaddr==m_I2C_address.ledxp2addr){
+          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+        }
+        else if (myaddr==m_I2C_address.pwraddr){
+          std::cout << "\tFOUND I2C slave POWER MODULE DAC (0x" << std::hex << myaddr << ")" << std::endl;
+        }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
         }
@@ -333,6 +343,37 @@ namespace tlu {
       SetBoardID();
     }
     std::cout.flags( coutflags ); // Restore cout flags
+  }
+
+  void FmctluController::pwrled_Initialize(int verbose) {
+    std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
+    m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77);
+    m_pwrled.initI2Cslaves(false, verbose);
+    //int indicator= 1;
+    //std::array<int, 3>RGB{ {1, 0, 1} };
+    //m_pwrled.setIndicatorRGB( indicator, RGB, verbose);
+    m_pwrled.led_allOff();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    m_pwrled.led_allWhite();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    m_pwrled.led_allOff();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    m_pwrled.testLED();
+  }
+
+  void FmctluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose) {
+    // Note that ordering is not 1:1. Mapping is done in here.
+    std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
+    if (verbose > 0){
+      std::cout << "\tV PMT1=" << v3 << "V" << std::endl;
+      std::cout << "\tV PMT2=" << v2 << "V" << std::endl;
+      std::cout << "\tV PMT3=" << v4 << "V" << std::endl;
+      std::cout << "\tV PMT4=" << v1 << "V" << std::endl;
+    }
+    m_pwrled.setVchannel(0, v3, verbose);
+    m_pwrled.setVchannel(1, v2, verbose);
+    m_pwrled.setVchannel(2, v4, verbose);
+    m_pwrled.setVchannel(3, v1, verbose);
   }
 
   unsigned int FmctluController::PackBits(std::vector< unsigned int>  rawValues){

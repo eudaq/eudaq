@@ -43,15 +43,14 @@
 
 //ONLINE MONITOR Includes
 #include "OnlineMon.hh"
-
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/StdEventConverter.hh"
 using namespace std;
 
 RootMonitor::RootMonitor(const std::string & runcontrol,
 			 int /*x*/, int /*y*/, int /*w*/, int /*h*/,
-			 int argc, int offline, const std::string & conffile)
-  :eudaq::Monitor("StdEventMonitor", runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
+			 int argc, int offline, const std::string & conffile, const std::string & monname)
+  :eudaq::Monitor(monname, runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
   if (_offline <= 0)
   {
     onlinemon = new OnlineMonWindow(gClient->GetRoot(),800,600);
@@ -62,6 +61,9 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
     }
   }
 
+  m_plane_c = 0;
+  m_ev_rec_n = 0;
+  
   hmCollection = new HitmapCollection();
   corrCollection = new CorrelationCollection();
   MonitorPerformanceCollection *monCollection =new MonitorPerformanceCollection();
@@ -181,6 +183,20 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
     stdev = eudaq::StandardEvent::MakeShared();
     eudaq::StdEventConverter::Convert(evsp, stdev, nullptr); //no conf
   }
+
+  uint32_t ev_plane_c = stdev->NumPlanes();
+  if(m_ev_rec_n < 10){
+    m_ev_rec_n ++;
+    if(ev_plane_c > m_plane_c){
+      m_plane_c = ev_plane_c;
+    }
+    return;
+  }
+
+  if(ev_plane_c != m_plane_c){
+    std::cout<< "do nothing for this event at "<< evsp->GetEventN()<< ", ev_plane_c "<<ev_plane_c<<std::endl;
+    return;
+  }
   
   auto &ev = *(stdev.get());
   while(_offline <= 0 && onlinemon==NULL){
@@ -241,11 +257,14 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
 
         cout << "Plane Mismatch on " <<ev.GetEventNumber()<<endl;
         cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
-        skip_dodgy_event=true; //we may want to skip this FIXME
+        skip_dodgy_event=false; //we may want to skip this FIXME
         ostringstream eudaq_warn_message;
         eudaq_warn_message << "Plane Mismatch in Event "<<ev.GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
         EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
-
+	_planesInitialized = false;
+	num = (unsigned int) ev.NumPlanes();
+	eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
+	myevent.setNPlanes(num);
       }
       else {
         myevent.setNPlanes(num);
@@ -280,12 +299,20 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
       simpEv.setSlow_para(tagname,val);
     }
 
-    // std::vector<std::string> paralist = ev.GetTagList("PLOT_");
-    // for(auto &e: paralist){
-    //   double val ;
-    //   val=ev.GetTag(e, val);
-    //   simpEv.setSlow_para(e,val);
-    // }
+    try{
+    auto paralist = ev.GetTags();
+    for(auto &e: paralist){
+      if(e.first.find("PLOT_") == std::string::npos) continue;
+
+      double val = stod(e.second);
+      // val=ev.GetTag(e.first, val);
+      // The histograms are booked in first event with some data?
+      std::cout << "PLOT " << e.first << ": " << val << '\n';
+      simpEv.setSlow_para(e.first,val);
+    }
+    } catch(...) {
+      std::cout << "Failed to parse PLOT tag\n";
+    }
     
     if (skip_dodgy_event)
     {
@@ -454,6 +481,8 @@ void RootMonitor::autoReset(const bool reset) {
 
 void RootMonitor::DoStopRun()
 {
+  m_plane_c = 0;
+  m_ev_rec_n = 0;
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
@@ -471,6 +500,8 @@ void RootMonitor::DoStopRun()
 }
 
 void RootMonitor::DoStartRun() {
+  m_plane_c = 0;
+  m_ev_rec_n = 0;
   uint32_t param = GetRunNumber();
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -537,6 +568,7 @@ int main(int argc, const char ** argv) {
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
   eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
+  eudaq::Option<std::string>     monitorname(op, "t", "monitor_name"," ", "StdEventMonitor","Name for onlinemon");	
   eudaq::OptionFlag do_rootatend (op, "rf","root","Write out root-file after each run");
   eudaq::OptionFlag do_resetatend (op, "rs","reset","Reset Histograms when run stops");
 
@@ -548,7 +580,7 @@ int main(int argc, const char ** argv) {
     TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
     RootMonitor mon(rctrl.Value(),
 		    x.Value(), y.Value(), w.Value(), h.Value(),
-		    argc, offline.Value(), configfile.Value());
+		    argc, offline.Value(), configfile.Value(),monitorname.Value());
     mon.setWriteRoot(do_rootatend.IsSet());
     mon.autoReset(do_resetatend.IsSet());
     mon.setReduce(reduce.Value());

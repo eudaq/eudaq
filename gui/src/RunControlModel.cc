@@ -97,3 +97,17 @@ QVariant RunControlModel::headerData(int section, Qt::Orientation orientation,
   }
   return QVariant();
 }
+
+eudaq::ConnectionSPC RunControlModel::getConnection(const QModelIndex &index){
+  auto col_n = index.column();
+  auto row_n = index.row();
+  
+  if(row_n<m_con_status.size() && col_n<m_str_header.size()){
+    auto it = m_con_status.begin();
+    for(size_t i = 0; i< row_n; i++){
+      it++;
+    }
+    auto &con = it->first;	
+    return con;
+    }
+};

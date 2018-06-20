@@ -25,6 +25,8 @@ void ParaMonitorCollection::InitPlots(const SimpleStandardEvent &simpev){
   for(auto &e: list){
     name = e;
     tg = new TGraph();
+    // tg->SetMarkerStyle(5);
+    // tg->SetMarkerSize(4);
     tg->SetTitle(name.c_str());
     m_graphMap[name] = tg;    
   }
@@ -60,6 +62,7 @@ void ParaMonitorCollection::Reset() {
 }
 
 void ParaMonitorCollection::Fill(const SimpleStandardEvent &simpev) {
+  // This means we can't change the plots as we go, maybe OK?
   if (histos_init == false) {
     InitPlots(simpev);
     bookHistograms(simpev);

@@ -4,9 +4,9 @@ import pyeudaq
 import time
 
 class ExamplePyProducer(pyeudaq.Producer):
-    is_running = 0
     def __init__(self, name, runctrl):
         pyeudaq.Producer.__init__(self, 'PyProducer', name, runctrl)
+        self.is_running = 0
         print 'New instance of ExamplePyProducer'
 
     def DoInitialise(self):        
@@ -27,6 +27,7 @@ class ExamplePyProducer(pyeudaq.Producer):
 
     def DoReset(self):        
         print 'DoReset'
+        self.is_running = 0
 
     def RunLoop(self):
         print "Start of RunLoop in ExamplePyProducer"
@@ -34,6 +35,8 @@ class ExamplePyProducer(pyeudaq.Producer):
         while(self.is_running):
             ev = pyeudaq.Event("RawEvent", "sub_name")
             ev.SetTriggerN(trigger_n)
+            block = bytes(r'raw_data_string')
+            ev.AddBlock(0, block)
             print ev
             self.SendEvent(ev)
             trigger_n += 1

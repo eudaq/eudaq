@@ -47,7 +47,7 @@ class RootMonitor : public eudaq::Monitor{
 public:
   RootMonitor(const std::string &runcontrol, 
 	      int x, int y, int w, int h, int argc, int offline,
-              const std::string &conffile = "");
+              const std::string &conffile = "", const std::string &monname = "");
   ~RootMonitor() override;
   void DoConfigure() override;
   void DoStartRun() override;
@@ -97,6 +97,8 @@ private:
   double previous_event_clustering_time;
   double previous_event_correlation_time;
   unsigned int tracksPerEvent;
+  uint32_t m_plane_c;
+  uint32_t m_ev_rec_n = 0;
 };
 
 #ifdef __CINT__
