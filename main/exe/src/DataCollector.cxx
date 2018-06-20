@@ -10,9 +10,9 @@
 #ifndef WIN32
 #include <unistd.h>
 #endif
-class TestDataCollector : public eudaq::DataCollector {
+class DataCollector : public eudaq::DataCollector {
   public:
-  TestDataCollector(const std::string & name, const std::string & runcontrol,
+  DataCollector(const std::string & name, const std::string & runcontrol,
 		    const std::string & listenaddress, const std::string & runnumberfile)
     : eudaq::DataCollector(name, runcontrol, listenaddress, runnumberfile),
       done(false)
@@ -60,7 +60,7 @@ class TestDataCollector : public eudaq::DataCollector {
     bool done;
 };
 
-// static TestDataCollector * g_ptr = 0;
+// static DataCollector * g_ptr = 0;
 // void ctrlc_handler(int) {
 //   if (g_ptr) g_ptr->done = 1;
 // }
@@ -80,7 +80,7 @@ int main(int /*argc*/, const char ** argv) {
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    TestDataCollector fw(name.Value(), rctrl.Value(), addr.Value(), runnumberfile.Value());
+    DataCollector fw(name.Value(), rctrl.Value(), addr.Value(), runnumberfile.Value());
     //g_ptr = &fw;
     //std::signal(SIGINT, &ctrlc_handler);
     do {
