@@ -1,7 +1,7 @@
 # Determine platform- and compiler-specific settings
 
-# demand c++11 support
-set (CMAKE_CXX_STANDARD 11)
+# demand c++14 support
+set (CMAKE_CXX_STANDARD 14)
 set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # position independent code on instead of setting -fPIC directly
