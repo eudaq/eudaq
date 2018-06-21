@@ -32,20 +32,20 @@ add_executable(euRun ${RUN_GUI_SRC})
 target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euRun)
 
-##### start of customized euRun GUI ######
-set(KPIX_RUN_GUI_SRC
-  src/myeuRun.cxx
-  src/myeuRun.cc
-  src/RunControlModel.cc
-  src/euRun.rc
-  )
-qt5_wrap_ui(myeuRun_UISrcs ui/myeuRun.ui)
-qt5_wrap_cpp(myeuRun_MOCSrcs include/RunControlModel.hh include/myeuRun.hh )
-list(APPEND KPIX_RUN_GUI_SRC ${myeuRun_UISrcs} ${myeuRun_MOCSrcs})
-add_executable(myeuRun ${KPIX_RUN_GUI_SRC})
-target_link_libraries(myeuRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
-list(APPEND INSTALL_TARGETS myeuRun)
-###### end of customized euRun GUI ######
+# ##### start of customized euRun GUI ######
+# set(KPIX_RUN_GUI_SRC
+#   src/myeuRun.cxx
+#   src/myeuRun.cc
+#   src/RunControlModel.cc
+#   src/euRun.rc
+#   )
+# qt5_wrap_ui(myeuRun_UISrcs ui/myeuRun.ui)
+# qt5_wrap_cpp(myeuRun_MOCSrcs include/RunControlModel.hh include/myeuRun.hh )
+# list(APPEND KPIX_RUN_GUI_SRC ${myeuRun_UISrcs} ${myeuRun_MOCSrcs})
+# add_executable(myeuRun ${KPIX_RUN_GUI_SRC})
+# target_link_libraries(myeuRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
+# list(APPEND INSTALL_TARGETS myeuRun)
+# ###### end of customized euRun GUI ######
 
 set(LOG_GUI_SRC
   src/euLog.cxx

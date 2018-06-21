@@ -1,14 +1,14 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
-#include "myeuRun.hh"
+#include "kpixGui.hh"
 #include <iostream>
 #include <QApplication>
 
 int main(int argc, char **argv) {
   QCoreApplication *qapp = new QApplication(argc, argv );  
 
-  eudaq::OptionParser op("EUDAQ Run Control (kpix customized)", "2", "A Qt Launcher of the Run Control");
+  eudaq::OptionParser op("EUDAQ Run Control (kpixGui)", "2", "A Qt Launcher of the Run Control");
   eudaq::Option<std::string> sname(op, "n", "name", "RunControl", "Static Name",
 				   "Static Name of RunControl");
   eudaq::Option<std::string> addr(op, "a", "listen-address", "tcp://44000", "address",

@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QDateTime>
 #include <fstream>
-#include "myeuRun.hh"
+#include "kpixGui.hh"
 #include "Colours.hh"
 #include "eudaq/Config.hh"
 

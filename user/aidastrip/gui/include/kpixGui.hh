@@ -1,4 +1,5 @@
-#include "ui_euRun.h"
+#include "ui_kpixGui.h"
+
 #include "RunControlModel.hh"
 #include "eudaq/RunControl.hh"
 #include <QFileDialog>
