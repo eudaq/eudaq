@@ -1,5 +1,5 @@
 if(NOT USER_AIDASTRIP_EXE)
-  message(STATUS "Disable the building of aux. AIDASTRIP executables (USER_AIDASTRIP_EXE=OFF)")
+  message(STATUS "Disable building of aux. AIDASTRIP executables user/aidastrip/exe (USER_AIDASTRIP_EXE=OFF)")
   return()
 endif()
 
