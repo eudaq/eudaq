@@ -1,17 +1,20 @@
-##-- EUDAQ_MODULE needed for compilation at lower level CMakeLists
-get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
-
+##-- OPT: Compile AIDA strip?
 option(USER_AIDASTRIP "build AIDA strip" ON)
-
 if(NOT USER_AIDASTRIP)
   message("disable building of user/aidastrip  (USER_AIDASTRIP=OFF)")
   return()
 endif()
 
+##-- Global Preparation:
+#-- EUDAQ_MODULE needed for compilation at lower level CMakeLists
+get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
+
+
+##-- Main Producer + DC:
 add_subdirectory(module)
 
-##-- root analyzer needs ROOT:
+##-- ROOT analyzer/converter needs ROOT:
 find_package(ROOT)
 cmake_dependent_option(USER_AIDASTRIP_EXE "build aux. AIDASTRIP executables." ON
   "ROOT_FOUND" OFF)
