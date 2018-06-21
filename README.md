@@ -4,12 +4,11 @@ EUDAQ version 2
 [![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=master)](https://travis-ci.org/eudaq/eudaq)
 [![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/master?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/master)
 
-
-
 EUDAQ is a Generic Multi-platform Data Acquisition Framework.
 Version 2 comes with more flexible cross connectivity between components, multiple data collectors, and a cleaner seperation between core functionalities and user modules. 
 
 ### License
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the Lesser GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -20,7 +19,7 @@ the Free Software Foundation, either version 3 of the License, or
 Please check out the online documentation at 
 - http://eudaq.github.io/ or 
 - the manual, see below
-- (https://telescopes.desy.de/EUDAQ or)
+- (https://telescopes.desy.de/EUDAQ for the use with the EUDET-type beam telescopes)
 
 ### Sources of documentation within the framework
 
@@ -61,8 +60,10 @@ ROOT 6 is required for the Online Monitor GUI.
 
 ## Compiling and installation
 
-cmake will configure the installation and prepare the makefiles. It searches for all the required files. 
-It has to be executed in a ```build``` folder, however the relevant CMakeLists.txt is in the main level, thus, the command is ```cmake ..```. 
+```cmake``` will configure the installation and prepare the makefiles. 
+It searches for all the required files. 
+As a standard, it is executed in the ```build``` folder. 
+Since the relevant CMakeLists.txt is in the main level, thus, the command is ```cmake ..```. 
 If cmake is successful, EUDAQ can be installed. 
 Variables set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
@@ -98,9 +99,6 @@ cmake ..
 make install
 ```
 
-
-
-
 ### Notes for Windows
 
 #### Visual Studio for compiling (MSVC)
@@ -124,6 +122,11 @@ This generates the VS project files. Installing into eudaq\bin by:
 ```
 cmake --build . --target install --config Release
 ```
+Or in the Visual Studio style:
+```
+MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
+```
+
 ### Notes for OS X
 
 - Compiler: Clang (at least version 3.1)
