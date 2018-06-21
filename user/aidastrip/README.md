@@ -7,12 +7,12 @@
 
 The KPiX DAQ was based on an old Qt4 version with a lot of dependencies, that are not compatible with one Qt5 installed under a normal system directory.
 
-There are 2 ways to do it, assuming your Qt5 is installed under '/opt/Qt5.9.3' and your Qt5Widgets is '/opt/Qt5.9.3/lib/cmake/Qt5Widgets/'.
-1. with 'cmake-gui ..': when you start 'configure', you will see 'Qt5Widgets_DIR NOT FOUND' in an 'ungrouped terms' section, you click the '...' then you can choose where you installed the Qt5;
-2. with 'cmake':
-'''
+There are 2 ways to do it, assuming your Qt5 is installed under `/opt/Qt5.9.3` and your Qt5Widgets is `/opt/Qt5.9.3/lib/cmake/Qt5Widgets/`.
+1. with `cmake-gui ..`: when you start `configure`, you will see `Qt5Widgets_DIR NOT FOUND` in an `ungrouped terms` section, you click the `...` then you can choose where you installed the Qt5;
+2. with `cmake`:
+```
 cmake -DQt5Widgets_DIR=/opt/Qt5.9.3/lib/cmake/Qt5Widgets/ ...
-'''
+```
 If you need to switch off some defaul on options, do like "-DUSER_TBSCDESY=OFF" to switch off the tbsc user module.
 
 ### Pre-request
