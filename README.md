@@ -134,6 +134,10 @@ Go to the EUDAQ-build folder and generate the VS project files:
 cd c:\[...]\eudaq\build
 cmake ..
 ```
+For NI Crate (Mimosa DAQ):
+```
+cmake -D USE_ROOT=OFF -D BUILD_onlinemon=OFF -D BUILD_ni=ON -D BUILD_tlu=ON ..
+```
 Installing into eudaq\bin by:
 ```
 cmake --build . --target install --config Release
