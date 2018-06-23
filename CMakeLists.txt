@@ -6,7 +6,7 @@ PROJECT( EUDAQ LANGUAGES CXX)
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 8 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 9 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # some macros are redefined if not exisiting
