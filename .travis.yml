@@ -126,9 +126,11 @@ matrix:
 #before_install:
       
 install:
+  - export AFS_REQUIRED="NO"
   - source .travis/set_compilers.sh
   - source .travis/update_repositories.sh  
-  - source .travis/install_afs.sh  
+  - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
+  - if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi
   - source .travis/install_cmake.sh
   - source .travis/install_python.sh  
   - source .travis/install_libusb_0_1.sh  
