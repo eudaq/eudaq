@@ -78,6 +78,7 @@ else
 	
 	if [[ $exit_status==0 ]]; then
 		echo "Afs seems to work properly"
+		export AFS_STATUS="GOOD"
 	fi
 	
 	if [[ $exit_status!=0 ]]; then
@@ -87,8 +88,10 @@ else
 	
 	if [[ $exit_status==0 ]]; then
 		echo "Afs seems to work properly, but desy afs down?"
+		export AFS_STATUS="BAD"
 	else
 		echo "Something wrong with the afs installation"	
+		export AFS_STATUS="BAD"
 	fi
 	
 fi
