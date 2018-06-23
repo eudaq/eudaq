@@ -6,7 +6,7 @@ pull_requests:
 branches:
   only:
   - master
-  - v1.7-dev
+  - v1.x-dev
 
 image: Visual Studio 2017
 
