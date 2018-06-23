@@ -4,6 +4,8 @@ EUDAQ version 1
 [![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=v1.7-dev)](https://travis-ci.org/eudaq/eudaq) 
 [![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/v1.6-dev?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/v1.7-dev)
 
+**Note: EUDAQ version 1.8 requires a C++14 compliant compiler.**
+
 EUDAQ is a Generic Multi-platform Data Acquisition Framework.
 Version 1 uses a central data collector which synchronize multiple data streams by event number. 
 This works smoothly with the EUDET TLU.
@@ -42,8 +44,8 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 
 ### For the core and executables
 
-EUDAQ requires a C++11 compliant compiler. 
-We recommend a gcc version 4.9 or later. 
+EUDAQ requires a C++14 compliant compiler. 
+We recommend a gcc version 5.0 or later. 
 Qt version 4/5 or higher is required to build GUIs. 
 ROOT 5/6 is required for the Online Monitor GUI.
 
