@@ -11,6 +11,8 @@
 echo "Entered install_afs.sh"
 echo "Installing afs"
 
+source travis_retry.sh
+
 export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.13
 export OPENAFS_FILENAME_MAC=AuriStor-client-0.170-HighSierra.dmg
 
@@ -73,7 +75,10 @@ else
 	sudo service openafs-client stop
 	sudo service openafs-client start
 	
-	timeout 30 test -d "/afs/desy.de/group/telescopes"
+	echo "Testing afs connectivity"
+	echo "Maximum 60s - timeout"
+	
+	travis_retry timeout 30s test -d "/afs/desy.de/group/telescopes"
 	exit_status=$?
 	
 	if [[ $exit_status==0 ]]; then
@@ -82,7 +87,7 @@ else
 	fi
 	
 	if [[ $exit_status!=0 ]]; then
-		timeout 30 test -d "/afs/cern.ch"
+		timeout 30s test -d "/afs/cern.ch"
 		exit_status=$?
 	fi
 	
