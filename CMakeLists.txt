@@ -95,7 +95,19 @@ IF(BUILD_nreader)
   add_definitions(${LCIO_DEFINITIONS} ${EUTELESCOPE_DEFINITIONS})
   AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
   ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
-  INSTALL(TARGETS DetectorDescriptons RUNTIME DESTINATION bin
+  
+  #This is an ugly workaround...is there a better way?
+  #get_target_property(DetectorDescriptions_EUDAQ_HEADERS EUDAQ INCLUDE_DIRECTORIES)
+  #message(${DetectorDescriptions_EUDAQ_HEADERS})
+  #include_directories(${DetectorDescriptions_EUDAQ_HEADERS})
+  
+  TARGET_INCLUDE_DIRECTORIES(DetectorDescriptons PRIVATE 
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/main/include>
+  )
+  target_link_libraries( DetectorDescriptons )
+  INSTALL(TARGETS DetectorDescriptons 
+				      EXPORT ${PROJECT_NAME}
+				      RUNTIME DESTINATION bin
                                       LIBRARY DESTINATION lib
                                       ARCHIVE DESTINATION lib)
   set(ADDITIONAL_LIBRARIES ${LCIO_LIBRARIES} ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)

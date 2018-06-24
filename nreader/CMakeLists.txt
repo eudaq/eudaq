@@ -39,6 +39,8 @@ INCLUDE_DIRECTORIES( ./include )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
 ADD_LIBRARY( ${libname} SHARED ${library_sources} )
 
+target_link_libraries( ${libname}   EUDAQ )
+
 INSTALL(TARGETS ${libname}
   EXPORT ${PROJECT_NAME}
   RUNTIME DESTINATION bin COMPONENT NREADER
