@@ -45,6 +45,8 @@ namespace eudaq {
     static ProducerSP Make(const std::string &code_name, const std::string &run_name,
 			   const std::string &runcontrol);
 
+    void Exec();
+
   private:
     void OnInitialise() override final;
     void OnConfigure() override final;
@@ -59,6 +61,8 @@ namespace eudaq {
     uint32_t m_evt_c;
     std::mutex m_mtx_sender;
     std::map<std::string, std::shared_ptr<DataSender>> m_senders;
+    bool m_cli_run=false; 
+    bool m_exit;
   };
   //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
 }
