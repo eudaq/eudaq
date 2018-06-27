@@ -147,7 +147,6 @@ namespace eudaq
                 const unsigned int board_id = ev_raw.GetTag("board",int());
                 
                 const std::string plane_name("KC705_"+std::to_string(board_id)+":RD53A");
-        //std::cout << "EL PLANE:" << plane_name << " Trigger number: " << trigger_number << std::endl;
                 if(static_cast<uint32_t>(trigger_number) == -1)
                 {
                     // Dummy plane
@@ -170,7 +169,6 @@ namespace eudaq
                 {
                     // Create a standard plane representing one sensor plane
                     StandardPlane plane(i, EVENT_TYPE,plane_name);
-        //std::cout << "INSIDE LOOP: EL PLANE:" << plane_name << " sensor: " << i << " Trigger number: " << trigger_number << std::endl;
                     // FIXME: Understand what is the meaning of those flags!! 
                     plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,RD53A_MAX_TRG_ID,
                             StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
