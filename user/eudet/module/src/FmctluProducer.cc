@@ -234,11 +234,11 @@ void FmctluProducer::DoConfigure() {
     // The conf function does not seem happy with a 32-bit default. Need to check.
     m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
-    m_tlu->SetDUTMask(conf->Get("DUTMask",1)); // Which DUTs are on
-    m_tlu->SetDUTMaskMode(conf->Get("DUTMaskMode",0xff)); // AIDA (x1) or EUDET (x0)
-    m_tlu->SetDUTMaskModeModifier(conf->Get("DUTMaskModeModifier",0xff)); // Only for EUDET
-    m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
-    m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1)); //
+    m_tlu->SetDUTMask(conf->Get("DUTMask",1), m_verbose); // Which DUTs are on
+    m_tlu->SetDUTMaskMode(conf->Get("DUTMaskMode",0xff), m_verbose); // AIDA (x1) or EUDET (x0)
+    m_tlu->SetDUTMaskModeModifier(conf->Get("DUTMaskModeModifier",0xff), m_verbose); // Only for EUDET
+    m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF), m_verbose); // Ignore busy in AIDA mode
+    m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1), m_verbose); //
     m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
     //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
     m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), m_verbose );
