@@ -177,6 +177,41 @@ namespace tlu {
     return res;
   }
 
+  uint32_t FmctluController::GetDUTMask(){
+    uint32_t res;
+    res= ReadRRegister("DUTInterfaces.DUTMaskR");
+    std::cout << "\tDUTMask read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetDUTMaskMode(){
+    uint32_t res;
+    res= ReadRRegister("DUTInterfaces.DUTInterfaceModeR");
+    std::cout << "\tDUTMaskMode read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetDUTMaskModeModifier(){
+    uint32_t res;
+    res= ReadRRegister("DUTInterfaces.DUTInterfaceModeModifierR");
+    std::cout << "\tDUTMaskModifier read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetDUTIgnoreBusy(){
+    uint32_t res;
+    res= ReadRRegister("DUTInterfaces.IgnoreDUTBusyR");
+    std::cout << "\tDUTIgnore busy read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetDUTIgnoreShutterVeto(){
+    uint32_t res;
+    res= ReadRRegister("DUTInterfaces.IgnoreShutterVetoR");
+    std::cout << "\tDUTIgnoreShutterVeto read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
   uint32_t FmctluController::GetInternalTriggerInterval(int verbose){
     uint32_t interval;
     uint32_t true_freq;
@@ -510,6 +545,47 @@ namespace tlu {
     }
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
+
+  void FmctluController::SetDUTMask(int value, bool verbose){
+    SetWRegister("DUTInterfaces.DUTMaskW",value);
+    if (verbose){
+      std::cout << "Writing DUTMask: " << value << std::cout;
+      GetDUTMask();
+    }
+  };
+
+  void FmctluController::SetDUTMaskMode(int value, bool verbose){
+    SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
+    if (verbose){
+      std::cout << "Writing DUTInterfaceMode: " << value << std::cout;
+      GetDUTMaskMode();
+    }
+  };
+
+  void FmctluController::SetDUTMaskModeModifier(int value, bool verbose){
+    SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
+    if (verbose){
+      std::cout << "Writing DUTModeModifier: " << value << std::cout;
+      GetDUTMaskModeModifier();
+    }
+  };
+
+  void FmctluController::SetDUTIgnoreBusy(int value, bool verbose){
+    SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
+    if (verbose){
+      std::cout << "Writing DUT Ignore Busy: " << value << std::cout;
+      GetDUTIgnoreBusy();
+    }
+  };
+
+  void FmctluController::SetDUTIgnoreShutterVeto(int value, bool verbose){
+    SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
+    if (verbose){
+      std::cout << "Writing DUT Ignore Veto: " << value << std::cout;
+      GetDUTIgnoreShutterVeto();
+    }
+  };
+
 
   void FmctluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
     uint32_t max_freq= 160000000;
