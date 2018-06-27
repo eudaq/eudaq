@@ -143,6 +143,8 @@ void CorrelationHistos::FillCorrVsTime(const SimpleStandardCluster &cluster1,
 void CorrelationHistos::Reset() {
   _2dcorrX->Reset();
   _2dcorrY->Reset();
+  _2dcorrTimeX->Reset();
+  _2dcorrTimeY->Reset();
 }
 
 TH2I *CorrelationHistos::getCorrXHisto() { return _2dcorrX; }
@@ -151,6 +153,8 @@ TH2I *CorrelationHistos::getCorrYHisto() { return _2dcorrY; }
 void CorrelationHistos::Write() {
   _2dcorrX->Write();
   _2dcorrY->Write();
+  _2dcorrTimeX->Write();
+  _2dcorrTimeY->Write();
 }
 
 

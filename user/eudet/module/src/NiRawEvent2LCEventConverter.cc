@@ -167,7 +167,7 @@ namespace eudaq{
 
     // If we get here it must be a data event
     const RawEvent &rawev = dynamic_cast<const RawEvent &>(source);
-    if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
+    if (rawev.NumBlocks() < 2 || rawev.GetBlock(0).size() < 20 ||
 	rawev.GetBlock(1).size() < 20) {
       EUDAQ_WARN("Ignoring bad event " + to_string(source.GetEventNumber()));
       return false;

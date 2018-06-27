@@ -114,7 +114,6 @@ namespace eudaq {
 	}
       }
     m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
-      std::cout << "sending command" << std::endl;
     SendCommand("INIT", to_string(*m_conf_init), id);	  
   }
   
@@ -187,7 +186,7 @@ namespace eudaq {
 	m_conf->SetString(server_name, server_addr);
     }
     m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
-    SendCommand("CONFIG", to_string(*m_conf), id);	  
+    SendCommand("CONFIG", to_string(*m_conf), id);
   }
 
   void RunControl::ReadConfigureFile(const std::string &path){
@@ -262,11 +261,44 @@ namespace eudaq {
 	}
       }
     }
-    
+
+
     //TODO: make sure datacollector is started before producer. waiting
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::string producer_last_start;
+    m_conf->SetSection("RunControl");
+    producer_last_start = m_conf->Get("EUDAQ_CTRL_PRODUCER_LAST_START", producer_last_start);
     for(auto &conn :conn_to_run){
-      if(conn->GetType() == "Producer"){
+      if(conn->GetType() == "Producer" &&
+	 conn->GetName() != producer_last_start){
+	SendCommand("START", to_string(m_run_n), conn);
+      }
+    }
+
+    auto tp_timeout = std::chrono::steady_clock::now()
+      + std::chrono::seconds(60);
+    for(auto &conn :conn_to_run){
+      if(conn->GetName() == producer_last_start){
+	continue;
+      }
+      while(1){
+	auto st = GetConnectionStatus(conn)->GetState();
+	if(st == Status::STATE_CONF){
+	  if(std::chrono::steady_clock::now()>tp_timeout){
+	    EUDAQ_ERROR("Timesout waiting running status from "+ conn->GetName());
+	  }
+	  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	  continue;
+	}else{
+	  break;
+	}
+      }
+    }
+    
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    for(auto &conn :conn_to_run){
+      if(conn->GetType() == "Producer" &&
+	 conn->GetName() == producer_last_start){
 	SendCommand("START", to_string(m_run_n), conn);
       }
     }
@@ -375,7 +407,7 @@ namespace eudaq {
   void RunControl::StatusThread(){
     while(!m_exit){
       SendCommand("STATUS", "");
-      std::this_thread::sleep_for(std::chrono::milliseconds(300));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // status/request update time of RunControl
     }
   }
   

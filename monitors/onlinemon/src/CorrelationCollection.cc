@@ -77,7 +77,14 @@ void CorrelationCollection::Reset() {
   std::map<std::pair<SimpleStandardPlane, SimpleStandardPlane>,
            CorrelationHistos *>::iterator it;
   for (it = _map.begin(); it != _map.end(); ++it) {
-    (*it).second->Reset();
+    if((*it).second)
+      (*it).second->Reset();
+    else {
+      // Is this to do with order of first and second?
+      // auto &plane = it->first;
+      // std::cout << "No correlations for " << plane.first.getName()
+      // 		<< " vs " << plane.second.getName() << '\n';
+    }
   }
 }
 
@@ -533,7 +540,8 @@ void CorrelationCollection::Write(TFile *file) {
     // it->first.getPlane2().getName().c_str(),it->first.getPlane2().getID());
     // gDirectory->mkdir(sensorfolder);
     // gDirectory->cd(sensorfolder);
-    it->second->Write();
+    if(it->second)
+      it->second->Write();
 
     // gDirectory->cd("..");
   }

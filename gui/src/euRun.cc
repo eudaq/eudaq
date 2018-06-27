@@ -72,7 +72,7 @@ RunControlGUI::RunControlGUI()
 
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
   connect(&m_timer_display, SIGNAL(timeout()), this, SLOT(DisplayTimer()));
-  m_timer_display.start(500);
+  m_timer_display.start(1000); // internal update time of GUI
   btnInit->setEnabled(1);
   btnConfig->setEnabled(1);
   btnLoadInit->setEnabled(1);

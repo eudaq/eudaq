@@ -97,6 +97,8 @@ private:
   double previous_event_clustering_time;
   double previous_event_correlation_time;
   unsigned int tracksPerEvent;
+  uint32_t m_plane_c;
+  uint32_t m_ev_rec_n = 0;
 };
 
 #ifdef __CINT__

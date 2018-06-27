@@ -79,6 +79,7 @@ namespace eudaq {
       m_fwtype = conf->Get("EUDAQ_FW", "native");
       m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
       m_dct_n = conf->Get("EUDAQ_ID", m_dct_n);
+      m_fraction = conf->Get("EUDAQ_DATACOL_SEND_MONITOR_FRACTION", 1);
       DoConfigure();
       CommandReceiver::OnConfigure();
     }catch (const Exception &e) {
@@ -201,6 +202,9 @@ namespace eudaq {
       std::unique_lock<std::mutex> lk(m_mtx_sender);
       auto senders = m_senders;
       lk.unlock();
+      if(m_evt_c%m_fraction != 0){
+	return;
+      }
       for(auto &e: senders){
 	if(e.second)
 	  e.second->SendEvent(ev);

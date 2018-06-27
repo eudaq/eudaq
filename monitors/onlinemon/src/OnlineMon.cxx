@@ -43,7 +43,6 @@
 
 //ONLINE MONITOR Includes
 #include "OnlineMon.hh"
-
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/StdEventConverter.hh"
 using namespace std;
@@ -62,6 +61,9 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
     }
   }
 
+  m_plane_c = 0;
+  m_ev_rec_n = 0;
+  
   hmCollection = new HitmapCollection();
   corrCollection = new CorrelationCollection();
   MonitorPerformanceCollection *monCollection =new MonitorPerformanceCollection();
@@ -181,6 +183,20 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
     stdev = eudaq::StandardEvent::MakeShared();
     eudaq::StdEventConverter::Convert(evsp, stdev, nullptr); //no conf
   }
+
+  uint32_t ev_plane_c = stdev->NumPlanes();
+  if(m_ev_rec_n < 10){
+    m_ev_rec_n ++;
+    if(ev_plane_c > m_plane_c){
+      m_plane_c = ev_plane_c;
+    }
+    return;
+  }
+
+  if(ev_plane_c != m_plane_c){
+    std::cout<< "do nothing for this event at "<< evsp->GetEventN()<< ", ev_plane_c "<<ev_plane_c<<std::endl;
+    return;
+  }
   
   auto &ev = *(stdev.get());
   while(_offline <= 0 && onlinemon==NULL){
@@ -283,12 +299,20 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
       simpEv.setSlow_para(tagname,val);
     }
 
-    // std::vector<std::string> paralist = ev.GetTagList("PLOT_");
-    // for(auto &e: paralist){
-    //   double val ;
-    //   val=ev.GetTag(e, val);
-    //   simpEv.setSlow_para(e,val);
-    // }
+    try{
+    auto paralist = ev.GetTags();
+    for(auto &e: paralist){
+      if(e.first.find("PLOT_") == std::string::npos) continue;
+
+      double val = stod(e.second);
+      // val=ev.GetTag(e.first, val);
+      // The histograms are booked in first event with some data?
+      std::cout << "PLOT " << e.first << ": " << val << '\n';
+      simpEv.setSlow_para(e.first,val);
+    }
+    } catch(...) {
+      std::cout << "Failed to parse PLOT tag\n";
+    }
     
     if (skip_dodgy_event)
     {
@@ -457,6 +481,8 @@ void RootMonitor::autoReset(const bool reset) {
 
 void RootMonitor::DoStopRun()
 {
+  m_plane_c = 0;
+  m_ev_rec_n = 0;
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
@@ -474,6 +500,8 @@ void RootMonitor::DoStopRun()
 }
 
 void RootMonitor::DoStartRun() {
+  m_plane_c = 0;
+  m_ev_rec_n = 0;
   uint32_t param = GetRunNumber();
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
