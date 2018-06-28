@@ -5,7 +5,7 @@ data/*
 include/*
 extern/*
 lib/*
-logs/*
+log/*
 test.conf
 test.ini
 

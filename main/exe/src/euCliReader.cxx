@@ -23,6 +23,9 @@ int main(int /*argc*/, const char **argv) {
   if(type_in=="raw")
     type_in = "native";
 
+  bool stdev_v = stdev.Value();
+
+
   uint32_t eventl_v = eventl.Value();
   uint32_t eventh_v = eventh.Value();
   uint32_t triggerl_v = triggerl.Value();
@@ -35,8 +38,6 @@ int main(int /*argc*/, const char **argv) {
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
   uint32_t event_count = 0;
 
-  std::cout<< "runNumber,eventNumber,triggerNumber,timeStampBegin,triggersFired" <<std::endl;
-
   while(1){
     auto ev = reader->GetNextEvent();
     if(!ev)
@@ -45,7 +46,7 @@ int main(int /*argc*/, const char **argv) {
     if(eventl_v!=0 || eventh_v!=0){
       uint32_t ev_n = ev->GetEventN();
       if(ev_n >= eventl_v && ev_n < eventh_v){
-	in_range_evn = true;
+        in_range_evn = true;
       }
     }
     else
@@ -55,7 +56,7 @@ int main(int /*argc*/, const char **argv) {
     if(triggerl_v!=0 || triggerh_v!=0){
       uint32_t tg_n = ev->GetTriggerN();
       if(tg_n >= triggerl_v && tg_n < triggerh_v){
-	in_range_tgn = true;
+        in_range_tgn = true;
       }
     }
     else
@@ -66,7 +67,7 @@ int main(int /*argc*/, const char **argv) {
       uint32_t ts_beg = ev->GetTimestampBegin();
       uint32_t ts_end = ev->GetTimestampEnd();
       if(ts_beg >= timestampl_v && ts_end <= timestamph_v){
-	in_range_tsn = true;
+        in_range_tsn = true;
       }
     }
     else
@@ -74,28 +75,16 @@ int main(int /*argc*/, const char **argv) {
 
 
     if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
-        auto subevents = ev->GetSubEvents();
-        for (auto &subev: subevents){
-            auto subeventDescription = subev->GetDescription();
-            // std::cout<< subeventDescription << std::endl;
-            if (subeventDescription=="TluRawDataEvent") {
-		auto eventNumber = subev->GetEventNumber();
-		auto runNumber = subev->GetRunNumber();
-		auto triggerNumber = subev->GetTriggerN();
-		auto triggersFired = subev->GetTag("TRIGGER" , "NAN");
-		auto timeStampBegin = subev->GetTimestampBegin();
-		uint32_t scalers [6] = { static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER0" , "NAN"))), static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER1" , "NAN"))) , static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER2" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER3" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER4" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER5" , "NAN")))    };
-		uint32_t fine_ts [6] = { static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS0" , "NAN"))), static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS1" , "NAN"))) , static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS2" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS3" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS4" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS5" , "NAN")))    };
-		std::cout<< runNumber << " " << eventNumber << " " << triggerNumber << " " << timeStampBegin << " " << triggersFired <<std::endl;
-                //subev->Print(std::cout);
-            }
-
-        }
-      // ev->Print(std::cout);
+      ev->Print(std::cout);
+      if(stdev_v){
+        auto evstd = eudaq::StandardEvent::MakeShared();
+        eudaq::StdEventConverter::Convert(ev, evstd, nullptr);
+        std::cout<< ">>>>>"<< evstd->NumPlanes() <<"<<<<"<<std::endl;
+      }
     }
-
+    
     event_count ++;
   }
-  // std::cout<< "There are "<< event_count << "Events"<<std::endl;
+  std::cout<< "There are "<< event_count << "Events"<<std::endl;
   return 0;
 }

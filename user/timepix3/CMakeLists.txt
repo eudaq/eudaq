@@ -6,8 +6,10 @@ set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
 option(USER_TIMEPIX3_BUILD "build timepix3" OFF)
 
 if(NOT USER_TIMEPIX3_BUILD)
-  message("disable building of user/timepix3 (USER_TIMEPIX3_BUILD=OFF)")
+  message(STATUS "user/timepix3 is NOT to be built (USER_TIMEPIX3_BUILD=OFF)")
   return()
+else()
+  message(STATUS "user/timepix3 is to be built (USER_TIMEPIX3_BUILD=ON)")
 endif()
 
 include_directories(${EUDAQ_INCLUDE_DIRS})

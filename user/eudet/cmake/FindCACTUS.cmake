@@ -8,7 +8,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   return()
 endif()
 
-
 file(GLOB_RECURSE CACTUS_UHAL_HEADER_FOUND
   ${CMAKE_CURRENT_LIST_DIR}/../extern/*/uhal.hpp)
 
@@ -19,11 +18,11 @@ if(NOT CACTUS_UHAL_HEADER_FOUND)
 endif()
   
 if(NOT CACTUS_UHAL_HEADER_FOUND)
-  message(WARNING "Check for CACTUS/uhal header uhal.hpp -- fail")
+    message(STATUS "No CACTUS/uhal header: AIDA TLU is NOT to be built. Please refer to the documentation on how to obtain the software.")
   return()
 endif()
 
-message(STATUS "Check for CACTUS/uhal header uhal.hpp: ${CACTUS_UHAL_HEADER_FOUND} -- ok")
+message(STATUS "Check for CACTUS header uhal.hpp: ${CACTUS_UHAL_HEADER_FOUND} -- ok")
 
 # using the 1st found file uhal.hpp.  
 list(GET CACTUS_UHAL_HEADER_FOUND 0 CACTUS_UHAL_HEADER_FILE)
@@ -31,9 +30,9 @@ get_filename_component(CACTUS_UHAL_HEADER_FILE ${CACTUS_UHAL_HEADER_FILE} ABSOLU
 
 get_filename_component(CACTUS_UHAL_INCLUDE_DIR ${CACTUS_UHAL_HEADER_FILE} DIRECTORY)
 get_filename_component(CACTUS_INCLUDE_DIR ${CACTUS_UHAL_INCLUDE_DIR} DIRECTORY)
-message(STATUS "Set CACTUS_INCLUDE_DIR to : ${CACTUS_INCLUDE_DIR}")
+message(STATUS "Set CACTUS_INCLUDE_DIR to: ${CACTUS_INCLUDE_DIR}")
 get_filename_component(CACTUS_LIBRARY_DIR ${CACTUS_INCLUDE_DIR}/../lib ABSOLUTE)
-message(STATUS "Set CACTUS_LIBRARY_DIR to : ${CACTUS_LIBRARY_DIR}")
+message(STATUS "Set CACTUS_LIBRARY_DIR to: ${CACTUS_LIBRARY_DIR}")
 
 find_library(CACTUS_UHAL_UHAL_LIBRARY cactus_uhal_uhal
   HINTS ${CACTUS_LIBRARY_DIR})
@@ -70,7 +69,7 @@ endif()
 unset(CACTUS_BOOST_THREAD_LIBRARY CACHE)
 
 
-message(STATUS "Set CACTUS_LIBRARIES to : ${CACTUS_LIBRARIES}")
+message(STATUS "Set CACTUS_LIBRARIES to: ${CACTUS_LIBRARIES}")
 
 find_package_handle_standard_args(CACTUS DEFAULT_MSG
   CACTUS_INCLUDE_DIR CACTUS_LIBRARY_DIR CACTUS_LIBRARIES)

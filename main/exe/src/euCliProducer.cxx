@@ -38,7 +38,7 @@ int main(int /*argc*/, const char **argv) {
     app->Connect();
   }
   catch (...){
-    std::cout<<"Can not connect to RunContrl at "<<rctrl.Value()<<std::endl;
+    std::cout<<"Can not connect to RunControl at "<<rctrl.Value()<<std::endl;
     return -1;
   }
   while(app->IsConnected()){

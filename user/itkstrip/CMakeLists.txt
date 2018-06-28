@@ -1,10 +1,16 @@
 get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
-option(USER_ITKSTRIP_BUILD "build user itkstrip" ON)
+
+option(USER_ITKSTRIP_BUILD "build user/itkstrip" OFF)
+
 if(NOT USER_ITKSTRIP_BUILD)
-  message("disable building of user/ITKSTRIP  (USER_ITKSTRIP_BUILD=OFF)")
+  message(STATUS "user/itkstrip is NOT to be built (USER_ITKSTRIP_BUILD=OFF)")
   return()
+else()
+    message(STATUS "user/itkstrip is to be built (USER_ITKSTRIP_BUILD=ON)")
 endif()
+
+
 add_subdirectory(module)
 
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})

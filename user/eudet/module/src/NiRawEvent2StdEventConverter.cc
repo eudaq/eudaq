@@ -20,6 +20,7 @@ namespace{
 }  
 
 bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
+  
   static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5};
   //TODO: number of telescope plane may be less than 6. Decode additional tags 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
@@ -36,7 +37,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
   }
     
   auto &rawev = *ev;
-  if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
+  if (rawev.NumBlocks() < 2 || rawev.GetBlock(0).size() < 20 ||
       rawev.GetBlock(1).size() < 20) {
     EUDAQ_WARN("Ignoring bad event " + std::to_string(rawev.GetEventNumber()));
     return false;
