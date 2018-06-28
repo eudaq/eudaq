@@ -244,6 +244,8 @@ namespace eudaq
                 // needs to be converted to concrete type RawDataEvent
                 const RawDataEvent & ev_raw = dynamic_cast <const RawDataEvent &>(eudaqEvent);
                 std::vector<eutelescope::EUTelSetupDescription*> setupDescription;
+                // --- Get the board identifier
+                const unsigned int board_id = ev_raw.GetTag("board",int());
                 
                 // [JDC - XXX: Just in case we're able to readout more chips
                 for(size_t chip = 0; chip < ev_raw.NumBlocks(); ++chip) 
@@ -257,7 +259,7 @@ namespace eudaq
                         currentDetector->setMode("ZS");
                         setupDescription.push_back( new eutelescope::EUTelSetupDescription(currentDetector)) ;
                     }
-                    zsDataEncoder["sensorID"] = ev_raw.GetID(chip)+chip_id_offset;  
+                    zsDataEncoder["sensorID"] = ev_raw.GetID(chip)+(10*board_id+chip_id_offset);  
                     zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
                     
                     // prepare a new TrackerData object for the ZS data
