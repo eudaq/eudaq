@@ -41,6 +41,7 @@ public:
   void LoadFile(const std::string &filename);
   void AddSender(const std::string &type, const std::string &name = "");
   void closeEvent(QCloseEvent *) override;
+  void DoTerminate() override;
 signals:
   void RecMessage(const eudaq::LogMessage &msg);
 private slots:

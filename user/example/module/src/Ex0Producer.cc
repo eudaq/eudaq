@@ -58,7 +58,7 @@ void Ex0Producer::DoConfigure(){
   conf->Print(std::cout);
   m_plane_id = conf->Get("EX0_PLANE_ID", 0);
   m_ms_busy = std::chrono::milliseconds(conf->Get("EX0_DURATION_BUSY_MS", 1000));
-  m_flag_ts = conf->Get("EX0_ENABLE_TIEMSTAMP", 0);
+  m_flag_ts = conf->Get("EX0_ENABLE_TIMESTAMP", 0);
   m_flag_tg = conf->Get("EX0_ENABLE_TRIGERNUMBER", 0);
   if(!m_flag_ts && !m_flag_tg){
     EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. Now, Timestamp is enabled by default");
@@ -106,7 +106,8 @@ void Ex0Producer::RunLoop(){
   std::uniform_int_distribution<uint32_t> position(0, x_pixel*y_pixel-1);
   std::uniform_int_distribution<uint32_t> signal(0, 255);
   while(!m_exit_of_run){
-    auto ev = eudaq::Event::MakeUnique("Ex0Raw");  
+    auto ev = eudaq::Event::MakeUnique("Ex0Raw");
+    ev->SetTag("Plane ID", std::to_string(m_plane_id));
     auto tp_trigger = std::chrono::steady_clock::now();
     auto tp_end_of_busy = tp_trigger + m_ms_busy;
     if(m_flag_ts){

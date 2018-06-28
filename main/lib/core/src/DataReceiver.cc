@@ -127,6 +127,10 @@ namespace eudaq {
 	while(m_cv_not_empty.wait_for(lk, std::chrono::seconds(1))
 	      ==std::cv_status::timeout){
 	  if(m_is_async_rcv_return){
+	    for(auto &con: m_vt_con){
+	      OnDisconnect(con);
+	    }
+	    m_vt_con.clear();
 	    return 0;
 	  }
 	}
@@ -150,6 +154,7 @@ namespace eudaq {
     for(auto &con: m_vt_con){
       OnDisconnect(con);
     }
+
     m_vt_con.clear();
     return 0;
   }

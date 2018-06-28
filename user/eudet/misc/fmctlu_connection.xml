@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<connections>
-  <connection id="fmctlu.udp" uri="ipbusudp-2.0://192.168.200.30:50001"
-	      address_table="file://./fmctlu_address.xml" />
-</connections>
