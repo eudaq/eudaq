@@ -285,7 +285,7 @@ namespace eudaq
                     {
                         for(const auto & hits: decoded_data.hits(dh))
                         {
-                            sparseFrame->emplace_back(hits[0],hits[0],hits[2],decoded_data.trig_id()[dh]);
+                            sparseFrame->emplace_back(hits[0],hits[1],hits[2],decoded_data.trig_id()[dh]);
                         }
                     }
                     // write TrackerData object that contains info from one sensor to LCIO collection
