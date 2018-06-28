@@ -59,8 +59,6 @@ namespace eudaq {
     static ProducerSP Make(const std::string &code_name, const std::string &run_name,
 			   const std::string &runcontrol);
 
-    void Exec();
-
   private:
     void OnInitialise() override final;
     void OnConfigure() override final;
@@ -71,8 +69,6 @@ namespace eudaq {
 
     void OnStatus() override;
   private:
-    bool m_exit;
-    bool m_cli_run; 
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
     std::string m_type;
@@ -86,7 +82,7 @@ namespace eudaq {
     std::map<std::string, std::shared_ptr<DataSender>> m_senders;
     bool m_cli_run=false; 
     bool m_exit;
-    //    FileWriterUP m_writer;
+    FileWriterUP m_writer;
   };
   //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
 }

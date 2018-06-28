@@ -54,25 +54,7 @@ namespace eudaq {
     void SetStatusMsg(const std::string&);
     void SetStatusTag(const std::string &key, const std::string &val);
 
-<<<<<<< HEAD
-    void ReadConfigureFile(const std::string &path);
-    void ReadInitializeFile(const std::string &path);
-
     void SetRunN(uint32_t n){m_run_number = n;}    
-
-    
-    void StartCommandReceiver();
-    void CloseCommandReceiver();
-
-    bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
-    std::string GetFullName() const;
-    std::string GetName() const;
-    uint32_t GetRunNumber() const;
-    ConfigurationSPC GetConfiguration() const;
-    ConfigurationSPC GetInitConfiguration() const;
-=======
-    void SetRunN(uint32_t n){m_run_number = n;}    
->>>>>>> psarun
 
     std::string GetFullName() const; // {return m_type+"."+m_name;};
     std::string GetName() const;// {return m_name;};
@@ -89,7 +71,6 @@ namespace eudaq {
     bool IsStatus(Status::State);
 
   private:
-    void ProcessingCommand();
     void CommandHandler(TransportEvent &);
     void ProcessingCommand();
     bool Deamon();
@@ -120,7 +101,6 @@ namespace eudaq {
     std::string m_name;
     std::thread m_thd_client;
     uint32_t m_run_number;
-    std::thread m_thd_client;
     bool m_exit;
     bool m_exited;
     uint32_t m_cmdrcv_id;
