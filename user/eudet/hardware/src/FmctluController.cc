@@ -212,6 +212,49 @@ namespace tlu {
     return res;
   }
 
+  uint32_t FmctluController::GetShutterControl(){
+    uint32_t res;
+    res= ReadRRegister("Shutter.ControlRW");
+    std::cout << "\tShutter Control read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetShutterInternalInterval(){
+    uint32_t res;
+    res= ReadRRegister("Shutter.InternalShutterPeriodRW");
+    std::cout << "\tInternalShutterPeriod read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetShutterSource(){
+    uint32_t res;
+    res= ReadRRegister("Shutter.ShutterSelectRW");
+    std::cout << "\tShutterSelect read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  
+  uint32_t FmctluController::GetShutterOnTime(){
+    uint32_t res;
+    res= ReadRRegister("Shutter.ShutterOnTimeRW");
+    std::cout << "\tShutterOnTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetShutterOffTime(){
+    uint32_t res;
+    res= ReadRRegister("Shutter.ShutterOffTimeRW");
+    std::cout << "\tShutterOffTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint32_t FmctluController::GetShutterVetoOffTime(){
+    uint32_t res;
+    res= ReadRRegister("Shutter.ShutterVetoOffTimeRW");
+    std::cout << "\tVetoOffTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+  
   uint32_t FmctluController::GetInternalTriggerInterval(int verbose){
     uint32_t interval;
     uint32_t true_freq;
@@ -546,47 +589,94 @@ namespace tlu {
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
-  void FmctluController::SetDUTMask(int value, bool verbose){
+  void FmctluController::SetDUTMask(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTMaskW",value);
     if (verbose){
-      std::cout << "Writing DUTMask: " << value << std::cout;
+      std::cout << "Writing DUTMask: " << (uint32_t)value  << std::endl;
       GetDUTMask();
     }
   };
 
-  void FmctluController::SetDUTMaskMode(int value, bool verbose){
+  void FmctluController::SetDUTMaskMode(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
     if (verbose){
-      std::cout << "Writing DUTInterfaceMode: " << value << std::cout;
+      std::cout << "Writing DUTInterfaceMode: " <<  std::hex<< value  <<std::dec << std::endl;
       GetDUTMaskMode();
     }
   };
 
-  void FmctluController::SetDUTMaskModeModifier(int value, bool verbose){
+  void FmctluController::SetDUTMaskModeModifier(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
     if (verbose){
-      std::cout << "Writing DUTModeModifier: " << value << std::cout;
+      std::cout << "Writing DUTModeModifier: " << value << std::endl;
       GetDUTMaskModeModifier();
     }
   };
 
-  void FmctluController::SetDUTIgnoreBusy(int value, bool verbose){
+  void FmctluController::SetDUTIgnoreBusy(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Busy: " << value << std::cout;
+      std::cout << "Writing DUT Ignore Busy: " << value << std::endl;
       GetDUTIgnoreBusy();
     }
   };
 
-  void FmctluController::SetDUTIgnoreShutterVeto(int value, bool verbose){
-    SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
+  void FmctluController::SetShutterControl(uint32_t value, bool verbose){
+    SetWRegister("Shutter.ControlRW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Veto: " << value << std::cout;
-      GetDUTIgnoreShutterVeto();
+      std::cout << "Writing ShutterControl: " << value << std::endl;
+      GetShutterControl();
     }
   };
 
+  void FmctluController::SetShutterInternalInterval(uint32_t value, bool verbose){
+    SetWRegister("Shutter.InternalShutterPeriodRW",value);
+    if (verbose){
+      std::cout << "Writing InternalShutterPeriod: " << value << std::endl;
+      GetShutterInternalInterval();
+    }
+  };
 
+  void FmctluController::SetShutterSource(uint32_t value, bool verbose){
+    SetWRegister("Shutter.ShutterSelectRW",value);
+    if (verbose){
+      std::cout << "Writing ShutterSource: " << value << std::endl;
+      GetShutterControl();
+    }
+  };
+
+   void FmctluController::SetShutterOnTime(uint32_t value, bool verbose){
+    SetWRegister("Shutter.ShutterOnTimeRW",value);
+    if (verbose){
+      std::cout << "Writing ShutterOnTime: " << value << std::endl;
+      GetShutterControl();
+    }
+  };
+
+   void FmctluController::SetShutterOffTime(uint32_t value, bool verbose){
+    SetWRegister("Shutter.ShutterOffTimeRW",value);
+    if (verbose){
+      std::cout << "Writing ShutterOffTime: " << value << std::endl;
+      GetShutterOffTime();
+    }
+  };
+
+   void FmctluController::SetShutterVetoOffTime(uint32_t value, bool verbose){
+    SetWRegister("Shutter.ShutterVetoOffTimeRW",value);
+    if (verbose){
+      std::cout << "Writing ShutterVetoOffTime: " << value << std::endl;
+      GetShutterVetoOffTime();
+    }
+  };
+  
+  void FmctluController::SetDUTIgnoreShutterVeto(uint32_t value, bool verbose){
+    SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
+    if (verbose){
+      std::cout << "Writing DUT Ignore Veto: " << value << std::endl;
+      GetDUTIgnoreShutterVeto();
+    }
+  };
+  
   void FmctluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
     uint32_t max_freq= 160000000;
     uint32_t interval;
