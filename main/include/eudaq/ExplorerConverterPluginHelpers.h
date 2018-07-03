@@ -8,7 +8,11 @@
 #include <cstdlib>
 
 #ifdef WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif //NOMINMAX
 #include "Windows4Root.h"
+#undef NOMINMAX
 #endif
 
 #include "TCanvas.h"

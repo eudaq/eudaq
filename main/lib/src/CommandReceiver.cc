@@ -112,13 +112,7 @@ namespace eudaq {
   void CommandReceiver::StartThread() {
     m_thread = std::unique_ptr<std::thread>(
         new std::thread(CommandReceiver_thread, this));
-    // m_thread.start(CommandReceiver_thread, this);
     m_threadcreated = true;
-    //     pthread_attr_init(&m_threadattr);
-    //     if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread,
-    //     this) != 0) {
-    //       m_threadcreated = true;
-    //     }
   }
 
   void CommandReceiver::SetConnectionState(ConnectionState::State state,
@@ -138,7 +132,6 @@ namespace eudaq {
 
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
-    // return false;
   }
 
   void CommandReceiver::OnIdle() { mSleep(500); }

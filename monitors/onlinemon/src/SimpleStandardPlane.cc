@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include "include/SimpleStandardPlane.hh"
+#include "SimpleStandardPlane.hh"
 
 SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id,
                                          const int maxX, const int maxY,
@@ -256,19 +256,18 @@ void SimpleStandardPlane::setPixelType(std::string name) {
     is_RD53A = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
-  }
-  
-
- else if (name.find("USBPIX_GEN") != std::string::npos ) {
+  } else if(name=="CLICpix" || name=="timepix3") {
+    is_UNKNOWN = false;
+  } else if (name.find("USBPIX_GEN") != std::string::npos ) {
     is_USBPIXI4 = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
-  }
- else if (name == "Explorer20x20" || name == "Explorer30x30") {
+  } else if (name == "Explorer20x20" || name == "Explorer30x30") {
     is_EXPLORER = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
-  } else if (name == "pALPIDEfs") {
+  } else if (name == "pALPIDEfs" ||
+	    name=="CLICpix" || name=="timepix3") {
     is_UNKNOWN = false;
   } else {
     is_UNKNOWN = true;

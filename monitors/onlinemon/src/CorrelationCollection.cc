@@ -493,6 +493,23 @@ void CorrelationCollection::registerPlaneCorrelations(
         tree, getCorrelationHistos(p1, p2)->getCorrTimeYHisto(), "COLZ", 0);
     _mon->getOnlineMon()->registerMutex(
 	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    sprintf(tree, "%s/%s %i/%s %i in XY Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeXYHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    
+    sprintf(tree, "%s/%s %i/%s %i in YX Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeYXHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());    
 
     sprintf(tree, "%s/%s %i", dirName.c_str(), p1.getName().c_str(),
             p1.getID());

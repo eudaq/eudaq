@@ -35,6 +35,8 @@ protected:
 
   TH2I *_2dcorrTimeX;
   TH2I *_2dcorrTimeY;
+  TH2I *_2dcorrTimeXY;
+  TH2I *_2dcorrTimeYX;
 
   double m_pitchX1;
   double m_pitchY1;
@@ -61,6 +63,8 @@ public:
   TH2I *getCorrYXHisto();
   TH2I *getCorrTimeXHisto(){return _2dcorrTimeX;};
   TH2I *getCorrTimeYHisto(){return _2dcorrTimeY;};
+  TH2I *getCorrTimeXYHisto(){return _2dcorrTimeXY;};
+  TH2I *getCorrTimeYXHisto(){return _2dcorrTimeYX;};  
   std::mutex* getMutex();
   
   int getFills() const;

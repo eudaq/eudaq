@@ -2,11 +2,11 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 ########################################################
 # project name
-PROJECT( EUDAQ )
+PROJECT( EUDAQ LANGUAGES CXX)
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 7 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 9 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # some macros are redefined if not exisiting
@@ -54,7 +54,12 @@ ELSE(NOT SOURCE_PACKAGE)
 ENDIF(NOT SOURCE_PACKAGE)
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
+STRING(REGEX REPLACE "^v" "" EUDAQ_LIB_VERSION_STRIPPED ${EUDAQ_LIB_VERSION})
+STRING(REGEX REPLACE "[-]+" "+" EUDAQ_LIB_VERSION_STRIPPED ${EUDAQ_LIB_VERSION_STRIPPED})
+STRING(REGEX REPLACE "[-]+" "~" EUDAQ_LIB_VERSION_STRIPPED ${EUDAQ_LIB_VERSION_STRIPPED})
+STRING(REGEX REPLACE "[*]" "" EUDAQ_LIB_VERSION_STRIPPED ${EUDAQ_LIB_VERSION_STRIPPED})
 MESSAGE("-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
+MESSAGE("-- Determined EUDAQ stripped version ${EUDAQ_LIB_VERSION_STRIPPED}")
 
 # set the path to which we will install later: default project home, can be changed using
 # cmake -DINSTALL_PREFIX=/some/dir ..
@@ -72,15 +77,13 @@ IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 ENDIF()
 
 # include directories
-INCLUDE_DIRECTORIES( ./main/include )
+#INCLUDE_DIRECTORIES( ./main/include )
 INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+LIST(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
-# find necessary threading libraries (using C++11 threading)
-Find_Package(Threads REQUIRED)
-set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
@@ -92,7 +95,19 @@ IF(BUILD_nreader)
   add_definitions(${LCIO_DEFINITIONS} ${EUTELESCOPE_DEFINITIONS})
   AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
   ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
-  INSTALL(TARGETS DetectorDescriptons RUNTIME DESTINATION bin
+  
+  #This is an ugly workaround...is there a better way?
+  #get_target_property(DetectorDescriptions_EUDAQ_HEADERS EUDAQ INCLUDE_DIRECTORIES)
+  #message(${DetectorDescriptions_EUDAQ_HEADERS})
+  #include_directories(${DetectorDescriptions_EUDAQ_HEADERS})
+  
+  TARGET_INCLUDE_DIRECTORIES(DetectorDescriptons PRIVATE 
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/main/include>
+  )
+  target_link_libraries( DetectorDescriptons )
+  INSTALL(TARGETS DetectorDescriptons 
+				      EXPORT ${PROJECT_NAME}
+				      RUNTIME DESTINATION bin
                                       LIBRARY DESTINATION lib
                                       ARCHIVE DESTINATION lib)
   set(ADDITIONAL_LIBRARIES ${LCIO_LIBRARIES} ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
@@ -253,3 +268,56 @@ ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
 MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
 MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )
 MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )
+
+# Set everything for packaging with CPACK
+include (CMakeCPack.cmake)
+
+include(CMakePackageConfigHelpers)
+
+set(INCLUDE_INSTALL_DIR include/ )
+set(LIB_INSTALL_DIR lib/ )
+set(SYSCONFIG_INSTALL_DIR etc/eudaq/ )
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/eudaqConfigVersion.cmake"
+  VERSION ${EUDAQ_LIB_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+export(EXPORT ${PROJECT_NAME}
+  NAMESPACE EUDAQ::
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/eudaqTargets.cmake"
+)
+
+configure_package_config_file(eudaqConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/eudaqConfig.cmake
+  INSTALL_DESTINATION ${LIB_INSTALL_DIR}/EUDAQ/cmake
+  PATH_VARS INCLUDE_INSTALL_DIR SYSCONFIG_INSTALL_DIR)
+
+export (PACKAGE EUDAQ)
+
+# We redefine this variable, using this time a relative path:
+set ( eudaq_INCLUDE_DIRS "include" )
+
+# We write in the 'export' folder in order not to collide with
+# the previous config file:
+#configure_package_config_file ( 
+#       "<PATH TO THE CONFIG TEMPLATE>/foo-config.cmake.in" 
+#       "${CMAKE_BINARY_DIR}/export/foo-config.cmake.cmake"
+#       INSTALL_DESTINATION "${CMAKE_CONFIG_DEST}"
+#       PATH_VARS foo_INCLUDE_DIRS )
+
+#install (
+#      EXPORT export 
+#      DESTINATION ${CMAKE_CONFIG_DEST} FILE "fooTargets.cmake" )
+      
+#export(EXPORT EUDAQ_MAIN_EXE
+#  FILE "${CMAKE_CURRENT_BINARY_DIR}/eudaqExeTargets.cmake"
+#  NAMESPACE Upstream::
+#)
+
+#configure_file(cmake/eudaqTargets.cmake
+#  "${CMAKE_CURRENT_BINARY_DIR}/eudaqTargets.cmake"
+#  COPYONLY
+#)
+

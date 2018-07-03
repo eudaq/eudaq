@@ -8,7 +8,7 @@
 #ifndef SIMPLESTANDARDCLUSTER_HH_
 #define SIMPLESTANDARDCLUSTER_HH_
 
-#include "include/SimpleStandardHit.hh"
+#include "SimpleStandardHit.hh"
 
 class SimpleStandardCluster {
 protected:

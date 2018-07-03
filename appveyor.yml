@@ -1,4 +1,4 @@
-version: 1.7.0.{build}
+version: 1.9.0.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -6,9 +6,9 @@ pull_requests:
 branches:
   only:
   - master
-  - v1.7-dev
+  - v1.x-dev
 
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 configuration: Release
 
@@ -23,7 +23,7 @@ environment:
   matrix:
     - build_type: full
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.8\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
       BUILD_BIFAHCAL: OFF
       BUILD_TESTING: OFF
@@ -57,7 +57,7 @@ environment:
       PYTHON_ARCH: "32"
     - build_type: minimum
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.8\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
       BUILD_BIFAHCAL: OFF
       BUILD_TESTING: OFF
@@ -91,7 +91,7 @@ environment:
       PYTHON_ARCH: "32"      
     - build_type: library_only
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.8\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
       BUILD_BIFAHCAL: OFF
       BUILD_TESTING: OFF
@@ -136,9 +136,10 @@ init:
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
-- '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
+#- '"C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /x86'
+- call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
-- cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+# - cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
 # Install Python (from the official .msi of http://python.org) and pip when not already installed.
 # This was copied from 
@@ -152,7 +153,8 @@ install:
 - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 # Upgrade to the latest version of pip to avoid it displaying warnings
 # about it being out of date.
-- "pip install --disable-pip-version-check --user --upgrade pip"
+# disbled due to main no longer supported
+# - "pip install --disable-pip-version-check --user --upgrade pip"
 # Install the build dependencies of the project. If some dependencies contain
 # compiled extensions and are not provided as pre-built wheel packages,
 # pip will build them from source using the MSVC compiler matching the
@@ -160,7 +162,7 @@ install:
 - "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
-- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.36.win32.vc12.zip'; 7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\; 
+- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.14.00.win32.vc15.zip' -storageLocation 'C:\\root_v6.14.00.win32.vc15.zip'; 7z -y x C:\\root_v6.14.00.win32.vc15.zip -oC:\; 
 
 - ps: appveyor\install_afs.ps1;
 

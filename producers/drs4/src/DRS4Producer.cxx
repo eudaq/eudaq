@@ -25,7 +25,6 @@
 #include <sched.h>
 #endif
 
-using namespace std;
 static const std::string EVENT_TYPE = "DRS4";
 
 DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)  
@@ -42,16 +41,16 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
                              is_initalized(false)
 {
 	n_channels = 4;
-	cout << "Started DRS4Producer with Name: \"" << name << "\"" <<endl;
+	std::cout << "Started DRS4Producer with Name: \"" << name << "\"" <<std::endl;
 	m_b = 0;
 	m_drs = 0;
-	cout << "Event Type: " << m_event_type << endl;
-	cout << " Get DRS() ..."<<endl;
+	std::cout << "Event Type: " << m_event_type << std::endl;
+	std::cout << " Get DRS() ..."<<std::endl;
 	if (m_drs) delete m_drs;
 	m_drs = new DRS();
-	cout <<" DRS: "<< m_drs << endl;
+	std::cout <<" DRS: "<< m_drs << std::endl;
 	int nBoards = m_drs->GetNumberOfBoards();
-	cout << " NBoards : " << nBoards << endl;
+	std::cout << " NBoards : " << nBoards << std::endl;
 	for (int ch = 0; ch < 8; ch++) m_chnOn[ch] = false; //set all channels on per default
 }
 
@@ -72,16 +71,16 @@ void DRS4Producer::OnStartRun(unsigned runnumber)
 		 std::cout << "Set tag fw"<<std::endl;
 		 bore.SetTag("DRS4_FW", std::to_string(m_b->GetFirmwareVersion()));
 		 bore.SetTag("actived_channels",std::to_string(activated_channels));
-		 bore.SetTag("device_name",(string)"DRS4");
+		 bore.SetTag("device_name",(std::string)"DRS4");
 		 // Set Names for different channels
 		 for (int ch = 0; ch < n_channels; ch++)
 		     {
-		 	  string tag = "CH_"+std::to_string(ch+1);
-			  string value;
+		 	  std::string tag = "CH_"+std::to_string(ch+1);
+			  std::string value;
 			  if (!m_chnOn[ch]) value = "OFF";
 			  else value = m_config.Get(tag, tag);
 			  bore.SetTag(tag, value);
-			  cout<<"\tBore tag: "<<tag<<"\t"<<value<<endl;
+			  std::cout<<"\tBore tag: "<<tag<<"\t"<<value<<std::endl;
 		     }
 
 		bore.SetTag("DRS4_Board_type",std::to_string(m_b->GetBoardType()));
@@ -90,12 +89,12 @@ void DRS4Producer::OnStartRun(unsigned runnumber)
 		unsigned char *p = buffer;
 		int block_id = 0;
 		int waveDepth = m_b->GetChannelDepth();
-		cout<<"WaveformDepth: "<<waveDepth<<endl;
+		std::cout<<"WaveformDepth: "<<waveDepth<<std::endl;
 		for (int i=0 ; i<n_channels ; i++) 
 		    {
 			 if (m_chnOn[i]) 
 			    {
-				 cout<<"TimeCalibration CH"<<i+1<<":"<<endl;
+				 std::cout<<"TimeCalibration CH"<<i+1<<":"<<std::endl;
 				 float tcal[2048];
 				 m_b->GetTimeCalibration(0, i*2, 0, tcal, 0);
 				 if (waveDepth == 2048) for (int j=0 ; j<waveDepth ; j++) {
@@ -103,7 +102,7 @@ void DRS4Producer::OnStartRun(unsigned runnumber)
 						tcal[j/2] = (tcal[j]+tcal[j+1])/2;
 						j++;
 					}
-				cout << endl;
+				std::cout << std::endl;
                 //cout << "Set Buffer" << i+1 << endl;
 				char buffer [6];
 				sprintf((char *)buffer, "C%03d\n", i+1);
@@ -118,14 +117,14 @@ void DRS4Producer::OnStartRun(unsigned runnumber)
 		// Send the event out:
 		SendEvent(bore);
 
-		std::cout << "BORE for DRS4 Board: (event type"<<m_event_type<<")\tself trigger: "<<m_self_triggering<<endl;
+		std::cout << "BORE for DRS4 Board: (event type"<<m_event_type<<")\tself trigger: "<<m_self_triggering<<std::endl;
 		SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
 		m_running = true;
 		/* Start Readout */
 		if (m_b) m_b->StartDomino();
 	}
 	catch (...){
-		EUDAQ_ERROR(string("Unknown exception."));
+		EUDAQ_ERROR(std::string("Unknown exception."));
 		SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
 	}
 
@@ -155,7 +154,7 @@ void DRS4Producer::OnStopRun()
 	    // Output information for the logbook:
 	    std::cout << "RUN " << m_run << " DRS4 " << std::endl
 	          << "\t Total triggers:   \t" << m_ev << std::endl;
-	    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", ended with " + std::to_string(m_ev)
+	    EUDAQ_USER(std::string("Run " + std::to_string(m_run) + ", ended with " + std::to_string(m_ev)
 	              + " Events"));
 
 		SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
@@ -201,7 +200,7 @@ void DRS4Producer::ReadoutLoop()
 			//Check if ready for triggers
 			if ( m_b->IsBusy()){
 				if (m_self_triggering && k%(int)1e4 == 0 ){
-					cout<<"Send software trigger"<<endl;
+					std::cout<<"Send software trigger"<<std::endl;
 					m_b->SoftTrigger();
 					eudaq::umSleep(10); //todo not mt save
 				}
@@ -217,7 +216,7 @@ void DRS4Producer::ReadoutLoop()
 			catch(int e) 
 			     {
 				  // No event available in derandomize buffers (DTB RAM), return to scheduler:
-				  cout << "An exception occurred. Exception Nr. " << e << '\n';
+				  std::cout << "An exception occurred. Exception Nr. " << e << std::endl;
 #ifdef _MSC_VER
 				  SwitchToThread();
 #else
@@ -231,10 +230,10 @@ void DRS4Producer::ReadoutLoop()
 
 void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) 
 {
-	cout << "Configure DRS4 board"<<endl;
+	std::cout << "Configure DRS4 board"<<std::endl;
 	m_config = conf;
 	while (!m_drs){
-		cout<<"wait for configure"<<endl;
+		std::cout<<"wait for configure"<<std::endl;
 		eudaq::umSleep(10);
 	}
 
@@ -245,9 +244,9 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf)
 		int nBoards = m_drs->GetNumberOfBoards();
 		m_self_triggering = m_config.Get("self_triggering",false);
 		m_n_self_trigger = m_config.Get("n_self_trigger",1e5);
-		cout<<"Config: "<<endl;
-		cout<<"Show boards..."<<endl;
-		cout<<"There are "<<nBoards<<" DRS4-Evaluation-Board(s) connected:"<<endl;
+		std::cout<<"Config: "<<std::endl;
+		std::cout<<"Show boards..."<<std::endl;
+		std::cout<<"There are "<<nBoards<<" DRS4-Evaluation-Board(s) connected:"<<std::endl;
 		/* show any found board(s) */
 		int board_no = 0;
 		for (int i=0 ; i < m_drs->GetNumberOfBoards() ; i++) {
@@ -260,15 +259,15 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf)
 
 		/* exit if no board found */
 		if (!nBoards){
-			EUDAQ_ERROR(string("No Board connected exception."));
+			EUDAQ_ERROR(std::string("No Board connected exception."));
 			return;
 		}
 
-		cout <<"Get board no: "<<board_no<<endl;
+		std::cout <<"Get board no: "<<board_no<<std::endl;
 		/* continue working with first board only */
 		if (m_b != m_drs->GetBoard(board_no)){
 		    m_b = m_drs->GetBoard(board_no);
-		    cout<<"Init"<<endl;
+		    std::cout<<"Init"<<std::endl;
 		    /* initialize board */
 		    m_b->Init();
 		}
@@ -276,32 +275,32 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf)
 		    throw eudaq::Exception("Cannot find board");
 		}
 		else{
-		    cout<<"ReInit"<<endl;
+		    std::cout<<"ReInit"<<std::endl;
 		    m_b->Reinit();
 		}
 
 		double sampling_frequency = m_config.Get("sampling_frequency",5);
 		bool wait_for_PLL_lock = m_config.Get("wait_for_PLL_lock",true);
-		cout<<"Set Freqeuncy: "<<sampling_frequency<<" | Wait for PLL lock" <<wait_for_PLL_lock<<endl;
+		std::cout<<"Set Freqeuncy: "<<sampling_frequency<<" | Wait for PLL lock" <<wait_for_PLL_lock<<std::endl;
 		/* set sampling frequency */
 		m_b->SetFrequency(sampling_frequency, wait_for_PLL_lock);
 
-		cout<<"Set Transparent mode"<<endl;
+		std::cout<<"Set Transparent mode"<<std::endl;
 		/* enable transparent mode needed for analog trigger */
 		m_b->SetTranspMode(1);
 
 		/* set input range to -0.5V ... +0.5V */
 		m_inputRange =  m_config.Get("input_range_center",0.0f);
 		if (std::abs(m_inputRange)>.5){
-			EUDAQ_WARN(string("Could not set valid input range,choose input range center to be 0V"));
+			EUDAQ_WARN(std::string("Could not set valid input range,choose input range center to be 0V"));
 			m_inputRange = 0;
 		}
-		EUDAQ_INFO(string("Set Input Range to: "+std::to_string(m_inputRange-0.5) + "V - "+std::to_string(m_inputRange-0.5) + "V"));
+		EUDAQ_INFO(std::string("Set Input Range to: "+std::to_string(m_inputRange-0.5) + "V - "+std::to_string(m_inputRange-0.5) + "V"));
 		m_b->SetInputRange(m_inputRange);
 
 		/* use following line to turn on the internal 100 MHz clock connected to all channels  */
 		if (m_config.Get("enable_calibration_clock",false)){
-			cout<<" turn on the internal 100 MHz clock connected to all channels "<<endl;
+			std::cout<<" turn on the internal 100 MHz clock connected to all channels "<<std::endl;
 			m_b->EnableTcal(1);
 		}
 
@@ -320,40 +319,40 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf)
 		bool trigger_polarity = m_config.Get("trigger_polarity",false);
 
 		m_b->SetTriggerLevel(trigger_level);            // 0.05 V
-		EUDAQ_INFO(string("Set Trigger Level to: "+std::to_string(trigger_level) + " mV"));
+		EUDAQ_INFO(std::string("Set Trigger Level to: "+std::to_string(trigger_level) + " mV"));
 
 		m_b->SetTriggerDelayNs(trigger_delay);
-		EUDAQ_INFO(string("Set Trigger Delay to: "+std::to_string(trigger_delay)+" ns"));
+		EUDAQ_INFO(std::string("Set Trigger Delay to: "+std::to_string(trigger_delay)+" ns"));
 
 		m_b->SetTriggerPolarity(trigger_polarity);        // positive edge
 		if (trigger_polarity)
-			EUDAQ_INFO(string("Set Trigger Polarity to negative edge"));
+			EUDAQ_INFO(std::string("Set Trigger Polarity to negative edge"));
 		else
-			EUDAQ_INFO(string("Set Trigger Polarity to positive edge"));
+			EUDAQ_INFO(std::string("Set Trigger Polarity to positive edge"));
 
 		int trigger_source = m_config.Get("trigger_source",1);
-		std::cout<<string("Set Trigger Source to: "+std::to_string(trigger_source))<<endl;
+		std::cout<<std::string("Set Trigger Source to: "+std::to_string(trigger_source))<<std::endl;
 		m_b->SetTriggerSource(trigger_source);
-		std::cout<<string("Read Trigger Source to: "+std::to_string(trigger_source))<<endl;
-		EUDAQ_INFO(string("Set Trigger Source to: "+std::to_string(trigger_source)));
+		std::cout<<std::string("Read Trigger Source to: "+std::to_string(trigger_source))<<std::endl;
+		EUDAQ_INFO(std::string("Set Trigger Source to: "+std::to_string(trigger_source)));
 
 		activated_channels = m_config.Get("activated_channels",255);
 		for (int i = 0; i< 8; i++){
 			m_chnOn[i] = ((activated_channels)&(1<<i))==1<<i;
-			cout<<"CH"<<i+1<<": ";
+			std::cout<<"CH"<<i+1<<": ";
 			if (m_chnOn[i])
-				cout<<"ON"<<endl;
+				std::cout<<"ON"<<std::endl;
 			else
-				cout<<"OFF"<<endl;
+				std::cout<<"OFF"<<std::endl;
 		}
 
 		SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" +m_config.Name() + ")");
 
 	}catch ( ... ){
-		EUDAQ_ERROR(string("Unknown exception."));
+		EUDAQ_ERROR(std::string("Unknown exception."));
 		SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
 	}
-	cout<<"Configured! Ready to take data"<<endl;
+	std::cout<<"Configured! Ready to take data"<<std::endl;
 }
 
 
@@ -437,7 +436,7 @@ void DRS4Producer::SendRawEvent()
 	}
     if ( m_ev < 50 || m_ev % 100 == 0) 
 	   {
-	    cout<< "\rSend Event" << std::setw(7) << m_ev << " " << std::setw(1) <<  m_self_triggering << "Trigger cell: " << std::setw(4) << trigger_cell << ", " << std::flush;
+	    std::cout<< "\rSend Event" << std::setw(7) << m_ev << " " << std::setw(1) <<  m_self_triggering << "Trigger cell: " << std::setw(4) << trigger_cell << ", " << std::flush;
        }
 	SendEvent(ev);
 	m_ev++;

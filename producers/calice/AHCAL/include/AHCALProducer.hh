@@ -6,7 +6,6 @@
 #include <vector>
 #include <deque>
 #include <string>
-//#include <pthread.h>
 #include <fstream>
 #include <thread>
 #include <mutex>
@@ -55,8 +54,7 @@ namespace eudaq {
     int _runNo;
     int _eventNo;
     int _fd;
-    //airqui 
-    //    pthread_mutex_t _mufd;
+
     std::mutex _mufd;
       
     bool _running;

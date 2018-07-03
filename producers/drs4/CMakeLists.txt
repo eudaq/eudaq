@@ -30,12 +30,15 @@ ELSE(LIBUSB_1_FOUND)
 ENDIF(LIBUSB_1_FOUND)
 ENDIF(NOT WIN32) 
 
+# For some reason it is not to be compiled at all if recognized as a C file instead of a C++ file
+set_source_files_properties(DRS/src/mxml.c PROPERTIES LANGUAGE CXX)
+
 SET(sourcefiles src/DRS4Producer.cxx 
-DRS/src/musbstd.c
-DRS/src/mxml.c
-DRS/src/DRS.cpp
-DRS/src/averager.cpp
-DRS/src/strlcpy.c)
+	DRS/src/musbstd.c
+	DRS/src/mxml.c
+	DRS/src/DRS.cpp
+	DRS/src/averager.cpp
+	DRS/src/strlcpy.c)
 MESSAGE(STATUS "SOURCEFILES: '" ${sourcefiles} "'")
 
 INCLUDE_DIRECTORIES(include DRS/include ${USB_INCLUDE_DIRS})
@@ -51,6 +54,6 @@ MESSAGE(STATUS "ADD_EXECUTABLE " ${name} " " ${sourcefiles})
 TARGET_LINK_LIBRARIES(${name} EUDAQ ${EUDAQ_THREADS_LIB} ${USB_LIBRARIES})
 
 INSTALL(TARGETS ${name}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
+  RUNTIME DESTINATION bin COMPONENT DRS4
+  LIBRARY DESTINATION lib COMPONENT DRS4
+  ARCHIVE DESTINATION lib COMPONENT DRS4)

@@ -1,5 +1,7 @@
 #ifdef WIN32
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif //NOMINMAX
 #endif
 
 #include "eudaq/DataConverterPlugin.hh"

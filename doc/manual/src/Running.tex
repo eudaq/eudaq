@@ -20,7 +20,7 @@ In \autoref{tab:exes}, you will find an overview of the most important EUDAQ exe
   DAQ & Run Control & \texttt{TestRunControl.exe} & CLI version (Sec. \ref{sec:runcontrol}) \\
   DAQ & Log Collector & \texttt{euLog.exe} & GUI version, recommended (Sec. \ref{sec:logcollector}) \\
   DAQ & Log Collector & \texttt{TestLogCollector.exe} & CLI version (Sec. \ref{sec:logcollector}) \\
-  DAQ & Data Collector & \texttt{TestDataCollector.exe} & CLI, recommended (Sec. \ref{sec:datacollector}) \\
+  DAQ & Data Collector & \texttt{DataCollector.exe} & CLI, recommended (Sec. \ref{sec:datacollector}) \\
   DAQ & Online Monitor & \texttt{OnlineMon.exe} & GUI version, recommended (Sec. \ref{sec:onlinemonitor}) \\
   DAQ & Online Monitor & \texttt{TestMonitor.exe} & CLI version (Sec. \ref{sec:onlinemonitor}) \\
   DAQ & TLU Producer & \texttt{TLUProducer.exe} & CLI for EUDET-type telescopes (Sec. \ref{sec:tluproducer}) \\
@@ -221,13 +221,13 @@ The port can also be set using the \texttt{-a \param{port}} option, similar to t
 \label{sec:datacollector}
 The Data Collector is the process that collects all the raw data from the Producers,
 merges all the connected incoming streams into a single data stream, and writes it to file.
-There is only a text-based version called \texttt{TestDataCollector.exe}.
+There is only a text-based version called \texttt{DataCollector.exe}.
 It is recommended to start the Data Collector directly after having started the Run Control and RunControl and before starting other processors.
 
 Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine.
 Accordingly, the \texttt{-r} and \texttt{-a} options can be used, for example:
 \begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -r tcp://192.168.0.1:44000
+$[./DataCollector.exe]$ -r tcp://192.168.0.1:44000
 \end{listing}
 
 It is also possible to run multiple Data Collector instances within
@@ -246,7 +246,7 @@ serve as the default.
 The name of a Data Collector can be set with the
 \texttt{-n} option, for example:
 \begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -n myproducer
+$[./DataCollector.exe]$ -n myproducer
 \end{listing}
 
 If you wish to run several instances of the Data Collector on one

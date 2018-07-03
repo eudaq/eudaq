@@ -1,0 +1,8 @@
+# This is the default init file.
+# The NiProducer and the TLUProducer needs no dedicated init-paramters 
+
+[RunControl]
+
+[DataCollector]
+
+[LogCollector]

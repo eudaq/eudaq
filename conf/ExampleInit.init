@@ -3,13 +3,9 @@
 
 [RunControl]
 
-[DataCollector]
-
 [LogCollector]
 
+[DataCollector]
+
 [Producer.Example]
-InitParamter = 123
-
-[Producer.TLU]
-ErrorHandler=2
-
+InitParameter = 1

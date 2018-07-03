@@ -11,8 +11,10 @@
 echo "Entered install_afs.sh"
 echo "Installing afs"
 
-export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.11
-export OPENAFS_FILENAME_MAC=AuriStor-client-0.159-ElCapitan.dmg
+source travis_retry.sh
+
+export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.13
+export OPENAFS_FILENAME_MAC=AuriStor-client-0.170-HighSierra.dmg
 
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
@@ -23,16 +25,24 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
 	sudo hdiutil attach $OPENAFS_FILENAME_MAC
 	
-	#ls /Volumes/OpenAFS/
+	ls /Volumes/OpenAFS/
 	
-	sudo installer -package /Volumes/Auristor-Lite-ElCapitan/Auristor-Lite.pkg -target /
-	sudo hdiutil detach /Volumes/Auristor-Lite-ElCapitan
+	sudo installer -package /Volumes/Auristor-Lite-HighSierra/Auristor-Lite.pkg -target /
+	sudo hdiutil detach /Volumes/Auristor-Lite-HighSierra
 	#sudo launchctl start org.auristor.filesystems.afs
+	
+	echo "Location of ThisCell"
+	ls /var/db/openafs/etc/
+	touch ~/ThisCell
+	echo "desy.de" >> ~/ThisCell
+	echo "" >> ~/ThisCell
+	sudo cp ~/ThisCell /var/db/openafs/etc/
+	
 	sudo launchctl list
 	sudo launchctl start com.auristor.yfs-client
 	sudo launchctl start com.auristor.XPCHelper
 	
-	ls /afs/
+	ls /afs/desy.de
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS
@@ -40,6 +50,14 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	#tar xfz $OPENAFS_FILENAME_MAC
 	#export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
 	#echo $PATH	
+	
+	if [[ -d "/afs/desy.de/group/telescopes" ]]; then
+		echo "Afs seems to work properly"
+	elif [[ -d "/afs/cern.ch" ]]; then
+		echo "Afs seems to work properly, but desy afs down?"
+	else
+		echo "Something wrong with the afs installation"	
+	fi
 	
 else
 
@@ -50,16 +68,37 @@ else
 	sudo apt-get install --force-yes -y linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5	
 	
 	touch ~/ThisCell
-	echo "cern.ch" >> ~/ThisCell
+	echo "desy.de" >> ~/ThisCell
 	echo "" >> ~/ThisCell
 	sudo cp ~/ThisCell /etc/openafs
 	sudo service openafs-client start	
+	sudo service openafs-client stop
+	sudo service openafs-client start
+	
+	echo "Testing afs connectivity"
+	echo "Maximum 60s - timeout"
+	
+	travis_retry timeout 30s test -d "/afs/desy.de/group/telescopes"
+	exit_status=$?
+	
+	if [[ $exit_status==0 ]]; then
+		echo "Afs seems to work properly"
+		export AFS_STATUS="GOOD"
+	fi
+	
+	if [[ $exit_status!=0 ]]; then
+		timeout 30s test -d "/afs/cern.ch"
+		exit_status=$?
+	fi
+	
+	if [[ $exit_status==0 ]]; then
+		echo "Afs seems to work properly, but desy afs down?"
+		export AFS_STATUS="BAD"
+	else
+		echo "Something wrong with the afs installation"	
+		export AFS_STATUS="BAD"
+	fi
+	
 fi
 	
-if [[ -d "/afs/desy.de/group/telescopes" ]]; then
-	echo "Afs seems to work properly"
-elif [[ -d "/afs/cern.ch" ]]; then
-	echo "Afs seems to work properly, but desy afs down?"
-else
-	echo "Something wrong with the afs installation"	
-fi
+

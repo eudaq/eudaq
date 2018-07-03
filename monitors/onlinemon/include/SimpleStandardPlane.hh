@@ -17,9 +17,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "include/SimpleStandardHit.hh"
-#include "include/SimpleStandardCluster.hh"
-#include "include/OnlineMonConfiguration.hh"
+#include "SimpleStandardHit.hh"
+#include "SimpleStandardCluster.hh"
+#include "OnlineMonConfiguration.hh"
 
 //!Simple Standard Plane Class
 /*!

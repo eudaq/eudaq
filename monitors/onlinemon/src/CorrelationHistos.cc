@@ -98,12 +98,12 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
   m_pitchY1=1;
   m_pitchX2=1;
   m_pitchY2=1;
-
+  
   if(_sensor1=="MIMOSA26"){
     m_pitchX1=18.4;
     m_pitchY1=18.4;
   }
-  if(_sensor1=="USBPIXI4"){
+  if((_sensor1.find("USBPIX_GEN") != std::string::npos ) || (_sensor1.find("USBPIXI4") != std::string::npos )){
     m_pitchX1=50;
     m_pitchY1=250;
   }
@@ -116,7 +116,7 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     m_pitchX2=18.4;
     m_pitchY2=18.4;
   }
-  if(_sensor2=="USBPIXI4"){
+  if((_sensor2.find("USBPIX_GEN") != std::string::npos ) || (_sensor2.find("USBPIXI4") != std::string::npos )){
     m_pitchX2=50;
     m_pitchY2=250;
   }
@@ -149,6 +149,31 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     _2dcorrTimeY->SetBit(TH2I::kCanRebin);
 #endif
   }
+  
+  if (_maxX1 != -1 && _maxX2 != -1) {
+    sprintf(out, "XY CorrelationVsTime of %s %i and %s %i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    sprintf(out2, "h_corrVsTime_XY_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    _2dcorrTimeXY = new TH2I(out2, out, 1000, 0, 1000, 200, 0, 10);
+#ifdef EUDAQ_LIB_ROOT6
+    _2dcorrTimeXY->SetCanExtend(TH2I::kAllAxes);
+#else
+    _2dcorrTimeXY->SetBit(TH2I::kCanRebin);
+#endif
+  }
+  if (_maxY1 != -1 && _maxY2 != -1) {
+    sprintf(out, "YX CorrelationVsTime of %s %i and %s %i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    sprintf(out2, "h_corrVsTime_YX_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    _2dcorrTimeYX = new TH2I(out2, out, 1000, 0, 1000, 200, 0, 10);
+#ifdef EUDAQ_LIB_ROOT6
+    _2dcorrTimeYX->SetCanExtend(TH2I::kAllAxes);
+#else
+    _2dcorrTimeYX->SetBit(TH2I::kCanRebin);
+#endif
+  }  
 
 }
 
@@ -181,6 +206,19 @@ void CorrelationHistos::FillCorrVsTime(const SimpleStandardCluster &cluster1,
   if (_2dcorrTimeY != NULL){
     _2dcorrTimeY->Fill(simpev.getEvent_number(), cluster1.getY()-cluster2.getY()*m_pitchY2/m_pitchY1);
   }
+  
+  if (_2dcorrTimeXY != NULL){
+    //_2dcorrTimeXY->Fill(simpev.getEvent_number(),  cluster1.getX()-cluster2.getY());
+	  //std::cout << "cluster1.getX: " << cluster1.getX() << std::endl;
+	  //std::cout << "cluster2.getY: " << cluster2.getY() << std::endl;
+	  //std::cout << "pitchY2: " << m_pitchY2 << std::endl;
+	  //std::cout << "pitchX1: " << m_pitchX1 << std::endl;
+	  //std::cout << "pitchY2/pitchX1: " << m_pitchY2/m_pitchX1 << std::endl;
+    _2dcorrTimeXY->Fill(simpev.getEvent_number(),  cluster1.getX()-cluster2.getY()*m_pitchX2/m_pitchX1);
+  }
+  if (_2dcorrTimeYX != NULL){
+    _2dcorrTimeYX->Fill(simpev.getEvent_number(), cluster1.getY()-cluster2.getX()*m_pitchY2/m_pitchY1);
+  }  
 
 }
 
@@ -189,6 +227,8 @@ void CorrelationHistos::Reset() {
   _2dcorrY->Reset();
   _2dcorrXY->Reset();
   _2dcorrYX->Reset();
+  _2dcorrTimeX->Reset();
+  _2dcorrTimeY->Reset();
 }
 
 TH2I *CorrelationHistos::getCorrXHisto() { return _2dcorrX; }
@@ -199,6 +239,8 @@ TH2I *CorrelationHistos::getCorrYXHisto() { return _2dcorrYX; }
 void CorrelationHistos::Write() {
   _2dcorrX->Write();
   _2dcorrY->Write();
+  _2dcorrXY->Write();
+  _2dcorrYX->Write();	
 }
 
 

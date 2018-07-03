@@ -24,10 +24,14 @@ typedef int int32_t
 #include <tinyxml.h>
 #endif
 
-#if ROOT_FOUND
-#if (defined WIN32)
+#ifdef ROOT_FOUND
+#ifdef WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif //NOMINMAX
 #include "Windows4Root.h"
-#endif
+#undef NOMINMAX
+#endif //WIN32
 #include "TF1.h"
 #include "TGraph.h"
 #include "TMath.h"
@@ -36,7 +40,7 @@ typedef int int32_t
 #include "TH2F.h"
 #include "TFile.h"
 #include "TCanvas.h"
-#endif
+#endif //ROOT_FOUND
 
 #include <iostream>
 #include <iterator>

@@ -121,8 +121,8 @@ public:
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
 
       trigger_interval = param.Get("TriggerInterval", 0);
-      dut_mask = param.Get("DutMask", 2);
-      and_mask = param.Get("AndMask", 0xff);
+      dut_mask = param.Get("DutMask", 1);
+      and_mask = param.Get("AndMask", 0);
       or_mask = param.Get("OrMask", 0);
       strobe_period = param.Get("StrobePeriod", 0);
       strobe_width = param.Get("StrobeWidth", 0);

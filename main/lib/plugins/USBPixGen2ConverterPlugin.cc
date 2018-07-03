@@ -51,12 +51,73 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
 
 	std::string EVENT_TYPE = USBPIX_GEN2_NAME;
 
-    /** Returns the LCIO version of the event.
-     */
-    virtual bool GetLCIOSubEvent(lcio::LCEvent & /*result*/,
-                                 eudaq::Event const & /*source*/) const {
-      return false;
-    }
+#if USE_LCIO
+	/** Returns the LCIO version of the event.*/
+virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eudaqEvent) const {
+
+	if(eudaqEvent.IsBORE() || eudaqEvent.IsEORE()) return true;
+
+	auto evRaw = dynamic_cast<RawDataEvent const &>(eudaqEvent);
+	int boardID = evRaw.GetTag("board", int());
+
+	if(!boardInitialized.at(boardID)) {
+		//getChannels will determine all the channels from a board, making the assumption that every channel (i.e. FrontEnd)
+		//wrote date into the data block. This holds true if the FE is responding. Then for every trigger there will be
+		//data headers (DHs) in the data stream
+		boardChannels.at(boardID) = getChannels(evRaw.GetBlock(0));
+		if(!boardChannels.at(boardID).empty()) boardInitialized.at(boardID) = true;
+    	}
+
+	lcioEvent.parameters().setValue( eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE );
+	LCCollectionVec * dataCollection;
+
+	auto dataCollectionExists = false;
+
+	try {
+		dataCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "zsdata_apix" ) );
+		dataCollectionExists = true;
+	} catch(lcio::DataNotAvailableException& e) {
+		dataCollection =  new LCCollectionVec(lcio::LCIO::TRACKERDATA);
+	}
+
+	CellIDEncoder<TrackerDataImpl> cellIDEncoder( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, dataCollection );
+	//The pixel type is the same for every hit
+	cellIDEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+
+	std::map<int, std::unique_ptr<lcio::TrackerDataImpl>> frameMap;
+	std::map<int, std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>> frameInterfaceMap;
+	
+
+	for(auto channel: boardChannels.at(boardID)){
+		auto frame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl);
+		auto sensorID = 20 + channel;
+		cellIDEncoder["sensorID"] = sensorID;
+		cellIDEncoder.setCellID(frame.get());
+		auto frameInterface = 	std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>( 
+						new eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>(frame.get())
+					);
+		frameInterfaceMap[channel] = std::move(frameInterface);
+		frameMap[channel] = std::move(frame);
+	}
+	
+	int hitDiscConf = 0;
+
+	auto pixelVec = decodeFEI4DataGen2(evRaw.GetBlock(0));
+	for(auto& hitPixel: pixelVec) {
+		frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
+	}
+
+	for(auto& framePair: frameMap){
+		dataCollection->push_back( framePair.second.release() );
+	}
+
+	//add this collection to lcio event
+	if( !dataCollectionExists && (dataCollection->size()!=0)) lcioEvent.addCollection(dataCollection, "zsdata_apix" );
+
+	return true;
+}
+
+#endif
 
 
     virtual void Initialize(const Event & bore, const Configuration & cnf) {
@@ -70,6 +131,24 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
           boardInitialized[boardID] = false;
           std::cout << "Added USBPix Board: " << boardID << " to list!" << std::endl;
       } */
+    }
+
+   virtual int IsSyncWithTLU(eudaq::Event const &ev,
+                              eudaq::TLUEvent const &tluEvent) const {
+      unsigned triggerID = GetTriggerID(ev);
+      auto tlu_triggerID = tluEvent.GetEventNumber();
+	// until the fix of STcontrol
+	//if((tlu_triggerID - (tlu_triggerID % 32768)) < 1) {
+		//std::cout << compareTLU2DUT(tlu_triggerID % 32767, triggerID-1) << std::endl;
+	//	if((compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID))!=Event_IS_Sync) std::cout << "DESYNCH! ...  ";
+	//	std::cout << "tlu_triggerID = " << tlu_triggerID << " (tlu_triggerID+1) % 32768 = " << (tlu_triggerID+1) % 32768 << " triggerID = " << triggerID << std::endl;
+	//	return compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID);
+	//} else {
+	//	//std::cout << compareTLU2DUT(tlu_triggerID % 32767, triggerID) << std::endl;
+		if((compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID % 32768))!=Event_IS_Sync) std::cout << "DESYNCH! in USBPIXGen2 plane detected ...  " << std::endl;
+		//std::cout << "tlu_triggerID = "  << tlu_triggerID << " (tlu_triggerID+1) % 32768 = " << (tlu_triggerID+1) % 32768 << " triggerID % 32768 = " << triggerID % 32768 << std::endl;
+		return compareTLU2DUT((tlu_triggerID+1) % 32768, triggerID % 32768);
+	//}
     }
 
     /** Returns the StandardEvent version of the event.
