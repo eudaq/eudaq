@@ -18,12 +18,20 @@ using eudaq::AidaPacket;
 
 class PyProducer : public eudaq::Producer {
   public:
-    PyProducer(const std::string & name, const std::string & runcontrol)
-      : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) {}
+    PyProducer(const std::string & name, const std::string & runcontrol, unsigned int boardID =0) : 
+      eudaq::Producer(name+"_"+std::to_string(boardID), runcontrol), 
+      m_internalstate(Init), 
+      m_name(name), 
+      m_run(0), 
+      m_evt(0), 
+      m_board_id(boardID), 
+      m_config(NULL) 
+    {}
   
     void SendEvent(uint8_t* data, size_t size) {
-      RawDataEvent ev(m_name, m_run, ++m_evt);
+      RawDataEvent ev(m_name, m_run, m_evt++);
       ev.AddBlock(0, data, size);
+      ev.SetTag("board",m_board_id);
       eudaq::DataSender::SendEvent(ev);
     }
 
@@ -57,7 +65,9 @@ class PyProducer : public eudaq::Producer {
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Running) {
-	eudaq::DataSender::SendEvent(RawDataEvent::BORE(m_name, m_run));
+        eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_name,m_run));
+        bore.SetTag("board",m_board_id);
+        eudaq::DataSender::SendEvent(bore);
 	SetConnectionState(eudaq::ConnectionState::STATE_RUNNING);
       }
     }
@@ -144,12 +154,13 @@ private:
   PyState m_internalstate; 
   std::string m_name;
   unsigned m_run, m_evt;
+  unsigned int m_board_id;
   eudaq::Configuration * m_config;
 };
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
-  DLLEXPORT PyProducer* PyProducer_new(char *name, char *rcaddress){return new PyProducer(std::string(name),std::string(rcaddress));}
+  DLLEXPORT PyProducer* PyProducer_new(char *name, char *rcaddress,unsigned int board_id){return new PyProducer(std::string(name),std::string(rcaddress),board_id);}
   // functions for I/O
   DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint8_t* buffer, size_t size){pp->SendEvent(buffer,size);}
   DLLEXPORT char* PyProducer_GetConfigParameter(PyProducer *pp, char *item){

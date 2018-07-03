@@ -27,19 +27,20 @@ SET(OnlineMon_SOURCES
   )
 
 SET(OnlineMon_HEADERS 
-  include/OnlineMonWindow.hh
-  include/SimpleStandardHit.hh
-  include/SimpleStandardCluster.hh
-  include/SimpleStandardPlane.hh
-  include/OnlineMonConfiguration.hh
-  include/CheckEOF.hh
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/OnlineMonWindow.hh
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/SimpleStandardHit.hh
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/SimpleStandardCluster.hh
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/SimpleStandardPlane.hh
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/OnlineMonConfiguration.hh
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/CheckEOF.hh
   )
 
 
 #This is an ugly workaround...should be all automatically done by the dictionary macro from root
 get_target_property(OnlineMon_EUDAQ_HEADERS EUDAQ INCLUDE_DIRECTORIES)
 #message(${OnlineMon_EUDAQ_HEADERS})
-include_directories(${OnlineMon_EUDAQ_HEADERS})
+#include_directories(${OnlineMon_EUDAQ_HEADERS})
+include_directories("${CMAKE_SOURCE_DIR}/main/include")
 
 SET(OnlineMon_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict.cxx) 
 # FIXME Workaround to be replaced as soon as there is some solution within ROOT

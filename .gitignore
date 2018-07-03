@@ -4,11 +4,14 @@ bin/*
 # Ignore libraries:
 lib/*
 
+
 # Ignore data files:
+data/*
 *.raw
 *.raw2
 *.idx
 *.dat
+*.h5
 
 # ignore everything in logs
 logs/*
@@ -49,6 +52,8 @@ extern/IPHCRC
 # Ignore paths to windows libraries installed by user:
 extern/pthread*
 extern/libusb*
+extern/pixel-dtb-firmare
+extern/libftd2xx-x86-1.4.6
 
 
 #ignore debug folder
