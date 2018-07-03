@@ -42,7 +42,7 @@ sleep 2
 # DataCollector
 ###############
 printf '\033[22;33m\t Data Collector \033[0m \n'
-xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './DataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
+xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './euDataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
 sleep 2
 
 ######################################################################
