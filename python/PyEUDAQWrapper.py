@@ -67,7 +67,14 @@ class PyProducer(object):
         data_p = data.ctypes.data_as(POINTER(c_uint8))
         lib.PyProducer_SendEvent(c_void_p(self.obj),data_p,data.nbytes)
     def GetConfigParameter(self, item):
-        return c_char_p(lib.PyProducer_GetConfigParameter(c_void_p(self.obj),create_string_buffer(item))).value
+        buf_len = 1024
+        buf = create_string_buffer(buf_len)
+        str_len = lib.PyProducer_GetConfigParameter(c_void_p(self.obj), create_string_buffer(item), buf, buf_len)
+        if str_len < 0:
+            raise ValueError('Cannot find configuration parameter %s', item)
+        if not str_len:
+            raise NotImplementedError('A configuration parameter with more than %d characters is not supported!', buf_len)
+        return buf.value
     @property
     def Configuring(self):
         return lib.PyProducer_IsConfiguring(c_void_p(self.obj))

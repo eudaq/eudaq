@@ -163,12 +163,18 @@ extern "C" {
   DLLEXPORT PyProducer* PyProducer_new(char *name, char *rcaddress,unsigned int board_id){return new PyProducer(std::string(name),std::string(rcaddress),board_id);}
   // functions for I/O
   DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint8_t* buffer, size_t size){pp->SendEvent(buffer,size);}
-  DLLEXPORT char* PyProducer_GetConfigParameter(PyProducer *pp, char *item){
+  DLLEXPORT int PyProducer_GetConfigParameter(PyProducer *pp, char *item, char *buf, int buf_len){
     std::string value = pp->GetConfigParameter(std::string(item));
-    // convert string to char*
-    char* rv = (char*) malloc(sizeof(char) * (strlen(value.data())+1));
-    strcpy(rv, value.data());
-    return rv;
+    if(value.empty()) // key not found
+    	return -1;
+    // Copy to buffer if it fits
+    if (buf_len > strlen(value.c_str())){
+    	strcpy(buf, value.c_str());
+    	return strlen(value.c_str());
+    }
+    else
+    	return 0;
+
   }
   // functions to report on the current state of the producer
   DLLEXPORT bool PyProducer_IsConfiguring(PyProducer *pp){return pp->IsConfiguring();}
