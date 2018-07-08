@@ -5,6 +5,8 @@
 #  ZESTSC1_LIBRARIES - The libraries needed to use ZestSC1
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
+include(FetchContent)
+
 macro(find_zestsc1_in_extern arg)
 # disable a warning about changed behaviour when traversing directories recursively (wrt symlinks)
 IF(COMMAND cmake_policy)
@@ -12,7 +14,11 @@ IF(COMMAND cmake_policy)
   CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
 ENDIF(COMMAND cmake_policy)
 # determine path to zestsc1 package in ./extern folder
-file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h)
+IF("${arg}" STREQUAL "")
+  file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h )
+ELSE()
+  file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h ${arg}/*ZestSC1.h)
+ENDIF()
 if (extern_file)
   # should have found multiple files of that name, take root of folder (no 'windows*7/inc' string)
   FOREACH (this_file ${extern_file})
@@ -78,24 +84,40 @@ find_zestsc1_in_extern("")
 
 # could not find the package at the usual locations -- try to copy from AFS if accessible
 if (NOT ZESTSC1_LIBRARY)
-  IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")
-    MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer; downloading it now via AFS to ./extern ....")
-    if(DEFINED ENV{TRAVIS})
-    MESSAGE(STATUS "Running on travis and therefore downloading only the absolutely necessary part of the ZestSC1 driver.")
-    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/Inc" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-    if("$ENV{TRAVIS_OS_NAME}" STREQUAL "linux")
-	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/linux" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-    else()
-	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/macosx" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-    endif()    
-    else()
-    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1" DESTINATION ${PROJECT_SOURCE_DIR}/extern)
-    endif()
-    find_zestsc1_in_extern(NO_DEFAULT_PATH)
-  ELSE()
-    MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+#  IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")
+#    MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer; downloading it now via AFS to ./extern ....")
+#    if(DEFINED ENV{TRAVIS})
+#    MESSAGE(STATUS "Running on travis and therefore downloading only the absolutely necessary part of the ZestSC1 driver.")
+#    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+#    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/Inc" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+#    if("$ENV{TRAVIS_OS_NAME}" STREQUAL "linux")
+#	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/linux" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+#    else()
+#	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/macosx" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
+#    endif()    
+#    else()
+#    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1" DESTINATION ${PROJECT_SOURCE_DIR}/extern)
+#    endif()
+#    find_zestsc1_in_extern(NO_DEFAULT_PATH)
+#  ELSE()
+#    MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+#  ENDIF()
+  FetchContent_Declare(
+    tlu-dependencies
+    GIT_REPOSITORY    https://github.com/eudaq/tlu-dependencies.git
+    GIT_TAG           origin/master
+    GIT_PROGRESS TRUE
+    GIT_SHALLOW  TRUE
+  ) 
+  
+  IF(NOT tlu-dependencies_POPULATED)
+    FetchContent_Populate( tlu-dependencies )
   ENDIF()
+  
+  FetchContent_GetProperties( tlu-dependencies )
+  MESSAGE(${tlu-dependencies_SOURCE_DIR})
+  find_zestsc1_in_extern(${tlu-dependencies_SOURCE_DIR}/ZestSC1)
+
 endif()
 
 set(ZESTSC1_LIBRARIES ${ZESTSC1_LIBRARY} )
