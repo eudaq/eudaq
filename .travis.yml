@@ -144,8 +144,8 @@ install:
   - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi
 
 before_script:
-  - $CXX --version
-  - $CC --version
+#  - $CXX --version
+#  - $CC --version
   - echo $PATH
   - echo $LD_LIBRARY_PATH
 
