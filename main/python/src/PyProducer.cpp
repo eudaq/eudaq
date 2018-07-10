@@ -27,6 +27,11 @@ class PyProducer : public eudaq::Producer {
       m_board_id(boardID), 
       m_config(NULL) 
     {}
+
+    unsigned int GetRunNumber() {
+    	std::cout << "[PyProducer] GetRunNumber "<< m_run<< std::endl;
+    	return m_run;
+    }
   
     void SendEvent(uint8_t* data, size_t size) {
       RawDataEvent ev(m_name, m_run, m_evt++);
@@ -176,6 +181,9 @@ extern "C" {
     	return 0;
 
   }
+
+  DLLEXPORT unsigned int PyProducer_GetRunNumber(PyProducer *pp){return pp->GetRunNumber();}
+
   // functions to report on the current state of the producer
   DLLEXPORT bool PyProducer_IsConfiguring(PyProducer *pp){return pp->IsConfiguring();}
   DLLEXPORT bool PyProducer_IsStartingRun(PyProducer *pp){return pp->IsStartingRun();}

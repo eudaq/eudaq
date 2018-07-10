@@ -66,6 +66,8 @@ class PyProducer(object):
     def SendEvent(self,data):
         data_p = data.ctypes.data_as(POINTER(c_uint8))
         lib.PyProducer_SendEvent(c_void_p(self.obj),data_p,data.nbytes)
+    def GetRunNumber(self):
+        return lib.PyProducer_GetRunNumber(c_void_p(self.obj))
     def GetConfigParameter(self, item):
         buf_len = 1024
         buf = create_string_buffer(buf_len)
