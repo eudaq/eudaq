@@ -1,0 +1,613 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Usefull Utilities}
+The EUDAQ framework contains a number of other parts that may be useful.
+Those that have not already been described in previous sections will be outlined below.\\
+
+
+There are a number of other utilities available that are not needed for running the DAQ,
+but can be useful for other tasks such as debugging.
+The executables are all located in the \texttt{bin} subdirectory.
+They should all accept a help (\texttt{-h} or \texttt{--help}) option,
+to print a summary of the available options.
+
+
+\subsection{FileChecker}
+\label{sec:FileChecker}
+
+This is a small utility that reads raw data files and checks if all events are
+readable, can be syncronised using the TLU trigger id and lists which type
+of subevents the file contains.
+
+It should be called with list of file paths or run numbers. For any argument
+that consist only of numerical digits the file path is constructed by
+substituting \texttt{\$6R} in the input pattern (defaults to
+``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
+
+For example:
+\begin{listing}[mybash]
+$[./FileChecker]$ {6045..6050}
+\end{listing}
+
+This would produce the following output.
+\begin{listing}[]
+run     valid  num_events  contains                   errors                    
+------  -----  ----------  -------------------------  ----------------------
+  6045   true       13131  MUPIX4,NI,TLU                                        
+  6046   true           1  MUPIX4,NI,TLU                                        
+  6047   true       14674  MUPIX4,NI,TLU                                        
+  6048   true        7776  MUPIX4,NI,TLU                                        
+  6049  false           0                             no events in the file.    
+  6050  false          -1                             read error. 
+\end{listing}
+
+
+\subsection{Converter}
+\label{sec:Converter}
+The \texttt{Converter} program will read a native data file,
+optionally select just a subset of events from the file,
+and can then write it out to another file in either the same native format, or a different format.
+The most commonly used options are:
+\begin{description}
+\ttitem{-t \param{type}}
+The file type to write out.
+The available types are listed below.
+
+\ttitem{-e \param{range}}
+Select the specified range of event numbers.
+
+\ttitem{-s}
+Try to resynchronize events based on the TLU event number
+(see TestReader in \autoref{sec:TestReader}).
+
+\end{description}
+
+The available output file types are as follows:
+
+\begin{description}\phantomsection\label{lst:FileTypes}
+
+\ttitem{native}
+The native EUDAQ binary file format, consisting of a serialised stream of
+\texttt{DetectorEvent}s, containing the raw data read out from the hardware.
+
+\ttitem{standard}
+Like the \texttt{native} format, this is also a serialised stream,
+but in this case it contains \texttt{StandardEvent}s,
+in which the raw data has been converted into a standard format.
+
+\ttitem{lcio}
+The standard \gls{LCIO} file format used by the analysis software.
+This type is only available if EUDAQ was compiled with \gls{LCIO} support.
+
+\ttitem{root}
+A Root file containing a TTree with the hit pixel information.
+
+\ttitem{text}
+A simple text based format (not yet implemented).
+
+\ttitem{mimoloop}
+A text based format mimicking the output of the mimoloop program
+(from Angelo Cotta Ramusino and Lorenzo Chiarelli at INFN Ferrara).
+
+\end{description}
+
+Although this program can be used to convert a native data file into \gls{LCIO} format,
+the more usual (and therefore better tested) way is to use the EUTelescope converter.
+
+\subsection{ClusterExtractor}
+\label{sec:ClusterExtractor}
+This program can be used to quickly extract some clusters from raw data.
+It is not as sophisticated as the EUTelescope package, which should be preferred for real analysis,
+but it can be useful for doing quick checks.
+It will read a native data file, perform a basic clustering,
+and then write these clusters to one text file per sensor plane.
+The most commonly used options are:
+\begin{description}
+\ttitem{-p \param{pixels}}
+The cluster size in pixels.
+It should be an odd number, with 1 meaning no clustering (just pixels over threshold),
+3 meaning 3\x{}3 pixel clusters, etc.
+
+\ttitem{-n \param{adcs}}
+The noise level (sigma) in ADC units.
+This is used to scale the thresholds in terms of the noise.
+
+\ttitem{-s \param{thresh}}
+The threshold for seed pixels, in terms of the noise.
+
+\ttitem{-c \param{thresh}}
+The threshold for the total charge of a cluster,
+in terms of the cumulative noise of all the pixels in the cluster.
+
+\ttitem{-w}
+Reports the cluster centre as the weighted average of the pixels,
+instead of the position of the seed pixel.
+
+\end{description}
+
+An example use is:
+\begin{listing}[mybash]
+$[./ClusterExtractor]$ -p 3 -n 3.5 -s 6 -c 10 -w 5432
+\end{listing}
+
+This will generate a number of text files named \texttt{runNNN\_eutel\_M.txt},
+where \texttt{NNN} is the run number, and \texttt{M} is the sensor plane number.
+The format of the output text files is as follows:
+\begin{listing}[]
+2       2       51487659237
+ 182    153     126
+ 241    120     125
+3       1       51489095892
+ 111    67      346
+5       1       51491334074
+ 113    141     171
+7       2       51495330212
+ 252    240     305
+ 95     170     189
+\end{listing}
+
+The first line contains the event number,
+the number of clusters, and the TLU timestamp.
+Then for each cluster there is one line,
+containing the \texttt{x} and \texttt{y} coordinates of the cluster centre,
+and the total charge in ADC units.
+The cluster lines are prepended with a space to make it easier to scan the file by eye.
+
+
+\subsection{MagicLogBook}
+\label{sec:MagicLogBook}
+This program is designed to extract as much information as possible from data files and log files,
+in order to reconstruct a log book.
+Despite its name, it is in fact not magical,
+so it is preferable to keep a good log book during running,
+rather than relying on this program to generate it later.
+
+The available options are listed below:
+\begin{description}
+\ttitem{-f \param{fields}}
+A list of fields to include in the output, in the form \texttt{name=value},
+with multiple fields separated by commas.
+If a predefined list is also specified these will be appended to the list.
+
+\ttitem{-s \param{separator}}
+The separator to use between fields in the output. The default is a tab character.
+
+\ttitem{-h \param{string}}
+A string that appears at the beginning of the header line (with the list of field names),
+that can be used to differentiate it from the other lines. The default is an empty string.
+
+\ttitem{-p {name}}
+Use a predefined list of fields.
+Currently available values are \texttt{normal} and \texttt{full}.
+
+\ttitem{-o \param{file}}
+The output filename. By default the standard output is used.
+
+\end{description}
+
+The easiest method of running is to use a predefined list of fields.
+There are currently two predefined lists available: \texttt{normal} and \texttt{full}.
+If neither of these are suitable, contact the EUDAQ maintainer,
+as it may be possible to add more options.
+
+The \texttt{normal} list includes:
+\begin{myitemize}
+  \item the run number,
+  \item the config file name,
+  \item the run start time,
+  \item for the \glspl{EUDRB}:
+  \begin{myitemize}
+    \item the mode,
+    \item the sensor type,
+    \item whether they are running unsynchronized,
+    \item the number of boards,
+    \item and the firmware version.
+  \end{myitemize}
+  \item and for the \gls{TLU}:
+    \begin{myitemize}
+    \item the internal trigger interval,
+    \item the AND mask,
+    \item the DUT mask,
+    \item and the firmware version.
+  \end{myitemize}
+\end{myitemize}
+
+The \texttt{full} list includes all the values from the \texttt{normal} list,
+plus the number of events in the run and the end of run time.
+This is because these values can only be known by reading
+the whole data file to the end, which is slow, especially for large data files.
+
+If necessary, other information is available using custom fields,
+although the syntax for these is a bit complicated,
+since it is designed to be as flexible as possible at specifying any information in the data file.
+In the future it may be redefined in order to simplify it if possible.
+Therefore it is recommended to use a predefined list of fields where possible.
+Custom fields are specified as a comma separated list of items in the form \texttt{name=value},
+with the name being what will appear on the header line of the output,
+and the value specifying what exactly to extract from the file.
+The possible values are illustrated below, although not exhaustively:
+
+\begin{mydescription}
+  \ttitem{events$^\ast$} The number of events in the run.
+  \ttitem{config} The configuration name, or:
+  \begin{mydescription}
+    \ttitem{config:section:key} The value of the \texttt{key} from the corresponding \texttt{section} in the config
+    (e.g. \texttt{config:Producer.EUDRB:NumBoards}).
+  \end{mydescription}
+  \item{\texttt{bore}, \texttt{tlu}, \texttt{eudrb}, \texttt{eore}$^\ast$:} Something from the \gls{BORE},
+  the \texttt{TLUEvent} or \texttt{EUDRBEvent} subevents of the \gls{BORE}, or the \gls{EORE}, respectively:
+  \begin{mydescription}
+    \ttitem{bore:.Run} The run number
+    \ttitem{bore:\param{name}} Otherwise, if the second part does not start with a period, the value of the tag \param{name} is used
+    (e.g. \texttt{tlu:DutMask} or \texttt{eudrb:MODE}).
+  \end{mydescription}
+  \ttitem{log} Something from the log file (not implemented yet).
+\end{mydescription}
+
+$^\ast$ items marked with an asterisk require reading the whole data file, and are therefore slow,
+especially when large data files are involved.
+
+Note that the \texttt{EUDRBEvent} is now deprecated, having been replaced by the \texttt{RawDataEvent},
+but there is currently no way to specify this.
+
+The \texttt{MagicLogBook} command is used as follows:
+
+\begin{listing}[mybash]
+$[./MagicLogBook]$ -p normal ../data/*.raw
+\end{listing}
+
+This will produce an output similar to the following:
+\begin{listing}[]
+Run  Config     Mode Det Start                   U P Trg AND  DUT  Tfw Efw
+6371 eudet-beam          2009-07-29 07:44:39.535 1 6   0 0xf  0x10 241
+6372 eudet-beam          2009-07-29 08:03:05.079 1 6   0 0xf  0x10 241
+6373 eudet-m26test       2009-07-30 09:57:45.157 1 6 255 0xff 0x12 241
+6374 eudet-m26test       2009-07-30 10:00:45.205 1 6 255 0xff 0x12 241
+6375 eudet-m26test       2009-07-30 10:05:38.625 1 6   1 0xff 0x12 241
+6376 eudet-m26test       2009-07-30 10:10:00.107 1 6   1 0xff 0x12 241
+6379 eudet-m26test       2009-07-30 10:13:05.322 1 6   1 0xff 0x12 241
+\end{listing}
+
+Note that the header row has been modified slightly to fit into the page width:
+the \texttt{U} should be \texttt{UnSync}, \texttt{P} should be \texttt{Planes},
+\texttt{Trg} should be \texttt{TriggerInterval}, \texttt{Tfw} should be \texttt{TLUfw},
+and \texttt{Efw} should be \texttt{EUDRBfw}.
+The columns \texttt{Mode}, \texttt{Det} and \texttt{EUDRBfw} are missing from the output
+due to the fact that this information is now stored in a \texttt{RawDataEvent},
+which is not currently accessible with this version of the program.
+
+
+\subsection{PluginManager}\label{sec:PluginManager}
+The \texttt{PluginManager} handles the different \texttt{DataConverterPlugin}s,
+allowing raw data stored in a \texttt{RawDataEvent} to be easily converted
+to a \texttt{StandardEvent} or \texttt{LCEvent} without having to know the details of all the detector types in there.
+It is defined in the following header:
+\begin{listing}
+#include "eudaq/PluginManager.hh"
+\end{listing}
+
+In order to convert the events correctly,
+the plugins must have access to the information in the BORE.
+Therefore, before any events may be converted, and for each data file,
+the \texttt{PluginManager} must be initialized as follows:
+\begin{listing}
+eudaq::PluginManager::Initialize(bore);
+\end{listing}
+
+The \texttt{PluginManager} will take care of passing the relevant parts of the \gls{BORE}
+to the appropriate \texttt{DataConverterPlugin}s.
+The \texttt{DetectorEvent}s can then be converted as follows:
+\begin{listing}
+eudaq::StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
+\end{listing}
+
+The \texttt{PluginManager} will take care of splitting the \texttt{DetectorEvent}
+into its constituent subevents, and passing them all to the appropriate
+\texttt{DataConverterPlugin}s to be inserted into the returned \texttt{StandardEvent}.
+For a slightly more complete example of the \texttt{PluginManager},
+see the \texttt{ExampleReader} in \autoref{sec:ExampleReader}.
+
+\subsection{OptionParser}
+The \texttt{OptionParser} is used to simplify parsing of command-line options.
+It provides a way to specify which arguments a program accepts,
+with the types, default values and descriptions,
+so that the help text can be automatically generated,
+and therefore is always in sync with the code,
+and all command line programs can have a uniform interface.
+
+All programs using the \texttt{OptionParser} will automatically provide a
+\texttt{-h} (and \texttt{--help}) option to display the help text,
+as well as a \texttt{-v} (and \texttt{--version}) option to display the program version,
+unless the program explicitly overrides these options with other ones with the same names.
+
+The \texttt{OptionParser} is the class that handles the actual parsing of the command line.
+The signature of the constructor is as follows:
+\begin{listing}
+OptionParser(const std::string & name, const std::string & version,
+             const std::string & desc="", int minargs = -1, int maxargs = -1);
+\end{listing}
+The first three arguments are the program name, version and (optionally) description,
+and these are optionally followed by two numbers specifying the number of arguments
+expected after the command line options.
+The default value of -1 for the minimum means no arguments are allowed,
+and for the maximum means that an arbitrary number may be given
+(i.e. there is no explicit maximum).
+
+If the automatically generated help text is not sufficient,
+extra text may also be given to display at the end of the help text,
+by passing it to the following method:
+\begin{listing}
+void OptionParser::ExtraHelpText(const std::string & text);
+\end{listing}
+This can be used to provide extra information about the options to the program.
+
+Once an \texttt{OptionParser} object has been constructed, the different options may be specified.
+There are two types: \texttt{OptionFlag}, which specifies a simple option with no argument,
+and the template \texttt{Option<T>}, which specifies an option taking an argument of type \texttt{T}.
+
+The \texttt{OptionFlag} constructor has the following signature:
+\begin{listing}
+OptionFlag(OptionParser & op, const std::string & shortname,
+           const std::string & longname, const std::string & desc = "");
+\end{listing}
+where \texttt{op} is a reference to the \texttt{OptionParser} object created previously,
+that will do the actual parsing of the command line.
+It then takes two names: a short version (usually a single character) that is used with a single hyphen,
+and a long version that must be preceded by two hyphens on the command line.
+Finally, a description may be given that will be displayed in the help text.
+
+The \texttt{Option} constructor has the following two signatures,
+one for normal types, the other for vectors of another type:
+\begin{listing}
+Option<T>(OptionParser & op, const std::string & shortname,
+          const std::string & longname, const T & deflt = T(),
+          const std::string & argname = "", const std::string & desc = "");
+Option<std::vector<T> >(OptionParser & op, const std::string & shortname,
+          const std::string & longname, const std::string & argname = "",
+          const std::string & sep = "", const std::string & desc = "");
+\end{listing}
+where, in both cases, the first three arguments are as for \texttt{OptionFlag}.
+The first constructor then takes a default value that will be used
+in the case the option is not specified on the command line,
+a name for the argument to the option (to be used in the help text),
+and a description of the option.
+The vector version also takes an argument name and a description,
+but no default value (the default is always an empty vector), instead it takes a separator,
+which is the string used to separate multiple elements of the vector on the command line.
+By default (or if an empty string is specified), a comma will be used.
+
+Once all the options have been specified, the command line can be parsed,
+which is done by calling the following method of the \texttt{OptionParser} object:
+\begin{listing}
+OptionParser & OptionParser::Parse(const char ** args);
+\end{listing}
+as an argument it takes the list of arguments from the command line (by convention usually called \texttt{argv}).
+If there is an error during parsing, an exception may be thrown;
+this should be handled by the \texttt{HandleMainException} method as described below.
+
+Afterwards the values of the options can be accessed using their \texttt{Value()} method.
+The \texttt{IsSet()} method is also available to tell whether an option has been set on the command line
+(for \texttt{OptionFlag}s this will hold the same value as the \texttt{Value()} method).
+
+Finally, the \texttt{OptionParser} has a \texttt{HandleMainException} method that provides
+a way to catch any unhandled exceptions,
+and either display help if it is a problem with parsing the command line,
+or otherwise display a standard text informing the user of a problem.
+It will also catch exceptions of type \texttt{MessageException} and display the message,
+without treating it as an error, so this can be used to exit the program with a message to the user.
+It is recommended to put the main program inside a \texttt{try} block,
+then call the \texttt{HandleMainException} method from a \texttt{catch(...)} block,
+after any other exceptions have been handled (if necessary).
+
+An example use is shown below, illustrating most of what is described above:
+\lstinputlisting[style=full, language=C++]{../../main/exe/src/OptionExample.cxx}
+
+Running this program produces the following output:
+\begin{listing}[mybash]
+$[./OptionExample.exe]$ -h
+Example version 1.0
+An example program
+
+usage: ./OptionExample.exe [options] [0 or more arguments]
+
+options:
+  -t --test
+     Enable test
+  -e --example <value>	(default = 42)
+     Example parameter
+  -a --another <values>	(default = )
+     Example vector
+
+Some more information about this program.
+
+$[./OptionExample.exe]$
+Test: Disabled
+Example: 42
+Another: 
+No arguments were given
+
+$[./OptionExample.exe]$ -t -e 2.718 -a 1;2;3 foo bar
+Test: Enabled
+Example: 2.718
+Another: 1, 2, 3
+Argument 1: foo
+Argument 2: bar
+\end{listing}
+
+\subsection{Timer}
+The \texttt{Timer} class wraps the underlying operating system's timer functions,
+making them easier to use in a platform independent way.
+Whenever a \texttt{Timer} object is created, it will record the current time.
+Then at any time in the future, the elapsed time in seconds may be accesses
+with the \texttt{Seconds()} method.
+
+There is also a \texttt{Stop()} method to stop the timer counting, so any subsequent calls
+to \texttt{Seconds} will return the same value, and a \texttt{Restart()} method to
+reset the timer's start time to the current time and start counting again.
+An example use is shown below:
+\begin{listing}[C++]
+#include "eudaq/Timer.hh"
+
+Timer t;
+function_a();
+cout << "Function A took " << t.Seconds() << " seconds." << endl;
+t.Restart();
+function_b();
+cout << "Function B took " << t.Seconds() << " seconds." << endl;
+// wait 3 microseconds
+t.Restart();
+while (t.Seconds() < 3e-6) {
+  // do nothing
+}
+\end{listing}
+
+This shows a timer being used to measure the execution time of two functions,
+and to wait for a small delay.
+Usually to wait for a delay, it is preferable to use sleep (or \texttt{mSleep}, see \autoref{sec:mSleep}),
+but in most operating systems the minimum delay for a sleep is around 20~ms
+(even when using \texttt{usleep} which has microsecond resolution)
+so if the delay must be shorter, a busy loop like above is needed.
+
+\subsection{Utils}
+The \texttt{Utils} package is a collection of useful functions and classes too small to merit
+their own individual files.
+It is used by including the header:
+\begin{listing}
+#include "eudaq/Utils.hh"
+\end{listing}
+
+Some of the most useful parts are described here.
+
+\subsubsection{to\_string}
+This is a template function that takes (almost) any type and returns the value converted to a string.
+An optional second argument specifies the minimum number of digits to use
+(padding with zeroes if necessary).
+\begin{listing}
+int value = 123;
+strfunction(to_string(value));
+strfunction(to_string(value, 6));
+\end{listing}
+
+This will pass first the string \inline{"123"},
+and then the string \inline{"000123"}
+to the function \texttt{strfunction}.
+
+\subsubsection{from\_string}
+This template function is the inverse of \texttt{to\_string}.
+It takes as arguments a string and a default value of type T,
+and returns an object of type T initialised from the string.
+If it is not possible to convert the string to the required type,
+the default value is returned instead.
+\begin{listing}
+std::string value = "456";
+intfunction(from_string(value, 0));
+\end{listing}
+
+This will call \texttt{intfunction} with the integer value 456.
+
+\subsubsection{hexdec}
+This is a class to facilitate printing numbers in both hexadecimal and decimal.
+It is used similarly to \texttt{to\_string}, but when printed,
+it will display the value in hexadecimal, followed by the value in decimal in parentheses.
+The hexadecimal values will be padded to the full width of the type,
+unless a second argument is given specifying the minimum number of hex digits to display.
+\begin{listing}
+short value = 789;
+cout << hexdec(value) << endl
+     << hexdec(value, 0) << endl;
+\end{listing}
+
+This will display:
+\begin{listing}[]
+0x0315 (789)
+0x315 (789)
+\end{listing}
+
+If the result is required in a string, instead of being printed,
+this can be achieved with \inline{to_string(hexdec(value))}.
+
+\subsubsection{mSleep}\label{sec:mSleep}
+This is a wrapper around the operating system's \texttt{sleep}/\texttt{usleep}
+(or equivalent) function.
+It takes as an argument the number of milliseconds to sleep.
+The advantage of this function is that it will work on Linux,
+Mac OS X and Windows, as it will automatically call the correct underlying function.
+
+\subsection{Python Interface}
+\label{sssec:pywrapper}
+A Python interface is provided for selected EUDAQ components:
+RunControl, DataCollector and a Producer, that can be extended on the
+Python side. The interface is realized through the \texttt{ctypes}
+package that is part of every standard Python installation and
+requires the \texttt{numpy} Python package to be installed. The
+interface code for all components is located in the
+\texttt{main/python} directory.
+
+To use the interface and access the components as Python objects, the
+wrapper must be loaded inside your Python script:
+
+\begin{listing}[python]
+  #!/usr/bin/env python2 
+  execfile('PyEUDAQWrapper.py') # load ctypes wrapper
+
+  prc = PyRunControl() # start run control with default settings
+  # wait for more than one active connection to appear
+  while prc.NumConnections < 2:
+      sleep(1)
+  prc.Configure("ExampleConfig") # load configuration file
+  while not prc.AllOk:
+      sleep(1) # sleep while waiting for all connected producers
+  prc.StartRun()
+\end{listing}
+
+This little scripts creates a RunControl instance, sends a
+configuration to all connected producers, waits for their reply, and
+starts a new run. Several more extensive examples for using Python
+with EUDAQ are located in the \texttt{python} directory in the main
+EUDAQ directory.
+
+\subsection{Log Messages}
+The logging infrastructure allows to send information, error messages or debug information to a central point in the DAQ system to collect logging information, the Log Collector.
+It is strongly encouraged to use the logging system rather than simple cout statements.
+The logging class is defined in:
+\begin{listing}
+#include "eudaq/Logger.hh"
+\end{listing}
+
+The following macros for sending log messages are defined,
+listed here in decreasing order of severity:
+\begin{description}
+
+\ttitem{EUDAQ\_USER}
+A user-generated message (e.g. from the RunControl Log button).
+
+\ttitem{EUDAQ\_ERROR}
+Something that went wrong and should be fixed. Errors usually are blocking, i.e. the data acquisition cannot be continued without fixing the cause.
+
+\ttitem{EUDAQ\_WARN}
+A warning that something may not be quite right and should probably be taken care of. Warnings are considered non-blocking, i.e. the data acquisition will proceed but some of the components might experience problems (lacking configurations for a threshold setting would be an example).
+
+\ttitem{EUDAQ\_INFO}
+An message generated during normal running containing information that may be useful to the user.
+
+\ttitem{EUDAQ\_EXTRA}
+Some extra information that may be less useful in normal running.
+
+\ttitem{EUDAQ\_DEBUG}
+Information for debugging purposes that will normally be hidden and should only be used for development purposes. Additional information for shifters should be categorized as \texttt{EUDAQ\_EXTRA}.
+
+\end{description}
+
+They are used as follows:
+\begin{listing}
+EUDAQ_ERROR("No keyboard detected: press F1 to continue.");
+\end{listing}
+
+The messages will be sent to the central Log Collector if it is connected,
+otherwise they will be displayed on the local terminal.
+The log level can be changed in the following way:
+\begin{listing}
+EUDAQ_LOG_LEVEL("WARN");
+\end{listing}
+
+Any messages lower than the specified level will just be ignored.
+This can be useful to filter out unimportant messages and, for example, just display error messages.

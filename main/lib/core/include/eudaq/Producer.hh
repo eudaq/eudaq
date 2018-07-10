@@ -8,6 +8,7 @@
 #include "eudaq/Event.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/FileWriter.hh"
 
 #include <string>
 
@@ -33,6 +34,7 @@ namespace eudaq {
   public:
     Producer(const std::string &name, const std::string &runcontrol);
 
+
     virtual void DoInitialise(){};
     virtual void DoConfigure(){};
     virtual void DoStartRun(){};
@@ -40,7 +42,19 @@ namespace eudaq {
     virtual void DoReset(){};
     virtual void DoTerminate(){};
     virtual void DoStatus(){};
-    
+
+    void Exec();
+    void WriteEvent(EventUP ev);
+
+
+    /*    virtual void DoInitialise(){};
+	  virtual void DoConfigure(){};
+	  virtual void DoStartRun()=0;
+	  virtual void DoStopRun()=0;
+	  virtual void DoReset()=0;
+	  virtual void DoTerminate()=0;
+	  void ReadConfigureFile(const std::string &path);
+	  void ReadInitializeFile(const std::string &path); */
     void SendEvent(EventSP ev);
     static ProducerSP Make(const std::string &code_name, const std::string &run_name,
 			   const std::string &runcontrol);
@@ -52,13 +66,25 @@ namespace eudaq {
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
+
     void OnStatus() override;
-    
   private:
+    bool m_exit;
+    bool m_cli_run; 
+    std::shared_ptr<Configuration> m_conf;
+    std::shared_ptr<Configuration> m_conf_init;
+    std::string m_type;
+    std::string m_name;
+    std::string m_fwpatt;
+    std::string m_fwtype;
+
     uint32_t m_pdc_n;
     uint32_t m_evt_c;
     std::mutex m_mtx_sender;
     std::map<std::string, std::shared_ptr<DataSender>> m_senders;
+    //    uint32_t m_run_number;
+    FileWriterUP m_writer;
+
   };
   //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
 }

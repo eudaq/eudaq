@@ -1,0 +1,35 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Writing a DataCollector}\label{sec:DataCollectorWriting}
+A DataCollector can take data from Producers and merge/synchronise those data.
+A DataCollector consists of a CommandReceiver and a DataReceiver, where the first receives commands from the Run Control while the latter receives binary data events from one or more Producers. A dedicated synchronisation method should be implemented inside of the DataCollector to pack the incoming data.
+The DataCollector base class is provided in order to simplify the integration. Example code for Producers is provided.
+
+\subsection{DataCollector Prototype}\label{sec:datacollector_hh}
+
+\autoref{ls:datacoldef}, below, is part of the header file which declares the eudaq::Producer. You are required to write the user DataCollector derived from eudaq::DataCollector.
+There are nine virtual methods, belonging to two categories, which should be implemented by the user. The first category includes the methods \lstinline[style=cpp]{DoInitialise},
+\lstinline[style=cpp]{DoConfigure}, \lstinline[style=cpp]{DoStopRun}, \lstinline[style=cpp]{DoStartRun}, \lstinline[style=cpp]{DoReset} and \lstinline[style=cpp]{DoTerminate} which are called by command received and should return as soon as possible. The other category includes the methods \lstinline[style=cpp]{DoConnect}, \lstinline[style=cpp]{DoDisconnect}, and \lstinline[style=cpp]{DoReveive} which respond to a connection in establishing or deleting, or a new coming Event.
+
+\lstinputlisting[label=ls:datacoldef, style=cpp, linerange=BEG*DEC-END*DEC]{../../main/lib/core/include/eudaq/DataCollector.hh}
+
+The virtual function Exec() is optional to be implemented in user DataCollector. Internally, the base Exec() to create two threads for command execution and data receiving,  itself then goes to an infinite loop and can never return until the Terminate command is executed. In case you are going to implement it yourselves, please read the source code to find detailed information.
+
+\subsection{Example Code: DirectSave}\label{sec:directsavedatacollector_cc}
+Here is an example code of a derived DataCollector, named DirectSaveDataCollector. As its name hints,  it does nothing except save all incoming Event data to disk directly. Printing out of the Event to screen is optional for debugging.
+\lstinputlisting[label=ls:datacoldirsave, style=cpp]{../../main/module/std/src/DirectSaveDataCollector.cc}
+
+Two virtual methods are implemented in DirectSaveDataCollector, \lstinline[style=cpp]{DoConfigure()} and \lstinline[style=cpp]{DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev)}. It registers itself to the correlated \lstinline[style=cpp]{eudaq::factory} by the hash number from the name string \lstinline[style=cpp]{DirectSaveDataCollector}. 
+
+\subsection{Example Code: SyncTrigger}\label{sec:ex2datacollector_cc}
+Now, a more realistic example. The full source code is available here, \autoref{ls:ex2datacoldec}. It can merge the eudaq::Event by trigger number from the connected eudaq::Producer.
+\lstinputlisting[label=ls:ex2datacoldec, style=cpp]{../../user/example/module/src/Ex0TgDataCollector.cc}
+Compared to previous DirectSaveDataCollector example, two more virtual methods are implemented. They are \lstinline[style=cpp]{DoConnect}, \lstinline[style=cpp]{DoDisconnect}. The first, \lstinline[style=cpp]{DoConnect}, will be called when a new connection from eudaq::Producer is created, and the other, \lstinline[style=cpp]{DoDisconnect}, will be called  when the connection is expired. The information of the correlated connection is provided by the incoming parameter. The lifetime of the connection between the eudaq::DataCollector and eudaq::Producer is a data-taking run. No \lstinline[style=cpp]{DoConfigure} method is implemented, and this DataCollector is not Configurable.
+
+
+
+
+
+
+
+
+

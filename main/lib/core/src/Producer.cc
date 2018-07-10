@@ -12,6 +12,10 @@ namespace eudaq {
     : CommandReceiver("Producer", name, runcontrol){
     m_evt_c = 0;
     m_pdc_n = str2hash(GetFullName());
+    if(!runcontrol.empty())
+      m_cli_run=false;
+    else
+      m_cli_run=true;
   }
 
   void Producer::OnInitialise(){
@@ -43,6 +47,8 @@ namespace eudaq {
       if(!conf)
 	EUDAQ_THROW("No Configuration Section for OnConfigure");
       m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
+      m_fwtype = conf->Get("EUDAQ_FW", "native");
+      m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
       DoConfigure();
       CommandReceiver::OnConfigure();
     }catch (const std::exception &e) {
@@ -60,6 +66,9 @@ namespace eudaq {
       if(!IsStatus(Status::STATE_CONF))
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
       std::map<std::string, std::shared_ptr<DataSender>> senders;
+      EUDAQ_INFO("Start Run: "+ std::to_string(GetRunNumber()));
+      m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(m_fwtype), m_fwpatt);
+      m_evt_c = 0;
       std::string dc_str = GetConfiguration()->Get("EUDAQ_DC", "");
       std::vector<std::string> col_dc_name = split(dc_str, ";,", true);
       std::string cur_backup = GetConfiguration()->GetCurrentSectionName();
@@ -149,6 +158,7 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, "Status Error");
     }
   }
+
   
   void Producer::SendEvent(EventSP ev){
     if(ev->IsBORE()){
@@ -164,9 +174,9 @@ namespace eudaq {
     std::unique_lock<std::mutex> lk(m_mtx_sender);
     auto senders = m_senders; //hold on the ptrs
     lk.unlock();
-    for(auto &e: senders){
+    for(auto &e: m_senders){
       if(e.second)
-	e.second->SendEvent(ev);
+	e.second->SendEvent(move(ev));
       else
 	EUDAQ_THROW("Producer::SendEvent, using a null pointer of DataSender");
     }

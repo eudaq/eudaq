@@ -194,7 +194,7 @@ namespace eudaq {
     m_conf->SetSection("RunControl");
   }
   
-  void RunControl::ReadInitilizeFile(const std::string &path){
+  void RunControl::ReadInitializeFile(const std::string &path){
     m_conf_init = Configuration::MakeUniqueReadFile(path);
     m_conf_init->SetSection("RunControl");
   }
