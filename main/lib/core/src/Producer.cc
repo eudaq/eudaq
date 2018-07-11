@@ -188,6 +188,8 @@ namespace eudaq {
 	  ReadInitializeFile(pathini);
 	  //  ReadInitializeFile("Ex0.ini");
 	  OnInitialise();
+	} else if (cmd == "status"){
+	  OnStatus();
 	} else if (cmd == "config"){
 	  std::cout << " Path to Configure file : " << std::endl;
 	  std::cin >> pathconfig;
@@ -201,12 +203,12 @@ namespace eudaq {
 	  OnStartRun();
 	} else if (cmd == "stop") {
 	  OnStopRun();
-	} else if (cmd == "quit") {
+	} else if (cmd == "quit" || cmd == "exit") {
 	  OnTerminate();
 	  m_exit = true;
 	} else if (cmd == "reset") {
 	  OnReset();
-	  std::cout << " Status reset to UnInitialized." << std::endl;
+	  //	  std::cout << " Status reset to UnInitialized." << std::endl;
 	} else if (cmd == "help") {
 	  std::cout << "--- Commands ---\n"
 		    << "init [file] Initialize clients (with file 'file')\n"
