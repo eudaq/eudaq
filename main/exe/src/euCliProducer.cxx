@@ -8,21 +8,27 @@ int main(int /*argc*/, const char **argv) {
 				  "The eudaq application to be launched");
   eudaq::Option<std::string> tname(op, "t", "tname", "", "string",
 				  "Runtime name of the eudaq application");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
-  				   "The address of the run control to connect to");
-  try{
-    op.Parse(argv);
-  }
-  catch(...){
-    std::ostringstream err;
-    return op.HandleMainException(err);
-  }
+  eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "", "address",
+				   "The address of the run control to connect to");
+  op.Parse(argv);
   std::string app_name = name.Value();
-
-    if(app_name.find("Producer") == std::string::npos){
-      std::cout<<"unknown application"<<std::endl;
+  std::string rctrl_value = rctrl.Value();
+  if(!rctrl_value.empty()) std::cout << "Online run, RC is at :  " << rctrl_value << std::endl;
+  else if(rctrl_value.empty()) std::cout << "Offline run : " << rctrl_value << std::endl;
+  
+  if(app_name.find("Producer") != std::string::npos){
+    auto app=eudaq::Factory<eudaq::Producer>::MakeShared<const std::string&,const std::string&>
+      (eudaq::str2hash(name.Value()), tname.Value(), rctrl.Value());
+    if(!app){
+      std::cout<<"unknown Producer"<<std::endl;
       return -1;
     }
+    app->Exec();
+  }
+  if(app_name.find("Producer") == std::string::npos){
+    std::cout<<"unknown application"<<std::endl;
+    return -1;
+  }
   auto app=eudaq::Producer::Make(name.Value(), tname.Value(), rctrl.Value());
   if(!app){
     std::cout<<"unknown Producer: "<<name.Value()<<std::endl;
@@ -32,7 +38,7 @@ int main(int /*argc*/, const char **argv) {
     app->Connect();
   }
   catch (...){
-    std::cout<<"Can not connect to RunControl at "<<rctrl.Value()<<std::endl;
+    //    std::cout<<"Can not connect to RunControl at "<<rctrl.Value()<<std::endl;
     return -1;
   }
   while(app->IsConnected()){

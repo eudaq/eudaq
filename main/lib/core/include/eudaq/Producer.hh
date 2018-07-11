@@ -69,8 +69,6 @@ namespace eudaq {
 
     void OnStatus() override;
   private:
-    bool m_exit;
-    bool m_cli_run; 
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
     std::string m_type;
@@ -82,9 +80,9 @@ namespace eudaq {
     uint32_t m_evt_c;
     std::mutex m_mtx_sender;
     std::map<std::string, std::shared_ptr<DataSender>> m_senders;
-    //    uint32_t m_run_number;
+    bool m_cli_run=false; 
+    bool m_exit;
     FileWriterUP m_writer;
-
   };
   //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
 }

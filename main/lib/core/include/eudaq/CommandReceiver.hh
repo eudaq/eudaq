@@ -71,8 +71,8 @@ namespace eudaq {
     bool IsStatus(Status::State);
 
   private:
-    void ProcessingCommand();
     void CommandHandler(TransportEvent &);
+    void ProcessingCommand();
     bool Deamon();
     bool AsyncForwarding();
     bool AsyncReceiving();
@@ -101,9 +101,9 @@ namespace eudaq {
     std::string m_name;
     std::thread m_thd_client;
     uint32_t m_run_number;
-    uint32_t m_cmdrcv_id;
     bool m_exit;
     bool m_exited;
+    uint32_t m_cmdrcv_id;
   };
 }
 
