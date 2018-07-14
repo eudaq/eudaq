@@ -1,3 +1,6 @@
+# new condition settings according to https://docs.travis-ci.com/user/conditions-v1
+conditions: v1
+
 language: cpp
 
 sudo: required
@@ -85,7 +88,13 @@ before_cache:
   - unzip aliceitsalpidesoftwaremaster.zip
 
 matrix:      
+   fast_finish: true
    include:   
+      - os: linux
+        services: docker
+        env: USING_DOCKER = YES
+        env: DOCKER_IMAGE = ubuntu/18.04
+        env: OPTION=modern
       - os: linux
         compiler: clang      
         python: 3.6
@@ -123,8 +132,11 @@ matrix:
         python: 2.7    
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
 
-#before_install:
-      
+before_install:
+  - if [[ $USING_DOCKER == "YES" ]]; then docker pull $DOCKER_IMAGE ; fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker run -d -p 127.0.0.1:80:4567 $DOCKER_IMAGE /bin/sh -c "cd /root/sinatra; bundle exec foreman start;"; fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker ps -a; fi
+  
 install:
   - export AFS_REQUIRED="NO"
   - source .travis/set_compilers.sh
