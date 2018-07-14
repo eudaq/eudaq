@@ -134,11 +134,11 @@ matrix:
 before_install:
   - if [[ $USING_DOCKER == "YES" ]]; then echo "This build will be done on docker container " $DOCKER_IMAGE ; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker pull $DOCKER_IMAGE ; fi
-  - if [[ $USING_DOCKER == "YES" ]]; then docker run -d --name docker_image $DOCKER_IMAGE tail -f /dev/null; fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker run -d --name docker_image -v $(pwd):/travis $DOCKER_IMAGE tail -f /dev/null; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker ps -a; fi
   
 install:
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "cd /travis; source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "export TEST=PRESERVED!"; fi  
   - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "echo $OPTION; echo $TEST"; fi  
   - source .travis/update_repositories.sh  
