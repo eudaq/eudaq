@@ -92,7 +92,7 @@ matrix:
    include:   
       - os: linux
         services: docker
-        env: USING_DOCKER = YES DOCKER_IMAGE = ubuntu/18.04 OPTION=modern
+        env: USING_DOCKER=YES DOCKER_IMAGE=ubuntu/18.04 OPTION=modern
       - os: linux
         compiler: clang      
         python: 3.6
