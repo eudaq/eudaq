@@ -140,7 +140,7 @@ before_install:
 install:
   - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "cd /travis; source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "export TEST=PRESERVED!"; fi  
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "echo $OPTION; echo $TEST"; fi  
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c 'echo $OPTION; echo $TEST'; fi  
   - source .travis/update_repositories.sh  
   # - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
   - if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi
