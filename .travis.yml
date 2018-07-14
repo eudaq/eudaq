@@ -139,23 +139,36 @@ before_install:
   - if [[ $USING_DOCKER == "YES" ]]; then docker ps -a; fi
   
 install:
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "pwd; cd /travis; pwd; source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "pwd; export TEST=PRESERVED!; echo $TEST; cat 'export TEST=PRESERVED!;' >> docker_env_vars.sh"; fi  
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "source docker_env_vars.sh; echo $OPTION; echo $TEST"; fi  
-  - source .travis/update_repositories.sh  
   # - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
-  - if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi
-  - source .travis/install_cmake.sh
-  - source .travis/install_python.sh  
-  - source .travis/install_libusb_0_1.sh  
-  - source .travis/install_libusb_1_0.sh  
-  - source .travis/install_qt.sh  
-  - source .travis/install_root.sh
-  - source .travis/install_tex.sh  
-  - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
-  - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
-  - export PALPIDEFS_SPECIAL_PARAMETERS=""
-  - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "cd /travis; 
+    source .travis/set_compilers.sh;
+    source .travis/update_repositories.sh;
+    if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi;
+    source .travis/install_cmake.sh;
+    source .travis/install_python.sh;  
+    source .travis/install_libusb_0_1.sh;
+    source .travis/install_libusb_1_0.sh;  
+    source .travis/install_qt.sh;  
+    source .travis/install_root.sh;
+    source .travis/install_tex.sh;  
+    if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi;
+    if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi;
+    export PALPIDEFS_SPECIAL_PARAMETERS="";
+    if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi; else 
+    source .travis/set_compilers.sh;
+    source .travis/update_repositories.sh;
+    if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi;
+    source .travis/install_cmake.sh;
+    source .travis/install_python.sh;  
+    source .travis/install_libusb_0_1.sh;
+    source .travis/install_libusb_1_0.sh;  
+    source .travis/install_qt.sh;  
+    source .travis/install_root.sh;
+    source .travis/install_tex.sh;  
+    if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi;
+    if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi;
+    export PALPIDEFS_SPECIAL_PARAMETERS="";
+    fi;    
 
 before_script:
 #  - $CXX --version
