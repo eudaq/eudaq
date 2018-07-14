@@ -132,6 +132,7 @@ matrix:
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
 
 before_install:
+# according to https://romanvm.pythonanywhere.com/post/using-docker-travis-continuous-integration-25/
   - if [[ $USING_DOCKER == "YES" ]]; then echo "This build will be done on docker container " $DOCKER_IMAGE ; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker pull $DOCKER_IMAGE ; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker run -d --name docker_image -v $(pwd):/travis $DOCKER_IMAGE tail -f /dev/null; fi
@@ -139,8 +140,8 @@ before_install:
   
 install:
   - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "cd /travis; source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "export TEST=PRESERVED!"; fi  
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c 'echo $OPTION; echo $TEST'; fi  
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "set env TEST=PRESERVED! && echo 'export TEST=PRESERVED!;' >> docker_env_vars.sh"; fi  
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "source docker_env_vars.sh; echo $OPTION; echo $TEST"; fi  
   - source .travis/update_repositories.sh  
   # - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
   - if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi
