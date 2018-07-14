@@ -139,8 +139,8 @@ before_install:
   - if [[ $USING_DOCKER == "YES" ]]; then docker ps -a; fi
   
 install:
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "cd /travis; source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
-  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "echo $pwd; export TEST=PRESERVED! && cat 'export TEST=PRESERVED!;' >> docker_env_vars.sh"; fi  
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "pwd; cd /travis; pwd; source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "pwd; export TEST=PRESERVED!; echo $TEST; cat 'export TEST=PRESERVED!;' >> docker_env_vars.sh"; fi  
   - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "source docker_env_vars.sh; echo $OPTION; echo $TEST"; fi  
   - source .travis/update_repositories.sh  
   # - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
