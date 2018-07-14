@@ -55,6 +55,7 @@ env:
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
       - BUILD_tlu=ON
+      - AFS_REQUIRED=NO
 
       
 # possible options:
@@ -92,7 +93,7 @@ matrix:
    include:   
       - os: linux
         services: docker
-        env: USING_DOCKER=YES DOCKER_IMAGE=ubuntu:bionic OPTION=modern
+        env: USING_DOCKER=YES DOCKER_IMAGE=ubuntu:18.04 OPTION=modern
       - os: linux
         compiler: clang      
         python: 3.6
@@ -131,13 +132,15 @@ matrix:
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
 
 before_install:
+  - if [[ $USING_DOCKER == "YES" ]]; then echo "This build will be done on docker container " $DOCKER_IMAGE ; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker pull $DOCKER_IMAGE ; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker run -d --name docker_image $DOCKER_IMAGE tail -f /dev/null; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker ps -a; fi
   
 install:
-  - export AFS_REQUIRED="NO"
-  - source .travis/set_compilers.sh
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "source .travis/set_compilers.sh"; else source .travis/set_compilers.sh;  fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "export TEST=PRESERVED!"; fi  
+  - if [[ $USING_DOCKER == "YES" ]]; then docker exec -t docker_image bash -c "echo $OPTION; echo $TEST"; fi  
   - source .travis/update_repositories.sh  
   # - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
   - if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi
