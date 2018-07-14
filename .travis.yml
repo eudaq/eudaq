@@ -154,7 +154,7 @@ install:
     if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi;
     if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi;
     export PALPIDEFS_SPECIAL_PARAMETERS="";
-    if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi; else 
+    if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi;" else 
     source .travis/set_compilers.sh;
     source .travis/update_repositories.sh;
     if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi;
