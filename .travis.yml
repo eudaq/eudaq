@@ -132,7 +132,7 @@ matrix:
 
 before_install:
   - if [[ $USING_DOCKER == "YES" ]]; then docker pull $DOCKER_IMAGE ; fi
-  - if [[ $USING_DOCKER == "YES" ]]; then docker run -d -name docker_image $DOCKER_IMAGE tail -f /dev/null; fi
+  - if [[ $USING_DOCKER == "YES" ]]; then docker run -d --name docker_image $DOCKER_IMAGE tail -f /dev/null; fi
   - if [[ $USING_DOCKER == "YES" ]]; then docker ps -a; fi
   
 install:
