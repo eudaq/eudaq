@@ -17,7 +17,7 @@ cmake_dependent_option(EUDAQ_LIBRARY_BUILD_LCIO "build eudaq lib/lcio library" O
   "GIT_OR_FOUND" OFF)
 
 if(NOT EUDAQ_LIBRARY_BUILD_LCIO)
-  message("disable building of eudaq lib/lcio library (EUDAQ_LIBRARY_BUILD_LCIO=OFF)")
+    message(STATUS "disable building of eudaq lib/lcio library (EUDAQ_LIBRARY_BUILD_LCIO=OFF)")
   unset(EUDAQ_LCIO_LIBRARY CACHE)
   unset(LCIO_LIBRARIES CACHE)
   return()
