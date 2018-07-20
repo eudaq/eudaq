@@ -24,7 +24,7 @@ and to set or get configuration values.
 An example use is shown below:
 
 \begin{listing}
-std::ifstream infile("../conf/ExampleConfig.conf");
+std::ifstream infile("../conf/ExampleConfig1.conf");
 eudaq::Configuration config(infile, "Producer.Example");
 int param = config.Get("Parameter", 0);
 std::cout << "Loaded config, param = " << param << std::endl;
@@ -34,7 +34,7 @@ std::ofstream outfile("Test.conf");
 config.Save(outfile);
 \end{listing}
 
-This creates a configuration loaded from the file \texttt{../conf/ExampleConfig.conf},
+This creates a configuration loaded from the file \texttt{../conf/ExampleConfig1.conf},
 selecting the \texttt{Producer.Example} section.
 It then gets an integer parameter from the configuration and displays it.
 Then it modifies the value of the parameter and sets another parameter,

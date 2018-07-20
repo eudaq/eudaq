@@ -18,7 +18,7 @@ ADD_LATEX_DOCUMENT(
          src/SourceCode.tex
 	 src/ClassicCite.bst
 	 ../../main/exe/src/OptionExample.cxx
-	 ../../conf/ExampleConfig.conf
+	 ../../conf/ExampleConfig1.conf
 	 ../../main/exe/src/ExampleProducer.cxx
 	 ../../main/lib/plugins/ExampleConverterPlugin.cc
 	 ../../main/exe/src/ExampleReader.cxx
