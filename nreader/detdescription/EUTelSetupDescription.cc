@@ -65,6 +65,8 @@ EUTelSetupDescription::EUTelSetupDescription(EUTelPixelDetector *detector)
     typeE = kAPIX;
   else if (typeS == "CMSPixel")
     typeE = kCMSPixel;
+  else if (typeS == "RD53A")
+    typeE = kRD53A;
   else {
     throw UnknownDataTypeException(typeS + " is not a valid detector type.");
   }
