@@ -9,7 +9,6 @@ if(NOT EUDAQ_BUILD_GUI)
   message(STATUS "EUDAQ GUI Interface is disabled. (requires QT5)")
   return()
 endif()
-
 find_package(Qt5Widgets REQUIRED)
 message(STATUS "Qt5Widgets: ${Qt5Widgets_DIR}")
 set(EXTERNAL_LIB_QT Qt5::Widgets)
