@@ -234,14 +234,23 @@ void FmctluProducer::DoConfigure() {
     // The conf function does not seem happy with a 32-bit default. Need to check.
     m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
-    m_tlu->SetDUTMask(conf->Get("DUTMask",1)); // Which DUTs are on
-    m_tlu->SetDUTMaskMode(conf->Get("DUTMaskMode",0xff)); // AIDA (x1) or EUDET (x0)
-    m_tlu->SetDUTMaskModeModifier(conf->Get("DUTMaskModeModifier",0xff)); // Only for EUDET
-    m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
-    m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1)); //
-    m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
-    //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
-    m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), m_verbose );
+    m_tlu->SetDUTMask( (uint32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
+    std::cout << "DUT mask = " << conf->Get("DUTMask",1) << std::endl;
+    std::cout << "DUT mask = " << (uint32_t)(conf->Get("DUTMask",1)) << std::endl;
+
+    m_tlu->SetDUTMaskMode( (uint32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
+    m_tlu->SetDUTMaskModeModifier( (uint32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
+    m_tlu->SetDUTIgnoreBusy( (uint32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode
+    m_tlu->SetDUTIgnoreShutterVeto( (uint32_t)(conf->Get("DUTIgnoreShutterVeto",1)), m_verbose); //
+    m_tlu->SetShutterOnTime( (uint32_t)(conf->Get("ShutterOnTime",0)), m_verbose);
+    m_tlu->SetShutterSource( (uint32_t)(conf->Get("ShutterSelect",0)), m_verbose);
+    m_tlu->SetShutterInternalInterval( (uint32_t)(conf->Get("ShutterInternalShutterPeriod",0)), m_verbose);
+    m_tlu->SetShutterControl( (uint32_t)(conf->Get("ShutterControl",0)), m_verbose);
+    m_tlu->SetShutterVetoOffTime( (uint32_t)(conf->Get("ShutterVetoOffTime",0)), m_verbose);
+    m_tlu->SetShutterOffTime( (uint32_t)(conf->Get("ShutterOffTime",0)), m_verbose);
+    m_tlu->SetEnableRecordData( (uint32_t)(conf->Get("EnableRecordData", 1)) );
+    //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0)));  // 160M/interval
+    m_tlu->SetInternalTriggerFrequency( (uint32_t)( conf->Get("InternalTriggerFreq", 0)), m_verbose );
     m_tlu->GetEventFifoCSR();
     m_tlu->GetEventFifoFillLevel();
   }
