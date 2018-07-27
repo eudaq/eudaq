@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<node> 
+  <node id="SYNC">
+    <node id="BUSY" address="0x0" permission="rw"/>
+    <node id="RUN_NUMBER" address="0x1" permission="rw"/>
+    <node id="EVT_NUMBER" address="0x2" permission="rw"/>
+  </node>
+</node>
+

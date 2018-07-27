@@ -10,6 +10,7 @@ namespace eudaq {
   public:
     using DataCollector::DataCollector;
     void DoStartRun() override;
+    void DoTerminate() override;
     void DoConnect(ConnectionSPC /*id*/) override;
     void DoDisconnect(ConnectionSPC /*id*/) override;
     void DoReceive(ConnectionSPC id, EventSP ev) override;
@@ -36,18 +37,19 @@ namespace eudaq {
     std::unique_lock<std::mutex> lk(m_mtx_map);
     std::string pdc_name = id->GetName();
     EUDAQ_INFO("Producer."+pdc_name+" is connecting");
-    if(m_que_event.find(pdc_name) != m_que_event.end())
-      EUDAQ_THROW("DataCollector::Doconnect, multiple producers are sharing a same name");
-    m_que_event[pdc_name];
+    if(m_que_event.find(pdc_name) == m_que_event.end())
+      //EUDAQ_THROW("DataCollector::Doconnect, multiple producers are sharing a same name");
+      m_que_event[pdc_name];
   }
   
   void EventnumberSyncDataCollector::DoDisconnect(ConnectionSPC id){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     std::string pdc_name = id->GetName();
-    if(m_que_event.find(pdc_name) == m_que_event.end())
-      EUDAQ_THROW("DataCollector::DisDoconnect, the disconnecting producer was not existing in list");
-    EUDAQ_WARN("Producer."+pdc_name+" is disconnected, the remaining events are erased. ("+std::to_string(m_que_event[pdc_name].size())+ " Events)");
-    m_que_event.erase(pdc_name);
+    if(m_que_event.find(pdc_name) != m_que_event.end()){
+      //EUDAQ_THROW("DataCollector::DisDoconnect, the disconnecting producer was not existing in list");
+      EUDAQ_WARN("Producer."+pdc_name+" is disconnected, the remaining events are erased. ("+std::to_string(m_que_event[pdc_name].size())+ " Events)");
+      m_que_event.erase(pdc_name);
+    }
   }
   
   void EventnumberSyncDataCollector::DoReceive(ConnectionSPC id, EventSP ev){
@@ -75,5 +77,9 @@ namespace eudaq {
       }
       WriteEvent(std::move(ev_wrap));
     }
+  }
+
+  void EventnumberSyncDataCollector::DoTerminate(){
+    m_que_event.erase( m_que_event.begin(),m_que_event.end() );
   }
 }

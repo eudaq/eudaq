@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<node id="TOP">
+
+    <node id="FIRMWARE_VERSION"	    address="0x511"	permission="r"	mode="single" 	/>
+    <node id="CONSTANT0"	    address="0x512"	permission="r"	mode="single" 	/>
+    <node id="CONSTANT1"	    address="0x513"	permission="r"	mode="single" 	/>
+    <node id="DISABLE_DEBUG"	    address="0x514"	permission="r"	mode="single" 	/>
+    <node id="SKIROC_MASK"	    address="0x515"	permission="r"	mode="single" 	/>
+    <node id="DATE_STAMP"	    address="0x516"	permission="r"	mode="single" 	/>
+    <node id="BLOCK_SIZE"	    address="0x517"	permission="r"	mode="single" 	/>
+    <node id="PEDESTAL_MODE"	    address="0x518"	permission="r"	mode="single" 	/>
+    <node id="TRIG_COUNT"	    address="0x519"	permission="r"	mode="single" 	/>
+    <node id="CLK_COUNT0"	    address="0x51b"	permission="r"	mode="single" 	/>
+    <node id="CLK_COUNT1"	    address="0x51c"	permission="r"	mode="single" 	/>
+    <node id="BLOCK_READY"	    address="0x51d"	permission="r"	mode="single" 	/>
+    <node id="ALMOST_FULL"	    address="0x51e"	permission="r"	mode="single" 	/>
+    <node id="EMPTY"	            address="0x51f"	permission="r"	mode="single" 	/>
+    <node id="FIFO"	            address="0x520"	permission="r"	mode="non-inc"	size="32768"/>
+    <node id="FULL"	            address="0x563"	permission="r"	mode="single" 	/>
+    <node id="OCCUPANCY"	    address="0x564"	permission="r"	mode="single" 	/>
+    <node id="RDOUT_DONE"	    address="0x565"	permission="rw"	mode="single" 	/>
+
+    <node id="check0"               address="0x100" 	permission="r"	mode="single" 	/>
+    <node id="check1"               address="0x101" 	permission="r"	mode="single" 	/>
+    <node id="check2"               address="0x102" 	permission="r"	mode="single" 	/>
+    <node id="check3"               address="0x103" 	permission="r"	mode="single" 	/>
+    <node id="check4"               address="0x104" 	permission="r"	mode="single" 	/>
+    <node id="check5"               address="0x105" 	permission="r"	mode="single" 	/>
+    <node id="check6"               address="0x106" 	permission="r"	mode="single" 	/>
+
+    <node id="check30"               address="0x300" 	permission="r"	mode="single" 	/>
+    <node id="check31"               address="0x301" 	permission="r"	mode="single" 	/>
+    <node id="check32"               address="0x302" 	permission="r"	mode="single" 	/>
+    <node id="check33"               address="0x303" 	permission="r"	mode="single" 	/>
+    <node id="check34"               address="0x304" 	permission="r"	mode="single" 	/>
+    <node id="check35"               address="0x305" 	permission="r"	mode="single" 	/>
+    <node id="check36"               address="0x306" 	permission="r"	mode="single" 	/>
+
+</node>

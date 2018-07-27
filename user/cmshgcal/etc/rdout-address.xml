@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<node> 
+  <node id="RDOUT">
+    <node id="RUN_NUMBER" address="0x0000" permission="rw"/>
+    <node id="EVT_NUMBER" address="0x0001" permission="rw"/>
+    <node id="RDOUT_RDY" address="0x0002" permission="rw"/>
+    <node id="CRC" address="0x0003" permission="rw"/>
+    <node id="FIFO" address="0x0004" size="30788" permission="rw" mode="incremental"/>
+  </node>
+
+</node>
+
