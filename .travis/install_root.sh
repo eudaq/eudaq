@@ -15,7 +15,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 	echo "Installing root now"
 	wget https://root.cern.ch/download/$ROOT_FILENAME
-	tar -xvf $ROOT_FILENAME
+	tar -xf $ROOT_FILENAME
 	source root/bin/thisroot.sh
 	
 else
@@ -27,7 +27,7 @@ else
 	
 	echo "Installing root now"
 	wget https://root.cern.ch/download/$ROOT_FILENAME
-	tar -xvf $ROOT_FILENAME
+	tar -xf $ROOT_FILENAME
 	source root/bin/thisroot.sh
 	
 fi
