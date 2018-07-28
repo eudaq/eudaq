@@ -12,7 +12,7 @@ SET(sourcefiles src/RPiController.cxx)
 INCLUDE_DIRECTORIES(include ${wiringPi_INCLUDE_DIR})
 ADD_EXECUTABLE(${name} ${sourcefiles})
 
-TARGET_LINK_LIBRARIES(${name} EUDAQ ${wiringPi_LIBRARY})
+TARGET_LINK_LIBRARIES(${name} EUDAQ ${wiringPi_LIBRARIES})
 
 INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin COMPONENT RPICONTROLLER
