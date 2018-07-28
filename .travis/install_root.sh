@@ -7,11 +7,7 @@ echo "Installing CERN root"
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
-	if [[ $OPTION == 'modern' ]]; then
-		export ROOT_FILENAME=${ROOT6_FILENAME_MAC}		
-	else
-		export ROOT_FILENAME=${ROOT5_FILENAME_MAC}	
-	fi
+	export ROOT_FILENAME=${ROOT6_FILENAME_MAC}
 
 	echo "Installing root now"
 	wget https://root.cern.ch/download/$ROOT_FILENAME
@@ -19,11 +15,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	source root/bin/thisroot.sh
 	
 else
-	if [[ $OPTION == 'modern' ]]; then
-		export ROOT_FILENAME=${ROOT6_FILENAME_LINUX}
-	else
-		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
-	fi
+	export ROOT_FILENAME=${ROOT6_FILENAME_LINUX}
+
 	
 	echo "Installing root now"
 	wget https://root.cern.ch/download/$ROOT_FILENAME
