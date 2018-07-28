@@ -20,7 +20,7 @@ else
 	
 	echo "Installing root now"
 	
-	sudo apt-get install --force-yes -y libtbb2-dev libtbb-dev libcrypto++-dev libcrypto++ libssl-dev libsslcommon2
+	sudo apt-get install --force-yes -y libtbb2-dev libtbb-dev libtbb2 libcrypto++-dev libcrypto++ libssl-dev libsslcommon2
 	 
 	wget https://root.cern.ch/download/$ROOT_FILENAME
 	tar -xf $ROOT_FILENAME
