@@ -41,7 +41,7 @@ env:
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
       - BUILD_onlinemon=ON
-      - BUILD_palpidefs=ON
+      - BUILD_palpidefs=OFF
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=ON
@@ -141,7 +141,7 @@ install:
   - export AFS_REQUIRED="NO"
   - source .travis/set_compilers.sh
   - source .travis/update_repositories.sh  
-  - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
+  # - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
   - if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi
   - source .travis/install_cmake.sh
   - source .travis/install_python.sh  
@@ -156,8 +156,8 @@ install:
   - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi
 
 before_script:
-  - $CXX --version
-  - $CC --version
+#  - $CXX --version
+#  - $CC --version
   - echo $PATH
   - echo $LD_LIBRARY_PATH
 

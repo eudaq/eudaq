@@ -19,6 +19,9 @@ else
 
 	
 	echo "Installing root now"
+	
+	sudo apt-get install --force-yes -y libtbb-dev
+	 
 	wget https://root.cern.ch/download/$ROOT_FILENAME
 	tar -xf $ROOT_FILENAME
 	source root/bin/thisroot.sh
