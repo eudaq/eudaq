@@ -1,0 +1,17 @@
+# - Config file for the FooBar package
+# It defines the following variables
+#  EUDAQ_INCLUDE_DIRS - include directories for FooBar
+#  EUDAQ_LIBRARIES    - libraries to link against
+
+# Compute paths
+get_filename_component(EUDAQ_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(EUDAQ_INSTALL_DIR "${EUDAQ_CMAKE_DIR}" PATH)
+
+# set(EUDAQ_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+set(EUDAQ_INCLUDE_DIRS ${EUDAQ_INSTALL_DIR}/include ${EUDAQ_INSTALL_DIR}/extern/include)
+set(EUDAQ_LIBRARIES_DIRS ${EUDAQ_INSTALL_DIR}/lib ${EUDAQ_INSTALL_DIR}/extern/lib)
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+include("${EUDAQ_CMAKE_DIR}/eudaqTargets.cmake")
+
+set(EUDAQ_LIBRARIES "@CONF_EUDAQ_LIBRARIES@")
