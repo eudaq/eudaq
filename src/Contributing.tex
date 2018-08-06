@@ -1,0 +1,110 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Contributing to EUDAQ}
+\label{sec:contributing}
+
+\subsection{Reporting Issues}
+\label{sec:reporting}
+The GitHub server, on which EUDAQ is hosted, provides a system for reporting bugs and for requesting new features.
+It is accessible at the following address: 
+
+\url{https://github.com/eudaq/eudaq/issues}.
+
+Here you may submit new reports (you are required to register first to do this),
+or follow the status of existing bugs and feature requests.
+This is recommended over (or at least, as well as) sending an email to the developers,
+as it ensures a record of the issue is available, and others may follow the progress.
+
+\subsection{Regression Testing}
+\label{sec:ctest}
+
+If a CMake version later than 3.1 is found and Python is installed
+together with the \texttt{numpy} package, several regression tests are made
+available that can be executed through CTest. The tests are based on
+the Python wrapper around EUDAQ components as described in
+section~\ref{sssec:pywrapper}. Run the tests by typing
+
+\begin{listing}[mybash]
+  cd build
+  cmake ..
+  ctest
+\end{listing}
+
+This starts the script \texttt{etc/tests/run\_dummydataproduction.py}
+which runs a short DAQ session with instances of RunControl,
+DataCollector and a (dummy) Producer and compares the output to a
+reference file stored on AFS at DESY. If your system is set up
+correctly, you have access to the reference file, and the basic
+components of the EUDAQ library work, all tests should pass.
+To see the output of failing tests, you can add the
+\texttt{--output-on-failure} parameter to the CTest command.
+
+These basic tests can easily be extended to test other parts of the
+core framework or of your own producer. Take a look at the
+\texttt{etc/tests/testing.cmake} CMake script and the central
+\texttt{CMakeLists.txt} file where it is included for an example of
+how to set up tests with CTest.
+
+The automated nightly tests are defined in CMake scripts located in
+\texttt{etc/tests/nightly} and are executed by the scripts
+\texttt{run\_nightly.sh} and \texttt{run\_nightly.bat} for Unix and
+Windows platforms, respectively. In addition to the dummy run
+described above, the nightly tests check out all changes from the
+central repository, build the full code base, and submit all results
+to the CDash webserver hosted at DESY: \url{http://aidasoft.desy.de/CDash/index.php?project=EUDAQ}
+
+\subsection{Commiting Code to the Main Repository}
+\label{sec:commiting}
+
+
+
+If you would like to contribute your code back into the main repository, please follow the ``fork \& pull request'' strategy:
+
+\begin{itemize}
+\item Create a user account on github, log in
+\item ``Fork'' the (main) project on github (using the button on the page of the main repo)
+\item \emph{Either}: clone from the newly forked project and add
+  'upstream' repository to local clone (change user names in URLs
+  accordingly):
+  \begin{listing}[mybash]
+git clone https://github.com/your_account_name/eudaq eudaq
+cd eudaq
+git remote add upstream https://github.com/eudaq/eudaq.git
+\end{listing}
+\item \emph{or} if edits were made to a previous checkout of upstream: rename origin to upstream, add fork as new origin:
+
+  \begin{listing}[mybash]
+cd eudaq
+git remote rename origin upstream
+git remote add origin https://github.com/your_account_name/eudaq
+git remote -v show
+\end{listing}
+\item Optional: edit away on your local clone! But keep in sync with
+  the development in the upstream repository by running
+  \begin{listing}
+git fetch upstream        # download named heads or tags
+git pull upstream master  # merge changes into your branch
+\end{listing}
+on a regular basis. Replace \texttt{master} by the appropriate branch if you work on a separate one.
+Don't forget that you can refer to issues in the main repository anytime by using the string \texttt{eudaq/eudaq\#XX} in your commit messages, where \texttt{XX} stands for the issue number, e.g.
+  \begin{listing}[mybash]
+[...]. this addresses issue eudaq/eudaq#1
+\end{listing}
+\item Push the edits to origin (our fork)
+  \begin{listing}[mybash]
+git push origin
+\end{listing}
+(defaults to \texttt{git push origin master} where origin is the repo and master the branch)
+\item Verify that your changes made it to your github fork and then click there on the ``compare \& pull request'' button
+\item Summarize your changes and click on ``send''
+\item Thank you!
+\end{itemize}
+
+
+Working together on a branch:
+If you have a copy installed, and want to update it to the
+latest version, you do not need to clone the repository again, just change to the \texttt{eudaq} directory use the command:
+\begin{listing}[mybash]
+git pull
+\end{listing}
+to update your local copy with all changes commited to the central repository.%
+

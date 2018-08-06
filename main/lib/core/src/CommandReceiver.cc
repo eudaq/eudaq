@@ -179,23 +179,7 @@ namespace eudaq {
   void CommandReceiver::OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/){
 
   }
-  void CommandReceiver::OnIdle() { mSleep(500); }
 
-  void CommandReceiver::ReadConfigureFile(const std::string &path){
-    m_conf = Configuration::MakeUniqueReadFile(path);
-    std::string section  = m_type;
-    if(m_name != "")
-      section += "." + m_name;
-    m_conf->SetSection(section);
-  }
-  
-  void CommandReceiver::ReadInitializeFile(const std::string &path){
-    m_conf_init = Configuration::MakeUniqueReadFile(path);
-    std::string section  = m_type;
-    if(m_name != "")
-      section += "." + m_name;
-    m_conf_init->SetSection(section);
-  }
   std::string CommandReceiver::GetFullName() const {
     return m_type+"."+m_name;
   }
@@ -297,6 +281,23 @@ namespace eudaq {
       }
     }
   }
+  void CommandReceiver::OnIdle() { mSleep(500); }
+
+  void CommandReceiver::ReadConfigureFile(const std::string &path){
+    m_conf = Configuration::MakeUniqueReadFile(path);
+    std::string section  = m_type;
+    if(m_name != "")
+      section += "." + m_name;
+    m_conf->SetSection(section);
+  }
+  
+  void CommandReceiver::ReadInitializeFile(const std::string &path){
+    m_conf_init = Configuration::MakeUniqueReadFile(path);
+    std::string section  = m_type;
+    if(m_name != "")
+      section += "." + m_name;
+    m_conf_init->SetSection(section);
+  }
   
   void CommandReceiver::CommandHandler(TransportEvent &ev) {
     if (ev.etype == TransportEvent::RECEIVE) {
@@ -354,7 +355,6 @@ namespace eudaq {
     m_cmdclient->SendPacket(ser);
   }
 
-  
   
   std::string CommandReceiver::Connect(){
     if(!m_fut_deamon.valid())
@@ -415,37 +415,6 @@ namespace eudaq {
     return m_addr_client;
   }
 
-  void CommandReceiver::ProcessingCommand(){
-    try {
-      //TODO: create m_cmdclient here instead of inside constructor
-      while (!m_exit){
-	m_cmdclient->Process(-1);
-	OnIdle();
-      }
-      //TODO: SendDisconnect event;
-      OnTerminate();
-      m_exited = true;
-    } catch (const std::exception &e) {
-      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
-      std::this_thread::sleep_for(std::chrono::seconds(3));
-      OnTerminate();
-      m_exited = true;
-    } catch (...) {
-      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
-      std::this_thread::sleep_for(std::chrono::seconds(3));
-      OnTerminate();
-      m_exited = true;
-    }
-  }
-  
-  void CommandReceiver::StartCommandReceiver(){
-    if(m_exit){
-      EUDAQ_THROW("CommandReceiver can not be restarted after exit. (TODO)");
-    }
-    m_thd_client = std::thread(&CommandReceiver::ProcessingCommand, this);
-  }
-
-  
   bool CommandReceiver::Deamon(){
     while(!m_is_destructing){
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -501,7 +470,35 @@ namespace eudaq {
     }
   return true;    
   }
+ void CommandReceiver::ProcessingCommand(){
+    try {
+      //TODO: create m_cmdclient here instead of inside constructor
+      while (!m_exit){
+	m_cmdclient->Process(-1);
+	OnIdle();
+      }
+      //TODO: SendDisconnect event;
+      OnTerminate();
+      m_exited = true;
+    } catch (const std::exception &e) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      OnTerminate();
+      m_exited = true;
+    } catch (...) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      OnTerminate();
+      m_exited = true;
+    }
+  }
   
+ void CommandReceiver::StartCommandReceiver(){
+    if(m_exit){
+      EUDAQ_THROW("CommandReceiver can not be restarted after exit. (TODO)");
+    }
+    m_thd_client = std::thread(&CommandReceiver::ProcessingCommand, this);
+  }
 
   void CommandReceiver::CloseCommandReceiver(){
     m_exit = true;
