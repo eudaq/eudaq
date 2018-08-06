@@ -3,22 +3,24 @@ if(WIN32)
     return()
 endif()
 
+
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 #set(CMAKE_PREFIX_PATH ${ROOTSYS})
 #set(ROOT_DIR ${ROOTSYS}/etc/)
 find_package(ROOT)
 
-cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "build eduaq lib/ttree library" ON
-  "ROOT_FOUND" OFF)
-if(NOT EUDAQ_LIBRARY_BUILD_TTREE)
-    message(STATUS "disable building of eudaq lib/ttree library (EUDAQ_LIBRARY_BUILD_TTREE=OFF)")
-  return()
-endif()
-
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_TTREE_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq ttree library")
 
+
+cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "build eduaq lib/ttree library" ON
+  "ROOT_FOUND" OFF)
+
+if(NOT EUDAQ_LIBRARY_BUILD_TTREE)
+  message("disable building of eudaq lib/ttree library (EUDAQ_LIBRARY_BUILD_TTREE=OFF)")
+  return()
+endif()
 set (TTREE_LIBRARIES ${TTREE_LIBRARIES} CACHE INTERNAL "external ttree library")
   set(EUDAQ_INCLUDE_DIRS
     ${EUDAQ_INCLUDE_DIRS}
@@ -34,10 +36,9 @@ endif()
 
 include_directories(. include)
 include_directories(${CMAKE_BINARY_DIR})
-
-#if(ROOT_VERSION_MAJOR GREATER 5)
-#  add_definitions(-DEUDAQ_LIB_ROOT6)
-#endif()
+if(ROOT_VERSION_MAJOR GREATER 5)
+  add_definitions(-DEUDAQ_LIB_ROOT6)
+endif()
 
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
