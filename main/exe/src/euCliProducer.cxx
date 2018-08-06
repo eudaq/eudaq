@@ -18,11 +18,10 @@ int main(int /*argc*/, const char **argv) {
     return op.HandleMainException(err);
   }
   std::string app_name = name.Value();
-
-    if(app_name.find("Producer") == std::string::npos){
-      std::cout<<"unknown application"<<std::endl;
-      return -1;
-    }
+  if(app_name.find("Producer") == std::string::npos){
+    std::cout<<"unknown application"<<std::endl;
+    return -1;
+  }
   auto app=eudaq::Producer::Make(name.Value(), tname.Value(), rctrl.Value());
   if(!app){
     std::cout<<"unknown Producer: "<<name.Value()<<std::endl;
@@ -39,6 +38,4 @@ int main(int /*argc*/, const char **argv) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   return 0;
-  }
-
-
+}

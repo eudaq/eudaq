@@ -5,7 +5,8 @@ namespace eudaq{
   template DLLEXPORT
   std::map<uint32_t, typename Factory<LCEventConverter>::UP(*)()>&
   Factory<LCEventConverter>::Instance<>();
-   bool LCEventConverter::Convert(EventSPC d1, LCEventSP d2, ConfigurationSPC conf){
+  
+  bool LCEventConverter::Convert(EventSPC d1, LCEventSP d2, ConfigurationSPC conf){
     if(d1->IsFlagFake()){
       return true;
     }
