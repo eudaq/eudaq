@@ -1,7 +1,7 @@
 ##-- OPT: Compile AIDA strip?
 option(USER_AIDASTRIP "build AIDA strip")
 if(NOT USER_AIDASTRIP)
-    message(STATUS "disable building of user/aidastrip  (USER_AIDASTRIP=OFF)")
+  message("disable building of user/aidastrip  (USER_AIDASTRIP=OFF)")
   return()
 endif()
 
