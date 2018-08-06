@@ -143,12 +143,12 @@ cd ../user/example/misc
 The startrun script assembles the new command line syntax: Core executables are started by loading a specific module with the name option ```-n``` assigning a unique tag by the option ```-t```:
 ```
 cd bin
-./euRun -n Ex0RunControl -a tcp://44000 &
+./euRun &
 sleep 1
-./euLog -a tcp://44001&
+./euLog &
 sleep 1
-./euCliMonitor -n Ex0Monitor -t my_mon  -a tcp://45001 &
-./euCliCollector -n Ex0TgDataCollector -t my_dc -a tcp://45002 &
+./euCliMonitor -n Ex0Monitor -t my_mon &
+./euCliCollector -n Ex0TgDataCollector -t my_dc &
 ./euCliProducer -n Ex0Producer -t my_pd0 &
 ./euCliProducer -n Ex0Producer -t my_pd1 &
 ```
