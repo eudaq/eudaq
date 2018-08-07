@@ -50,12 +50,14 @@ ROOT 6 is required for the Online Monitor GUI.
 
 - [example](user/example/README.md): run the example without hardware, see below Execution
 - [eudet](user/eudet/README.md): EUDET-type beam telescopes and EUDET and AIDA TLU, required: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
+- [aidastrip](user/aidastrip/): SiStrip telescope for DESY TB24 (AIDA2020 WP15 development)
+- [calice](user/calice/README.md): test beam user
+- [itkstrip](user/itkstrip/README.md): test beam user
+- [stcontrol](user/stcontrol/README.md): USBPix/FEI4 
+- [tbscDESY](user/tbscDESY/README.md): Slow Control System at DESY test beam
 - [timepix3](user/timepix3/README.md): Timepix3 read out, required: Spidr
 - [torch](user/torch/README.md): test beam user
-- [calice](user/calice/README.md): test beam user
-- [stcontrol](user/stcontrol/README.md): USBPix/FEI4 
-- [itkstrip](user/itkstrip/README.md): test beam user
-- [experimental](user/experimental/README.md): developed, not tested with hardware
+- [experimental](user/experimental/README.md): developed, not tested (with hardware)
 
 
 ## Compiling and installation
