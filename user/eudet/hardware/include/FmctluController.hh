@@ -151,7 +151,7 @@ namespace tlu {
     void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
-    void pwrled_Initialize(int verbose);
+    void pwrled_Initialize(int verbosem, unsigned int type);
     void pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose);
     void PulseT0();
 
@@ -171,7 +171,7 @@ namespace tlu {
     void SetI2C_EEPROM_addr(char addressa) { m_I2C_address.EEPROM = addressa; };
     void SetI2C_expander1_addr(char addressa) { m_I2C_address.expander1 = addressa; };
     void SetI2C_expander2_addr(char addressa) { m_I2C_address.expander2 = addressa; };
-    void SetI2C_pwrmdl_addr(char addressa, char addressb, char addressc) { m_I2C_address.pwraddr = addressa; m_I2C_address.ledxp1addr = addressb; m_I2C_address.ledxp2addr = addressc; };
+    void SetI2C_pwrmdl_addr(char addressa, char addressb, char addressc, char addressd) { m_I2C_address.pwraddr = addressa; m_I2C_address.ledxp1addr = addressb; m_I2C_address.ledxp2addr = addressc; m_I2C_address.pwrId = addressd;};
 
   private:
 
@@ -184,7 +184,8 @@ namespace tlu {
       char EEPROM;
       char expander1;
       char expander2;
-      char pwraddr; // i2s address of DAC of power module
+      char pwrId= 0x00; // i2c address of EEPROM on power module. This is only available on new modules.
+      char pwraddr; // i2c address of DAC of power module
       char ledxp1addr; // i2c address of expander (LED controller)
       char ledxp2addr; //i2c address of expander (LED controller)
     } m_I2C_address;
@@ -203,6 +204,7 @@ namespace tlu {
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
     PWRLED m_pwrled;
+
 
     // Define constants such as number of DUTs and trigger inputs
     int m_nDUTs;

@@ -233,7 +233,7 @@ namespace tlu {
     return res;
   }
 
-  
+
   uint32_t FmctluController::GetShutterOnTime(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterOnTimeRW");
@@ -254,7 +254,7 @@ namespace tlu {
     std::cout << "\tVetoOffTime read back as= " << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
-  
+
   uint32_t FmctluController::GetInternalTriggerInterval(int verbose){
     uint32_t interval;
     uint32_t true_freq;
@@ -365,6 +365,7 @@ namespace tlu {
 
     //First we need to enable the enclustra I2C expander or we will not see any I2C slave past on the TLU
     I2C_enable(m_I2C_address.core);
+    char powerModuleType=0;
 
     std::cout << "  Scan I2C bus:" << std::endl;
     for(int myaddr = 0; myaddr < 128; myaddr++) {
@@ -406,6 +407,10 @@ namespace tlu {
         else if (myaddr==m_I2C_address.pwraddr){
           std::cout << "\tFOUND I2C slave POWER MODULE DAC (0x" << std::hex << myaddr << ")" << std::endl;
         }
+        else if (myaddr==m_I2C_address.pwrId){
+          std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
+          powerModuleType= myaddr;
+        }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
         }
@@ -420,12 +425,14 @@ namespace tlu {
     if(m_IDaddr){
       SetBoardID();
     }
+
+    pwrled_Initialize(0, powerModuleType);
     std::cout.flags( coutflags ); // Restore cout flags
   }
 
-  void FmctluController::pwrled_Initialize(int verbose) {
+  void FmctluController::pwrled_Initialize(int verbose, unsigned int type) {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
-    m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77);
+    m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77, type);
     m_pwrled.initI2Cslaves(false, verbose);
     //int indicator= 1;
     //std::array<int, 3>RGB{ {1, 0, 1} };
@@ -668,7 +675,7 @@ namespace tlu {
       GetShutterVetoOffTime();
     }
   };
-  
+
   void FmctluController::SetDUTIgnoreShutterVeto(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
     if (verbose){
@@ -676,7 +683,7 @@ namespace tlu {
       GetDUTIgnoreShutterVeto();
     }
   };
-  
+
   void FmctluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
     uint32_t max_freq= 160000000;
     uint32_t interval;
