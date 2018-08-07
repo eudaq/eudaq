@@ -31,6 +31,7 @@ IF(EUDAQ_BUILD_MANUAL)
     src/OtherParts.tex
     src/Contributing.tex
     src/PlatformIssue.tex
+    src/TTreeConverter.tex
     ../../main/lib/core/include/eudaq/Producer.hh  
     ../../main/lib/core/include/eudaq/DataCollector.hh
     ../../main/lib/core/include/eudaq/Monitor.hh
@@ -46,6 +47,7 @@ IF(EUDAQ_BUILD_MANUAL)
     ../../user/example/module/src/Ex0TsDataCollector.cc
     ../../user/example/module/src/Ex0TgTsDataCollector.cc
     ../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc
+    ../../user/example/module/src/Ex0RawEvent2TTreeEventConverter.cc
     ../../user/example/misc/Ex0.ini
     ../../user/example/misc/Ex0.conf
     ../../user/eudet/module/src/DirectSaveDataCollector.cc

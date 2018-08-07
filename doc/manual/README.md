@@ -1,5 +1,5 @@
 To generate a pdf file from the LaTeX source, run these commands in your CMake build directory, e.g. eudaq/build:
-cmake -DBUILD_manual=ON ..
+cmake -D EUDAQ_BUILD_MANUAL=ON ..
 make pdf
 make install
 

@@ -75,6 +75,7 @@ cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deact
 - ```EUDAQ_BUILD_STDEVENT_MONITOR=ON```
 - ```EUDAQ_EXTRA_BUILD_NREADER=OFF```
 - ```EUDAQ_LIBRARY_BUILD_LCIO=ON```
+- ```EUDAQ_LIBRARY_BUILD_TTREE=OFF```
 - ```EUDAQ_MODULE_BUILD_STD=ON```
 - ```USER_CALICE_BUILD=OFF```
 - ```USER_EUDET_BUILD=ON```
