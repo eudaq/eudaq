@@ -40,11 +40,17 @@ namespace tlu {
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
     void SetPulseStretchPack(std::vector< unsigned int>  valuesVec);
     void SetPulseDelayPack(std::vector< unsigned int>  valuesVec);
-    void SetDUTMask(int value, bool verbose);
-    void SetDUTMaskMode(int value, bool verbose);
-    void SetDUTMaskModeModifier(int value, bool verbose);
-    void SetDUTIgnoreBusy(int value, bool verbose);
-    void SetDUTIgnoreShutterVeto(int value, bool verbose);
+    void SetDUTMask(uint32_t value, bool verbose);
+    void SetDUTMaskMode(uint32_t value, bool verbose);
+    void SetDUTMaskModeModifier(uint32_t value, bool verbose);
+    void SetDUTIgnoreBusy(uint32_t value, bool verbose);
+    void SetDUTIgnoreShutterVeto(uint32_t value, bool verbose);
+    void SetShutterControl(uint32_t value, bool verbose);
+    void SetShutterInternalInterval(uint32_t value, bool verbose);
+    void SetShutterSource(uint32_t value, bool verbose);
+    void SetShutterOffTime(uint32_t value, bool verbose);
+    void SetShutterOnTime(uint32_t value, bool verbose);
+    void SetShutterVetoOffTime(uint32_t value, bool verbose);
 
     //uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
 
@@ -66,6 +72,12 @@ namespace tlu {
     uint32_t GetDUTMaskModeModifier();
     uint32_t GetDUTIgnoreBusy();
     uint32_t GetDUTIgnoreShutterVeto();
+    uint32_t GetShutterControl();
+    uint32_t GetShutterInternalInterval();
+    uint32_t GetShutterSource();
+    uint32_t GetShutterOnTime();
+    uint32_t GetShutterOffTime();
+    uint32_t GetShutterVetoOffTime();
     uint32_t GetTriggerVeto() { return ReadRRegister("triggerLogic.TriggerVetoR"); };
     uint32_t GetPreVetoTriggers() { return ReadRRegister("triggerLogic.PreVetoTriggersR"); };
     uint32_t GetPostVetoTriggers() { return ReadRRegister("triggerLogic.PostVetoTriggersR"); };

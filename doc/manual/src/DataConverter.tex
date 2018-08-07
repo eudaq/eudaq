@@ -44,12 +44,3 @@ eudaq::StandardEvent is derived from eudaq::Event with the m\_type always set to
 This example DataConverter is named Ex0RawEvent2StdEventConverter. As indicated by the name, it converts the eudaq::RawDataEvent to eudaq::StandardEvent. The sub type of eudaq::RawDataEvent is ``my\_ex0'' which is also used to calculate the hash and register it to the eudaq::Factory. If an eudaq::RawDataEvent object announcing its sub-type by ``my\_ex0'' exists when doing the data converting, this object will be forwarded to that Ex0RawEvent2StdEventConverter.
 \lstinputlisting[label=ls:ex0raw2std, style=cpp]{../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc}
 
-
-\subsection{RawEventTTreeEvent Converter}
-\label{sec:RawEvent2TTreeEventConverter}
-
-Another working example of converting the \texttt{raw} event to \texttt{ROOT TTree} format is also provided. The details and flow of converter is described in Annexe \ref{sec:TTreeConverter}.
-
-
-
- 
