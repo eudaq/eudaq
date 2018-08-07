@@ -28,3 +28,8 @@ test.ini
 *.pyc
 
 Thumbs.db
+
+cmake/eudaqConfig.cmake
+cmake/eudaqConfigVersion.cmake
+cmake/eudaqTargets-relwithdebinfo.cmake
+cmake/eudaqTargets.cmake
