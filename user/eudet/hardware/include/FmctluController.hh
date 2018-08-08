@@ -40,13 +40,13 @@ namespace tlu {
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
     void SetPulseStretchPack(std::vector< unsigned int>  valuesVec);
     void SetPulseDelayPack(std::vector< unsigned int>  valuesVec);
-    void SetDUTMask(int value, bool verbose);
-    void SetDUTMaskMode(int value, bool verbose);
-    void SetDUTMaskModeModifier(int value, bool verbose);
-    void SetDUTIgnoreBusy(int value, bool verbose);
-    void SetDUTIgnoreShutterVeto(int value, bool verbose);
+    void SetDUTMask(int value) { SetWRegister("DUTInterfaces.DUTMaskW",value); };
+    void SetDUTMaskMode(int value) { SetWRegister("DUTInterfaces.DUTInterfaceModeW",value); };
+    void SetDUTMaskModeModifier(int value) { SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value); };
+    void SetDUTIgnoreBusy(int value){ SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value); };
+    void SetDUTIgnoreShutterVeto(int value){ SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value); };
 
-    //uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
+    uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
 
     void SetEventFifoCSR(int value) { SetWRegister("eventBuffer.EventFifoCSR",value); };
     void SetLogicClocksCSR(int value) { SetWRegister("logic_clocks.LogicClocksCSR",value); };
@@ -61,11 +61,6 @@ namespace tlu {
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
     uint64_t GetTriggerMask();
-    uint32_t GetDUTMask();
-    uint32_t GetDUTMaskMode();
-    uint32_t GetDUTMaskModeModifier();
-    uint32_t GetDUTIgnoreBusy();
-    uint32_t GetDUTIgnoreShutterVeto();
     uint32_t GetTriggerVeto() { return ReadRRegister("triggerLogic.TriggerVetoR"); };
     uint32_t GetPreVetoTriggers() { return ReadRRegister("triggerLogic.PreVetoTriggersR"); };
     uint32_t GetPostVetoTriggers() { return ReadRRegister("triggerLogic.PostVetoTriggersR"); };
