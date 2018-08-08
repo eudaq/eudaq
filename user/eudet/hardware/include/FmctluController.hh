@@ -148,7 +148,7 @@ namespace tlu {
     void enableClkLEMO(bool enable, bool verbose);
     //void InitializeI2C(char DACaddr, char IDaddr);
     float GetDACref(){return m_vref;};
-    void InitializeClkChip(const std::string & filename);
+    int InitializeClkChip(const std::string & filename);
     void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
@@ -201,8 +201,8 @@ namespace tlu {
     char m_IDaddr;
     //uint32_t m_BoardID=0;
     unsigned int m_BoardID[6]= {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
-    bool hasDisplay= false; // Set to true if the LCD display is detected
-    char powerModuleType=0; // 0= old bugged power board, anything else= new power board with eeprom
+    bool m_hasDisplay= false; // Set to true if the LCD display is detected
+    char m_powerModuleType=0; // 0= old bugged power board, anything else= new power board with eeprom
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;

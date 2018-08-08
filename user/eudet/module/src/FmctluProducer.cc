@@ -160,7 +160,17 @@ void FmctluProducer::DoInitialise(){
 
     // Initialize the Si5345 clock chip using pre-generated file
     if (ini->Get("CONFCLOCK", true)){
-      m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+      std::string  clkConfFile;
+      std::string defaultCfgFile= "./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_clock_config.txt";
+      clkConfFile= ini->Get("CLOCK_CFG_FILE", defaultCfgFile);
+      if (clkConfFile== defaultCfgFile){
+        EUDAQ_WARN("AIDA TLU: Could not find the parameter for clock configuration. Using the default.");
+      }
+      int clkres;
+      clkres= m_tlu->InitializeClkChip( clkConfFile  );
+      if (clkres == -1){
+        EUDAQ_ERROR("AIDA TLU: clock configuration failed.");
+      }
     }
 
     // Reset IPBus registers
@@ -171,6 +181,7 @@ void FmctluProducer::DoInitialise(){
     m_tlu->ResetEventsBuffer();
 
     m_tlu->ResetTimestamp();
+
   }
 }
 

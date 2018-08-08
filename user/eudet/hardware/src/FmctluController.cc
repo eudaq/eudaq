@@ -9,6 +9,7 @@
 #include <string>
 #include <bitset>
 #include <iomanip>
+#include "eudaq/Logger.hh"
 
 #include "uhal/uhal.hpp"
 
@@ -316,14 +317,18 @@ namespace tlu {
     }
   }
 
-  void FmctluController::InitializeClkChip(const std::string & filename){
+  int FmctluController::InitializeClkChip(const std::string & filename){
     std::vector< std::vector< unsigned int> > tmpConf;
     m_zeClock.SetI2CPar(m_i2c, m_I2C_address.clockChip);
     m_zeClock.getDeviceVersion();
     //std::string filename = "/users/phpgb/workspace/myFirmware/AIDA/bitFiles/TLU_CLK_Config.txt";
     tmpConf= m_zeClock.parseClkFile(filename, false);
+    if (tmpConf.size() == 0){
+      return -1;
+    }
     m_zeClock.writeConfiguration(tmpConf, false);
     m_zeClock.checkDesignID();
+    return 0;
   }
 
   void FmctluController::InitializeDAC(bool intRef, float Vref) {
@@ -366,7 +371,7 @@ namespace tlu {
 
     //First we need to enable the enclustra I2C expander or we will not see any I2C slave past on the TLU
     I2C_enable(m_I2C_address.core);
-    //char powerModuleType=0;
+
 
     std::cout << "  Scan I2C bus:" << std::endl;
     for(int myaddr = 0; myaddr < 128; myaddr++) {
@@ -410,11 +415,11 @@ namespace tlu {
         }
         else if (myaddr==m_I2C_address.pwrId){
           std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
-          powerModuleType= myaddr;
+          m_powerModuleType= myaddr;
         }
         else if (myaddr==m_I2C_address.lcdDisp){
           std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
-          hasDisplay= true;
+          m_hasDisplay= true;
           m_lcddisp.setParameters(m_i2c, myaddr, 2, 16);
         }
         else{
@@ -432,10 +437,13 @@ namespace tlu {
       SetBoardID();
     }
 
-    pwrled_Initialize(0, powerModuleType);
+    pwrled_Initialize(0, m_powerModuleType);
     std::cout.flags( coutflags ); // Restore cout flags
 
-    m_lcddisp.pulseLCD(1);
+    if (m_hasDisplay){
+      m_lcddisp.pulseLCD(1);
+      EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+    }
   }
 
   void FmctluController::pwrled_Initialize(int verbose, unsigned int type) {
