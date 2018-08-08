@@ -1,6 +1,7 @@
 #include "FmctluController.hh"
 #include "FmctluHardware.hh"
 #include "FmctluPowerModule.hh"
+#include "AidaTluDisplay.hh"
 #include "FmctluI2c.hh"
 #include <iomanip>
 #include <thread>
@@ -365,7 +366,7 @@ namespace tlu {
 
     //First we need to enable the enclustra I2C expander or we will not see any I2C slave past on the TLU
     I2C_enable(m_I2C_address.core);
-    char powerModuleType=0;
+    //char powerModuleType=0;
 
     std::cout << "  Scan I2C bus:" << std::endl;
     for(int myaddr = 0; myaddr < 128; myaddr++) {
@@ -411,6 +412,11 @@ namespace tlu {
           std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
           powerModuleType= myaddr;
         }
+        else if (myaddr==m_I2C_address.lcdDisp){
+          std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
+          hasDisplay= true;
+          m_lcddisp.setParameters(m_i2c, myaddr, 2, 16);
+        }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
         }
@@ -428,6 +434,8 @@ namespace tlu {
 
     pwrled_Initialize(0, powerModuleType);
     std::cout.flags( coutflags ); // Restore cout flags
+
+    m_lcddisp.pulseLCD(1);
   }
 
   void FmctluController::pwrled_Initialize(int verbose, unsigned int type) {
