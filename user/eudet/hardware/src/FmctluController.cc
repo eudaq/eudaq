@@ -442,6 +442,7 @@ namespace tlu {
 
     if (m_hasDisplay){
       m_lcddisp.pulseLCD(1);
+      m_lcddisp.clear();
       EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
     }
   }

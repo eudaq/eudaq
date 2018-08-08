@@ -28,7 +28,7 @@ public:
   //void writeString();
   //void posCursor();
   //void clearLine();
-  //void clear();
+  void clear();
   //void setLCDtype();
   void setBrightness(unsigned int value);
   //void writeChar();

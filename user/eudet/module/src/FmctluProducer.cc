@@ -164,7 +164,7 @@ void FmctluProducer::DoInitialise(){
       std::string defaultCfgFile= "./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_clock_config.txt";
       clkConfFile= ini->Get("CLOCK_CFG_FILE", defaultCfgFile);
       if (clkConfFile== defaultCfgFile){
-        EUDAQ_WARN("AIDA TLU: Could not find the parameter for clock configuration. Using the default.");
+        EUDAQ_WARN("AIDA TLU: Could not find the parameter for clock configuration in the INI file. Using the default.");
       }
       int clkres;
       clkres= m_tlu->InitializeClkChip( clkConfFile  );

@@ -52,6 +52,12 @@ void LCD09052::setBrightness(unsigned int value){
   disp_i2c_core->WriteI2CChar(disp_i2c_addr, myaddr, (unsigned char)value);
 }
 
+void LCD09052::clear(){
+  // Clears the display and locates the curson on position (1,1), i.e. top left
+  int myaddr= 4;
+  disp_i2c_core->WriteI2CChar(disp_i2c_addr, myaddr, 0x0);
+}
+
 void LCD09052::pulseLCD(unsigned int nCycles){
   // Pulse the LCD backlight
   float startP= 0;
