@@ -26,12 +26,12 @@ public:
 
   //void dispString();
   //void writeString();
-  //void posCursor();
-  //void clearLine();
+  void posCursor(unsigned int line, unsigned int pos);
+  void clearLine(unsigned int line);
   void clear();
   //void setLCDtype();
   void setBrightness(unsigned int value);
-  //void writeChar();
+  void writeChar(char mychar);
   //void createChar();
   //void writeSomething();
   void pulseLCD(unsigned int nCycles);

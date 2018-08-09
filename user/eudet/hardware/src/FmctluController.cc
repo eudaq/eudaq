@@ -443,6 +443,14 @@ namespace tlu {
     if (m_hasDisplay){
       m_lcddisp.pulseLCD(1);
       m_lcddisp.clear();
+      m_lcddisp.posCursor(2, 3);
+      m_lcddisp.writeChar(80);
+      m_lcddisp.writeChar(80);
+      m_lcddisp.writeChar(82);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      m_lcddisp.clearLine(2);
+      m_lcddisp.writeChar(82);
+      m_lcddisp.writeChar(82);
       EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
     }
   }

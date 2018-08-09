@@ -58,6 +58,30 @@ void LCD09052::clear(){
   disp_i2c_core->WriteI2CChar(disp_i2c_addr, myaddr, 0x0);
 }
 
+void LCD09052::clearLine(unsigned int line){
+  /// Clear line. Place cursor at beginning of line.
+  if ( (1<=line) && (line <= nRows) ){
+    int myaddr= 3;
+    disp_i2c_core->WriteI2CChar(disp_i2c_addr, myaddr, line);
+  }
+}
+
+void LCD09052::posCursor(unsigned int line, unsigned int pos){
+  // Position the cursor on a specific location
+  //  line can be 1 (top) or 2 (bottom)
+  //  pos can be [1, 16}
+  if ( ( (1<=line) && (line <= nRows) ) && ( ( 1 <= pos) && (pos <= nCols) ) ){
+    int myaddr= 2;
+    unsigned char chrsToSend[2];
+    chrsToSend[0]= line;
+    chrsToSend[1]= pos;
+    disp_i2c_core->WriteI2CCharArray(disp_i2c_addr, myaddr, chrsToSend, 2);
+  }
+  else{
+    std::cout << "Cursor line can only be 1 or 2, position must be in range [1, " << nCols << "]" << std::endl;
+  }
+}
+
 void LCD09052::pulseLCD(unsigned int nCycles){
   // Pulse the LCD backlight
   float startP= 0;
@@ -76,4 +100,14 @@ void LCD09052::pulseLCD(unsigned int nCycles){
     setBrightness(iBright);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+}
+
+void LCD09052::writeChar(char mychar){
+  // Writes a char in the current cursor position
+  // The cursor is then shifted right one position
+  // value must be an integer corresponding to the ascii code of the character
+  // Example: mychar= 80 will print a "P"
+  unsigned int myaddr= 10;
+  disp_i2c_core->WriteI2CChar(disp_i2c_addr, myaddr, mychar);
+  return;
 }
