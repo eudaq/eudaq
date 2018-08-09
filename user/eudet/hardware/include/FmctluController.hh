@@ -8,6 +8,7 @@
 #include "FmctluI2c.hh"
 #include "FmctluHardware.hh"
 #include "FmctluPowerModule.hh"
+#include "AidaTluDisplay.hh"
 
 typedef unsigned char uchar_t;
 
@@ -147,7 +148,7 @@ namespace tlu {
     void enableClkLEMO(bool enable, bool verbose);
     //void InitializeI2C(char DACaddr, char IDaddr);
     float GetDACref(){return m_vref;};
-    void InitializeClkChip(const std::string & filename);
+    int InitializeClkChip(const std::string & filename);
     void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
@@ -172,6 +173,7 @@ namespace tlu {
     void SetI2C_expander1_addr(char addressa) { m_I2C_address.expander1 = addressa; };
     void SetI2C_expander2_addr(char addressa) { m_I2C_address.expander2 = addressa; };
     void SetI2C_pwrmdl_addr(char addressa, char addressb, char addressc, char addressd) { m_I2C_address.pwraddr = addressa; m_I2C_address.ledxp1addr = addressb; m_I2C_address.ledxp2addr = addressc; m_I2C_address.pwrId = addressd;};
+    void SetI2C_disp_addr(char addressa) { m_I2C_address.lcdDisp = addressa; };
 
   private:
 
@@ -188,6 +190,7 @@ namespace tlu {
       char pwraddr; // i2c address of DAC of power module
       char ledxp1addr; // i2c address of expander (LED controller)
       char ledxp2addr; //i2c address of expander (LED controller)
+      char lcdDisp; //i2c address of LCD display
     } m_I2C_address;
 
 
@@ -198,12 +201,15 @@ namespace tlu {
     char m_IDaddr;
     //uint32_t m_BoardID=0;
     unsigned int m_BoardID[6]= {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    bool m_hasDisplay= false; // Set to true if the LCD display is detected
+    char m_powerModuleType=0; // 0= old bugged power board, anything else= new power board with eeprom
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
     PWRLED m_pwrled;
+    LCD09052 m_lcddisp;
 
 
     // Define constants such as number of DUTs and trigger inputs

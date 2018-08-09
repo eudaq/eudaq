@@ -1,6 +1,7 @@
 #include "FmctluController.hh"
 #include "FmctluHardware.hh"
 #include "FmctluPowerModule.hh"
+#include "AidaTluDisplay.hh"
 #include "FmctluI2c.hh"
 #include <iomanip>
 #include <thread>
@@ -8,6 +9,7 @@
 #include <string>
 #include <bitset>
 #include <iomanip>
+#include "eudaq/Logger.hh"
 
 #include "uhal/uhal.hpp"
 
@@ -18,7 +20,9 @@ namespace tlu {
     std::cout << "Configuring from " << connectionFilename << " the device " << deviceName << std::endl;
     if(!m_hw) {
       ConnectionManager manager ( connectionFilename );
-      m_hw = new uhal::HwInterface(manager.getDevice( deviceName ));
+      uhal::setLogLevelTo(uhal::Error()); //  Get rid of initial flood of messages for address map
+      m_hw = new uhal::HwInterface(manager.getDevice( deviceName )); // <<
+      //std::cout << m_hw->uri() << std::endl;
       m_i2c = new i2cCore(m_hw);
       GetFW();
 
@@ -315,14 +319,18 @@ namespace tlu {
     }
   }
 
-  void FmctluController::InitializeClkChip(const std::string & filename){
+  int FmctluController::InitializeClkChip(const std::string & filename){
     std::vector< std::vector< unsigned int> > tmpConf;
     m_zeClock.SetI2CPar(m_i2c, m_I2C_address.clockChip);
     m_zeClock.getDeviceVersion();
     //std::string filename = "/users/phpgb/workspace/myFirmware/AIDA/bitFiles/TLU_CLK_Config.txt";
     tmpConf= m_zeClock.parseClkFile(filename, false);
+    if (tmpConf.size() == 0){
+      return -1;
+    }
     m_zeClock.writeConfiguration(tmpConf, false);
     m_zeClock.checkDesignID();
+    return 0;
   }
 
   void FmctluController::InitializeDAC(bool intRef, float Vref) {
@@ -365,7 +373,7 @@ namespace tlu {
 
     //First we need to enable the enclustra I2C expander or we will not see any I2C slave past on the TLU
     I2C_enable(m_I2C_address.core);
-    char powerModuleType=0;
+
 
     std::cout << "  Scan I2C bus:" << std::endl;
     for(int myaddr = 0; myaddr < 128; myaddr++) {
@@ -409,7 +417,12 @@ namespace tlu {
         }
         else if (myaddr==m_I2C_address.pwrId){
           std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
-          powerModuleType= myaddr;
+          m_powerModuleType= myaddr;
+        }
+        else if (myaddr==m_I2C_address.lcdDisp){
+          std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
+          m_hasDisplay= true;
+          m_lcddisp.setParameters(m_i2c, myaddr, 2, 16);
         }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
@@ -426,13 +439,28 @@ namespace tlu {
       SetBoardID();
     }
 
-    pwrled_Initialize(0, powerModuleType);
+    pwrled_Initialize(0, m_powerModuleType);
     std::cout.flags( coutflags ); // Restore cout flags
+
+    if (m_hasDisplay){
+      EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+      m_lcddisp.clear();
+      m_lcddisp.writeString("Please wait...");
+      m_lcddisp.pulseLCD(1);
+      // retrieve IP device from uhal and show it on display
+      std::string myip= m_hw->uri();
+      std::string delimiter = "://";
+      myip = myip.substr(myip.find(delimiter)+3);
+      delimiter = ":";
+      myip = myip.substr(0, myip.find(delimiter));
+      //
+      m_lcddisp.writeAll("AIDA TLU", myip);
+    }
   }
 
   void FmctluController::pwrled_Initialize(int verbose, unsigned int type) {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
-    m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77, type);
+    m_pwrled.setI2CPar( m_i2c , m_I2C_address.pwraddr, m_I2C_address.ledxp1addr, m_I2C_address.ledxp2addr, type);
     m_pwrled.initI2Cslaves(false, verbose);
     //int indicator= 1;
     //std::array<int, 3>RGB{ {1, 0, 1} };
