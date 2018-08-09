@@ -32,6 +32,8 @@ public:
   //void setLCDtype();
   void setBrightness(unsigned int value);
   void writeChar(char mychar);
+  void writeString(const std::string & myString);
+  void writeAll(const std::string & topLine, const std::string & bottomLine);
   //void createChar();
   //void writeSomething();
   void pulseLCD(unsigned int nCycles);

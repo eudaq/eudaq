@@ -20,7 +20,9 @@ namespace tlu {
     std::cout << "Configuring from " << connectionFilename << " the device " << deviceName << std::endl;
     if(!m_hw) {
       ConnectionManager manager ( connectionFilename );
-      m_hw = new uhal::HwInterface(manager.getDevice( deviceName ));
+      uhal::setLogLevelTo(uhal::Error()); //  Get rid of initial flood of messages for address map
+      m_hw = new uhal::HwInterface(manager.getDevice( deviceName )); // <<
+      //std::cout << m_hw->uri() << std::endl;
       m_i2c = new i2cCore(m_hw);
       GetFW();
 
@@ -441,23 +443,24 @@ namespace tlu {
     std::cout.flags( coutflags ); // Restore cout flags
 
     if (m_hasDisplay){
-      m_lcddisp.pulseLCD(1);
-      m_lcddisp.clear();
-      m_lcddisp.posCursor(2, 3);
-      m_lcddisp.writeChar(80);
-      m_lcddisp.writeChar(80);
-      m_lcddisp.writeChar(82);
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      m_lcddisp.clearLine(2);
-      m_lcddisp.writeChar(82);
-      m_lcddisp.writeChar(82);
       EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+      m_lcddisp.clear();
+      m_lcddisp.writeString("Please wait...");
+      m_lcddisp.pulseLCD(1);
+      // retrieve IP device from uhal and show it on display
+      std::string myip= m_hw->uri();
+      std::string delimiter = "://";
+      myip = myip.substr(myip.find(delimiter)+3);
+      delimiter = ":";
+      myip = myip.substr(0, myip.find(delimiter));
+      //
+      m_lcddisp.writeAll("AIDA TLU", myip);
     }
   }
 
   void FmctluController::pwrled_Initialize(int verbose, unsigned int type) {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
-    m_pwrled.setI2CPar( m_i2c , 0x1C, 0x76, 0x77, type);
+    m_pwrled.setI2CPar( m_i2c , m_I2C_address.pwraddr, m_I2C_address.ledxp1addr, m_I2C_address.ledxp2addr, type);
     m_pwrled.initI2Cslaves(false, verbose);
     //int indicator= 1;
     //std::array<int, 3>RGB{ {1, 0, 1} };

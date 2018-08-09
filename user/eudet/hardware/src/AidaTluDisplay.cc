@@ -111,3 +111,31 @@ void LCD09052::writeChar(char mychar){
   disp_i2c_core->WriteI2CChar(disp_i2c_addr, myaddr, mychar);
   return;
 }
+
+void LCD09052::writeAll(const std::string & topLine, const std::string & bottomLine){
+  // Clears the display and writes the two lines to it.
+  // Lines longer than the display width are trimmed.
+  clear();
+  //if (topLine.length() > nCols){
+  //  topLine.erase(nCols, std::string::npos);
+  //}
+  writeString(topLine);
+  posCursor(2, 1);
+  //if (bottomLine.length() > nCols){
+  //  bottomLine.erase(nCols, std::string::npos);
+  //}
+  writeString(bottomLine);
+}
+
+void LCD09052::writeString(const std::string & myString){
+  // Convert the string to a char array an writes it to the display.
+  // NOTE: No check is performed to ensure the string will fit in the line.
+  // The writing starts at the current cursor position.
+  unsigned int myaddr= 1;
+  int strLen= myString.length();
+  //unsigned char *myChars = new char[strLen.length() + 1];
+  const char *myChars = myString.c_str();
+  //strcpy( static_cast <char*>( myChars ), myString );
+  //unsigned char myChars[] = { 'H', 'e', 'l', 'l', 'o' };
+  disp_i2c_core->WriteI2CCharArray(disp_i2c_addr, myaddr, (unsigned char*)myChars, strLen);
+}

@@ -219,18 +219,18 @@ void PWRLED::testLED(){
   led_allOff();
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{1, 0, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 1, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 0, 1}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 0, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
 }
