@@ -123,8 +123,10 @@ void FmctluProducer::DoInitialise(){
   */
   auto ini = GetInitConfiguration();
   std::cout << "INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
-  std::string uhal_conn = "file://./FMCTLU_connections.xml";
-  std::string uhal_node = "fmctlu.udp";
+  //std::string uhal_conn = "file://./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_connection.xml";
+  //std::string uhal_node = "fmctlu.udp";
+  std::string uhal_conn;
+  std::string uhal_node;
   uhal_conn = ini->Get("ConnectionFile", uhal_conn);
   uhal_node = ini->Get("DeviceName",uhal_node);
   m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
