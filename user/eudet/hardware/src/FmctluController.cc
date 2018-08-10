@@ -444,6 +444,8 @@ namespace tlu {
 
     if (m_hasDisplay){
       EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+      std::cout << "  AIDA_TLU LCD: Initialising" << std::endl;
+      
       m_lcddisp.clear();
       m_lcddisp.writeString("Please wait...");
       m_lcddisp.pulseLCD(1);
