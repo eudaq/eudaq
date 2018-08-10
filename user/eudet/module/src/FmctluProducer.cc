@@ -3,6 +3,7 @@
 #include "FmctluController.hh"
 #include "FmctluHardware.hh"
 #include "FmctluPowerModule.hh"
+
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -144,7 +145,8 @@ void FmctluProducer::DoInitialise(){
     m_tlu->SetI2C_EEPROM_addr(ini->Get("I2C_ID_Addr", 0x50) );
     m_tlu->SetI2C_expander1_addr(ini->Get("I2C_EXP1_Addr",0x74));
     m_tlu->SetI2C_expander2_addr(ini->Get("I2C_EXP2_Addr",0x75) );
-    m_tlu->SetI2C_pwrmdl_addr(ini->Get("I2C_DACModule_Addr",  0x1C), ini->Get("I2C_EXP1Module_Addr",  0x76), ini->Get("I2C_EXP2Module_Addr",  0x77));
+    m_tlu->SetI2C_pwrmdl_addr(ini->Get("I2C_DACModule_Addr",  0x1C), ini->Get("I2C_EXP1Module_Addr",  0x76), ini->Get("I2C_EXP2Module_Addr",  0x77), ini->Get("I2C_pwrId_Addr",  0x51));
+    m_tlu->SetI2C_disp_addr(ini->Get("I2C_disp_Addr",0x3A));
 
     // Initialize TLU hardware
     m_tlu->InitializeI2C();
@@ -158,9 +160,18 @@ void FmctluProducer::DoInitialise(){
 
     // Initialize the Si5345 clock chip using pre-generated file
     if (ini->Get("CONFCLOCK", true)){
-      m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+      std::string  clkConfFile;
+      std::string defaultCfgFile= "./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_clock_config.txt";
+      clkConfFile= ini->Get("CLOCK_CFG_FILE", defaultCfgFile);
+      if (clkConfFile== defaultCfgFile){
+        EUDAQ_WARN("AIDA TLU: Could not find the parameter for clock configuration in the INI file. Using the default.");
+      }
+      int clkres;
+      clkres= m_tlu->InitializeClkChip( clkConfFile  );
+      if (clkres == -1){
+        EUDAQ_ERROR("AIDA TLU: clock configuration failed.");
+      }
     }
-    m_tlu->pwrled_Initialize(0);
 
     // Reset IPBus registers
     m_tlu->ResetSerdes();
@@ -170,6 +181,7 @@ void FmctluProducer::DoInitialise(){
     m_tlu->ResetEventsBuffer();
 
     m_tlu->ResetTimestamp();
+
   }
 }
 

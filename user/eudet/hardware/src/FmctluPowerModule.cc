@@ -16,17 +16,29 @@ void PWRLED::testme(){
 }
 
 PWRLED::PWRLED(){
-  std::cout << "  TLU_POWERMODULE: Instantiated" << std::endl;
+  std::cout << "  TLU_POWERMODULE: Instantiated xxxx" << std::endl;
   //std::vector<RGB_array> indicatorXYZ;
   //std::array<RGB_array, 11> indicatorXYZ{{30, 29, 31}, {27, 26, 28}, {24, 23, 25}, {21, 20, 22}, {18, 17, 19}, {15, 14, 16}, {12, 11, 13}, {9, 8, 10}, {6, 5, 7}, {3, 2, 4}, {1, 0, -1}};
 }
 
-PWRLED::PWRLED( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add){
+PWRLED::PWRLED( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add, char IdAdd){
   pwr_i2c_core = mycore;
   pwr_i2c_DACaddr= DACaddr;
   pwr_i2c_exp1Add= Exp1Add;
   pwr_i2c_exp2Add= Exp2Add;
-  std::cout << "  TLU_POWERMODULE: Instantiated" << std::endl;
+  pwr_i2c_eeprom= IdAdd;
+  std::cout << "  TLU_POWERMODULE: Instantiated abcd" << std::endl;
+  if (IdAdd){
+    std::cout << "\tTYPE: new" << std::endl;
+    std::cout << "\tI2C addr: 0x" << std::hex<< (int)IdAdd << std::dec << "(EEPROM)" << std::endl;
+    indicatorXYZ= { { { {30, 29, 31} }, { {27, 26, 28} }, { {24, 23, 25} }, { {21, 20, 22} }, { {18, 17, -1} }, { {15, 14, 16} },
+                      { {12, 11, 13} }, { {  9, 8, 10} }, { {   6, 5, 7} }, { {3, 2, 4} }, { {1, 0, 19} } } };
+  }
+  else{
+    std::cout << "\tTYPE: legacy (no eeprom and old LED map)" << std::endl;
+    indicatorXYZ= { { { {30, 29, 31} }, { {27, 26, 28} }, { {24, 23, 25} }, { {21, 20, 22} }, { {18, 17, 19} }, { {15, 14, 16} },
+                      { {12, 11, 13} }, { {  9, 8, 10} }, { {   6, 5, 7} }, { {3, 2, 4} }, { {1, 0, -1} } } };
+  }
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)DACaddr << std::dec << "(DAC)" << std::endl;
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp1Add << std::dec << "(LED EXPANDER 1)" << std::endl;
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp2Add << std::dec << "(LED EXPANDER 1)" << std::endl;
@@ -59,7 +71,7 @@ uint32_t PWRLED::_set_bit(uint32_t v, int index, bool x){
   ///Set the index:th bit of v to 1 if x is truthy, else to 0, and return the new value
   uint32_t mask;
   if (index == -1){
-    std::cout << "  SETBIT: Index= -1 will be ignored" << std::endl;
+    //std::cout << "  SETBIT: Index= -1 will be ignored" << std::endl;
   }
   else{
     mask = 1 << index;  // Compute mask, an integer with just bit 'index' set.
@@ -71,11 +83,22 @@ uint32_t PWRLED::_set_bit(uint32_t v, int index, bool x){
   return v;
 }
 
-void PWRLED::setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add){
+void PWRLED::setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add, char IdAdd){
   pwr_i2c_core = mycore;
   pwr_i2c_DACaddr= DACaddr;
   pwr_i2c_exp1Add= Exp1Add;
   pwr_i2c_exp2Add= Exp2Add;
+  if (IdAdd){
+    std::cout << "\tTYPE: new" << std::endl;
+    std::cout << "\tI2C addr: 0x" << std::hex<< (int)IdAdd << std::dec << "(EEPROM)" << std::endl;
+    indicatorXYZ= { { { {30, 29, 31} }, { {27, 26, 28} }, { {24, 23, 25} }, { {21, 20, 22} }, { {18, 17, -1} }, { {15, 14, 16} },
+                      { {12, 11, 13} }, { {  9, 8, 10} }, { {   6, 5, 7} }, { {3, 2, 4} }, { {1, 0, 19} } } };
+  }
+  else{
+    std::cout << "\tTYPE: legacy (no eeprom and old LED map)" << std::endl;
+    indicatorXYZ= { { { {30, 29, 31} }, { {27, 26, 28} }, { {24, 23, 25} }, { {21, 20, 22} }, { {18, 17, 19} }, { {15, 14, 16} },
+                      { {12, 11, 13} }, { {  9, 8, 10} }, { {   6, 5, 7} }, { {3, 2, 4} }, { {1, 0, -1} } } };
+  }
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)DACaddr << std::dec << "(DAC)" << std::endl;
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp1Add << std::dec << "(LED EXPANDER 1)" << std::endl;
   std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp2Add << std::dec << "(LED EXPANDER 1)" << std::endl;
@@ -196,18 +219,18 @@ void PWRLED::testLED(){
   led_allOff();
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{1, 0, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 1, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 0, 1}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 0, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
   }
 }
