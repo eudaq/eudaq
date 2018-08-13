@@ -18,6 +18,14 @@ IF(USE_LCIO)
   add_definitions(${LCIO_DEFINITIONS})
 ENDIF(USE_LCIO)
 
+#option(USE_EUTELESCOPE "Compiling main library using EUTELESCOPE" OFF)
+IF(BUILD_nreader)
+  FIND_PACKAGE( ILCUTIL COMPONENTS streamlog REQUIRED )
+  INCLUDE_DIRECTORIES(${streamlog_INCLUDE_DIRS})
+  SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ${streamlog_LIBRARIES} )
+  add_definitions(${streamlog_DEFINITIONS})
+ENDIF(BUILD_nreader)
+
 AUX_SOURCE_DIRECTORY( src library_sources )
 AUX_SOURCE_DIRECTORY( plugins plugins_sources )
 
