@@ -123,8 +123,10 @@ void FmctluProducer::DoInitialise(){
   */
   auto ini = GetInitConfiguration();
   std::cout << "INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
-  std::string uhal_conn = "file://./FMCTLU_connections.xml";
-  std::string uhal_node = "fmctlu.udp";
+  //std::string uhal_conn = "file://./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_connection.xml";
+  //std::string uhal_node = "fmctlu.udp";
+  std::string uhal_conn;
+  std::string uhal_node;
   uhal_conn = ini->Get("ConnectionFile", uhal_conn);
   uhal_node = ini->Get("DeviceName",uhal_node);
   m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
@@ -247,9 +249,7 @@ void FmctluProducer::DoConfigure() {
     m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
     m_tlu->SetDUTMask( (uint32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
-    std::cout << "DUT mask = " << conf->Get("DUTMask",1) << std::endl;
-    std::cout << "DUT mask = " << (uint32_t)(conf->Get("DUTMask",1)) << std::endl;
-
+    
     m_tlu->SetDUTMaskMode( (uint32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
     m_tlu->SetDUTMaskModeModifier( (uint32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
     m_tlu->SetDUTIgnoreBusy( (uint32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode

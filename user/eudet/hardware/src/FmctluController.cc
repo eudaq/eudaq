@@ -25,7 +25,7 @@ namespace tlu {
       //std::cout << m_hw->uri() << std::endl;
       m_i2c = new i2cCore(m_hw);
       GetFW();
-
+      m_IPaddress= parseURI();
     }
   }
 
@@ -177,63 +177,63 @@ namespace tlu {
   uint32_t FmctluController::GetFW(){
     uint32_t res;
     res= ReadRRegister("version");
-    std::cout << "TLU FIRMWARE VERSION= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "TLU FIRMWARE VERSION= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetDUTMask(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTMaskR");
-    std::cout << "\tDUTMask read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTMask read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetDUTMaskMode(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTInterfaceModeR");
-    std::cout << "\tDUTMaskMode read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTMaskMode read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetDUTMaskModeModifier(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTInterfaceModeModifierR");
-    std::cout << "\tDUTMaskModifier read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTMaskModifier read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetDUTIgnoreBusy(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.IgnoreDUTBusyR");
-    std::cout << "\tDUTIgnore busy read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTIgnore busy read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetDUTIgnoreShutterVeto(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.IgnoreShutterVetoR");
-    std::cout << "\tDUTIgnoreShutterVeto read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTIgnoreShutterVeto read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetShutterControl(){
     uint32_t res;
     res= ReadRRegister("Shutter.ControlRW");
-    std::cout << "\tShutter Control read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutter Control read back as (dec)= " << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetShutterInternalInterval(){
     uint32_t res;
     res= ReadRRegister("Shutter.InternalShutterPeriodRW");
-    std::cout << "\tInternalShutterPeriod read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tInternalShutterPeriod read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetShutterSource(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterSelectRW");
-    std::cout << "\tShutterSelect read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutterSelect read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
@@ -241,21 +241,21 @@ namespace tlu {
   uint32_t FmctluController::GetShutterOnTime(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterOnTimeRW");
-    std::cout << "\tShutterOnTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutterOnTime read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetShutterOffTime(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterOffTimeRW");
-    std::cout << "\tShutterOffTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutterOffTime read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
   uint32_t FmctluController::GetShutterVetoOffTime(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterVetoOffTimeRW");
-    std::cout << "\tVetoOffTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tVetoOffTime read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
@@ -273,6 +273,28 @@ namespace tlu {
       }
       std::cout << "\tFrequency read back as: " << true_freq << " Hz"<< std::endl;
     }
+  }
+
+  std::string FmctluController::parseURI(){
+    std::string myURI= m_hw->uri();
+    std::string delimiter;
+    if (myURI.find("ipbusudp") != std::string::npos) {
+      //std::cout << myURI << std::endl;
+      delimiter = "://";
+      myURI = myURI.substr(myURI.find(delimiter)+3);
+      delimiter = ":";
+      myURI = myURI.substr(0, myURI.find(delimiter));
+      std::cout << "  Using IPBus with IP= " << myURI << std::endl;
+    }
+    if (myURI.find("chtcp") != std::string::npos) {
+      //std::cout << myURI << std::endl;
+      delimiter = "et="; //end of "target="
+      myURI = myURI.substr(myURI.find(delimiter)+3);
+      delimiter = ":";
+      myURI = myURI.substr(0, myURI.find(delimiter));
+      std::cout << "  Using ControlHub with IP= " << myURI << std::endl;
+    }
+    return myURI;
   }
 
   unsigned int* FmctluController::SetBoardID(){
@@ -388,44 +410,55 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave CORE" << std::endl;
         }
         else if (myaddr== m_I2C_address.clockChip){
-          std::cout << "\tFOUND I2C slave CLOCK (0x" << std::hex << myaddr << ")"<< std::endl;
+          //std::cout << "\tFOUND I2C slave CLOCK (0x" << std::hex << myaddr << ")"<< std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : CLOCK CHIP found."<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC1){
-          std::cout << "\tFOUND I2C slave DAC1 (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave DAC1 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : DAC1 found."<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC2){
-          std::cout << "\tFOUND I2C slave DAC2 (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave DAC2 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : DAC2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.EEPROM){
           m_IDaddr= myaddr;
-          std::cout << "\tFOUND I2C slave EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : EEPROM found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.expander1){
-          std::cout << "\tFOUND I2C slave EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER1 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.expander2){
-          std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.ledxp1addr){
-          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave POWER MODULE EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER1 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.ledxp2addr){
-          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave POWER MODULE EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.pwraddr){
-          std::cout << "\tFOUND I2C slave POWER MODULE DAC (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave POWER MODULE DAC (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE DAC found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.pwrId){
-          std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EEPROM found."<< std::endl;
           m_powerModuleType= myaddr;
         }
         else if (myaddr==m_I2C_address.lcdDisp){
-          std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
+          //std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : LCD DISPLAY found."<< std::endl;
           m_hasDisplay= true;
-          m_lcddisp.setParameters(m_i2c, myaddr, 2, 16);
         }
         else{
-          std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
+          //std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : UNKNOWN DEVICE. Not on AIDA TLU address list." << std::endl;
         }
       }
       SetI2CTX(0x0);
@@ -444,17 +477,13 @@ namespace tlu {
 
     if (m_hasDisplay){
       EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+      m_lcddisp.setParameters(m_i2c, m_I2C_address.lcdDisp, 2, 16);
+      std::cout << "  AIDA_TLU LCD: Initialising" << std::endl;
+
       m_lcddisp.clear();
       m_lcddisp.writeString("Please wait...");
       m_lcddisp.pulseLCD(1);
-      // retrieve IP device from uhal and show it on display
-      std::string myip= m_hw->uri();
-      std::string delimiter = "://";
-      myip = myip.substr(myip.find(delimiter)+3);
-      delimiter = ":";
-      myip = myip.substr(0, myip.find(delimiter));
-      //
-      m_lcddisp.writeAll("AIDA TLU", myip);
+      m_lcddisp.writeAll("AIDA TLU", m_IPaddress);
     }
   }
 
@@ -627,7 +656,7 @@ namespace tlu {
   void FmctluController::SetDUTMask(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTMaskW",value);
     if (verbose){
-      std::cout << "Writing DUTMask: " << (uint32_t)value  << std::endl;
+      std::cout << "Writing DUTMask: 0x" << std::hex << (uint32_t)value  << std::endl;
       GetDUTMask();
     }
   };
@@ -635,7 +664,7 @@ namespace tlu {
   void FmctluController::SetDUTMaskMode(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
     if (verbose){
-      std::cout << "Writing DUTInterfaceMode: " <<  std::hex<< value  <<std::dec << std::endl;
+      std::cout << "Writing DUTInterfaceMode: 0x" << std::hex << value  <<std::dec << std::endl;
       GetDUTMaskMode();
     }
   };
@@ -643,7 +672,7 @@ namespace tlu {
   void FmctluController::SetDUTMaskModeModifier(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
     if (verbose){
-      std::cout << "Writing DUTModeModifier: " << value << std::endl;
+      std::cout << "Writing DUTModeModifier: 0x" << std::hex << value << std::endl;
       GetDUTMaskModeModifier();
     }
   };
@@ -651,7 +680,7 @@ namespace tlu {
   void FmctluController::SetDUTIgnoreBusy(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Busy: " << value << std::endl;
+      std::cout << "Writing DUT Ignore Busy: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreBusy();
     }
   };
@@ -659,7 +688,7 @@ namespace tlu {
   void FmctluController::SetShutterControl(uint32_t value, bool verbose){
     SetWRegister("Shutter.ControlRW",value);
     if (verbose){
-      std::cout << "Writing ShutterControl: " << value << std::endl;
+      std::cout << "Writing ShutterControl (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
@@ -667,7 +696,7 @@ namespace tlu {
   void FmctluController::SetShutterInternalInterval(uint32_t value, bool verbose){
     SetWRegister("Shutter.InternalShutterPeriodRW",value);
     if (verbose){
-      std::cout << "Writing InternalShutterPeriod: " << value << std::endl;
+      std::cout << "Writing InternalShutterPeriod (dec): " << value << std::endl;
       GetShutterInternalInterval();
     }
   };
@@ -675,7 +704,7 @@ namespace tlu {
   void FmctluController::SetShutterSource(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterSelectRW",value);
     if (verbose){
-      std::cout << "Writing ShutterSource: " << value << std::endl;
+      std::cout << "Writing ShutterSource (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
@@ -683,7 +712,7 @@ namespace tlu {
    void FmctluController::SetShutterOnTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterOnTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterOnTime: " << value << std::endl;
+      std::cout << "Writing ShutterOnTime (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
@@ -691,7 +720,7 @@ namespace tlu {
    void FmctluController::SetShutterOffTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterOffTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterOffTime: " << value << std::endl;
+      std::cout << "Writing ShutterOffTime (dec): " << value << std::endl;
       GetShutterOffTime();
     }
   };
@@ -699,7 +728,7 @@ namespace tlu {
    void FmctluController::SetShutterVetoOffTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterVetoOffTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterVetoOffTime: " << value << std::endl;
+      std::cout << "Writing ShutterVetoOffTime (dec): " << value << std::endl;
       GetShutterVetoOffTime();
     }
   };
@@ -707,7 +736,7 @@ namespace tlu {
   void FmctluController::SetDUTIgnoreShutterVeto(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Veto: " << value << std::endl;
+      std::cout << "Writing DUT Ignore Veto: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreShutterVeto();
     }
   };

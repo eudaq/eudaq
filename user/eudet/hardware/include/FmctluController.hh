@@ -105,6 +105,9 @@ namespace tlu {
     }
 
 
+    std::string parseURI();
+
+
     void SetI2CClockPrescale(int value) {
       SetWRegister("i2c_master.i2c_pre_lo", value&0xff);
       SetWRegister("i2c_master.i2c_pre_hi", (value>>8)&0xff);
@@ -196,6 +199,7 @@ namespace tlu {
 
     HwInterface * m_hw; //Instance of IPBus
     i2cCore *m_i2c; //Instance of I2C
+    std::string m_IPaddress;
 
     char m_DACaddr;
     char m_IDaddr;
