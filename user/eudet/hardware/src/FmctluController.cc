@@ -25,7 +25,7 @@ namespace tlu {
       //std::cout << m_hw->uri() << std::endl;
       m_i2c = new i2cCore(m_hw);
       GetFW();
-
+      m_IPaddress= parseURI();
     }
   }
 
@@ -275,6 +275,28 @@ namespace tlu {
     }
   }
 
+  std::string FmctluController::parseURI(){
+    std::string myURI= m_hw->uri();
+    std::string delimiter;
+    if (myURI.find("ipbusudp") != std::string::npos) {
+      //std::cout << myURI << std::endl;
+      delimiter = "://";
+      myURI = myURI.substr(myURI.find(delimiter)+3);
+      delimiter = ":";
+      myURI = myURI.substr(0, myURI.find(delimiter));
+      std::cout << "  Using IPBus with IP= " << myURI << std::endl;
+    }
+    if (myURI.find("chtcp") != std::string::npos) {
+      //std::cout << myURI << std::endl;
+      delimiter = "et="; //end of "target="
+      myURI = myURI.substr(myURI.find(delimiter)+3);
+      delimiter = ":";
+      myURI = myURI.substr(0, myURI.find(delimiter));
+      std::cout << "  Using ControlHub with IP= " << myURI << std::endl;
+    }
+    return myURI;
+  }
+
   unsigned int* FmctluController::SetBoardID(){
     m_IDaddr= m_I2C_address.EEPROM;
     unsigned char myaddr= 0xfa;
@@ -433,7 +455,6 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : LCD DISPLAY found."<< std::endl;
           m_hasDisplay= true;
-          m_lcddisp.setParameters(m_i2c, myaddr, 2, 16);
         }
         else{
           //std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
@@ -456,20 +477,13 @@ namespace tlu {
 
     if (m_hasDisplay){
       EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+      m_lcddisp.setParameters(m_i2c, m_I2C_address.lcdDisp, 2, 16);
       std::cout << "  AIDA_TLU LCD: Initialising" << std::endl;
 
       m_lcddisp.clear();
       m_lcddisp.writeString("Please wait...");
       m_lcddisp.pulseLCD(1);
-      // retrieve IP device from uhal and show it on display
-      std::string myip= m_hw->uri();
-      std::cout << myip << std::endl;
-      std::string delimiter = "://";
-      myip = myip.substr(myip.find(delimiter)+3);
-      delimiter = ":";
-      myip = myip.substr(0, myip.find(delimiter));
-      //
-      m_lcddisp.writeAll("AIDA TLU", myip);
+      m_lcddisp.writeAll("AIDA TLU", m_IPaddress);
     }
   }
 
