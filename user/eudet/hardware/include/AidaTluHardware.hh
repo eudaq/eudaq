@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include "FmctluI2c.hh"
+#include "AidaTluI2c.hh"
 
 /*
   This file contains classes for chips used on the new TLU design.

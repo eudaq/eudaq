@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "FmctluI2c.hh"
+#include "AidaTluI2c.hh"
 #include "AidaTluHardware.hh"
 #include "AidaTluPowerModule.hh"
 #include "AidaTluDisplay.hh"

@@ -2,7 +2,7 @@
 #include "AidaTluHardware.hh"
 #include "AidaTluPowerModule.hh"
 #include "AidaTluDisplay.hh"
-#include "FmctluI2c.hh"
+#include "AidaTluI2c.hh"
 #include <iomanip>
 #include <thread>
 #include <chrono>
