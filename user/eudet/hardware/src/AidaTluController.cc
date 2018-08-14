@@ -1,6 +1,6 @@
 #include "AidaTluController.hh"
 #include "AidaTluHardware.hh"
-#include "FmctluPowerModule.hh"
+#include "AidaTluPowerModule.hh"
 #include "AidaTluDisplay.hh"
 #include "FmctluI2c.hh"
 #include <iomanip>

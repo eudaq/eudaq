@@ -2,7 +2,7 @@
 
 #include "AidaTluController.hh"
 #include "AidaTluHardware.hh"
-#include "FmctluPowerModule.hh"
+#include "AidaTluPowerModule.hh"
 
 #include <iostream>
 #include <ostream>

@@ -1,5 +1,5 @@
-#ifndef H_FMCTLUPOWERMODULE_HH
-#define H_FMCTLUPOWERMODULE_HH
+#ifndef H_AIDATLUPOWERMODULE_HH
+#define H_AIDATLUPOWERMODULE_HH
 
 #include <string>
 #include <iostream>

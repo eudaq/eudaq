@@ -7,7 +7,7 @@
 #include <iostream>
 #include "FmctluI2c.hh"
 #include "AidaTluHardware.hh"
-#include "FmctluPowerModule.hh"
+#include "AidaTluPowerModule.hh"
 #include "AidaTluDisplay.hh"
 
 typedef unsigned char uchar_t;
