@@ -1,8 +1,8 @@
 #include "eudaq/Producer.hh"
 
-#include "FmctluController.hh"
-#include "FmctluHardware.hh"
-#include "FmctluPowerModule.hh"
+#include "AidaTluController.hh"
+#include "AidaTluHardware.hh"
+#include "AidaTluPowerModule.hh"
 
 #include <iostream>
 #include <ostream>
@@ -11,9 +11,9 @@
 #include <thread>
 
 
-class FmctluProducer: public eudaq::Producer {
+class AidaTluProducer: public eudaq::Producer {
 public:
-  FmctluProducer(const std::string name, const std::string &runcontrol);
+  AidaTluProducer(const std::string name, const std::string &runcontrol);
   void DoConfigure() override;
   void DoInitialise() override;
   void DoStartRun() override;
@@ -23,12 +23,12 @@ public:
   void DoStatus() override;
   void RunLoop() override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("FmctluProducer");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("AidaTluProducer");
 private:
   bool m_exit_of_run;
   std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
 
-  std::unique_ptr<tlu::FmctluController> m_tlu;
+  std::unique_ptr<tlu::AidaTluController> m_tlu;
   uint64_t m_lasttime;
 
   uint32_t m_verbose;
@@ -37,16 +37,16 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<FmctluProducer, const std::string&, const std::string&>(FmctluProducer::m_id_factory);
+    Register<AidaTluProducer, const std::string&, const std::string&>(AidaTluProducer::m_id_factory);
 }
 
 
-FmctluProducer::FmctluProducer(const std::string name, const std::string &runcontrol)
+AidaTluProducer::AidaTluProducer(const std::string name, const std::string &runcontrol)
   :eudaq::Producer(name, runcontrol){
 
 }
 
-void FmctluProducer::RunLoop(){
+void AidaTluProducer::RunLoop(){
   std::unique_lock<std::mutex> lk(m_mtx_tlu);
   bool isbegin = true;
   m_tlu->ResetCounters();
@@ -117,17 +117,19 @@ void FmctluProducer::RunLoop(){
   m_tlu->SetTriggerVeto(1);
 }
 
-void FmctluProducer::DoInitialise(){
+void AidaTluProducer::DoInitialise(){
   /* Establish a connection with the TLU using IPBus.
      Define the main hardware parameters.
   */
   auto ini = GetInitConfiguration();
   std::cout << "INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
-  std::string uhal_conn = "file://./FMCTLU_connections.xml";
-  std::string uhal_node = "fmctlu.udp";
+  //std::string uhal_conn = "file://./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_connection.xml";
+  //std::string uhal_node = "fmctlu.udp";
+  std::string uhal_conn;
+  std::string uhal_node;
   uhal_conn = ini->Get("ConnectionFile", uhal_conn);
   uhal_node = ini->Get("DeviceName",uhal_node);
-  m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
+  m_tlu = std::unique_ptr<tlu::AidaTluController>(new tlu::AidaTluController(uhal_conn, uhal_node));
 
   if( ini->Get("skipini", false) ){
     std::cout << "SKIPPING INITIALIZATION (skipini= 1)" << std::endl;
@@ -185,7 +187,7 @@ void FmctluProducer::DoInitialise(){
   }
 }
 
-void FmctluProducer::DoConfigure() {
+void AidaTluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
   m_verbose= conf->Get("verbose", 0);
@@ -247,8 +249,6 @@ void FmctluProducer::DoConfigure() {
     m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
     m_tlu->SetDUTMask( (uint32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
-    std::cout << "DUT mask = " << conf->Get("DUTMask",1) << std::endl;
-    std::cout << "DUT mask = " << (uint32_t)(conf->Get("DUTMask",1)) << std::endl;
 
     m_tlu->SetDUTMaskMode( (uint32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
     m_tlu->SetDUTMaskModeModifier( (uint32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
@@ -268,29 +268,29 @@ void FmctluProducer::DoConfigure() {
   }
 }
 
-void FmctluProducer::DoStartRun(){
+void AidaTluProducer::DoStartRun(){
   m_exit_of_run = false;
   std::cout << "TLU START command received" << std::endl;
 }
 
-void FmctluProducer::DoStopRun(){
+void AidaTluProducer::DoStopRun(){
   m_exit_of_run = true;
   std::cout << "TLU STOP command received" << std::endl;
 }
 
-void FmctluProducer::DoTerminate(){
+void AidaTluProducer::DoTerminate(){
   m_exit_of_run = true;
   std::cout << "TLU TERMINATE command received" << std::endl;
 }
 
-void FmctluProducer::DoReset(){
+void AidaTluProducer::DoReset(){
   m_exit_of_run = true;
   std::cout << "TLU RESET command received" << std::endl;
   std::unique_lock<std::mutex> lk(m_mtx_tlu); //waiting for the runloop's return
   m_tlu.reset();
 }
 
-void FmctluProducer::DoStatus() {
+void AidaTluProducer::DoStatus() {
   if (m_tlu) {
     uint64_t time = m_tlu->GetCurrentTimestamp();
     time = time/40000000; // in second

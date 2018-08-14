@@ -1,10 +1,10 @@
-#ifndef H_FMCTLUHARDWARE_HH
-#define H_FMCTLUHARDWARE_HH
+#ifndef H_AIDATLUHARDWARE_HH
+#define H_AIDATLUHARDWARE_HH
 
 #include <string>
 #include <iostream>
 #include <vector>
-#include "FmctluI2c.hh"
+#include "AidaTluI2c.hh"
 
 /*
   This file contains classes for chips used on the new TLU design.

@@ -1,4 +1,4 @@
-#include "FmctluHardware.hh"
+#include "AidaTluHardware.hh"
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -120,7 +120,7 @@ void PCA9539PW::setInvertReg(unsigned int memAddr, unsigned char polarity= 0x00,
     return;
   }
   if (verbose){
-    std::cout << "PCA9539PW - Setting register " << (int)memAddr+4 << " to " << std::hex << (int)polarity << std::dec<< std::endl;
+    std::cout << "\tPCA9539PW - Setting register " << (int)memAddr+4 << " to " << std::hex << (int)polarity << std::dec<< std::endl;
   }
   polarity = polarity & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+4, (unsigned char)polarity);
@@ -146,7 +146,7 @@ void PCA9539PW::setIOReg(unsigned int memAddr, unsigned char direction= 0xFF, bo
     return;
   }
   if (verbose){
-    std::cout << "PCA9539PW - Setting register " << (int)memAddr+6 << " to " << std::hex <<(int)direction << std::dec<< std::endl;
+    std::cout << "\tPCA9539PW - Setting register " << (int)memAddr+6 << " to " << std::hex <<(int)direction << std::dec<< std::endl;
   }
   direction = direction & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+6, (unsigned char)direction);
