@@ -1,5 +1,5 @@
-#ifndef H_FMCTLUHARDWARE_HH
-#define H_FMCTLUHARDWARE_HH
+#ifndef H_AIDATLUHARDWARE_HH
+#define H_AIDATLUHARDWARE_HH
 
 #include <string>
 #include <iostream>

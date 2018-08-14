@@ -1,12 +1,12 @@
-#ifndef H_FMCTLUCONTROLLER_HH
-#define H_FMCTLUCONTROLLER_HH
+#ifndef H_AIDATLUCONTROLLER_HH
+#define H_AIDATLUCONTROLLER_HH
 
 #include <deque>
 #include <string>
 #include <vector>
 #include <iostream>
 #include "FmctluI2c.hh"
-#include "FmctluHardware.hh"
+#include "AidaTluHardware.hh"
 #include "FmctluPowerModule.hh"
 #include "AidaTluDisplay.hh"
 

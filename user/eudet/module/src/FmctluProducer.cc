@@ -1,7 +1,7 @@
 #include "eudaq/Producer.hh"
 
-#include "FmctluController.hh"
-#include "FmctluHardware.hh"
+#include "AidaTluController.hh"
+#include "AidaTluHardware.hh"
 #include "FmctluPowerModule.hh"
 
 #include <iostream>
@@ -249,7 +249,7 @@ void FmctluProducer::DoConfigure() {
     m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
     m_tlu->SetDUTMask( (uint32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
-    
+
     m_tlu->SetDUTMaskMode( (uint32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
     m_tlu->SetDUTMaskModeModifier( (uint32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
     m_tlu->SetDUTIgnoreBusy( (uint32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode
