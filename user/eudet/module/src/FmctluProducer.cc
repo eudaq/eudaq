@@ -28,7 +28,7 @@ private:
   bool m_exit_of_run;
   std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
 
-  std::unique_ptr<tlu::FmctluController> m_tlu;
+  std::unique_ptr<tlu::AidaTluController> m_tlu;
   uint64_t m_lasttime;
 
   uint32_t m_verbose;
@@ -129,7 +129,7 @@ void FmctluProducer::DoInitialise(){
   std::string uhal_node;
   uhal_conn = ini->Get("ConnectionFile", uhal_conn);
   uhal_node = ini->Get("DeviceName",uhal_node);
-  m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
+  m_tlu = std::unique_ptr<tlu::AidaTluController>(new tlu::AidaTluController(uhal_conn, uhal_node));
 
   if( ini->Get("skipini", false) ){
     std::cout << "SKIPPING INITIALIZATION (skipini= 1)" << std::endl;

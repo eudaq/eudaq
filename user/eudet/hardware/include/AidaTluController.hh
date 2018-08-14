@@ -21,10 +21,10 @@ namespace tlu {
 
   class fmctludata;
 
-  class FmctluController {
+  class AidaTluController {
   public:
-    FmctluController(const std::string & connectionFilename, const std::string & deviceName);
-    ~FmctluController(){ResetEventsBuffer();};
+    AidaTluController(const std::string & connectionFilename, const std::string & deviceName);
+    ~AidaTluController(){ResetEventsBuffer();};
 
     void configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose);
     void enableHDMI(unsigned int dutN, bool enable, bool verbose);

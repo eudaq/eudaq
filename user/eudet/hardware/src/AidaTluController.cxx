@@ -1,4 +1,4 @@
-#include "FmctluController.hh"
+#include "AidaTluController.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
@@ -85,7 +85,7 @@ int main(int /*argc*/, char ** argv) {
     }
     signal(SIGINT, ctrlchandler);
 
-    FmctluController TLU(ConnectionFile.Value() , DeviceName.Value() );
+    AidaTluController TLU(ConnectionFile.Value() , DeviceName.Value() );
 
     TLU.ResetSerdes();
     TLU.ResetCounters();
