@@ -122,7 +122,7 @@ void AidaTluProducer::DoInitialise(){
      Define the main hardware parameters.
   */
   auto ini = GetInitConfiguration();
-  std::cout << "INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
+  std::cout << "  INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
   //std::string uhal_conn = "file://./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_connection.xml";
   //std::string uhal_node = "fmctlu.udp";
   std::string uhal_conn;

@@ -16,14 +16,12 @@
 namespace tlu {
   AidaTluController::AidaTluController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_DACaddr(0), m_IDaddr(0) {
 
-    //m_i2c = new i2cCore(connectionFilename, deviceName);
-    std::cout << "Configuring from " << connectionFilename << " the device " << deviceName << std::endl;
+    std::string myMsg= "CONFIGURING FROM " + connectionFilename + " THE DEVICE " + deviceName + "\t";
+    EUDAQ_INFO(myMsg);
     if(!m_hw) {
       ConnectionManager manager ( connectionFilename );
-      //uhal::setLogLevelTo(uhal::Error()); //  Get rid of initial flood of messages for address map
       SetUhalLogLevel(2); //  Get rid of initial flood of messages for address map
       m_hw = new uhal::HwInterface(manager.getDevice( deviceName )); // <<
-      //std::cout << m_hw->uri() << std::endl;
       m_i2c = new i2cCore(m_hw);
       GetFW();
       m_IPaddress= parseURI();
@@ -178,7 +176,10 @@ namespace tlu {
   uint32_t AidaTluController::GetFW(){
     uint32_t res;
     res= ReadRRegister("version");
-    std::cout << "TLU FIRMWARE VERSION= 0x" << std::hex<< res <<std::dec<< std::endl;
+    std::stringstream ss; //Use a string stream to do all the manipulation necessary
+    ss << "AIDA TLU FIRMWARE VERSION " << std::hex << std::showbase  << res << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
     return res;
   }
 
@@ -279,13 +280,14 @@ namespace tlu {
   std::string AidaTluController::parseURI(){
     std::string myURI= m_hw->uri();
     std::string delimiter;
+    std::stringstream ss;
     if (myURI.find("ipbusudp") != std::string::npos) {
       //std::cout << myURI << std::endl;
       delimiter = "://";
       myURI = myURI.substr(myURI.find(delimiter)+3);
       delimiter = ":";
       myURI = myURI.substr(0, myURI.find(delimiter));
-      std::cout << "  Using IPBus with IP= " << myURI << std::endl;
+      ss << "USING IPBus WITH IP= " << myURI << "\t";
     }
     if (myURI.find("chtcp") != std::string::npos) {
       //std::cout << myURI << std::endl;
@@ -293,8 +295,10 @@ namespace tlu {
       myURI = myURI.substr(myURI.find(delimiter)+3);
       delimiter = ":";
       myURI = myURI.substr(0, myURI.find(delimiter));
-      std::cout << "  Using ControlHub with IP= " << myURI << std::endl;
+      ss << "USING ControlHub WITH IP= " << myURI << "\t";
     }
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
     return myURI;
   }
 
@@ -309,12 +313,17 @@ namespace tlu {
       m_BoardID[iaddr]= ((uint)nibble)&0xff;
     }
 
-    std::cout << "  TLU unique ID:";
-    for(int iaddr =0; iaddr < nwords; iaddr++) {
-      std::cout << " " << std::setw(2) << std::setfill('0') << std::hex <<  m_BoardID[iaddr];
+    std::stringstream ss; //Use a string stream to do all the manipulation necessary
+    ss << "AIDA TLU UNIQUE ID:" ;
+    for(int iaddr =0; iaddr < nwords/2; iaddr++) {
+      ss << " " << std::setw(2) << std::setfill('0') << std::hex <<  m_BoardID[2*iaddr] << m_BoardID[2*iaddr+1];
     }
-    std::cout << " " << std::endl;
-    std::cout.flags( coutflags );
+    ss << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
+
+    //std::cout << " " << std::endl;
+    //std::cout.flags( coutflags );
     return m_BoardID;
   }
 
@@ -336,7 +345,8 @@ namespace tlu {
     std::bitset<8> resbit(res);
     if (resbit.test(7))
       {
-	std::cout << "\tWarning: enabling Enclustra I2C bus might have failed. This could prevent from talking to the I2C slaves on the TLU." << int(res) << std::endl;
+	       std::cout << "\tWarning: enabling Enclustra I2C bus might have failed. This could prevent from talking to the I2C slaves on the TLU." << int(res) << std::endl;
+         EUDAQ_WARN("The Enclustra I2C bus is not correctly enabled.");
       }else{
       std::cout << "\tSuccess." << std::endl;
     }
@@ -411,55 +421,43 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave CORE" << std::endl;
         }
         else if (myaddr== m_I2C_address.clockChip){
-          //std::cout << "\tFOUND I2C slave CLOCK (0x" << std::hex << myaddr << ")"<< std::endl;
-          std::cout << "\t0x" << std::hex << myaddr << " : CLOCK CHIP found."<< std::endl;
+          std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : CLOCK CHIP found."<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC1){
-          //std::cout << "\tFOUND I2C slave DAC1 (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : DAC1 found."<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC2){
-          //std::cout << "\tFOUND I2C slave DAC2 (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : DAC2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.EEPROM){
           m_IDaddr= myaddr;
-          //std::cout << "\tFOUND I2C slave EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : EEPROM found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.expander1){
-          //std::cout << "\tFOUND I2C slave EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER1 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.expander2){
-          //std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.ledxp1addr){
-          //std::cout << "\tFOUND I2C slave POWER MODULE EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER1 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.ledxp2addr){
-          //std::cout << "\tFOUND I2C slave POWER MODULE EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.pwraddr){
-          //std::cout << "\tFOUND I2C slave POWER MODULE DAC (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE DAC found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.pwrId){
-          //std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EEPROM found."<< std::endl;
           m_powerModuleType= myaddr;
         }
         else if (myaddr==m_I2C_address.lcdDisp){
-          //std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
           std::cout << "\t0x" << std::hex << myaddr << " : LCD DISPLAY found."<< std::endl;
           m_hasDisplay= true;
         }
         else{
-          //std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
-          std::cout << "\t0x" << std::hex << myaddr << " : UNKNOWN DEVICE. Not on AIDA TLU address list." << std::endl;
+          std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : UNKNOWN DEVICE. Not on AIDA TLU address list." << std::endl;
         }
       }
       SetI2CTX(0x0);

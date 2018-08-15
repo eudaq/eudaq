@@ -16,7 +16,7 @@ void PWRLED::testme(){
 }
 
 PWRLED::PWRLED(){
-  std::cout << "  TLU_POWERMODULE: Instantiated xxxx" << std::endl;
+  std::cout << "  AIDA_TLU POWERMODULE: Instantiated" << std::endl;
   //std::vector<RGB_array> indicatorXYZ;
   //std::array<RGB_array, 11> indicatorXYZ{{30, 29, 31}, {27, 26, 28}, {24, 23, 25}, {21, 20, 22}, {18, 17, 19}, {15, 14, 16}, {12, 11, 13}, {9, 8, 10}, {6, 5, 7}, {3, 2, 4}, {1, 0, -1}};
 }
@@ -27,7 +27,7 @@ PWRLED::PWRLED( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add, cha
   pwr_i2c_exp1Add= Exp1Add;
   pwr_i2c_exp2Add= Exp2Add;
   pwr_i2c_eeprom= IdAdd;
-  std::cout << "  TLU_POWERMODULE: Instantiated abcd" << std::endl;
+  std::cout << "  AIDA_TLU POWERMODULE: Instantiated" << std::endl;
   if (IdAdd){
     std::cout << "\tTYPE: new" << std::endl;
     //std::cout << "\tI2C addr: 0x" << std::hex<< (int)IdAdd << std::dec << "(EEPROM)" << std::endl;
