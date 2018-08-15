@@ -16,7 +16,7 @@ endif()
 
 if(NOT USER_BUILD_FMCTLU)
   list(REMOVE_ITEM MODULE_SRC src/MinitluProducer.cc)
-  list(REMOVE_ITEM MODULE_SRC src/FmctluProducer.cc)
+  list(REMOVE_ITEM MODULE_SRC src/AidaTluProducer.cc)
 endif()
 
 #get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)

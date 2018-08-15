@@ -1,4 +1,4 @@
-#include "FmctluHardware.hh"
+#include "AidaTluHardware.hh"
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -120,7 +120,7 @@ void PCA9539PW::setInvertReg(unsigned int memAddr, unsigned char polarity= 0x00,
     return;
   }
   if (verbose){
-    std::cout << "PCA9539PW - Setting register " << (int)memAddr+4 << " to " << std::hex << (int)polarity << std::dec<< std::endl;
+    std::cout << "\tPCA9539PW - Setting register " << (int)memAddr+4 << " to " << std::hex << (int)polarity << std::dec<< std::endl;
   }
   polarity = polarity & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+4, (unsigned char)polarity);
@@ -146,7 +146,7 @@ void PCA9539PW::setIOReg(unsigned int memAddr, unsigned char direction= 0xFF, bo
     return;
   }
   if (verbose){
-    std::cout << "PCA9539PW - Setting register " << (int)memAddr+6 << " to " << std::hex <<(int)direction << std::dec<< std::endl;
+    std::cout << "\tPCA9539PW - Setting register " << (int)memAddr+6 << " to " << std::hex <<(int)direction << std::dec<< std::endl;
   }
   direction = direction & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+6, (unsigned char)direction);
@@ -286,22 +286,26 @@ void Si5345::writeRegister(unsigned int myaddr, unsigned char data, bool verbose
   }
 }
 
-void Si5345::checkDesignID(){
+std::string Si5345::checkDesignID(){
   unsigned int regAddr= 0x026B;
   int nWords= 8;
   std::vector<char> resVec;
   char res;
+  std::stringstream ss;
 
   for (int i=0; i< nWords; i++){
     res= readRegister(regAddr);
     resVec.push_back(res);
     regAddr++;
   }
-  std::cout << "  Si5345 design Id:\n\t" ;
+  //std::cout << "  Si5345 design Id:\n\t" ;
   for (int i=0; i< nWords; i++){
-    std::cout << resVec[i] ;
+    //std::cout << resVec[i] ;
+    ss << resVec[i] ;
   }
-  std::cout  << std::endl;
+  //std::cout  << std::endl;
+  std::string desID = ss.str();
+  return desID;
 }
 
 std::vector< std::vector< unsigned int> > Si5345::parseClkFile(const std::string & filename, bool verbose){

@@ -1,13 +1,13 @@
-#ifndef H_FMCTLUCONTROLLER_HH
-#define H_FMCTLUCONTROLLER_HH
+#ifndef H_AIDATLUCONTROLLER_HH
+#define H_AIDATLUCONTROLLER_HH
 
 #include <deque>
 #include <string>
 #include <vector>
 #include <iostream>
-#include "FmctluI2c.hh"
-#include "FmctluHardware.hh"
-#include "FmctluPowerModule.hh"
+#include "AidaTluI2c.hh"
+#include "AidaTluHardware.hh"
+#include "AidaTluPowerModule.hh"
 #include "AidaTluDisplay.hh"
 
 typedef unsigned char uchar_t;
@@ -21,10 +21,10 @@ namespace tlu {
 
   class fmctludata;
 
-  class FmctluController {
+  class AidaTluController {
   public:
-    FmctluController(const std::string & connectionFilename, const std::string & deviceName);
-    ~FmctluController(){ResetEventsBuffer();};
+    AidaTluController(const std::string & connectionFilename, const std::string & deviceName);
+    ~AidaTluController(){ResetEventsBuffer();};
 
     void configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose);
     void enableHDMI(unsigned int dutN, bool enable, bool verbose);
