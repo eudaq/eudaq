@@ -60,7 +60,7 @@ public:
   unsigned int getDeviceVersion();
   char readRegister(unsigned int myaddr, bool verbose);
   void writeRegister(unsigned int myaddr, unsigned char data, bool verbose);
-  void checkDesignID();
+  std::string checkDesignID();
   std::vector< std::vector< unsigned int> > parseClkFile(const std::string & filename, bool verbose);
   void writeConfiguration(std::vector< std::vector< unsigned int> > regSetting, bool verbose);
 };

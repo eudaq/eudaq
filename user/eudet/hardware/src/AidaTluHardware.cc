@@ -286,22 +286,26 @@ void Si5345::writeRegister(unsigned int myaddr, unsigned char data, bool verbose
   }
 }
 
-void Si5345::checkDesignID(){
+std::string Si5345::checkDesignID(){
   unsigned int regAddr= 0x026B;
   int nWords= 8;
   std::vector<char> resVec;
   char res;
+  std::stringstream ss;
 
   for (int i=0; i< nWords; i++){
     res= readRegister(regAddr);
     resVec.push_back(res);
     regAddr++;
   }
-  std::cout << "  Si5345 design Id:\n\t" ;
+  //std::cout << "  Si5345 design Id:\n\t" ;
   for (int i=0; i< nWords; i++){
-    std::cout << resVec[i] ;
+    //std::cout << resVec[i] ;
+    ss << resVec[i] ;
   }
-  std::cout  << std::endl;
+  //std::cout  << std::endl;
+  std::string desID = ss.str();
+  return desID;
 }
 
 std::vector< std::vector< unsigned int> > Si5345::parseClkFile(const std::string & filename, bool verbose){

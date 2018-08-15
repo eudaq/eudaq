@@ -354,6 +354,7 @@ namespace tlu {
 
   int AidaTluController::InitializeClkChip(const std::string & filename){
     std::vector< std::vector< unsigned int> > tmpConf;
+    std::stringstream ss;
     m_zeClock.SetI2CPar(m_i2c, m_I2C_address.clockChip);
     m_zeClock.getDeviceVersion();
     //std::string filename = "/users/phpgb/workspace/myFirmware/AIDA/bitFiles/TLU_CLK_Config.txt";
@@ -362,7 +363,10 @@ namespace tlu {
       return -1;
     }
     m_zeClock.writeConfiguration(tmpConf, false);
-    m_zeClock.checkDesignID();
+
+    ss << "Si5345 design Id: " << m_zeClock.checkDesignID() << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
     return 0;
   }
 
@@ -475,7 +479,7 @@ namespace tlu {
     std::cout.flags( coutflags ); // Restore cout flags
 
     if (m_hasDisplay){
-      EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+      EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.\t");
       m_lcddisp.setParameters(m_i2c, m_I2C_address.lcdDisp, 2, 16);
       std::cout << "  AIDA_TLU LCD: Initialising" << std::endl;
 
@@ -655,7 +659,7 @@ namespace tlu {
   void AidaTluController::SetDUTMask(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTMaskW",value);
     if (verbose){
-      std::cout << "Writing DUTMask: 0x" << std::hex << (uint32_t)value  << std::endl;
+      std::cout << "  Writing DUTMask: 0x" << std::hex << (uint32_t)value  << std::endl;
       GetDUTMask();
     }
   };
@@ -663,7 +667,7 @@ namespace tlu {
   void AidaTluController::SetDUTMaskMode(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
     if (verbose){
-      std::cout << "Writing DUTInterfaceMode: 0x" << std::hex << value  <<std::dec << std::endl;
+      std::cout << "  Writing DUTInterfaceMode: 0x" << std::hex << value  <<std::dec << std::endl;
       GetDUTMaskMode();
     }
   };
@@ -671,7 +675,7 @@ namespace tlu {
   void AidaTluController::SetDUTMaskModeModifier(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
     if (verbose){
-      std::cout << "Writing DUTModeModifier: 0x" << std::hex << value << std::endl;
+      std::cout << "  Writing DUTModeModifier: 0x" << std::hex << value << std::endl;
       GetDUTMaskModeModifier();
     }
   };
@@ -679,7 +683,7 @@ namespace tlu {
   void AidaTluController::SetDUTIgnoreBusy(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Busy: 0x" << std::hex << value << std::endl;
+      std::cout << "  Writing DUT Ignore Busy: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreBusy();
     }
   };
@@ -687,7 +691,7 @@ namespace tlu {
   void AidaTluController::SetShutterControl(uint32_t value, bool verbose){
     SetWRegister("Shutter.ControlRW",value);
     if (verbose){
-      std::cout << "Writing ShutterControl (dec): " << value << std::endl;
+      std::cout << "  Writing ShutterControl (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
@@ -695,7 +699,7 @@ namespace tlu {
   void AidaTluController::SetShutterInternalInterval(uint32_t value, bool verbose){
     SetWRegister("Shutter.InternalShutterPeriodRW",value);
     if (verbose){
-      std::cout << "Writing InternalShutterPeriod (dec): " << value << std::endl;
+      std::cout << "  Writing InternalShutterPeriod (dec): " << value << std::endl;
       GetShutterInternalInterval();
     }
   };
@@ -703,7 +707,7 @@ namespace tlu {
   void AidaTluController::SetShutterSource(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterSelectRW",value);
     if (verbose){
-      std::cout << "Writing ShutterSource (dec): " << value << std::endl;
+      std::cout << "  Writing ShutterSource (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
@@ -711,7 +715,7 @@ namespace tlu {
    void AidaTluController::SetShutterOnTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterOnTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterOnTime (dec): " << value << std::endl;
+      std::cout << "  Writing ShutterOnTime (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
@@ -719,7 +723,7 @@ namespace tlu {
    void AidaTluController::SetShutterOffTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterOffTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterOffTime (dec): " << value << std::endl;
+      std::cout << "  Writing ShutterOffTime (dec): " << value << std::endl;
       GetShutterOffTime();
     }
   };
@@ -727,7 +731,7 @@ namespace tlu {
    void AidaTluController::SetShutterVetoOffTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterVetoOffTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterVetoOffTime (dec): " << value << std::endl;
+      std::cout << "  Writing ShutterVetoOffTime (dec): " << value << std::endl;
       GetShutterVetoOffTime();
     }
   };
@@ -735,7 +739,7 @@ namespace tlu {
   void AidaTluController::SetDUTIgnoreShutterVeto(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Veto: 0x" << std::hex << value << std::endl;
+      std::cout << "  Writing DUT Ignore Veto: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreShutterVeto();
     }
   };
@@ -745,7 +749,7 @@ namespace tlu {
     uint32_t interval;
     uint32_t actual_interval;
     if (user_freq > max_freq){
-      std::cout << "SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
+      std::cout << "  SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
       user_freq= max_freq;
     }
     if (user_freq==0){
