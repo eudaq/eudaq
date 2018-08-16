@@ -31,7 +31,7 @@ void AD5665R::SetI2CPar( i2cCore *mycore, char addr ) {
   m_i2cAddr= addr;
 }
 
-void AD5665R::SetIntRef(bool intRef, bool verbose){
+void AD5665R::SetIntRef(bool intRef, uint8_t verbose){
   // Configure the voltage reference for the DACs.
   // Normally we want to use the external one
   std::string stat;
@@ -49,15 +49,17 @@ void AD5665R::SetIntRef(bool intRef, bool verbose){
     //cmdDAC= [0x38,0x00,0x00]
   }
   m_DACcore->WriteI2CCharArray(m_i2cAddr, 0x38, chrsToSend, 2);
-  if (verbose)
+  if (verbose > 0){
     std::cout << "  DAC (0x"<< std::hex<< (int)m_i2cAddr << std::dec <<") reference set to " << stat << std::endl;
+  }
 }
 
-void AD5665R::SetDACValue(unsigned char channel, uint32_t value) {
+void AD5665R::SetDACValue(unsigned char channel, uint32_t value, uint8_t verbose){
   unsigned char chrsToSend[2];
 
-  std::cout << "\tSetting DAC channel " << (unsigned int)channel << " to " << value << std::endl;
-
+  if (verbose > 0){
+    std::cout << "\tSetting DAC channel " << (unsigned int)channel << " to " << value << std::endl;
+  }
   if (( (unsigned int)channel < 0 ) || ( 7 < (unsigned int)channel )){
     std::cout << "\tAD5665R - ERROR: channel " << int(channel)  << " not in range 0-7" << std::endl;
     return;
@@ -90,7 +92,7 @@ void PCA9539PW::SetI2CPar( i2cCore *mycore, char addr ) {
   m_i2cAddr= addr;
 }
 
-void PCA9539PW::writeReg(unsigned int memAddr, unsigned char regContent, bool verbose= false){
+void PCA9539PW::writeReg(unsigned int memAddr, unsigned char regContent, uint8_t verbose){
   //Basic functionality to write to register.
   if ((memAddr < 0) || (memAddr > 7)){
     std::cout << "PCA9539PW - ERROR: register number should be in range [0:7]" << std::endl;
@@ -100,7 +102,7 @@ void PCA9539PW::writeReg(unsigned int memAddr, unsigned char regContent, bool ve
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr, (unsigned char)regContent);
 }
 
-char PCA9539PW::readReg(unsigned int memAddr, bool verbose= false){
+char PCA9539PW::readReg(unsigned int memAddr, uint8_t verbose){
   //Basic functionality to read from register.
   char res;
   if ((memAddr < 0) || (memAddr > 7)){
@@ -112,21 +114,21 @@ char PCA9539PW::readReg(unsigned int memAddr, bool verbose= false){
 }
 
 //The functions below should really be implemented with just one function and a switch/case...
-void PCA9539PW::setInvertReg(unsigned int memAddr, unsigned char polarity= 0x00, bool verbose= false){
+void PCA9539PW::setInvertReg(unsigned int memAddr, unsigned char polarity= 0x00, uint8_t verbose=0){
   //Set the content of register 4 or 5 which determine the polarity of the
   //ports (0= normal, 1= inverted).
   if ((memAddr != 0) && (memAddr != 1)){
     std::cout << "PCA9539PW - ERROR: regN should be 0 or 1" << std::endl;
     return;
   }
-  if (verbose){
+  if (verbose > 2){
     std::cout << "\tPCA9539PW - Setting register " << (int)memAddr+4 << " to " << std::hex << (int)polarity << std::dec<< std::endl;
   }
   polarity = polarity & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+4, (unsigned char)polarity);
 }
 
-char PCA9539PW::getInvertReg(unsigned int memAddr, bool verbose= false){
+char PCA9539PW::getInvertReg(unsigned int memAddr, uint8_t verbose){
   //Read the content of register 4 or 5 which determine the polarity of the
   //ports (0= normal, 1= inverted).
   char res;
@@ -138,21 +140,21 @@ char PCA9539PW::getInvertReg(unsigned int memAddr, bool verbose= false){
   return res;
 }
 
-void PCA9539PW::setIOReg(unsigned int memAddr, unsigned char direction= 0xFF, bool verbose= false){
+void PCA9539PW::setIOReg(unsigned int memAddr, unsigned char direction= 0xFF, uint8_t verbose=0){
   //Set the content of register 6 or 7 which determine the direction of the
   //ports (0= output, 1= input).
   if ((memAddr != 0) && (memAddr != 1)){
     std::cout << "PCA9539PW - ERROR: regN should be 0 or 1" << std::endl;
     return;
   }
-  if (verbose){
+  if (verbose > 2){
     std::cout << "\tPCA9539PW - Setting register " << (int)memAddr+6 << " to " << std::hex <<(int)direction << std::dec<< std::endl;
   }
   direction = direction & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+6, (unsigned char)direction);
 }
 
-char PCA9539PW::getIOReg(unsigned int memAddr, bool verbose= false){
+char PCA9539PW::getIOReg(unsigned int memAddr,uint8_t  verbose){
   //Read the content of register 6 or 7 which determine the direction of the
   //ports (0= output, 1= input).
   char res;
@@ -164,7 +166,7 @@ char PCA9539PW::getIOReg(unsigned int memAddr, bool verbose= false){
   return res;
 }
 
-char PCA9539PW::getInputs(unsigned int memAddr, bool verbose= false){
+char PCA9539PW::getInputs(unsigned int memAddr, uint8_t verbose){
   //Read the incoming values of the pins for one of the two 8-bit banks.
   char res;
   if ((memAddr != 0) && (memAddr != 1)){
@@ -175,21 +177,21 @@ char PCA9539PW::getInputs(unsigned int memAddr, bool verbose= false){
   return res;
 }
 
-void PCA9539PW::setOutputs(unsigned int memAddr, unsigned char direction= 0xFF, bool verbose= false){
+void PCA9539PW::setOutputs(unsigned int memAddr, unsigned char direction= 0xFF, uint8_t verbose=0){
   //Set the content of register 6 or 7 which determine the direction of the
   //ports (0= output, 1= input).
   if ((memAddr != 0) && (memAddr != 1)){
     std::cout << "PCA9539PW - ERROR: regN should be 0 or 1" << std::endl;
     return;
   }
-  if (verbose){
+  if (verbose > 2){
     std::cout << "PCA9539PW - Setting register " << (int)memAddr+2 << " to " << std::hex << (int)direction << std::dec<< std::endl;
   }
   direction = direction & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+2, (unsigned char)direction);
 }
 
-char PCA9539PW::getOutputs(unsigned int memAddr, bool verbose= false){
+char PCA9539PW::getOutputs(unsigned int memAddr, uint8_t verbose){
   //Read the incoming values of the pins for one of the two 8-bit banks.
   char res;
   if ((memAddr != 0) && (memAddr != 1)){
@@ -213,53 +215,55 @@ void Si5345::SetI2CPar( i2cCore *mycore, char addr ) {
   m_i2cAddr= addr;
 }
 
-void Si5345::setPage(unsigned int page, bool verbose=false){
+void Si5345::setPage(unsigned int page, uint8_t verbose){
   //Configure the chip to perform operations on the specified address page.
   m_Clkcore->WriteI2CChar(m_i2cAddr, 0x01, (unsigned char)page);
-  if (verbose){
+  if (verbose > 2){
     std::cout << "  Si5345 Set Reg Page: " <<  page << std::endl;
   }
 }
 
-char Si5345::getPage(bool verbose= false){
+char Si5345::getPage(uint8_t verbose){
   //Read the current address page
   char res;
   res= m_Clkcore->ReadI2CChar(m_i2cAddr, 0x01);
-  if (verbose){
+  if (verbose > 2){
     std::cout << "\tPage read: " << res << std::endl;
   }
   return res;
 }
 
-unsigned int Si5345::getDeviceVersion(){
+unsigned int Si5345::getDeviceVersion(uint8_t verbose){
   //Read registers containing chip information
   int nwords=2;
   unsigned char myaddr = 0x02;
   unsigned int chipID;
-  setPage(0);
+  setPage(0, verbose);
   for(int i=0; i< nwords; i++) {
     char nibble = m_Clkcore->ReadI2CChar(m_i2cAddr, myaddr);
     chipID = ((((uint64_t)nibble)&0xff)<<(i*8))|chipID;
     myaddr++;
   }
-  std::cout <<  "  Si5345 EPROM: " << std::endl;
-  std::cout << std::hex << "\t" <<chipID << std::dec<< std::endl;
+  if (verbose > 0){
+    std::cout <<  "  Si5345 EPROM: " << std::endl;
+    std::cout << std::hex << "\t" <<chipID << std::dec<< std::endl;
+  }
   return chipID;
 }
 
-char Si5345::readRegister(unsigned int myaddr, bool verbose= false){
+char Si5345::readRegister(unsigned int myaddr, uint8_t verbose){
   //Read a specific register on the Si5344 chip. There is not check on the validity of the address but
   //the code sets the correct page before reading.
 
   //First make sure we are on the correct page
-  char currentPg= getPage();
+  char currentPg= getPage(verbose);
   char requirePg;
   requirePg= (myaddr & 0xFF00) >> 8;
-  if (verbose){
+  if (verbose > 2){
     std::cout << "REG" << std::hex << (int)myaddr <<  " CURR PG " << (int)currentPg << " REQ PG " << (int)requirePg << std::dec << std::endl;
   }
   if (currentPg != requirePg){
-    setPage(requirePg);
+    setPage(requirePg, verbose);
   }
   //Now read from register
   char res = m_Clkcore->ReadI2CChar(m_i2cAddr, myaddr);
@@ -267,26 +271,26 @@ char Si5345::readRegister(unsigned int myaddr, bool verbose= false){
 }
 
 
-void Si5345::writeRegister(unsigned int myaddr, unsigned char data, bool verbose= false){
+void Si5345::writeRegister(unsigned int myaddr, unsigned char data, uint8_t verbose){
   /// Write a specific register on the Si5344 chip. There is not check on the validity of the address but
   /// the code sets the correct page before reading.
 
   //First make sure we are on the correct page
   myaddr= myaddr & 0xFFFF;
-  char currentPg= getPage();
+  char currentPg= getPage(verbose);
   char requirePg;
   requirePg= (myaddr & 0xFF00) >> 8;
   if (currentPg != requirePg){
-    setPage(requirePg);
+    setPage(requirePg, verbose);
   }
   //Now write to register
   m_Clkcore->WriteI2CChar(m_i2cAddr, myaddr, (unsigned char)data);
-  if (verbose){
+  if (verbose > 2){
     std::cout << "  Writing: 0x" << std:: hex << (int)data << " to reg 0x" << (int)myaddr << std::dec << std:: endl;
   }
 }
 
-std::string Si5345::checkDesignID(){
+std::string Si5345::checkDesignID(uint8_t verbose){
   unsigned int regAddr= 0x026B;
   int nWords= 8;
   std::vector<char> resVec;
@@ -294,7 +298,7 @@ std::string Si5345::checkDesignID(){
   std::stringstream ss;
 
   for (int i=0; i< nWords; i++){
-    res= readRegister(regAddr);
+    res= readRegister(regAddr, verbose);
     resVec.push_back(res);
     regAddr++;
   }
@@ -308,12 +312,12 @@ std::string Si5345::checkDesignID(){
   return desID;
 }
 
-std::vector< std::vector< unsigned int> > Si5345::parseClkFile(const std::string & filename, bool verbose){
+std::vector< std::vector< unsigned int> > Si5345::parseClkFile(const std::string & filename, uint8_t verbose){
   //Parse the configuration file produced by Clockbuilder Pro (Silicon Labs)
   //Returns a 2-dimensional vector with each row being a couple (ADDRESS, DATA)
   //It could be improved by using pairs. Not sure if the library can be included.
   std::vector< std::vector< unsigned int> > regSetting;
-  if (1){
+  if (verbose > 0){
     std::cout << "  Parsing clock configuration file:" << std::endl;
     std::cout << "\t" << filename << std::endl;
   }
@@ -332,7 +336,7 @@ std::vector< std::vector< unsigned int> > Si5345::parseClkFile(const std::string
 	if ( regAddress != "Address"){
 	  unsigned int new_address = std::stoul(regAddress, nullptr, 16);
 	  unsigned int new_data = std::stoul(regData, nullptr, 16);
-	  if (verbose){
+	  if (verbose > 2){
 	    std::cout << "\tAddress " << std::hex << new_address << " --- Data " << new_data <<  std::endl;
 	  }
 	  tmpVec.push_back(new_address);
@@ -352,7 +356,7 @@ std::vector< std::vector< unsigned int> > Si5345::parseClkFile(const std::string
 }
 
 
-void Si5345::writeConfiguration(std::vector< std::vector< unsigned int> > regSetting, bool verbose){
+void Si5345::writeConfiguration(std::vector< std::vector< unsigned int> > regSetting, uint8_t verbose){
   std::ios::fmtflags coutflags( std::cout.flags() );// Store cout flags to be able to restore them
 
   std::cout << "  Si5345 Writing configuration (" << regSetting.size() << " registers):" << std::endl;
@@ -365,7 +369,7 @@ void Si5345::writeConfiguration(std::vector< std::vector< unsigned int> > regSet
   std::cout.setf ( std::ios::hex, std::ios::basefield );  // set hex as the basefield
   std::cout.setf ( std::ios::showbase ); // show radix
   for(int iRow=0; iRow < nRows; iRow++){
-    if (verbose){
+    if (verbose > 2){
       std::cout << "\tADDR \t" << std::hex << regSetting[iRow][0] << " DATA \t " <<  regSetting[iRow][1] << std::endl;
     }
     std::cout << std::dec<< "\r\t" << std::setw(3) << std::setfill('0') << iRow+1  << "/"<< regSetting.size() << std::flush;

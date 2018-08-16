@@ -31,7 +31,7 @@ private:
   std::unique_ptr<tlu::AidaTluController> m_tlu;
   uint64_t m_lasttime;
 
-  uint32_t m_verbose;
+  uint8_t m_verbose;
   uint32_t m_delayStart;
 };
 
@@ -135,6 +135,8 @@ void AidaTluProducer::DoInitialise(){
     std::cout << "SKIPPING INITIALIZATION (skipini= 1)" << std::endl;
   }
   else{
+
+    m_verbose= ini->Get("verbose", 0);
     // Define constants
     m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
 
@@ -151,13 +153,13 @@ void AidaTluProducer::DoInitialise(){
     m_tlu->SetI2C_disp_addr(ini->Get("I2C_disp_Addr",0x3A));
 
     // Initialize TLU hardware
-    m_tlu->InitializeI2C();
-    m_tlu->InitializeIOexp();
+    m_tlu->InitializeI2C(m_verbose);
+    m_tlu->InitializeIOexp(m_verbose);
     if (ini->Get("intRefOn", false)){
-      m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefInt", 2.5));
+      m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefInt", 2.5), m_verbose);
     }
     else{
-      m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
+      m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3), m_verbose);
     }
 
     // Initialize the Si5345 clock chip using pre-generated file
@@ -169,7 +171,7 @@ void AidaTluProducer::DoInitialise(){
         EUDAQ_WARN("AIDA TLU: Could not find the parameter for clock configuration in the INI file. Using the default.");
       }
       int clkres;
-      clkres= m_tlu->InitializeClkChip( clkConfFile  );
+      clkres= m_tlu->InitializeClkChip( clkConfFile, m_verbose  );
       if (clkres == -1){
         EUDAQ_ERROR("AIDA TLU: clock configuration failed.");
       }
@@ -188,12 +190,17 @@ void AidaTluProducer::DoInitialise(){
 }
 
 void AidaTluProducer::DoConfigure() {
+  std::stringstream ss;
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
   m_verbose= conf->Get("verbose", 0);
   std::cout << "VERBOSE SET TO: " << m_verbose << std::endl;
   m_delayStart= conf->Get("delayStart", 0);
-  std::cout << "DELAY START SET TO: " << std::dec << m_delayStart << " ms" << std::endl;
+
+  ss << "AIDA_TLU DELAY START SET TO: " << m_delayStart << " ms\t" ;
+  std::string myMsg = ss.str();
+  EUDAQ_INFO(myMsg);
+
 
   m_tlu->SetTriggerVeto(1);
   if( conf->Get("skipconf", false) ){
@@ -216,12 +223,12 @@ void AidaTluProducer::DoConfigure() {
     m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), m_verbose);
 
     // Set thresholds
-    m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
-    m_tlu->SetThresholdValue(1, conf->Get("DACThreshold1", 1.2));
-    m_tlu->SetThresholdValue(2, conf->Get("DACThreshold2", 1.2));
-    m_tlu->SetThresholdValue(3, conf->Get("DACThreshold3", 1.2));
-    m_tlu->SetThresholdValue(4, conf->Get("DACThreshold4", 1.2));
-    m_tlu->SetThresholdValue(5, conf->Get("DACThreshold5", 1.2));
+    m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2), m_verbose);
+    m_tlu->SetThresholdValue(1, conf->Get("DACThreshold1", 1.2), m_verbose);
+    m_tlu->SetThresholdValue(2, conf->Get("DACThreshold2", 1.2), m_verbose);
+    m_tlu->SetThresholdValue(3, conf->Get("DACThreshold3", 1.2), m_verbose);
+    m_tlu->SetThresholdValue(4, conf->Get("DACThreshold4", 1.2), m_verbose);
+    m_tlu->SetThresholdValue(5, conf->Get("DACThreshold5", 1.2), m_verbose);
 
     // Set PMT power
     m_tlu->pwrled_setVoltages(conf->Get("PMT1_V", 0.0), conf->Get("PMT2_V", 0.0), conf->Get("PMT3_V", 0.0), conf->Get("PMT4_V", 0.0), m_verbose);
