@@ -25,10 +25,12 @@ namespace tlu {
       m_i2c = new i2cCore(m_hw);
       GetFW();
       m_IPaddress= parseURI();
+      m_pwrled = new PWRLED();
+      m_lcddisp= new LCD09052();
     }
   }
 
-  void AidaTluController::configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose){
+  void AidaTluController::configureHDMI(unsigned int hdmiN, unsigned int enable, uint8_t verbose){
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
@@ -37,13 +39,14 @@ namespace tlu {
     nDUTs= m_nDUTs;
 
     if ((0 < hdmiN )&&( hdmiN < nDUTs+1 )){
-      std::cout << std::boolalpha << "  Configuring HDMI " << hdmiN << ":" << std::endl;
-
+      if (verbose > 0){
+        std::cout << std::boolalpha << "  Configuring HDMI " << hdmiN << " to: 0x" << std::hex << enable << std::endl;
+      }
       hdmiN = hdmiN-1;  // <<<<< CAREFUL HERE. All the rest is meant to work with [0:3] rather than [1:4}]
       unsigned int bank = (unsigned int)hdmiN / 2; // DUT0 and DUT1 are on bank 0. DUT2 and DUT3 on bank 1
       unsigned int nibble = hdmiN % 2;    // DUT0 and DUT2 are on nibble 0. DUT1 and DUT3 are on nibble 1
 
-      if (verbose){
+      if (verbose > 1){
         std::cout << "\tBank " << bank << " Nibble " << nibble << std::endl;
       }
       // Modify the expander responsible for CONT, TRIG, SPARE and BUSY
@@ -52,13 +55,13 @@ namespace tlu {
       mask = 0xF << 4*nibble; // bits we want to change are marked with 1
       newStatus= (oldStatus & (~mask)) | (newnibble & mask);
 
-      if (verbose){
+      if (verbose > 2){
         std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
       }
       m_IOexpander1.setOutputs(bank, newStatus, verbose);
     }
     else{
-      std::cout << "enableHDMI: connector out of range [1, " << nDUTs << "]" << std::endl;
+      std::cout << "ERROR enableHDMI: connector out of range [1, " << nDUTs << "]" << std::endl;
     }
   }
 
@@ -76,7 +79,7 @@ namespace tlu {
     std::cout<<"AidaTluController::DumpEvents end"<<std::endl;
   }
 
-  void AidaTluController::enableClkLEMO(bool enable, bool verbose= false){
+  void AidaTluController::enableClkLEMO(bool enable, uint8_t verbose){
     int bank=1;
     unsigned char mask= 0x10;
     unsigned char oldStatus;
@@ -89,14 +92,14 @@ namespace tlu {
       newStatus= newStatus | mask;
       outstat= "enabled";
     }
-    std::cout << "  Clk LEMO " << outstat << std::endl;
-    if (verbose){
+    std::cout << "  Clock output on LEMO is " << outstat << std::endl;
+    if (verbose > 2){
       std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
-  void AidaTluController::enableHDMI(unsigned int hdmiN, bool enable, bool verbose= false){
+  void AidaTluController::enableHDMI(unsigned int hdmiN, bool enable, uint8_t verbose){
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
@@ -147,7 +150,7 @@ namespace tlu {
     return shortID;
   }
 
-  uint32_t AidaTluController::GetEventFifoCSR(int verbose) {
+  uint32_t AidaTluController::GetEventFifoCSR(uint8_t verbose) {
     uint32_t res;
     bool empty, alm_empty, alm_full, full, prog_full;
     res= ReadRRegister("eventBuffer.EventFifoCSR");
@@ -261,7 +264,7 @@ namespace tlu {
     return res;
   }
 
-  uint32_t AidaTluController::GetInternalTriggerInterval(int verbose){
+  uint32_t AidaTluController::GetInternalTriggerInterval(uint8_t verbose){
     uint32_t interval;
     uint32_t true_freq;
 
@@ -352,11 +355,11 @@ namespace tlu {
     }
   }
 
-  int AidaTluController::InitializeClkChip(const std::string & filename){
+  int AidaTluController::InitializeClkChip(const std::string & filename, uint8_t verbose){
     std::vector< std::vector< unsigned int> > tmpConf;
     std::stringstream ss;
     m_zeClock.SetI2CPar(m_i2c, m_I2C_address.clockChip);
-    m_zeClock.getDeviceVersion();
+    m_zeClock.getDeviceVersion(verbose);
     //std::string filename = "/users/phpgb/workspace/myFirmware/AIDA/bitFiles/TLU_CLK_Config.txt";
     tmpConf= m_zeClock.parseClkFile(filename, false);
     if (tmpConf.size() == 0){
@@ -364,45 +367,45 @@ namespace tlu {
     }
     m_zeClock.writeConfiguration(tmpConf, false);
 
-    ss << "Si5345 design Id: " << m_zeClock.checkDesignID() << "\t";
+    ss << "Si5345 design Id: " << m_zeClock.checkDesignID(verbose) << "\t";
     std::string myMsg = ss.str();
     EUDAQ_INFO(myMsg);
     return 0;
   }
 
-  void AidaTluController::InitializeDAC(bool intRef, float Vref) {
+  void AidaTluController::InitializeDAC(bool intRef, float Vref, uint8_t verbose) {
     m_zeDAC1.SetI2CPar(m_i2c, m_I2C_address.DAC1);
-    m_zeDAC1.SetIntRef(intRef, true);
+    m_zeDAC1.SetIntRef(intRef, verbose);
     m_zeDAC2.SetI2CPar(m_i2c, m_I2C_address.DAC2);
-    m_zeDAC2.SetIntRef(intRef, true);
-    SetDACref(Vref);
+    m_zeDAC2.SetIntRef(intRef, verbose);
+    SetDACref(Vref, verbose);
   }
 
-  void AidaTluController::InitializeIOexp(){
+  void AidaTluController::InitializeIOexp(uint8_t verbose){
     m_IOexpander1.SetI2CPar(m_i2c, m_I2C_address.expander1);
     m_IOexpander2.SetI2CPar(m_i2c, m_I2C_address.expander2);
 
     //EPX1 bank 0
-    m_IOexpander1.setInvertReg(0, 0x00, false); //0= normal, 1= inverted
-    m_IOexpander1.setIOReg(0, 0x00, false); // 0= output, 1= input
-    m_IOexpander1.setOutputs(0, 0xFF, false); // If setIOReg is output, set to pin to xx
+    m_IOexpander1.setInvertReg(0, 0x00, verbose); //0= normal, 1= inverted
+    m_IOexpander1.setIOReg(0, 0x00, verbose); // 0= output, 1= input
+    m_IOexpander1.setOutputs(0, 0xFF, verbose); // If setIOReg is output, set to pin to xx
     //EPX1 bank 1
-    m_IOexpander1.setInvertReg(1, 0x00, false); // 0= normal, 1= inverted
-    m_IOexpander1.setIOReg(1, 0x00, false);// 0= output, 1= input
-    m_IOexpander1.setOutputs(1, 0xFF, false); // If setIOReg is output, set to pin to xx
+    m_IOexpander1.setInvertReg(1, 0x00, verbose); // 0= normal, 1= inverted
+    m_IOexpander1.setIOReg(1, 0x00, verbose);// 0= output, 1= input
+    m_IOexpander1.setOutputs(1, 0xFF, verbose); // If setIOReg is output, set to pin to xx
 
     //EPX2 bank 0
-    m_IOexpander2.setInvertReg(0, 0x00, false);// 0= normal, 1= inverted
-    m_IOexpander2.setIOReg(0, 0x00, false);// 0= output, 1= input
-    m_IOexpander2.setOutputs(0, 0x00, false);// If setIOReg is output, set to pin to xx
+    m_IOexpander2.setInvertReg(0, 0x00, verbose);// 0= normal, 1= inverted
+    m_IOexpander2.setIOReg(0, 0x00, verbose);// 0= output, 1= input
+    m_IOexpander2.setOutputs(0, 0x00, verbose);// If setIOReg is output, set to pin to xx
     //EPX2 bank 1
-    m_IOexpander2.setInvertReg(1, 0x00, false);// 0= normal, 1= inverted
-    m_IOexpander2.setIOReg(1, 0x00, false);// 0= output, 1= input
-    m_IOexpander2.setOutputs(1, 0xB0, false);// If setIOReg is output, set to pin to xx
+    m_IOexpander2.setInvertReg(1, 0x00, verbose);// 0= normal, 1= inverted
+    m_IOexpander2.setIOReg(1, 0x00, verbose);// 0= output, 1= input
+    m_IOexpander2.setOutputs(1, 0xB0, verbose);// If setIOReg is output, set to pin to xx
     std::cout << "  I/O expanders: initialized" << std::endl;
   }
 
-  void AidaTluController::InitializeI2C() {
+  void AidaTluController::InitializeI2C(uint8_t verbose) {
     std::ios::fmtflags coutflags( std::cout.flags() );// Store cout flags to be able to restore them
 
     SetI2CClockPrescale(0x30);
@@ -425,43 +428,67 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave CORE" << std::endl;
         }
         else if (myaddr== m_I2C_address.clockChip){
-          std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : CLOCK CHIP found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : CLOCK CHIP found."<< std::endl;
+          }
         }
         else if (myaddr== m_I2C_address.DAC1){
-          std::cout << "\t0x" << std::hex << myaddr << " : DAC1 found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : DAC1 found."<< std::endl;
+          }
         }
         else if (myaddr== m_I2C_address.DAC2){
-          std::cout << "\t0x" << std::hex << myaddr << " : DAC2 found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : DAC2 found."<< std::endl;
+          }
         }
         else if (myaddr==m_I2C_address.EEPROM){
           m_IDaddr= myaddr;
-          std::cout << "\t0x" << std::hex << myaddr << " : EEPROM found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : EEPROM found."<< std::endl;
+          }
         }
         else if (myaddr==m_I2C_address.expander1){
-          std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER1 found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER1 found."<< std::endl;
+          }
         }
         else if (myaddr==m_I2C_address.expander2){
-          std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER2 found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER2 found."<< std::endl;
+          }
         }
         else if (myaddr==m_I2C_address.ledxp1addr){
-          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER1 found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER1 found."<< std::endl;
+          }
         }
         else if (myaddr==m_I2C_address.ledxp2addr){
-          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER2 found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER2 found."<< std::endl;
+          }
         }
         else if (myaddr==m_I2C_address.pwraddr){
-          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE DAC found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE DAC found."<< std::endl;
+          }
         }
         else if (myaddr==m_I2C_address.pwrId){
-          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EEPROM found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EEPROM found."<< std::endl;
+          }
           m_powerModuleType= myaddr;
         }
         else if (myaddr==m_I2C_address.lcdDisp){
-          std::cout << "\t0x" << std::hex << myaddr << " : LCD DISPLAY found."<< std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::hex << myaddr << " : LCD DISPLAY found."<< std::endl;
+          }
           m_hasDisplay= true;
         }
         else{
-          std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : UNKNOWN DEVICE. Not on AIDA TLU address list." << std::endl;
+          if (verbose >0){
+            std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : UNKNOWN DEVICE. Not on AIDA TLU address list." << std::endl;
+          }
         }
       }
       SetI2CTX(0x0);
@@ -480,33 +507,32 @@ namespace tlu {
 
     if (m_hasDisplay){
       EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.\t");
-      m_lcddisp.setParameters(m_i2c, m_I2C_address.lcdDisp, 2, 16);
+      m_lcddisp->setParameters(m_i2c, m_I2C_address.lcdDisp, 2, 16);
       std::cout << "  AIDA_TLU LCD: Initialising" << std::endl;
 
-      m_lcddisp.clear();
-      m_lcddisp.writeString("Please wait...");
-      m_lcddisp.pulseLCD(1);
-      m_lcddisp.writeAll("AIDA TLU", m_IPaddress);
+      m_lcddisp->clear();
+      m_lcddisp->writeString("Please wait...");
+      m_lcddisp->pulseLCD(1);
+      m_lcddisp->writeAll("AIDA TLU", m_IPaddress);
     }
   }
 
-  void AidaTluController::pwrled_Initialize(int verbose, unsigned int type) {
+  void AidaTluController::pwrled_Initialize(uint8_t verbose, unsigned int type) {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
-    m_pwrled.setI2CPar( m_i2c , m_I2C_address.pwraddr, m_I2C_address.ledxp1addr, m_I2C_address.ledxp2addr, type);
-    m_pwrled.initI2Cslaves(false, verbose);
-    //int indicator= 1;
-    //std::array<int, 3>RGB{ {1, 0, 1} };
-    //m_pwrled.setIndicatorRGB( indicator, RGB, verbose);
-    m_pwrled.led_allOff();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    m_pwrled.led_allWhite();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    m_pwrled.led_allOff();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    m_pwrled.testLED();
+    m_pwrled->setI2CPar( m_i2c , m_I2C_address.pwraddr, m_I2C_address.ledxp1addr, m_I2C_address.ledxp2addr, type, verbose);
+    m_pwrled->initI2Cslaves(false, verbose);
+    std::cout << "  TLU_POWERMODULE: Testing LEDs (check front panel)... " << std::flush;
+    m_pwrled->led_allOff();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    m_pwrled->led_allWhite();
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    m_pwrled->led_allOff();
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    m_pwrled->testLED();
+    std::cout << "  done." << std::endl;
   }
 
-  void AidaTluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose) {
+  void AidaTluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, uint8_t verbose) {
     // Note that ordering is not 1:1. Mapping is done in here.
     std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
     if (verbose > 0){
@@ -515,10 +541,10 @@ namespace tlu {
       std::cout << "\tV PMT3=" << v4 << "V" << std::endl;
       std::cout << "\tV PMT4=" << v1 << "V" << std::endl;
     }
-    m_pwrled.setVchannel(0, v3, verbose);
-    m_pwrled.setVchannel(1, v2, verbose);
-    m_pwrled.setVchannel(2, v4, verbose);
-    m_pwrled.setVchannel(3, v1, verbose);
+    m_pwrled->setVchannel(0, v3, verbose);
+    m_pwrled->setVchannel(1, v2, verbose);
+    m_pwrled->setVchannel(2, v4, verbose);
+    m_pwrled->setVchannel(3, v1, verbose);
   }
 
   unsigned int AidaTluController::PackBits(std::vector< unsigned int>  rawValues){
@@ -565,7 +591,7 @@ namespace tlu {
     }
   }
 
-  void AidaTluController::ReceiveEvents(int verbose){
+  void AidaTluController::ReceiveEvents(uint8_t verbose){
     //bool verbose= 0;
     uint32_t nevent = GetEventFifoFillLevel()/6;
     uint32_t fifoStatus= GetEventFifoCSR(verbose);
@@ -601,12 +627,13 @@ namespace tlu {
     m_data.clear();
   }
 
-  void AidaTluController::SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose= false){
+  void AidaTluController::SetDutClkSrc(unsigned int hdmiN, unsigned int source, uint8_t verbose){
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
     unsigned char newnibble;
     unsigned char mask, maskLow, maskHigh;
+    std::ostringstream bufferString;
     int bank= 0;
 
     nDUTs= m_nDUTs;
@@ -618,7 +645,8 @@ namespace tlu {
       std::cout << "\tSetDutClkSrc - ERROR: Clock source can only be 0 (disabled), 1 (Si5345) or 2 (FPGA)" << std::endl;
       return;
     }
-    std::cout  << "  Setting HDMI " << hdmiN << " clock source:" << std::endl;
+
+    bufferString << "  Setting HDMI " << hdmiN << " clock source: " ;
     hdmiN= hdmiN-1;
     maskLow= 1 << (1* hdmiN); //CLK FROM FPGA
     maskHigh= 1<< (1* hdmiN +4); //CLK FROM Si5345
@@ -628,123 +656,127 @@ namespace tlu {
     switch(source){
       case 0 : {
         //newStatus = newStatus | mask;
-        newStatus= (oldStatus & ~mask)  ;
-        std::cout << "\tdisabled" << std::endl;
+        newStatus= (oldStatus & ~mask) ;
+        bufferString << "\tdisabled\n";
         break;
       }
       case 1 : {
         newStatus = (oldStatus | maskHigh) & ~maskLow;
-        //newStatus= (oldStatus & ~mask) | (0xF0 & mask);
-        std::cout << "\tSi5435" << std::endl;
+        bufferString << "\tSi5435\n";
         break;
       }
       case 2 : {
-        //newStatus= newStatus | maskLow;
         newStatus = (oldStatus | maskLow) & ~maskHigh;
-        std::cout << "\tFPGA" << std::endl;
+        bufferString << "\tFPGA\n";
         break;
       }
       default: {
         newStatus= oldStatus;
-        std::cout << "\tNo valid clock source selected" << std::endl;
+        bufferString << "\tNo valid clock source selected\n";
         break;
       }
     }
-    if(verbose){
+
+    if (verbose > 0){
+      std::cout << bufferString.str() ;
+    }
+
+    if(verbose > 2){
       std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMASK " <<  (int)mask << "\tMASK_L " << (int)maskLow << "\tMASK_H " << (int)maskHigh << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
+    return;
   }
 
-  void AidaTluController::SetDUTMask(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTMask(uint32_t value, uint8_t verbose){
     SetWRegister("DUTInterfaces.DUTMaskW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing DUTMask: 0x" << std::hex << (uint32_t)value  << std::endl;
       GetDUTMask();
     }
   };
 
-  void AidaTluController::SetDUTMaskMode(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTMaskMode(uint32_t value, uint8_t verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing DUTInterfaceMode: 0x" << std::hex << value  <<std::dec << std::endl;
       GetDUTMaskMode();
     }
   };
 
-  void AidaTluController::SetDUTMaskModeModifier(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTMaskModeModifier(uint32_t value, uint8_t verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing DUTModeModifier: 0x" << std::hex << value << std::endl;
       GetDUTMaskModeModifier();
     }
   };
 
-  void AidaTluController::SetDUTIgnoreBusy(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTIgnoreBusy(uint32_t value, uint8_t verbose){
     SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing DUT Ignore Busy: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreBusy();
     }
   };
 
-  void AidaTluController::SetShutterControl(uint32_t value, bool verbose){
+  void AidaTluController::SetShutterControl(uint32_t value, uint8_t verbose){
     SetWRegister("Shutter.ControlRW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing ShutterControl (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
 
-  void AidaTluController::SetShutterInternalInterval(uint32_t value, bool verbose){
+  void AidaTluController::SetShutterInternalInterval(uint32_t value, uint8_t verbose){
     SetWRegister("Shutter.InternalShutterPeriodRW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing InternalShutterPeriod (dec): " << value << std::endl;
       GetShutterInternalInterval();
     }
   };
 
-  void AidaTluController::SetShutterSource(uint32_t value, bool verbose){
+  void AidaTluController::SetShutterSource(uint32_t value, uint8_t verbose){
     SetWRegister("Shutter.ShutterSelectRW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing ShutterSource (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
 
-   void AidaTluController::SetShutterOnTime(uint32_t value, bool verbose){
+   void AidaTluController::SetShutterOnTime(uint32_t value, uint8_t verbose){
     SetWRegister("Shutter.ShutterOnTimeRW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing ShutterOnTime (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
 
-   void AidaTluController::SetShutterOffTime(uint32_t value, bool verbose){
+   void AidaTluController::SetShutterOffTime(uint32_t value, uint8_t verbose){
     SetWRegister("Shutter.ShutterOffTimeRW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing ShutterOffTime (dec): " << value << std::endl;
       GetShutterOffTime();
     }
   };
 
-   void AidaTluController::SetShutterVetoOffTime(uint32_t value, bool verbose){
+   void AidaTluController::SetShutterVetoOffTime(uint32_t value, uint8_t verbose){
     SetWRegister("Shutter.ShutterVetoOffTimeRW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing ShutterVetoOffTime (dec): " << value << std::endl;
       GetShutterVetoOffTime();
     }
   };
 
-  void AidaTluController::SetDUTIgnoreShutterVeto(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTIgnoreShutterVeto(uint32_t value, uint8_t verbose){
     SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
-    if (verbose){
+    if (verbose > 0){
       std::cout << "  Writing DUT Ignore Veto: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreShutterVeto();
     }
   };
 
-  void AidaTluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
+  void AidaTluController::SetInternalTriggerFrequency(uint32_t user_freq, uint8_t verbose){
     uint32_t max_freq= 160000000;
     uint32_t interval;
     uint32_t actual_interval;
@@ -772,12 +804,14 @@ namespace tlu {
     SetPulseDelay( (int)PackBits(valuesVec) );
   }
 
-  void AidaTluController::SetDACref(float vref){
+  void AidaTluController::SetDACref(float vref, uint8_t verbose){
     m_vref= vref;
-    std::cout << "  DAC will use Vref= " << m_vref << " V" << std::endl;
+    if (verbose > 0){
+      std::cout << "  DAC will use Vref= " << m_vref << " V" << std::endl;
+    }
   }
 
-  void AidaTluController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
+  void AidaTluController::SetThresholdValue(unsigned char channel, float thresholdVoltage, uint8_t verbose ) {
     //Channel can either be [0, 5] or 7 (all channels).
     int nChannels= m_nTrgIn; //We should read this from conf file, ideally.
     bool intRef= false; //We should read this from conf file, ideally.
@@ -797,18 +831,24 @@ namespace tlu {
     }
 
     if (channel==7){
-      std::cout << "  Setting threshold for all channels to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC1.SetDACValue(channel , int(dacCode) );
-      m_zeDAC2.SetDACValue(channel , int(dacCode) );
+      if (verbose > 0){
+        std::cout << "  Setting threshold for all channels to " << thresholdVoltage << " Volts" << std::endl;
+      }
+      m_zeDAC1.SetDACValue(channel , int(dacCode), verbose);
+      m_zeDAC2.SetDACValue(channel , int(dacCode), verbose);
       return;
     }
     if (channel <2){
-      std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC1.SetDACValue( 1-channel , int(dacCode) ); //The ADC channels are connected in reverse order
+      if (verbose > 0){
+        std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+      }
+      m_zeDAC1.SetDACValue( 1-channel , int(dacCode), verbose); //The ADC channels are connected in reverse order
     }
     else{
-      std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC2.SetDACValue( 3-(channel-2) , int(dacCode) );
+      if (verbose > 0){
+        std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+      }
+      m_zeDAC2.SetDACValue( 3-(channel-2) , int(dacCode), verbose);
     }
 
   }
