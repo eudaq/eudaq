@@ -39,9 +39,7 @@ PWRLED::PWRLED( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add, cha
     indicatorXYZ= { { { {30, 29, 31} }, { {27, 26, 28} }, { {24, 23, 25} }, { {21, 20, 22} }, { {18, 17, 19} }, { {15, 14, 16} },
                       { {12, 11, 13} }, { {  9, 8, 10} }, { {   6, 5, 7} }, { {3, 2, 4} }, { {1, 0, -1} } } };
   }
-  //std::cout << "\tI2C addr: 0x" << std::hex<< (int)DACaddr << std::dec << "(DAC)" << std::endl;
-  //std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp1Add << std::dec << "(LED EXPANDER 1)" << std::endl;
-  //std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp2Add << std::dec << "(LED EXPANDER 1)" << std::endl;
+  return;
 }
 
 void PWRLED::initI2Cslaves(bool intRef, int verbose){
@@ -99,9 +97,7 @@ void PWRLED::setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2
     indicatorXYZ= { { { {30, 29, 31} }, { {27, 26, 28} }, { {24, 23, 25} }, { {21, 20, 22} }, { {18, 17, 19} }, { {15, 14, 16} },
                       { {12, 11, 13} }, { {  9, 8, 10} }, { {   6, 5, 7} }, { {3, 2, 4} }, { {1, 0, -1} } } };
   }
-  //std::cout << "\tI2C addr: 0x" << std::hex<< (int)DACaddr << std::dec << "(DAC)" << std::endl;
-  //std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp1Add << std::dec << "(LED EXPANDER 1)" << std::endl;
-  //std::cout << "\tI2C addr: 0x" << std::hex<< (int)Exp2Add << std::dec << "(LED EXPANDER 1)" << std::endl;
+  return;
 }
 
 void PWRLED::setIndicatorRGB(int indicator, const std::array<int, 3>& RGB, int verbose){
@@ -219,18 +215,18 @@ void PWRLED::testLED(){
   led_allOff();
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{1, 0, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    std::this_thread::sleep_for(std::chrono::milliseconds(15));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 1, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    std::this_thread::sleep_for(std::chrono::milliseconds(15));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 0, 1}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    std::this_thread::sleep_for(std::chrono::milliseconds(15));
   }
   for (int iInd=1; iInd < 12; iInd++){
     setIndicatorRGB(iInd, {{0, 0, 0}}, false);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    std::this_thread::sleep_for(std::chrono::milliseconds(15));
   }
 }

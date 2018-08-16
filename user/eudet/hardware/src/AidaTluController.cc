@@ -494,16 +494,15 @@ namespace tlu {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
     m_pwrled.setI2CPar( m_i2c , m_I2C_address.pwraddr, m_I2C_address.ledxp1addr, m_I2C_address.ledxp2addr, type);
     m_pwrled.initI2Cslaves(false, verbose);
-    //int indicator= 1;
-    //std::array<int, 3>RGB{ {1, 0, 1} };
-    //m_pwrled.setIndicatorRGB( indicator, RGB, verbose);
+    std::cout << "  TLU_POWERMODULE: Testing LEDs (check front panel)... " << std::flush;
     m_pwrled.led_allOff();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     m_pwrled.led_allWhite();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
     m_pwrled.led_allOff();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
     m_pwrled.testLED();
+    std::cout << "  done." << std::endl;
   }
 
   void AidaTluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose) {
