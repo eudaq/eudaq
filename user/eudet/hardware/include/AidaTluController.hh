@@ -212,8 +212,8 @@ namespace tlu {
     AD5665R m_zeDAC1, m_zeDAC2;
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
-    PWRLED m_pwrled;
-    LCD09052 m_lcddisp;
+    PWRLED *m_pwrled;
+    LCD09052 *m_lcddisp;
 
 
     // Define constants such as number of DUTs and trigger inputs

@@ -81,7 +81,7 @@ uint32_t PWRLED::_set_bit(uint32_t v, int index, bool x){
   return v;
 }
 
-void PWRLED::setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add, char IdAdd){
+void PWRLED::setI2CPar( i2cCore  *mycore , char DACaddr, char Exp1Add, char Exp2Add, char IdAdd, uint8_t verbose){
   pwr_i2c_core = mycore;
   pwr_i2c_DACaddr= DACaddr;
   pwr_i2c_exp1Add= Exp1Add;

@@ -57,7 +57,7 @@ void AD5665R::SetIntRef(bool intRef, uint8_t verbose){
 void AD5665R::SetDACValue(unsigned char channel, uint32_t value, uint8_t verbose){
   unsigned char chrsToSend[2];
 
-  if (verbose > 0){
+  if (verbose > 1){
     std::cout << "\tSetting DAC channel " << (unsigned int)channel << " to " << value << std::endl;
   }
   if (( (unsigned int)channel < 0 ) || ( 7 < (unsigned int)channel )){
