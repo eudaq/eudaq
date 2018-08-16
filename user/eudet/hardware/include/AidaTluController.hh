@@ -79,7 +79,7 @@ namespace tlu {
     uint32_t GetShutterOnTime();
     uint32_t GetShutterOffTime();
     uint32_t GetShutterVetoOffTime();
-    uint32_t GetTriggerVeto() { return ReadRRegister("triggerLogic.TriggerVetoR"); };
+    uint32_t GetTriggerVeto();
     uint32_t GetPreVetoTriggers() { return ReadRRegister("triggerLogic.PreVetoTriggersR"); };
     uint32_t GetPostVetoTriggers() { return ReadRRegister("triggerLogic.PostVetoTriggersR"); };
     uint64_t GetCurrentTimestamp(){
@@ -221,8 +221,11 @@ namespace tlu {
     int m_nTrgIn;
     // Define reference voltage for DACs
     float m_vref;
+    // Used for log purposes
+    std::string m_myStates[2] = {"disabled", "enabled"};
 
     std::deque<fmctludata*> m_data;
+
 
   };
 

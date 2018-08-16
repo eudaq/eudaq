@@ -194,7 +194,7 @@ void AidaTluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
   m_verbose= conf->Get("verbose", 0);
-  std::cout << "VERBOSE SET TO: " << m_verbose << std::endl;
+  std::cout << "VERBOSE SET TO: " << int(m_verbose) << std::endl;
   m_delayStart= conf->Get("delayStart", 0);
 
   ss << "AIDA_TLU DELAY START SET TO: " << m_delayStart << " ms\t" ;
@@ -262,7 +262,7 @@ void AidaTluProducer::DoConfigure() {
     m_tlu->SetDUTIgnoreBusy( (uint32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode
     m_tlu->SetDUTIgnoreShutterVeto( (uint32_t)(conf->Get("DUTIgnoreShutterVeto",1)), m_verbose); //
     m_tlu->SetShutterOnTime( (uint32_t)(conf->Get("ShutterOnTime",0)), m_verbose);
-    m_tlu->SetShutterSource( (uint32_t)(conf->Get("ShutterSelect",0)), m_verbose);
+    m_tlu->SetShutterSource( (uint32_t)(conf->Get("ShutterSource",0)), m_verbose);
     m_tlu->SetShutterInternalInterval( (uint32_t)(conf->Get("ShutterInternalShutterPeriod",0)), m_verbose);
     m_tlu->SetShutterControl( (uint32_t)(conf->Get("ShutterControl",0)), m_verbose);
     m_tlu->SetShutterVetoOffTime( (uint32_t)(conf->Get("ShutterVetoOffTime",0)), m_verbose);
