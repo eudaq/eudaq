@@ -61,7 +61,7 @@ void AidaTluProducer::RunLoop(){
   m_tlu->PulseT0();
 
   // Enable triggers
-  m_tlu->SetTriggerVeto(0);
+  m_tlu->SetTriggerVeto(0, m_verbose);
 
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
@@ -114,7 +114,7 @@ void AidaTluProducer::RunLoop(){
       delete data;
     }
   }
-  m_tlu->SetTriggerVeto(1);
+  m_tlu->SetTriggerVeto(1, m_verbose);
 }
 
 void AidaTluProducer::DoInitialise(){
@@ -180,7 +180,7 @@ void AidaTluProducer::DoInitialise(){
     // Reset IPBus registers
     m_tlu->ResetSerdes();
     m_tlu->ResetCounters();
-    m_tlu->SetTriggerVeto(1);
+    m_tlu->SetTriggerVeto(1, m_verbose);
     m_tlu->ResetFIFO();
     m_tlu->ResetEventsBuffer();
 
@@ -202,7 +202,7 @@ void AidaTluProducer::DoConfigure() {
   EUDAQ_INFO(myMsg);
 
 
-  m_tlu->SetTriggerVeto(1);
+  m_tlu->SetTriggerVeto(1, m_verbose);
   if( conf->Get("skipconf", false) ){
     std::cout << "SKIPPING CONFIGURATION (skipconf= 1)" << std::endl;
   }

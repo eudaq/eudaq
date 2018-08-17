@@ -26,6 +26,7 @@ namespace tlu {
     AidaTluController(const std::string & connectionFilename, const std::string & deviceName);
     ~AidaTluController(){ResetEventsBuffer();};
 
+    void compareWriteRead(uint32_t written, uint32_t readback, uint32_t mask, const std::string & regName);
     void configureHDMI(unsigned int hdmiN, unsigned int enable, uint8_t verbose);
     void enableHDMI(unsigned int dutN, bool enable, uint8_t verbose);
     unsigned int PackBits(std::vector< unsigned int>  rawValues);
@@ -36,7 +37,7 @@ namespace tlu {
     void SetTriggerMask(uint64_t value);
     void SetTriggerMask(uint32_t maskHi, uint32_t maskLo);
     //void SetTriggerVeto(int value) { SetWRegister("triggerLogic.TriggerVetoW",value); };
-    void SetTriggerVeto(int value);
+    void SetTriggerVeto(int value, uint8_t verbose);
     void SetPulseStretch(int value) { SetWRegister("triggerLogic.PulseStretchW",value); };
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
     void SetPulseStretchPack(std::vector< unsigned int>  valuesVec);
@@ -67,19 +68,19 @@ namespace tlu {
     uint32_t GetPulseStretch(){ return ReadRRegister("triggerLogic.PulseStretchR"); };
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
-    uint64_t GetTriggerMask();
-    uint32_t GetDUTMask();
-    uint32_t GetDUTMaskMode();
-    uint32_t GetDUTMaskModeModifier();
-    uint32_t GetDUTIgnoreBusy();
-    uint32_t GetDUTIgnoreShutterVeto();
-    uint32_t GetShutterControl();
-    uint32_t GetShutterInternalInterval();
-    uint32_t GetShutterSource();
-    uint32_t GetShutterOnTime();
-    uint32_t GetShutterOffTime();
-    uint32_t GetShutterVetoOffTime();
-    uint32_t GetTriggerVeto();
+    uint64_t GetTriggerMask(uint8_t verbose);
+    uint32_t GetDUTMask(uint8_t verbose);
+    uint32_t GetDUTMaskMode(uint8_t verbose);
+    uint32_t GetDUTMaskModeModifier(uint8_t verbose);
+    uint32_t GetDUTIgnoreBusy(uint8_t verbose);
+    uint32_t GetDUTIgnoreShutterVeto(uint8_t verbose);
+    uint32_t GetShutterControl(uint8_t verbose);
+    uint32_t GetShutterInternalInterval(uint8_t verbose);
+    uint32_t GetShutterSource(uint8_t verbose);
+    uint32_t GetShutterOnTime(uint8_t verbose);
+    uint32_t GetShutterOffTime(uint8_t verbose);
+    uint32_t GetShutterVetoOffTime(uint8_t verbose);
+    uint32_t GetTriggerVeto(uint8_t verbose);
     uint32_t GetPreVetoTriggers() { return ReadRRegister("triggerLogic.PreVetoTriggersR"); };
     uint32_t GetPostVetoTriggers() { return ReadRRegister("triggerLogic.PostVetoTriggersR"); };
     uint64_t GetCurrentTimestamp(){
