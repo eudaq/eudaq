@@ -40,13 +40,12 @@
 \end{center}
 }
 \title{\Large EUDAQ2 User Manual} 
-\author{\normalsize EUDAQ2 Development Team \\
-        \normalsize Yi Liu}
+\author{\normalsize EUDAQ2 Team}
 \input{src/version.tex} % defines the \CMakeLibVersion command which is
                     % set by CMake to the current EUDAQ version number
                     % (with git hash tag)
-\date{\normalsize Last update on September 2017 \\  %\today
-for EUDAQ version v2.0.1} %\CMakeLibVersion}
+\date{\normalsize \today \\
+EUDAQ \CMakeLibVersion}
 
 \begin{document}
 
@@ -81,13 +80,12 @@ by writing their own: Producer, for integrating the data stream into the acquisi
 \include{src/Monitor}
 \include{src/RunControl}
 \include{src/NewData}
-%% \include{src/OtherParts}
 \include{src/Contributing}
 
 % Appendices
 \appendix
 \include{src/PlatformIssue}
-%%%% \include{src/CompilingOnWindows}
+\include{src/TTreeConverter}
 
 \printglossaries
 

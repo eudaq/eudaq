@@ -8,6 +8,7 @@
 #include "FmctluI2c.hh"
 #include "FmctluHardware.hh"
 #include "FmctluPowerModule.hh"
+#include "AidaTluDisplay.hh"
 
 typedef unsigned char uchar_t;
 
@@ -40,13 +41,19 @@ namespace tlu {
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
     void SetPulseStretchPack(std::vector< unsigned int>  valuesVec);
     void SetPulseDelayPack(std::vector< unsigned int>  valuesVec);
-    void SetDUTMask(int value) { SetWRegister("DUTInterfaces.DUTMaskW",value); };
-    void SetDUTMaskMode(int value) { SetWRegister("DUTInterfaces.DUTInterfaceModeW",value); };
-    void SetDUTMaskModeModifier(int value) { SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value); };
-    void SetDUTIgnoreBusy(int value){ SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value); };
-    void SetDUTIgnoreShutterVeto(int value){ SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value); };
+    void SetDUTMask(uint32_t value, bool verbose);
+    void SetDUTMaskMode(uint32_t value, bool verbose);
+    void SetDUTMaskModeModifier(uint32_t value, bool verbose);
+    void SetDUTIgnoreBusy(uint32_t value, bool verbose);
+    void SetDUTIgnoreShutterVeto(uint32_t value, bool verbose);
+    void SetShutterControl(uint32_t value, bool verbose);
+    void SetShutterInternalInterval(uint32_t value, bool verbose);
+    void SetShutterSource(uint32_t value, bool verbose);
+    void SetShutterOffTime(uint32_t value, bool verbose);
+    void SetShutterOnTime(uint32_t value, bool verbose);
+    void SetShutterVetoOffTime(uint32_t value, bool verbose);
 
-    uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
+    //uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
 
     void SetEventFifoCSR(int value) { SetWRegister("eventBuffer.EventFifoCSR",value); };
     void SetLogicClocksCSR(int value) { SetWRegister("logic_clocks.LogicClocksCSR",value); };
@@ -61,6 +68,17 @@ namespace tlu {
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
     uint64_t GetTriggerMask();
+    uint32_t GetDUTMask();
+    uint32_t GetDUTMaskMode();
+    uint32_t GetDUTMaskModeModifier();
+    uint32_t GetDUTIgnoreBusy();
+    uint32_t GetDUTIgnoreShutterVeto();
+    uint32_t GetShutterControl();
+    uint32_t GetShutterInternalInterval();
+    uint32_t GetShutterSource();
+    uint32_t GetShutterOnTime();
+    uint32_t GetShutterOffTime();
+    uint32_t GetShutterVetoOffTime();
     uint32_t GetTriggerVeto() { return ReadRRegister("triggerLogic.TriggerVetoR"); };
     uint32_t GetPreVetoTriggers() { return ReadRRegister("triggerLogic.PreVetoTriggersR"); };
     uint32_t GetPostVetoTriggers() { return ReadRRegister("triggerLogic.PostVetoTriggersR"); };
@@ -130,11 +148,11 @@ namespace tlu {
     void enableClkLEMO(bool enable, bool verbose);
     //void InitializeI2C(char DACaddr, char IDaddr);
     float GetDACref(){return m_vref;};
-    void InitializeClkChip(const std::string & filename);
+    int InitializeClkChip(const std::string & filename);
     void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
-    void pwrled_Initialize(int verbose);
+    void pwrled_Initialize(int verbose, unsigned int type);
     void pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose);
     void PulseT0();
 
@@ -154,7 +172,8 @@ namespace tlu {
     void SetI2C_EEPROM_addr(char addressa) { m_I2C_address.EEPROM = addressa; };
     void SetI2C_expander1_addr(char addressa) { m_I2C_address.expander1 = addressa; };
     void SetI2C_expander2_addr(char addressa) { m_I2C_address.expander2 = addressa; };
-    void SetI2C_pwrmdl_addr(char addressa, char addressb, char addressc) { m_I2C_address.pwraddr = addressa; m_I2C_address.ledxp1addr = addressb; m_I2C_address.ledxp2addr = addressc; };
+    void SetI2C_pwrmdl_addr(char addressa, char addressb, char addressc, char addressd) { m_I2C_address.pwraddr = addressa; m_I2C_address.ledxp1addr = addressb; m_I2C_address.ledxp2addr = addressc; m_I2C_address.pwrId = addressd;};
+    void SetI2C_disp_addr(char addressa) { m_I2C_address.lcdDisp = addressa; };
 
   private:
 
@@ -167,9 +186,11 @@ namespace tlu {
       char EEPROM;
       char expander1;
       char expander2;
-      char pwraddr; // i2s address of DAC of power module
+      char pwrId= 0x00; // i2c address of EEPROM on power module. This is only available on new modules.
+      char pwraddr; // i2c address of DAC of power module
       char ledxp1addr; // i2c address of expander (LED controller)
       char ledxp2addr; //i2c address of expander (LED controller)
+      char lcdDisp; //i2c address of LCD display
     } m_I2C_address;
 
 
@@ -180,12 +201,16 @@ namespace tlu {
     char m_IDaddr;
     //uint32_t m_BoardID=0;
     unsigned int m_BoardID[6]= {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    bool m_hasDisplay= false; // Set to true if the LCD display is detected
+    char m_powerModuleType=0; // 0= old bugged power board, anything else= new power board with eeprom
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
     PWRLED m_pwrled;
+    LCD09052 m_lcddisp;
+
 
     // Define constants such as number of DUTs and trigger inputs
     int m_nDUTs;

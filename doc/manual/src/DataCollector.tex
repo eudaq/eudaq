@@ -16,7 +16,7 @@ The virtual function Exec() is optional to be implemented in user DataCollector.
 
 \subsection{Example Code: DirectSave}\label{sec:directsavedatacollector_cc}
 Here is an example code of a derived DataCollector, named DirectSaveDataCollector. As its name hints,  it does nothing except save all incoming Event data to disk directly. Printing out of the Event to screen is optional for debugging.
-\lstinputlisting[label=ls:datacoldirsave, style=cpp]{../../main/module/std/src/DirectSaveDataCollector.cc}
+\lstinputlisting[label=ls:datacoldirsave, style=cpp]{../../user/eudet/module/src/DirectSaveDataCollector.cc}
 
 Two virtual methods are implemented in DirectSaveDataCollector, \lstinline[style=cpp]{DoConfigure()} and \lstinline[style=cpp]{DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev)}. It registers itself to the correlated \lstinline[style=cpp]{eudaq::factory} by the hash number from the name string \lstinline[style=cpp]{DirectSaveDataCollector}. 
 

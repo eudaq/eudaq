@@ -40,7 +40,18 @@ eudaq::RawDataEvent is derived from eudaq::Event with the m\_type always set to 
 \subsubsection{StandardEvent}\label{sec:convstddata}
 eudaq::StandardEvent is derived from eudaq::Event with the m\_type always set to eudaq::cstr2hash(``StandardEvent''). Historically, it presents a beam telescope tracking-hit event with all hit information of sensor planes. The hit information is contained by eudaq::StandardPlane. The beam telescope planes are pixel sensors. The spatial position and signal amplitude of the fired pixels are zero-compressed inside eudaq::StandaredPlane.
 
+\subsubsection{TTreeEvent}
+\label{sec:RawEvent2TTreeEventConverter}
+
+Another working example of converting the \texttt{raw} event to \texttt{ROOT TTree} format is also provided. The details and flow of converter is described in Annexe \ref{sec:TTreeConverter}.
+
+
+
 \subsection{Example Code: RawEvent2StdEvent}\label{sec:Ex0RawEvent2StdEventConverter_cc}
 This example DataConverter is named Ex0RawEvent2StdEventConverter. As indicated by the name, it converts the eudaq::RawDataEvent to eudaq::StandardEvent. The sub type of eudaq::RawDataEvent is ``my\_ex0'' which is also used to calculate the hash and register it to the eudaq::Factory. If an eudaq::RawDataEvent object announcing its sub-type by ``my\_ex0'' exists when doing the data converting, this object will be forwarded to that Ex0RawEvent2StdEventConverter.
 \lstinputlisting[label=ls:ex0raw2std, style=cpp]{../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc}
 
+
+
+
+ 

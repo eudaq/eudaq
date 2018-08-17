@@ -17,40 +17,42 @@ as it ensures a record of the issue is available, and others may follow the prog
 \subsection{Regression Testing}
 \label{sec:ctest}
 
-If a CMake version later than 3.1 is found and Python is installed
-together with the \texttt{numpy} package, several regression tests are made
-available that can be executed through CTest. The tests are based on
-the Python wrapper around EUDAQ components as described in
-section~\ref{sssec:pywrapper}. Run the tests by typing
+to be re-activated for EUDAQ2.
 
-\begin{listing}[mybash]
-  cd build
-  cmake ..
-  ctest
-\end{listing}
-
-This starts the script \texttt{etc/tests/run\_dummydataproduction.py}
-which runs a short DAQ session with instances of RunControl,
-DataCollector and a (dummy) Producer and compares the output to a
-reference file stored on AFS at DESY. If your system is set up
-correctly, you have access to the reference file, and the basic
-components of the EUDAQ library work, all tests should pass.
-To see the output of failing tests, you can add the
-\texttt{--output-on-failure} parameter to the CTest command.
-
-These basic tests can easily be extended to test other parts of the
-core framework or of your own producer. Take a look at the
-\texttt{etc/tests/testing.cmake} CMake script and the central
-\texttt{CMakeLists.txt} file where it is included for an example of
-how to set up tests with CTest.
-
-The automated nightly tests are defined in CMake scripts located in
-\texttt{etc/tests/nightly} and are executed by the scripts
-\texttt{run\_nightly.sh} and \texttt{run\_nightly.bat} for Unix and
-Windows platforms, respectively. In addition to the dummy run
-described above, the nightly tests check out all changes from the
-central repository, build the full code base, and submit all results
-to the CDash webserver hosted at DESY: \url{http://aidasoft.desy.de/CDash/index.php?project=EUDAQ}
+%If a CMake version later than 3.1 is found and Python is installed
+%together with the \texttt{numpy} package, several regression tests are made
+%available that can be executed through CTest. The tests are based on
+%the Python wrapper around EUDAQ components as described in
+%section~\ref{sssec:pywrapper}. Run the tests by typing
+%
+%\begin{listing}[mybash]
+%  cd build
+%  cmake ..
+%  ctest
+%\end{listing}
+%
+%This starts the script \texttt{etc/tests/run\_dummydataproduction.py}
+%which runs a short DAQ session with instances of RunControl,
+%DataCollector and a (dummy) Producer and compares the output to a
+%reference file stored on AFS at DESY. If your system is set up
+%correctly, you have access to the reference file, and the basic
+%components of the EUDAQ library work, all tests should pass.
+%To see the output of failing tests, you can add the
+%\texttt{--output-on-failure} parameter to the CTest command.
+%
+%These basic tests can easily be extended to test other parts of the
+%core framework or of your own producer. Take a look at the
+%\texttt{etc/tests/testing.cmake} CMake script and the central
+%\texttt{CMakeLists.txt} file where it is included for an example of
+%how to set up tests with CTest.
+%
+%The automated nightly tests are defined in CMake scripts located in
+%\texttt{etc/tests/nightly} and are executed by the scripts
+%\texttt{run\_nightly.sh} and \texttt{run\_nightly.bat} for Unix and
+%Windows platforms, respectively. In addition to the dummy run
+%described above, the nightly tests check out all changes from the
+%central repository, build the full code base, and submit all results
+%to the CDash webserver hosted at DESY: \url{http://aidasoft.desy.de/CDash/index.php?project=EUDAQ}
 
 \subsection{Commiting Code to the Main Repository}
 \label{sec:commiting}

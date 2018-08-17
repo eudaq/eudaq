@@ -19,6 +19,7 @@ if(USER_BUILD_FMCTLU)
   list(APPEND USER_HARDWARE_SRC src/FmctluHardware.cc)
   list(APPEND USER_HARDWARE_SRC src/FmctluPowerModule.cc)
   list(APPEND USER_HARDWARE_SRC src/FmctluI2c.cc)
+  list(APPEND USER_HARDWARE_SRC src/AidaTluDisplay.cc)
   list(APPEND USER_HARDWARE_DEP_LIB ${CACTUS_LIBRARIES})
 endif()
 

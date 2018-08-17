@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+
 #./euRun  &
 #./euCliMonitor -n Ex0Monitor -t mon
 #./euCliCollector -n Ex0TgDataCollector -t tg

@@ -6,7 +6,6 @@ endif()
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_LCIO_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq lcio library")
 
-
 find_package(LCIO CONFIG)
 find_package(Git QUIET)
 if(GIT_FOUND OR LCIO_FOUND)
@@ -17,7 +16,7 @@ cmake_dependent_option(EUDAQ_LIBRARY_BUILD_LCIO "build eudaq lib/lcio library" O
   "GIT_OR_FOUND" OFF)
 
 if(NOT EUDAQ_LIBRARY_BUILD_LCIO)
-  message("disable building of eudaq lib/lcio library (EUDAQ_LIBRARY_BUILD_LCIO=OFF)")
+    message(STATUS "disable building of eudaq lib/lcio library (EUDAQ_LIBRARY_BUILD_LCIO=OFF)")
   unset(EUDAQ_LCIO_LIBRARY CACHE)
   unset(LCIO_LIBRARIES CACHE)
   return()
@@ -77,6 +76,7 @@ endif()
 target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${LCIO_LIBRARIES})
 
 install(TARGETS ${EUDAQ_COMPONENT}
+  EXPORT eudaqTargets
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
