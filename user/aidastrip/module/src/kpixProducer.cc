@@ -242,9 +242,14 @@ void kpixProducer::DoStopRun(){
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void kpixProducer::DoReset(){
-  m_kpix->parseXmlString("<system><command><HardReset/></command></system>");
+  
+  //m_kpix->parseXmlString("<system><command><HardReset/></command></system>");
 
-  /* Step1: stop Mainloop (kpix+data collecting)*/
+  /* Step1: stop kpix running */
+  if (m_kpix->getVariable("RunState")->get() != "Stopped")
+    m_kpix->command("SetRunState","Stopped");
+  
+  /* Step2: stop Mainloop and kpix+data collecting threads*/
   m_exit_of_run = true;
   if (m_thd_run.joinable())    m_thd_run.join();
   if (m_thd_datarx.joinable()){
@@ -253,15 +258,16 @@ void kpixProducer::DoReset(){
   }
   if (m_thd_datatx.joinable()) m_thd_datatx.join();
 
-  if (m_kpix->getVariable("RunState")->get() != "Stopped")
-    m_kpix->command("SetRunState","Stopped");
-  /* Close data file to write*/
+  /* Close eudaq bin data file*/
   if (dataFileFd_>=0) {
     ::close(dataFileFd_);
     dataFileFd_ = -1;
   }
   
-  /* Step2: set the thread free and turned off the exit_of_run sign*/
+  /* step3: stop listen to the hardware */
+  udpLink.close();
+  
+  /* Step4: set the thread free and turned off the exit_of_run sign*/
   m_thd_run = std::thread();
   m_exit_of_run = false;
 }

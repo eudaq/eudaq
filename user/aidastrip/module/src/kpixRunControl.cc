@@ -49,8 +49,8 @@ void kpixRunControl::DoStatus(eudaq::ConnectionSPC id,
   if (id->GetType()+"."+id->GetName() == m_check_full_name){
     /* //--> if you want a max event cut at RC level:
       std::string ev_str = status->GetTag("EventN");
-    //std::cout << "[CHECK] " << ev_str
-    //	      << std::endl;
+    std::cout << "[CHECK] " << ev_str
+    	      << std::endl;
     uint32_t evn = 0;
     if (ev_str.size())
       evn = atol(ev_str.c_str());
