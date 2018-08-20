@@ -87,12 +87,10 @@ namespace tlu {
 
     oldStatus= m_IOexpander2.getOutputs(bank, false);
     newStatus= oldStatus & ~mask;
-    std::string outstat= "disabled";
     if (enable){ //1 activates the output. 0 disables it.
       newStatus= newStatus | mask;
-      outstat= "enabled";
     }
-    std::cout << "  Clock output on LEMO is " << outstat << std::endl;
+    std::cout << "  Clock output on LEMO is " << m_myStates[enable] << std::endl;
     if (verbose > 2){
       std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
@@ -186,98 +184,128 @@ namespace tlu {
     return res;
   }
 
-  uint32_t AidaTluController::GetDUTMask(){
+  uint32_t AidaTluController::GetDUTMask(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTMaskR");
-    std::cout << "\tDUTMask read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tDUTMask read back as= 0x" << std::hex<< res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetDUTMaskMode(){
+  uint32_t AidaTluController::GetDUTMaskMode(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTInterfaceModeR");
-    std::cout << "\tDUTMaskMode read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tDUTMaskMode read back as= 0x" << std::hex<< res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetDUTMaskModeModifier(){
+  uint32_t AidaTluController::GetDUTMaskModeModifier(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTInterfaceModeModifierR");
-    std::cout << "\tDUTMaskModifier read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tDUTMaskModifier read back as= 0x" << std::hex<< res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetDUTIgnoreBusy(){
+  uint32_t AidaTluController::GetDUTIgnoreBusy(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.IgnoreDUTBusyR");
-    std::cout << "\tDUTIgnore busy read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tDUTIgnore busy read back as= 0x" << std::hex<< res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetDUTIgnoreShutterVeto(){
+  uint32_t AidaTluController::GetDUTIgnoreShutterVeto(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.IgnoreShutterVetoR");
-    std::cout << "\tDUTIgnoreShutterVeto read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tDUTIgnoreShutterVeto read back as= 0x" << std::hex<< res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetShutterControl(){
+  uint32_t AidaTluController::GetShutterControl(uint8_t verbose){
     uint32_t res;
+    bool en_shutter, en_internal_shutter;
     res= ReadRRegister("Shutter.ControlRW");
-    std::cout << "\tShutter Control read back as (dec)= " << std::hex<< res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tShutter Control read back as (dec)= " << std::hex<< res <<std::dec << std::endl;
+    }
+    en_shutter= res & 0x1;
+    en_internal_shutter = (res >> 1) & 0x1;
+    if (verbose >0){
+      std::cout << "\tShutter Mode is " << m_myStates[en_shutter] << std::endl;
+      std::cout << "\tInternal shutter is " << m_myStates[en_internal_shutter] << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetShutterInternalInterval(){
+  uint32_t AidaTluController::GetShutterInternalInterval(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("Shutter.InternalShutterPeriodRW");
-    std::cout << "\tInternalShutterPeriod read back as (dec)= " << res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tInternalShutterPeriod read back as (dec)= " << res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetShutterSource(){
+  uint32_t AidaTluController::GetShutterSource(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterSelectRW");
-    std::cout << "\tShutterSelect read back as (dec)= " << res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tShutterSource read back as (dec)= " << res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
 
-  uint32_t AidaTluController::GetShutterOnTime(){
+  uint32_t AidaTluController::GetShutterOnTime(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterOnTimeRW");
-    std::cout << "\tShutterOnTime read back as (dec)= " << res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tShutterOnTime read back as (dec)= " << res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetShutterOffTime(){
+  uint32_t AidaTluController::GetShutterOffTime(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterOffTimeRW");
-    std::cout << "\tShutterOffTime read back as (dec)= " << res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tShutterOffTime read back as (dec)= " << res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetShutterVetoOffTime(){
+  uint32_t AidaTluController::GetShutterVetoOffTime(uint8_t verbose){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterVetoOffTimeRW");
-    std::cout << "\tVetoOffTime read back as (dec)= " << res <<std::dec<< std::endl;
+    if (verbose >1){
+      std::cout << "\tVetoOffTime read back as (dec)= " << res <<std::dec << "\n" << std::endl;
+    }
     return res;
   }
 
-  uint32_t AidaTluController::GetInternalTriggerInterval(uint8_t verbose){
+  uint32_t AidaTluController::GetInternalTriggerFrequency(uint8_t verbose){
     uint32_t interval;
     uint32_t true_freq;
 
     interval= ReadRRegister("triggerLogic.InternalTriggerIntervalR");
-    if (verbose > 0){
-      if (interval==0){
-        true_freq = 0;
-      }
-      else{
-        true_freq= (int) floor( (float)160000000 / interval );
-      }
+    if (interval==0){
+      true_freq = 0;
+    }
+    else{
+      true_freq= (int) floor( (float)160000000 / interval );
+    }
+    if (verbose > 1){
       std::cout << "\tFrequency read back as: " << true_freq << " Hz"<< std::endl;
     }
+    return true_freq;
   }
 
   std::string AidaTluController::parseURI(){
@@ -330,7 +358,7 @@ namespace tlu {
     return m_BoardID;
   }
 
-  uint64_t AidaTluController::GetTriggerMask(){
+  uint64_t AidaTluController::GetTriggerMask(uint8_t verbose){
     uint32_t maskHi, maskLo;
     maskLo= ReadRRegister("triggerLogic.TriggerPattern_lowR");
     maskHi= ReadRRegister("triggerLogic.TriggerPattern_highR");
@@ -338,6 +366,16 @@ namespace tlu {
     std::cout << std::hex << "\tTRIGGER PATTERN (for external triggers) READ 0x" << maskHi << " --- 0x"<< maskLo << std::dec << std::endl;
     return triggerPattern;
   }
+
+  uint32_t AidaTluController::GetTriggerVeto(uint8_t verbose){
+    uint32_t vetoState;
+    std::stringstream ss;
+    vetoState= ReadRRegister("triggerLogic.TriggerVetoR");
+    ss << "TRIGGER VETO: triggers are " << m_myStates[!bool(vetoState)] << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
+    return vetoState;
+  };
 
   uint32_t AidaTluController::I2C_enable(char EnclustraExpAddr)
   // This must be executed at least once after powering up the TLU or the I2C bus will not work.
@@ -534,12 +572,11 @@ namespace tlu {
 
   void AidaTluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, uint8_t verbose) {
     // Note that ordering is not 1:1. Mapping is done in here.
-    std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
     if (verbose > 0){
-      std::cout << "\tV PMT1=" << v3 << "V" << std::endl;
-      std::cout << "\tV PMT2=" << v2 << "V" << std::endl;
-      std::cout << "\tV PMT3=" << v4 << "V" << std::endl;
-      std::cout << "\tV PMT4=" << v1 << "V" << std::endl;
+      std::cout << "\tPMT1= " << v3 << " V" << std::endl;
+      std::cout << "\tPMT2= " << v2 << " V" << std::endl;
+      std::cout << "\tPMT3= " << v4 << " V" << std::endl;
+      std::cout << "\tPMT4= " << v1 << " V" << std::endl;
     }
     m_pwrled->setVchannel(0, v3, verbose);
     m_pwrled->setVchannel(1, v2, verbose);
@@ -547,10 +584,10 @@ namespace tlu {
     m_pwrled->setVchannel(3, v1, verbose);
   }
 
-  unsigned int AidaTluController::PackBits(std::vector< unsigned int>  rawValues){
+  uint32_t AidaTluController::PackBits(std::vector< unsigned int>  rawValues){
     //Pack 6 number using only 5-bits for each.
     int nChannels= m_nTrgIn;
-    unsigned int packedbits= 0;
+    uint32_t packedbits= 0;
     int tmpint= 0;
     if (nChannels== rawValues.size()){
       for (int iCh=0; iCh < nChannels; iCh++){
@@ -565,9 +602,24 @@ namespace tlu {
     return packedbits;
   }
 
-  void AidaTluController::PulseT0(){
-    SetWRegister("Shutter.PulseT0", 0x1);
-    std::cout << "  PULSE T0: done"  << std::endl;
+  void AidaTluController::SetRunActive(uint8_t state, uint8_t verbose){
+  /// Writes to IPBus register to instruct the TLU to start/stop a run.
+  //  state= 1 when running, 0 when stopped.
+  //  On start, the internal registers are reset and the TLU issues a T0 pulse to DUTs.
+    SetWRegister("Shutter.RunActive", state);
+    std::stringstream ss;
+    std::string runState;
+
+    if (state){
+      runState= "RUN";
+    }
+    else{
+      runState= "STOP";
+    }
+
+    ss << "AIDA TLU SET TO " << runState << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
   }
 
   fmctludata* AidaTluController::PopFrontEvent(){
@@ -689,97 +741,134 @@ namespace tlu {
   }
 
   void AidaTluController::SetDUTMask(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("DUTInterfaces.DUTMaskW",value);
     if (verbose > 0){
       std::cout << "  Writing DUTMask: 0x" << std::hex << (uint32_t)value  << std::endl;
-      GetDUTMask();
     }
+    res= GetDUTMask(verbose);
+    compareWriteRead(value, res, 0xF, "DUTMask");
   };
 
   void AidaTluController::SetDUTMaskMode(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
     if (verbose > 0){
       std::cout << "  Writing DUTInterfaceMode: 0x" << std::hex << value  <<std::dec << std::endl;
-      GetDUTMaskMode();
     }
+    res= GetDUTMaskMode(verbose);
+    compareWriteRead(value, res, 0xFF, "DUTMaskMode");
   };
 
   void AidaTluController::SetDUTMaskModeModifier(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
     if (verbose > 0){
       std::cout << "  Writing DUTModeModifier: 0x" << std::hex << value << std::endl;
-      GetDUTMaskModeModifier();
     }
+    res= GetDUTMaskModeModifier(verbose);
+    compareWriteRead(value, res, 0xFF, "DUTMaskModeModifier");
   };
 
   void AidaTluController::SetDUTIgnoreBusy(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
     if (verbose > 0){
       std::cout << "  Writing DUT Ignore Busy: 0x" << std::hex << value << std::endl;
-      GetDUTIgnoreBusy();
     }
+    res= GetDUTIgnoreBusy(verbose);
+    compareWriteRead(value, res, 0xF, "DUTIgnoreBusy");
   };
 
   void AidaTluController::SetShutterControl(uint32_t value, uint8_t verbose){
+    uint32_t res;
+    if (value > 3){
+      EUDAQ_WARN("Shutter control: only bit 0 and 1 are considered for this value.\t");
+      value= value & 0x3;
+    }
     SetWRegister("Shutter.ControlRW",value);
     if (verbose > 0){
       std::cout << "  Writing ShutterControl (dec): " << value << std::endl;
-      GetShutterControl();
     }
+    res= GetShutterControl(verbose);
+    compareWriteRead(value, res, 0x3, "ShutterControl");
   };
 
   void AidaTluController::SetShutterInternalInterval(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("Shutter.InternalShutterPeriodRW",value);
     if (verbose > 0){
       std::cout << "  Writing InternalShutterPeriod (dec): " << value << std::endl;
-      GetShutterInternalInterval();
     }
+    res= GetShutterInternalInterval(verbose);
+    compareWriteRead(value, res, 0xFFFFFFFF, "ShutterInternalInterval");
   };
 
   void AidaTluController::SetShutterSource(uint32_t value, uint8_t verbose){
-    SetWRegister("Shutter.ShutterSelectRW",value);
-    if (verbose > 0){
-      std::cout << "  Writing ShutterSource (dec): " << value << std::endl;
-      GetShutterControl();
+    // Selects the input to be used as shutter source (0, 5)
+    uint32_t res;
+    if (value > 5){
+      std::stringstream ss;
+      ss << "Shutter source can only be in range [0, 5]. Value " << value << " ignored.\t";
+      std::string myMsg = ss.str();
+      EUDAQ_ERROR(myMsg);
+      return;
+    }
+    else{
+      SetWRegister("Shutter.ShutterSelectRW",value);
+      if (verbose > 0){
+        std::cout << "  Writing ShutterSource (dec): " << value << std::endl;
+      }
+      res= GetShutterSource(verbose);
+      compareWriteRead(value, res, 0xF, "ShutterSelect");
+      return;
     }
   };
 
-   void AidaTluController::SetShutterOnTime(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterOnTime(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("Shutter.ShutterOnTimeRW",value);
     if (verbose > 0){
-      std::cout << "  Writing ShutterOnTime (dec): " << value << std::endl;
-      GetShutterControl();
+      std::cout << "  Writing ShutterOnTime (dec): " << std::dec << value << std::endl;
     }
+    res= GetShutterOnTime(verbose);
+    compareWriteRead(value, res, 0xFFFFFFFF, "ShutterOnTime");
   };
 
-   void AidaTluController::SetShutterOffTime(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterOffTime(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("Shutter.ShutterOffTimeRW",value);
     if (verbose > 0){
-      std::cout << "  Writing ShutterOffTime (dec): " << value << std::endl;
-      GetShutterOffTime();
+      std::cout << "  Writing ShutterOffTime (dec): " << std::dec << value << std::endl;
     }
+    res= GetShutterOffTime(verbose);
+    compareWriteRead(value, res, 0xFFFFFFFF, "ShutterOffTime");
   };
 
-   void AidaTluController::SetShutterVetoOffTime(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterVetoOffTime(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("Shutter.ShutterVetoOffTimeRW",value);
     if (verbose > 0){
-      std::cout << "  Writing ShutterVetoOffTime (dec): " << value << std::endl;
-      GetShutterVetoOffTime();
+      std::cout << "  Writing ShutterVetoOffTime (dec): " << std::dec << value << std::endl;
     }
+    res= GetShutterVetoOffTime(verbose);
+    compareWriteRead(value, res, 0xFFFFFFFF, "ShutterVetoOffTime");
   };
 
   void AidaTluController::SetDUTIgnoreShutterVeto(uint32_t value, uint8_t verbose){
+    uint32_t res;
     SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
     if (verbose > 0){
       std::cout << "  Writing DUT Ignore Veto: 0x" << std::hex << value << std::endl;
-      GetDUTIgnoreShutterVeto();
     }
+    res= GetDUTIgnoreShutterVeto(verbose);
+    compareWriteRead(value, res, 0xFFFFFFFF, "IgnoreShutterVeto");
   };
 
   void AidaTluController::SetInternalTriggerFrequency(uint32_t user_freq, uint8_t verbose){
     uint32_t max_freq= 160000000;
     uint32_t interval;
-    uint32_t actual_interval;
+    uint32_t read_freq;
     if (user_freq > max_freq){
       std::cout << "  SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
       user_freq= max_freq;
@@ -792,16 +881,36 @@ namespace tlu {
     }
     SetInternalTriggerInterval(interval);
     std::cout << "  Required internal trigger frequency: " << user_freq << " Hz" << std::endl;
-    std::cout << "\tSetting internal interval to:" << interval << std::endl;
-    actual_interval= GetInternalTriggerInterval(1);
+    if (verbose > 1){
+      std::cout << "\tSetting internal interval to: " << interval << std::endl;
+    }
+    read_freq= GetInternalTriggerFrequency(verbose);
+    compareWriteRead(user_freq, read_freq, 0xFFFFFFFF, "InternalFrequency");
   }
 
-  void AidaTluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){
-    SetPulseStretch( (int)PackBits(valuesVec) );
+  void AidaTluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec, uint8_t verbose){
+    uint32_t packed;
+    uint32_t res;
+    packed= PackBits(valuesVec);
+    if (verbose > 0){
+      std::cout << "  Writing pulse stretch word= 0x" << std::hex << std::setw(8) << std::setfill('0') << packed << std::endl;
+    }
+    //SetPulseStretch( (int)PackBits(valuesVec) );
+    SetPulseStretch( packed );
+    res= GetPulseStretch();
+    compareWriteRead(packed, res, 0x3FFFFFFF, "SetPulseStretch");
   }
 
-  void AidaTluController::SetPulseDelayPack(std::vector< unsigned int>  valuesVec){
-    SetPulseDelay( (int)PackBits(valuesVec) );
+  void AidaTluController::SetPulseDelayPack(std::vector< unsigned int>  valuesVec, uint8_t verbose){
+    uint32_t packed;
+    uint32_t res;
+    packed= PackBits(valuesVec);
+    if (verbose > 0){
+      std::cout << "  Writing pulse delay word= 0x" << std::hex << std::setw(8) << std::setfill('0') << packed << std::endl;
+    }
+    SetPulseDelay( packed );
+    res= GetPulseDelay();
+    compareWriteRead(packed, res, 0x3FFFFFFF, "SetPulseDelay");
   }
 
   void AidaTluController::SetDACref(float vref, uint8_t verbose){
@@ -840,13 +949,13 @@ namespace tlu {
     }
     if (channel <2){
       if (verbose > 0){
-        std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+        std::cout << "  Setting threshold for channel " << (unsigned int)channel+1 << " to " << thresholdVoltage << " V" << std::endl;
       }
       m_zeDAC1.SetDACValue( 1-channel , int(dacCode), verbose); //The ADC channels are connected in reverse order
     }
     else{
       if (verbose > 0){
-        std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+        std::cout << "  Setting threshold for channel " << (unsigned int)channel+1 << " to " << thresholdVoltage << " V" << std::endl;
       }
       m_zeDAC2.SetDACValue( 3-(channel-2) , int(dacCode), verbose);
     }
@@ -868,11 +977,10 @@ namespace tlu {
     SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
   }
 
-  void AidaTluController::SetTriggerVeto(int value){
+  void AidaTluController::SetTriggerVeto(int value, uint8_t verbose){
     uint32_t vetoStatus;
     SetWRegister("triggerLogic.TriggerVetoW",value);
-    vetoStatus= GetTriggerVeto();
-    std::cout << "  TRIGGER VETO SET TO: " << vetoStatus << std::endl;
+    GetTriggerVeto(verbose);
   }
 
   void AidaTluController::SetWRegister(const std::string & name, int value){
@@ -912,7 +1020,18 @@ namespace tlu {
     }
   }
 
-
+  void AidaTluController::compareWriteRead(uint32_t written, uint32_t readback, uint32_t mask, const std::string & regName){
+  // Use this to check that the written value matches the returned one. Throw an EUDAQ error if they do not.
+    if ((written & mask) == (readback & mask)){
+      return;
+    }
+    else{
+      std::stringstream ss;
+      ss << regName << ": Mismatch in values. Written: " << std::hex << std::showbase << (written & mask) << "; readback as: " << (readback & mask) << "\t";
+      std::string myMsg = ss.str();
+      EUDAQ_ERROR(myMsg);
+    }
+  }
 
   std::ostream &operator<<(std::ostream &s, fmctludata &d) {
     s << "__________________________________________________________________________" << std::endl
