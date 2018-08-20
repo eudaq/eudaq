@@ -58,7 +58,7 @@ void AidaTluProducer::RunLoop(){
   std::this_thread::sleep_for( std::chrono::milliseconds( m_delayStart ) );
 
   // Send reset pulse to all DUTs and reset internal counters
-  m_tlu->PulseT0();
+  m_tlu->SetRunActive(1, 1);
 
   // Enable triggers
   m_tlu->SetTriggerVeto(0, m_verbose);
@@ -115,6 +115,8 @@ void AidaTluProducer::RunLoop(){
     }
   }
   m_tlu->SetTriggerVeto(1, m_verbose);
+  // Set TLU internal logic to stop.
+  m_tlu->SetRunActive(0, 1);
 }
 
 void AidaTluProducer::DoInitialise(){

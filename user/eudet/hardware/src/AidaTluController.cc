@@ -602,9 +602,24 @@ namespace tlu {
     return packedbits;
   }
 
-  void AidaTluController::PulseT0(){
-    SetWRegister("Shutter.PulseT0", 0x1);
-    std::cout << "  PULSE T0: done"  << std::endl;
+  void AidaTluController::SetRunActive(uint8_t state, uint8_t verbose){
+  /// Writes to IPBus register to instruct the TLU to start/stop a run.
+  //  state= 1 when running, 0 when stopped.
+  //  On start, the internal registers are reset and the TLU issues a T0 pulse to DUTs.
+    SetWRegister("Shutter.RunActive", state);
+    std::stringstream ss;
+    std::string runState;
+
+    if (state){
+      runState= "RUN";
+    }
+    else{
+      runState= "STOP";
+    }
+
+    ss << "AIDA TLU SET TO " << runState << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
   }
 
   fmctludata* AidaTluController::PopFrontEvent(){

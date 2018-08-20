@@ -158,7 +158,7 @@ namespace tlu {
     void InitializeI2C(uint8_t verbose);
     void pwrled_Initialize(uint8_t verbose, unsigned int type);
     void pwrled_setVoltages(float v1, float v2, float v3, float v4, uint8_t verbose);
-    void PulseT0();
+    void SetRunActive(uint8_t state, uint8_t verbose);
 
     void SetDACValue(unsigned char channel, uint32_t value, uint8_t verbose);
     void SetThresholdValue(unsigned char channel, float thresholdVoltage, uint8_t verbose);
