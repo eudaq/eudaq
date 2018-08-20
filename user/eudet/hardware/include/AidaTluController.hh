@@ -29,7 +29,7 @@ namespace tlu {
     void compareWriteRead(uint32_t written, uint32_t readback, uint32_t mask, const std::string & regName);
     void configureHDMI(unsigned int hdmiN, unsigned int enable, uint8_t verbose);
     void enableHDMI(unsigned int dutN, bool enable, uint8_t verbose);
-    unsigned int PackBits(std::vector< unsigned int>  rawValues);
+    uint32_t PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
     void SetInternalTriggerInterval(int value) { SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
     void SetInternalTriggerFrequency(uint32_t user_freq, uint8_t verbose);
@@ -40,8 +40,8 @@ namespace tlu {
     void SetTriggerVeto(int value, uint8_t verbose);
     void SetPulseStretch(int value) { SetWRegister("triggerLogic.PulseStretchW",value); };
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
-    void SetPulseStretchPack(std::vector< unsigned int>  valuesVec);
-    void SetPulseDelayPack(std::vector< unsigned int>  valuesVec);
+    void SetPulseStretchPack(std::vector< unsigned int>  valuesVec, uint8_t verbose);
+    void SetPulseDelayPack(std::vector< unsigned int>  valuesVec, uint8_t verbose);
     void SetDUTMask(uint32_t value, uint8_t verbose);
     void SetDUTMaskMode(uint32_t value, uint8_t verbose);
     void SetDUTMaskModeModifier(uint32_t value, uint8_t verbose);
@@ -64,7 +64,7 @@ namespace tlu {
 
     uint32_t GetLogicClocksCSR() { return ReadRRegister("logic_clocks.LogicClocksCSR"); };
     //uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
-    uint32_t GetInternalTriggerInterval(uint8_t verbose);
+    uint32_t GetInternalTriggerFrequency(uint8_t verbose);
     uint32_t GetPulseStretch(){ return ReadRRegister("triggerLogic.PulseStretchR"); };
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };

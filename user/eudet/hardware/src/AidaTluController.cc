@@ -291,20 +291,21 @@ namespace tlu {
     return res;
   }
 
-  uint32_t AidaTluController::GetInternalTriggerInterval(uint8_t verbose){
+  uint32_t AidaTluController::GetInternalTriggerFrequency(uint8_t verbose){
     uint32_t interval;
     uint32_t true_freq;
 
     interval= ReadRRegister("triggerLogic.InternalTriggerIntervalR");
-    if (verbose > 0){
-      if (interval==0){
-        true_freq = 0;
-      }
-      else{
-        true_freq= (int) floor( (float)160000000 / interval );
-      }
+    if (interval==0){
+      true_freq = 0;
+    }
+    else{
+      true_freq= (int) floor( (float)160000000 / interval );
+    }
+    if (verbose > 1){
       std::cout << "\tFrequency read back as: " << true_freq << " Hz"<< std::endl;
     }
+    return true_freq;
   }
 
   std::string AidaTluController::parseURI(){
@@ -571,12 +572,11 @@ namespace tlu {
 
   void AidaTluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, uint8_t verbose) {
     // Note that ordering is not 1:1. Mapping is done in here.
-    std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
     if (verbose > 0){
-      std::cout << "\tV PMT1=" << v3 << "V" << std::endl;
-      std::cout << "\tV PMT2=" << v2 << "V" << std::endl;
-      std::cout << "\tV PMT3=" << v4 << "V" << std::endl;
-      std::cout << "\tV PMT4=" << v1 << "V" << std::endl;
+      std::cout << "\tPMT1= " << v3 << " V" << std::endl;
+      std::cout << "\tPMT2= " << v2 << " V" << std::endl;
+      std::cout << "\tPMT3= " << v4 << " V" << std::endl;
+      std::cout << "\tPMT4= " << v1 << " V" << std::endl;
     }
     m_pwrled->setVchannel(0, v3, verbose);
     m_pwrled->setVchannel(1, v2, verbose);
@@ -584,10 +584,10 @@ namespace tlu {
     m_pwrled->setVchannel(3, v1, verbose);
   }
 
-  unsigned int AidaTluController::PackBits(std::vector< unsigned int>  rawValues){
+  uint32_t AidaTluController::PackBits(std::vector< unsigned int>  rawValues){
     //Pack 6 number using only 5-bits for each.
     int nChannels= m_nTrgIn;
-    unsigned int packedbits= 0;
+    uint32_t packedbits= 0;
     int tmpint= 0;
     if (nChannels== rawValues.size()){
       for (int iCh=0; iCh < nChannels; iCh++){
@@ -853,7 +853,7 @@ namespace tlu {
   void AidaTluController::SetInternalTriggerFrequency(uint32_t user_freq, uint8_t verbose){
     uint32_t max_freq= 160000000;
     uint32_t interval;
-    uint32_t actual_interval;
+    uint32_t read_freq;
     if (user_freq > max_freq){
       std::cout << "  SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
       user_freq= max_freq;
@@ -869,15 +869,33 @@ namespace tlu {
     if (verbose > 1){
       std::cout << "\tSetting internal interval to: " << interval << std::endl;
     }
-    actual_interval= GetInternalTriggerInterval(verbose);
+    read_freq= GetInternalTriggerFrequency(verbose);
+    compareWriteRead(user_freq, read_freq, 0xFFFFFFFF, "InternalFrequency");
   }
 
-  void AidaTluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){
-    SetPulseStretch( (int)PackBits(valuesVec) );
+  void AidaTluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec, uint8_t verbose){
+    uint32_t packed;
+    uint32_t res;
+    packed= PackBits(valuesVec);
+    if (verbose > 0){
+      std::cout << "  Writing pulse stretch word= 0x" << std::hex << std::setw(8) << std::setfill('0') << packed << std::endl;
+    }
+    //SetPulseStretch( (int)PackBits(valuesVec) );
+    SetPulseStretch( packed );
+    res= GetPulseStretch();
+    compareWriteRead(packed, res, 0x3FFFFFFF, "SetPulseStretch");
   }
 
-  void AidaTluController::SetPulseDelayPack(std::vector< unsigned int>  valuesVec){
-    SetPulseDelay( (int)PackBits(valuesVec) );
+  void AidaTluController::SetPulseDelayPack(std::vector< unsigned int>  valuesVec, uint8_t verbose){
+    uint32_t packed;
+    uint32_t res;
+    packed= PackBits(valuesVec);
+    if (verbose > 0){
+      std::cout << "  Writing pulse delay word= 0x" << std::hex << std::setw(8) << std::setfill('0') << packed << std::endl;
+    }
+    SetPulseDelay( packed );
+    res= GetPulseDelay();
+    compareWriteRead(packed, res, 0x3FFFFFFF, "SetPulseDelay");
   }
 
   void AidaTluController::SetDACref(float vref, uint8_t verbose){
@@ -916,13 +934,13 @@ namespace tlu {
     }
     if (channel <2){
       if (verbose > 0){
-        std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+        std::cout << "  Setting threshold for channel " << (unsigned int)channel+1 << " to " << thresholdVoltage << " V" << std::endl;
       }
       m_zeDAC1.SetDACValue( 1-channel , int(dacCode), verbose); //The ADC channels are connected in reverse order
     }
     else{
       if (verbose > 0){
-        std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+        std::cout << "  Setting threshold for channel " << (unsigned int)channel+1 << " to " << thresholdVoltage << " V" << std::endl;
       }
       m_zeDAC2.SetDACValue( 3-(channel-2) , int(dacCode), verbose);
     }
