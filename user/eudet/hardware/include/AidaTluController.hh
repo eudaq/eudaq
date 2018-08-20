@@ -161,6 +161,7 @@ namespace tlu {
     void SetRunActive(uint8_t state, uint8_t verbose);
 
     void SetDACValue(unsigned char channel, uint32_t value, uint8_t verbose);
+    void SetShutterParameters(bool status, uint8_t source, uint32_t onTime, uint32_t offTime, uint32_t vetoOffTime, uint32_t intInterval, uint8_t verbose);
     void SetThresholdValue(unsigned char channel, float thresholdVoltage, uint8_t verbose);
     void SetDutClkSrc(unsigned int hdmiN, unsigned int source, uint8_t verbose);
     void SetDACref(float vre, uint8_t verbosef);

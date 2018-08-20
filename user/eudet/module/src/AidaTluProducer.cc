@@ -287,12 +287,20 @@ void AidaTluProducer::DoConfigure() {
     if(m_verbose > 0){
       std::cout << " -SHUTTER OPERATION MODE" << std::endl;
     }
-    m_tlu->SetShutterOnTime( (uint32_t)(conf->Get("ShutterOnTime",0)), m_verbose);
-    m_tlu->SetShutterSource( (uint32_t)(conf->Get("ShutterSource",0)), m_verbose);
-    m_tlu->SetShutterInternalInterval( (uint32_t)(conf->Get("ShutterInternalShutterPeriod",0)), m_verbose);
-    m_tlu->SetShutterControl( (uint32_t)(conf->Get("ShutterControl",0)), m_verbose);
-    m_tlu->SetShutterVetoOffTime( (uint32_t)(conf->Get("ShutterVetoOffTime",0)), m_verbose);
-    m_tlu->SetShutterOffTime( (uint32_t)(conf->Get("ShutterOffTime",0)), m_verbose);
+    m_tlu->SetShutterParameters( (bool)conf->Get("EnableShutterMode",0),
+                                 (uint32_t)(conf->Get("ShutterSource",0)),
+                                 (uint32_t)(conf->Get("ShutterOnTime",0)),
+                                 (uint32_t)(conf->Get("ShutterOffTime",0)),
+                                 (uint32_t)(conf->Get("ShutterVetoOffTime",0)),
+                                 (uint32_t)(conf->Get("InternalShutterInterval",0)),
+                                  m_verbose);
+
+    //m_tlu->SetShutterControl( (uint32_t)(conf->Get("ShutterControl",0)), m_verbose);
+    //m_tlu->SetShutterSource( (uint32_t)(conf->Get("ShutterSource",0)), m_verbose);
+    //m_tlu->SetShutterOnTime( (uint32_t)(conf->Get("ShutterOnTime",0)), m_verbose);
+    //m_tlu->SetShutterOffTime( (uint32_t)(conf->Get("ShutterOffTime",0)), m_verbose);
+    //m_tlu->SetShutterVetoOffTime( (uint32_t)(conf->Get("ShutterVetoOffTime",0)), m_verbose);
+    //m_tlu->SetShutterInternalInterval( (uint32_t)(conf->Get("ShutterInternalShutterPeriod",0)), m_verbose);
     //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0)));  // 160M/interval
 
     if(m_verbose > 0){
