@@ -32,7 +32,7 @@ namespace tlu {
     uint32_t PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
     void SetInternalTriggerInterval(int value) { SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
-    void SetInternalTriggerFrequency(uint32_t user_freq, uint8_t verbose);
+    void SetInternalTriggerFrequency(int32_t user_freq, uint8_t verbose);
     //void SetTriggerMask(int value) { SetWRegister("triggerLogic.TriggerMaskW",value); };
     void SetTriggerMask(uint64_t value);
     void SetTriggerMask(uint32_t maskHi, uint32_t maskLo);
@@ -42,17 +42,17 @@ namespace tlu {
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
     void SetPulseStretchPack(std::vector< unsigned int>  valuesVec, uint8_t verbose);
     void SetPulseDelayPack(std::vector< unsigned int>  valuesVec, uint8_t verbose);
-    void SetDUTMask(uint32_t value, uint8_t verbose);
-    void SetDUTMaskMode(uint32_t value, uint8_t verbose);
-    void SetDUTMaskModeModifier(uint32_t value, uint8_t verbose);
-    void SetDUTIgnoreBusy(uint32_t value, uint8_t verbose);
-    void SetDUTIgnoreShutterVeto(uint32_t value, uint8_t verbose);
-    void SetShutterControl(uint32_t value, uint8_t verbose);
-    void SetShutterInternalInterval(uint32_t value, uint8_t verbose);
-    void SetShutterSource(uint32_t value, uint8_t verbose);
-    void SetShutterOffTime(uint32_t value, uint8_t verbose);
-    void SetShutterOnTime(uint32_t value, uint8_t verbose);
-    void SetShutterVetoOffTime(uint32_t value, uint8_t verbose);
+    void SetDUTMask(int32_t value, uint8_t verbose);
+    void SetDUTMaskMode(int32_t value, uint8_t verbose);
+    void SetDUTMaskModeModifier(int32_t value, uint8_t verbose);
+    void SetDUTIgnoreBusy(int32_t value, uint8_t verbose);
+    void SetDUTIgnoreShutterVeto(int32_t value, uint8_t verbose);
+    void SetShutterControl(int32_t value, uint8_t verbose);
+    void SetShutterInternalInterval(int32_t value, uint8_t verbose);
+    void SetShutterSource(int32_t value, uint8_t verbose);
+    void SetShutterOffTime(int32_t value, uint8_t verbose);
+    void SetShutterOnTime(int32_t value, uint8_t verbose);
+    void SetShutterVetoOffTime(int32_t value, uint8_t verbose);
 
     //uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
 
@@ -161,6 +161,7 @@ namespace tlu {
     void SetRunActive(uint8_t state, uint8_t verbose);
 
     void SetDACValue(unsigned char channel, uint32_t value, uint8_t verbose);
+    void SetShutterParameters(bool status, int8_t source, int32_t onTime, int32_t offTime, int32_t vetoOffTime, int32_t intInterval, uint8_t verbose);
     void SetThresholdValue(unsigned char channel, float thresholdVoltage, uint8_t verbose);
     void SetDutClkSrc(unsigned int hdmiN, unsigned int source, uint8_t verbose);
     void SetDACref(float vre, uint8_t verbosef);

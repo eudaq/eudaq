@@ -240,7 +240,7 @@ namespace tlu {
     en_internal_shutter = (res >> 1) & 0x1;
     if (verbose >0){
       std::cout << "\tShutter Mode is " << m_myStates[en_shutter] << std::endl;
-      std::cout << "\tInternal shutter is " << m_myStates[en_internal_shutter] << "\n" << std::endl;
+      std::cout << "\tInternal shutter is " << m_myStates[en_internal_shutter] << std::endl;
     }
     return res;
   }
@@ -740,48 +740,76 @@ namespace tlu {
     return;
   }
 
-  void AidaTluController::SetDUTMask(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetDUTMask(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("DUTMask can  not be a negavite number.");
+      return;
+    }
     SetWRegister("DUTInterfaces.DUTMaskW",value);
     if (verbose > 0){
       std::cout << "  Writing DUTMask: 0x" << std::hex << (uint32_t)value  << std::endl;
     }
     res= GetDUTMask(verbose);
     compareWriteRead(value, res, 0xF, "DUTMask");
+    return;
   };
 
-  void AidaTluController::SetDUTMaskMode(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetDUTMaskMode(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("DUTMaskMode can  not be a negavite number.");
+      return;
+    }
     SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
     if (verbose > 0){
       std::cout << "  Writing DUTInterfaceMode: 0x" << std::hex << value  <<std::dec << std::endl;
     }
     res= GetDUTMaskMode(verbose);
     compareWriteRead(value, res, 0xFF, "DUTMaskMode");
+    return;
   };
 
-  void AidaTluController::SetDUTMaskModeModifier(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetDUTMaskModeModifier(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("DUTMaskModeModifier can  not be a negavite number.");
+      return;
+    }
     SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
     if (verbose > 0){
       std::cout << "  Writing DUTModeModifier: 0x" << std::hex << value << std::endl;
     }
     res= GetDUTMaskModeModifier(verbose);
     compareWriteRead(value, res, 0xFF, "DUTMaskModeModifier");
+    return;
   };
 
-  void AidaTluController::SetDUTIgnoreBusy(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetDUTIgnoreBusy(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("DUTIgnoreBusy can  not be a negavite number.");
+      return;
+    }
     SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
     if (verbose > 0){
       std::cout << "  Writing DUT Ignore Busy: 0x" << std::hex << value << std::endl;
     }
     res= GetDUTIgnoreBusy(verbose);
     compareWriteRead(value, res, 0xF, "DUTIgnoreBusy");
+    return;
   };
 
-  void AidaTluController::SetShutterControl(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterControl(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("ShutterControl can  not be a negavite number.");
+      return;
+    }
+    if (value & 0x1){
+      EUDAQ_INFO("AIDA TLU is configured to use shutter.\t");
+    }
+
     if (value > 3){
       EUDAQ_WARN("Shutter control: only bit 0 and 1 are considered for this value.\t");
       value= value & 0x3;
@@ -792,22 +820,28 @@ namespace tlu {
     }
     res= GetShutterControl(verbose);
     compareWriteRead(value, res, 0x3, "ShutterControl");
+    return;
   };
 
-  void AidaTluController::SetShutterInternalInterval(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterInternalInterval(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("ShutterInternalInterval can  not be a negavite number.");
+      return;
+    }
     SetWRegister("Shutter.InternalShutterPeriodRW",value);
     if (verbose > 0){
       std::cout << "  Writing InternalShutterPeriod (dec): " << value << std::endl;
     }
     res= GetShutterInternalInterval(verbose);
     compareWriteRead(value, res, 0xFFFFFFFF, "ShutterInternalInterval");
+    return;
   };
 
-  void AidaTluController::SetShutterSource(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterSource(int32_t value, uint8_t verbose){
     // Selects the input to be used as shutter source (0, 5)
     uint32_t res;
-    if (value > 5){
+    if ((value < 0) | (value > 5)){
       std::stringstream ss;
       ss << "Shutter source can only be in range [0, 5]. Value " << value << " ignored.\t";
       std::string myMsg = ss.str();
@@ -825,50 +859,123 @@ namespace tlu {
     }
   };
 
-  void AidaTluController::SetShutterOnTime(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterOnTime(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("ShutterOnTime can  not be a negavite number.");
+      return;
+    }
     SetWRegister("Shutter.ShutterOnTimeRW",value);
     if (verbose > 0){
       std::cout << "  Writing ShutterOnTime (dec): " << std::dec << value << std::endl;
     }
     res= GetShutterOnTime(verbose);
     compareWriteRead(value, res, 0xFFFFFFFF, "ShutterOnTime");
+    return;
   };
 
-  void AidaTluController::SetShutterOffTime(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterOffTime(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("ShutterOffTime can  not be a negavite number.");
+      return;
+    }
     SetWRegister("Shutter.ShutterOffTimeRW",value);
     if (verbose > 0){
       std::cout << "  Writing ShutterOffTime (dec): " << std::dec << value << std::endl;
     }
     res= GetShutterOffTime(verbose);
     compareWriteRead(value, res, 0xFFFFFFFF, "ShutterOffTime");
+    return;
   };
 
-  void AidaTluController::SetShutterVetoOffTime(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetShutterVetoOffTime(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("ShutterVetoOffTime can  not be a negavite number.");
+      return;
+    }
     SetWRegister("Shutter.ShutterVetoOffTimeRW",value);
     if (verbose > 0){
       std::cout << "  Writing ShutterVetoOffTime (dec): " << std::dec << value << std::endl;
     }
     res= GetShutterVetoOffTime(verbose);
     compareWriteRead(value, res, 0xFFFFFFFF, "ShutterVetoOffTime");
+    return;
   };
 
-  void AidaTluController::SetDUTIgnoreShutterVeto(uint32_t value, uint8_t verbose){
+  void AidaTluController::SetDUTIgnoreShutterVeto(int32_t value, uint8_t verbose){
     uint32_t res;
+    if (value < 0){
+      EUDAQ_ERROR("DUTIgnoreShutterVeto can  not be a negavite number.");
+      return;
+    }
     SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
     if (verbose > 0){
-      std::cout << "  Writing DUT Ignore Veto: 0x" << std::hex << value << std::endl;
+      std::cout << "  Writing DUT Ignore Veto: 0x" << std::hex << value << std::dec << std::endl;
     }
     res= GetDUTIgnoreShutterVeto(verbose);
     compareWriteRead(value, res, 0xFFFFFFFF, "IgnoreShutterVeto");
+    return;
   };
 
-  void AidaTluController::SetInternalTriggerFrequency(uint32_t user_freq, uint8_t verbose){
+  void AidaTluController::SetShutterParameters(bool status, int8_t source, int32_t onTime, int32_t offTime, int32_t vetoOffTime, int32_t intInterval, uint8_t verbose){
+    // Check consistency of shutter parameters and write them to the correct registers.
+    // status: enable or disable the shutter functionality
+    // source: selects the LEMO input to use as shutter signal (0-5)
+    uint8_t generatorFlag= 0;
+    uint8_t control= 0;
+
+    // Define the control bits
+    if (intInterval != 0){
+        generatorFlag= 1;
+    }
+    control= (generatorFlag << 1) | (unsigned)status;
+    SetShutterControl( control , verbose);
+
+    // Configure the rest of the parameters only if status= true
+    if (status){
+      SetShutterSource(source, verbose);
+      SetShutterInternalInterval(intInterval, verbose);
+
+      // Check that
+      // onTime < vetoOffTime < offTime
+      if (vetoOffTime < onTime){
+        EUDAQ_ERROR("ShutterVetoOffTime can not be shorter than ShutterOnTime. Please review configuration parameters.\t");
+        std::cout << "\tENSURE THAT ShutterOnTime <= ShutterVetoOffTime < ShutterOffTime" << std::endl;
+        return;
+      }
+      if (offTime <= onTime){
+        EUDAQ_ERROR("ShutterOffTime must be longer than ShutterOnTime. Please review configuration parameters.\t");
+        std::cout << "\tENSURE THAT ShutterOnTime <= ShutterVetoOffTime < ShutterOffTime" << std::endl;
+        return;
+      }
+      if (offTime <= vetoOffTime){
+        EUDAQ_ERROR("ShutterOffTime must be longer than ShutterVetoOffTime. Please review configuration parameters.\t");
+        std::cout << "\tENSURE THAT ShutterOnTime <= ShutterVetoOffTime < ShutterOffTime" << std::endl;
+        return;
+      }
+      SetShutterOnTime(onTime, verbose);
+      SetShutterOffTime(offTime, verbose);
+      SetShutterVetoOffTime(vetoOffTime, verbose);
+    }
+    else{
+      if (verbose > 1){
+        std::cout << "EnableShutterMode is set to 0x0. No further configuration for shutter will be performed." << std::endl;
+      }
+    }
+    return;
+  }
+
+  void AidaTluController::SetInternalTriggerFrequency(int32_t user_freq, uint8_t verbose){
     uint32_t max_freq= 160000000;
     uint32_t interval;
     uint32_t read_freq;
+
+    if (user_freq < 0){
+      EUDAQ_ERROR("InternalTriggerFrequency can  not be a negavite number.");
+      return;
+    }
     if (user_freq > max_freq){
       std::cout << "  SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
       user_freq= max_freq;
@@ -886,6 +993,7 @@ namespace tlu {
     }
     read_freq= GetInternalTriggerFrequency(verbose);
     compareWriteRead(user_freq, read_freq, 0xFFFFFFFF, "InternalFrequency");
+    return;
   }
 
   void AidaTluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec, uint8_t verbose){
@@ -921,7 +1029,7 @@ namespace tlu {
   }
 
   void AidaTluController::SetThresholdValue(unsigned char channel, float thresholdVoltage, uint8_t verbose ) {
-    //Channel can either be [0, 5] or 7 (all channels).
+    // Channel can either be [0, 5] or 7 (all channels).
     int nChannels= m_nTrgIn; //We should read this from conf file, ideally.
     bool intRef= false; //We should read this from conf file, ideally.
     float vref;
