@@ -138,7 +138,13 @@ void AidaTluProducer::DoInitialise(){
   }
   else{
 
-    m_verbose= ini->Get("verbose", 0);
+    m_verbose= abs(ini->Get("verbose", 0));
+    std::stringstream ss;
+    ss << "AIDA_TLU VERBOSITY SET TO: " << int(m_verbose) << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
+    ss.str(std::string());
+    ss.clear();
     // Define constants
     m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
 
@@ -192,15 +198,19 @@ void AidaTluProducer::DoInitialise(){
 }
 
 void AidaTluProducer::DoConfigure() {
-  std::stringstream ss;
+
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
-  m_verbose= conf->Get("verbose", 0);
-  std::cout << "VERBOSE SET TO: " << int(m_verbose) << std::endl;
-  m_delayStart= conf->Get("delayStart", 0);
-
-  ss << "AIDA_TLU DELAY START SET TO: " << m_delayStart << " ms\t" ;
+  m_verbose= abs(conf->Get("verbose", 0));
+  std::stringstream ss;
+  ss << "AIDA_TLU VERBOSITY SET TO: " << int(m_verbose) << "\t";
   std::string myMsg = ss.str();
+  EUDAQ_INFO(myMsg);
+
+  ss.str(std::string());
+  ss.clear();
+  m_delayStart= conf->Get("delayStart", 0);
+  ss << "AIDA_TLU DELAY START SET TO: " << m_delayStart << " ms\t" ;
   EUDAQ_INFO(myMsg);
 
 
@@ -278,35 +288,28 @@ void AidaTluProducer::DoConfigure() {
     if(m_verbose > 0){
       std::cout << " -DUT OPERATION MODE" << std::endl;
     }
-    m_tlu->SetDUTMask( (uint32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
-    m_tlu->SetDUTMaskMode( (uint32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
-    m_tlu->SetDUTMaskModeModifier( (uint32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
-    m_tlu->SetDUTIgnoreBusy( (uint32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode
-    m_tlu->SetDUTIgnoreShutterVeto( (uint32_t)(conf->Get("DUTIgnoreShutterVeto",1)), m_verbose); //
+    m_tlu->SetDUTMask( (int32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
+    m_tlu->SetDUTMaskMode( (int32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
+    m_tlu->SetDUTMaskModeModifier( (int32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
+    m_tlu->SetDUTIgnoreBusy( (int32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode
+    m_tlu->SetDUTIgnoreShutterVeto( (int32_t)(conf->Get("DUTIgnoreShutterVeto",1)), m_verbose); //
 
     if(m_verbose > 0){
       std::cout << " -SHUTTER OPERATION MODE" << std::endl;
     }
     m_tlu->SetShutterParameters( (bool)conf->Get("EnableShutterMode",0),
-                                 (uint32_t)(conf->Get("ShutterSource",0)),
-                                 (uint32_t)(conf->Get("ShutterOnTime",0)),
-                                 (uint32_t)(conf->Get("ShutterOffTime",0)),
-                                 (uint32_t)(conf->Get("ShutterVetoOffTime",0)),
-                                 (uint32_t)(conf->Get("InternalShutterInterval",0)),
+                                 (int8_t)(conf->Get("ShutterSource",0)),
+                                 (int32_t)(conf->Get("ShutterOnTime",0)),
+                                 (int32_t)(conf->Get("ShutterOffTime",0)),
+                                 (int32_t)(conf->Get("ShutterVetoOffTime",0)),
+                                 (int32_t)(conf->Get("InternalShutterInterval",0)),
                                   m_verbose);
 
-    //m_tlu->SetShutterControl( (uint32_t)(conf->Get("ShutterControl",0)), m_verbose);
-    //m_tlu->SetShutterSource( (uint32_t)(conf->Get("ShutterSource",0)), m_verbose);
-    //m_tlu->SetShutterOnTime( (uint32_t)(conf->Get("ShutterOnTime",0)), m_verbose);
-    //m_tlu->SetShutterOffTime( (uint32_t)(conf->Get("ShutterOffTime",0)), m_verbose);
-    //m_tlu->SetShutterVetoOffTime( (uint32_t)(conf->Get("ShutterVetoOffTime",0)), m_verbose);
-    //m_tlu->SetShutterInternalInterval( (uint32_t)(conf->Get("ShutterInternalShutterPeriod",0)), m_verbose);
-    //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0)));  // 160M/interval
 
     if(m_verbose > 0){
       std::cout << " -AUTO TRIGGER SETTINGS" << std::endl;
     }
-    m_tlu->SetInternalTriggerFrequency( (uint32_t)( conf->Get("InternalTriggerFreq", 0)), m_verbose );
+    m_tlu->SetInternalTriggerFrequency( (int32_t)( conf->Get("InternalTriggerFreq", 0)), m_verbose );
 
     if(m_verbose > 0){
       std::cout << " -FINALIZING AIDA TLU CONFIGURATION" << std::endl;
