@@ -145,9 +145,10 @@ namespace eudaq{
       if(m_ev==0) ev_raw->SetBORE();
       HGCalDataBlocks dataBlk=m_hgcController->getDequeData()[0];
       int iblock(0);
-      int head[1];
+      uint32_t head[2];
       for( std::map< int,std::vector<uint32_t> >::iterator it=dataBlk.getData().begin(); it!=dataBlk.getData().end(); ++it ){
-	head[0]=iblock+1;
+	head[0]=it->first;
+	head[1]=it->second[0];
 	ev_raw->AddBlock( 2*iblock,head,sizeof(head) );
 	if( m_doCompression==true ){
 	  std::string compressedData=compressor::compress(it->second,m_compressionLevel);
