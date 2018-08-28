@@ -2,7 +2,7 @@ include_directories(include)
 aux_source_directory(src MODULE_SRC)
 
 if(NOT EUDAQ_TTREE_LIBRARY)
-    list(REMOVE_ITEM MODULE_SRC src/Ex0RawEvent2TTreeEventConverter.cc)
+  list(REMOVE_ITEM MODULE_SRC src/Ex0RawEvent2TTreeEventConverter.cc)
 endif()
 
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
