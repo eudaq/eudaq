@@ -30,8 +30,6 @@
 #include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
 
-#include "CheckEOF.hh"
-
 // STL includes
 #include <string>
 #include <memory>
@@ -40,13 +38,12 @@ using namespace std;
 
 class OnlineMonWindow;
 class BaseCollection;
-class CheckEOF;
 
 class RootMonitor : public eudaq::Monitor{
   RQ_OBJECT("RootMonitor")
 public:
   RootMonitor(const std::string &runcontrol, 
-	      int x, int y, int w, int h, int argc, int offline,
+	      int x, int y, int w, int h,
               const std::string &conffile = "", const std::string &monname = "");
   ~RootMonitor() override;
   void DoConfigure() override;
@@ -55,9 +52,8 @@ public:
   void DoTerminate() override;
   void DoReceive(eudaq::EventSP) override;
   
-  void registerSensorInGUI(std::string name, int id);
   void autoReset(const bool reset);
-
+  
   void setWriteRoot(const bool write);
   void setReduce(const unsigned int red);
   void setUpdate(const unsigned int up);
@@ -73,15 +69,11 @@ public:
   OnlineMonWindow *getOnlineMon() const;
   OnlineMonConfiguration mon_configdata; // FIXME
 private:
-  bool histos_booked;
   std::vector<BaseCollection *> _colls;
   OnlineMonWindow *onlinemon;
   std::string rootfilename;
   std::string configfilename;
-  int runnumber;
   bool _writeRoot;
-  int _offline;
-  CheckEOF _checkEOF;
   bool _planesInitialized;
   HitmapCollection *hmCollection;
   CorrelationCollection *corrCollection;
