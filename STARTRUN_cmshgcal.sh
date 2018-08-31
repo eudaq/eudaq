@@ -29,5 +29,6 @@ xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL4" -e 'bin/euCliProducer -
 xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL5" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal5 -r tcp://$HOSTIP:$RCPORT '&
 
 
-xterm -r -sb -sl 100000 -T "OnlineMon" -e 'bin/StdEventMonitor  --monitor_name StdEventMonitor --reset -r tcp://$HODTIP:$RCPORT |tee -a logs/mon.log ; read' &
+xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --reset -r tcp://$HOSTIP:$RCPORT |tee -a logs/mon.log ; read' &
+# xterm -r -sb -sl 100000 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --reset -r tcp://$HODTIP:$RCPORT |tee -a logs/mon.log ; read' &
 #xterm -r -sb -sl 100000 -T "OnlineMon" -e './bin/euCliMonitor -n Ex0Monitor -t StdEventMonitor  -a tcp://45001 '&

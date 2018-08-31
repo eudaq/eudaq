@@ -25,5 +25,6 @@ xterm -r -sb -sl 100000 -T "EventnumberSyncData collector" -e 'bin/euCliCollecto
 #xterm -r -sb -sl 100000 -geometry 160x30 -T "Ex0-Producer" -e 'bin/euCliProducer -n Ex0Producer -t exo -r tcp://$HOSTIP:$RCPORT |tee -a logs/ex0.log ; read'&
 xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL2345" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal2345 -r tcp://$HOSTIP:$RCPORT '&
 
-xterm -r -sb -sl 100000 -T "OnlineMon" -e 'bin/StdEventMonitor  --monitor_name StdEventMonitor --reset -r tcp://$HOSTIP:$RCPORT |tee -a logs/mon.log ; read' &
+xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --reset -r tcp://$HOSTIP:$RCPORT |tee -a logs/mon.log ; read' &
+#xterm -r -sb -sl 100000 -T "OnlineMon" -e 'bin/StdEventMonitor  --monitor_name StdEventMonitor --reset -r tcp://$HOSTIP:$RCPORT |tee -a logs/mon.log ; read' &
 #xterm -r -sb -sl 100000 -T "OnlineMon" -e './bin/euCliMonitor -n Ex0Monitor -t StdEventMonitor  -a tcp://45001 | tee -a logs/euclimon.log ; read'&
