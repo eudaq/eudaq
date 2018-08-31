@@ -127,6 +127,19 @@ namespace eudaq {
     mutable std::vector<pixel_t> m_temp_pix;
     mutable std::vector<coord_t> m_temp_x, m_temp_y;
   };
+  inline std::ostream &operator<<(std::ostream &os, const StandardPlane &pl) {
+    pl.Print(os);
+    return os;
+  }
+
+  inline bool operator==(StandardPlane const &a, StandardPlane const &b) {
+    return (a.Sensor() == b.Sensor() && a.ID() == b.ID());
+  }
+
+  inline bool operator<(StandardPlane const &a, StandardPlane const &b) {
+    return (a.Sensor() < b.Sensor() ||
+	    (a.Sensor() == b.Sensor() && a.ID() < b.ID()));
+  }
 
 } // namespace eudaq
 

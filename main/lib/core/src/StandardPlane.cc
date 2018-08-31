@@ -1,5 +1,5 @@
 #include "eudaq/StandardPlane.hh"
-
+#include <iostream>
 namespace eudaq{
   StandardPlane::StandardPlane()
     : m_id(0), m_xsize(0), m_ysize(0), m_flags(0),
@@ -289,7 +289,22 @@ namespace eudaq{
 	  m_pix[2][i] * (m_pivot[0][i]);
       }
       m_result_pix = &m_temp_pix;
-    } else {
+    } else if (m_pix.size() == 30|| m_pix.size() == 21 || m_pix.size() == 1025){ // HGCAL Hexaboard data or DWC data or digitizer data
+      m_temp_pix.resize(0);
+      m_temp_x.resize(0);
+      m_temp_y.resize(0);
+
+      for (size_t p = 0; p < m_pix[2].size(); ++p) {
+	m_temp_x.push_back(GetX(p, 2));
+	m_temp_y.push_back(GetY(p, 2));
+	m_temp_pix.push_back(GetPixel(p, 2));
+      }
+
+      m_result_x = &m_temp_x;
+      m_result_y = &m_temp_y;
+      m_result_pix = &m_temp_pix;
+    }
+    else {
       EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size()) +
 		  " frames, CDS=" +
 		  (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");

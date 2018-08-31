@@ -36,10 +36,6 @@ namespace eudaq {
     std::vector<StandardPlane> m_planes;
   };
 
-  inline std::ostream &operator<<(std::ostream &os, const StandardPlane &pl) {
-    pl.Print(os);
-    return os;
-  }
   inline std::ostream &operator<<(std::ostream &os, const StandardEvent &ev) {
     ev.Print(os);
     return os;
