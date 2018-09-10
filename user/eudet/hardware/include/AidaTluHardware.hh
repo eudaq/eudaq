@@ -1,10 +1,10 @@
-#ifndef H_FMCTLUHARDWARE_HH
-#define H_FMCTLUHARDWARE_HH
+#ifndef H_AIDATLUHARDWARE_HH
+#define H_AIDATLUHARDWARE_HH
 
 #include <string>
 #include <iostream>
 #include <vector>
-#include "FmctluI2c.hh"
+#include "AidaTluI2c.hh"
 
 /*
   This file contains classes for chips used on the new TLU design.
@@ -60,7 +60,7 @@ public:
   unsigned int getDeviceVersion();
   char readRegister(unsigned int myaddr, bool verbose);
   void writeRegister(unsigned int myaddr, unsigned char data, bool verbose);
-  void checkDesignID();
+  std::string checkDesignID();
   std::vector< std::vector< unsigned int> > parseClkFile(const std::string & filename, bool verbose);
   void writeConfiguration(std::vector< std::vector< unsigned int> > regSetting, bool verbose);
 };

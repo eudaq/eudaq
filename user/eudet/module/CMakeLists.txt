@@ -16,7 +16,7 @@ endif()
 
 if(NOT USER_BUILD_FMCTLU)
   list(REMOVE_ITEM MODULE_SRC src/MinitluProducer.cc)
-  list(REMOVE_ITEM MODULE_SRC src/FmctluProducer.cc)
+  list(REMOVE_ITEM MODULE_SRC src/AidaTluProducer.cc)
 endif()
 
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})

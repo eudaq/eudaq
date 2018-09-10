@@ -14,11 +14,11 @@
 
 
 LCD09052::LCD09052(){
-  std::cout << "  AIDA_TLU: Instantiated display" << std::endl;
+  std::cout << "  AIDA_TLU DISPLAY: Instantiated" << std::endl;
 }
 
 LCD09052::LCD09052(i2cCore * thisCore, char thisAddr, unsigned int theseRows, unsigned int theseCols){
-  std::cout << "  AIDA_TLU: Instantiated display" << std::endl;
+  std::cout << "  AIDA_TLU DISPLAY: Instantiated" << std::endl;
   disp_i2c_core= thisCore;
   disp_i2c_addr= thisAddr;
   nRows= theseRows;
