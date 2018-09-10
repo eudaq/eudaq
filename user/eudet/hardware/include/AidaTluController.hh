@@ -26,32 +26,33 @@ namespace tlu {
     AidaTluController(const std::string & connectionFilename, const std::string & deviceName);
     ~AidaTluController(){ResetEventsBuffer();};
 
-    void configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose);
-    void enableHDMI(unsigned int dutN, bool enable, bool verbose);
-    unsigned int PackBits(std::vector< unsigned int>  rawValues);
+    void compareWriteRead(uint32_t written, uint32_t readback, uint32_t mask, const std::string & regName);
+    void configureHDMI(unsigned int hdmiN, unsigned int enable, uint8_t verbose);
+    void enableHDMI(unsigned int dutN, bool enable, uint8_t verbose);
+    uint32_t PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
     void SetInternalTriggerInterval(int value) { SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
-    void SetInternalTriggerFrequency(uint32_t user_freq, int verbose);
+    void SetInternalTriggerFrequency(int32_t user_freq, uint8_t verbose);
     //void SetTriggerMask(int value) { SetWRegister("triggerLogic.TriggerMaskW",value); };
     void SetTriggerMask(uint64_t value);
     void SetTriggerMask(uint32_t maskHi, uint32_t maskLo);
     //void SetTriggerVeto(int value) { SetWRegister("triggerLogic.TriggerVetoW",value); };
-    void SetTriggerVeto(int value);
+    void SetTriggerVeto(int value, uint8_t verbose);
     void SetPulseStretch(int value) { SetWRegister("triggerLogic.PulseStretchW",value); };
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
-    void SetPulseStretchPack(std::vector< unsigned int>  valuesVec);
-    void SetPulseDelayPack(std::vector< unsigned int>  valuesVec);
-    void SetDUTMask(uint32_t value, bool verbose);
-    void SetDUTMaskMode(uint32_t value, bool verbose);
-    void SetDUTMaskModeModifier(uint32_t value, bool verbose);
-    void SetDUTIgnoreBusy(uint32_t value, bool verbose);
-    void SetDUTIgnoreShutterVeto(uint32_t value, bool verbose);
-    void SetShutterControl(uint32_t value, bool verbose);
-    void SetShutterInternalInterval(uint32_t value, bool verbose);
-    void SetShutterSource(uint32_t value, bool verbose);
-    void SetShutterOffTime(uint32_t value, bool verbose);
-    void SetShutterOnTime(uint32_t value, bool verbose);
-    void SetShutterVetoOffTime(uint32_t value, bool verbose);
+    void SetPulseStretchPack(std::vector< unsigned int>  valuesVec, uint8_t verbose);
+    void SetPulseDelayPack(std::vector< unsigned int>  valuesVec, uint8_t verbose);
+    void SetDUTMask(int32_t value, uint8_t verbose);
+    void SetDUTMaskMode(int32_t value, uint8_t verbose);
+    void SetDUTMaskModeModifier(int32_t value, uint8_t verbose);
+    void SetDUTIgnoreBusy(int32_t value, uint8_t verbose);
+    void SetDUTIgnoreShutterVeto(int32_t value, uint8_t verbose);
+    void SetShutterControl(int32_t value, uint8_t verbose);
+    void SetShutterInternalInterval(int32_t value, uint8_t verbose);
+    void SetShutterSource(int32_t value, uint8_t verbose);
+    void SetShutterOffTime(int32_t value, uint8_t verbose);
+    void SetShutterOnTime(int32_t value, uint8_t verbose);
+    void SetShutterVetoOffTime(int32_t value, uint8_t verbose);
 
     //uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
 
@@ -63,23 +64,23 @@ namespace tlu {
 
     uint32_t GetLogicClocksCSR() { return ReadRRegister("logic_clocks.LogicClocksCSR"); };
     //uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
-    uint32_t GetInternalTriggerInterval(int verbose);
+    uint32_t GetInternalTriggerFrequency(uint8_t verbose);
     uint32_t GetPulseStretch(){ return ReadRRegister("triggerLogic.PulseStretchR"); };
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
-    uint64_t GetTriggerMask();
-    uint32_t GetDUTMask();
-    uint32_t GetDUTMaskMode();
-    uint32_t GetDUTMaskModeModifier();
-    uint32_t GetDUTIgnoreBusy();
-    uint32_t GetDUTIgnoreShutterVeto();
-    uint32_t GetShutterControl();
-    uint32_t GetShutterInternalInterval();
-    uint32_t GetShutterSource();
-    uint32_t GetShutterOnTime();
-    uint32_t GetShutterOffTime();
-    uint32_t GetShutterVetoOffTime();
-    uint32_t GetTriggerVeto() { return ReadRRegister("triggerLogic.TriggerVetoR"); };
+    uint64_t GetTriggerMask(uint8_t verbose);
+    uint32_t GetDUTMask(uint8_t verbose);
+    uint32_t GetDUTMaskMode(uint8_t verbose);
+    uint32_t GetDUTMaskModeModifier(uint8_t verbose);
+    uint32_t GetDUTIgnoreBusy(uint8_t verbose);
+    uint32_t GetDUTIgnoreShutterVeto(uint8_t verbose);
+    uint32_t GetShutterControl(uint8_t verbose);
+    uint32_t GetShutterInternalInterval(uint8_t verbose);
+    uint32_t GetShutterSource(uint8_t verbose);
+    uint32_t GetShutterOnTime(uint8_t verbose);
+    uint32_t GetShutterOffTime(uint8_t verbose);
+    uint32_t GetShutterVetoOffTime(uint8_t verbose);
+    uint32_t GetTriggerVeto(uint8_t verbose);
     uint32_t GetPreVetoTriggers() { return ReadRRegister("triggerLogic.PreVetoTriggersR"); };
     uint32_t GetPostVetoTriggers() { return ReadRRegister("triggerLogic.PostVetoTriggersR"); };
     uint64_t GetCurrentTimestamp(){
@@ -90,7 +91,7 @@ namespace tlu {
     }
 
     uint32_t GetFW();
-    uint32_t GetEventFifoCSR(int verbose= 0);
+    uint32_t GetEventFifoCSR(uint8_t verbose= 0);
     uint32_t GetEventFifoFillLevel();
     uint32_t GetI2CStatus() { return ReadRRegister("i2c_master.i2c_cmdstatus"); };
     uint32_t GetI2CRX() { return ReadRRegister("i2c_master.i2c_rxtx"); };
@@ -143,26 +144,27 @@ namespace tlu {
 
     fmctludata* PopFrontEvent();
     bool IsBufferEmpty(){return m_data.empty();};
-    void ReceiveEvents(int verbose);
+    void ReceiveEvents(uint8_t verbose);
     void ResetEventsBuffer();
     void DefineConst(int nDUTs, int nTrigInputs);
     void DumpEventsBuffer();
 
-    void enableClkLEMO(bool enable, bool verbose);
+    void enableClkLEMO(bool enable, uint8_t verbose);
     //void InitializeI2C(char DACaddr, char IDaddr);
     float GetDACref(){return m_vref;};
-    int InitializeClkChip(const std::string & filename);
-    void InitializeDAC(bool intRef, float Vref);
-    void InitializeIOexp();
-    void InitializeI2C();
-    void pwrled_Initialize(int verbose, unsigned int type);
-    void pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose);
-    void PulseT0();
+    int InitializeClkChip(const std::string & filename, uint8_t verbose);
+    void InitializeDAC(bool intRef, float Vref, uint8_t verbose);
+    void InitializeIOexp(uint8_t verbose);
+    void InitializeI2C(uint8_t verbose);
+    void pwrled_Initialize(uint8_t verbose, unsigned int type);
+    void pwrled_setVoltages(float v1, float v2, float v3, float v4, uint8_t verbose);
+    void SetRunActive(uint8_t state, uint8_t verbose);
 
-    void SetDACValue(unsigned char channel, uint32_t value);
-    void SetThresholdValue(unsigned char channel, float thresholdVoltage);
-    void SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose);
-    void SetDACref(float vref);
+    void SetDACValue(unsigned char channel, uint32_t value, uint8_t verbose);
+    void SetShutterParameters(bool status, int8_t source, int32_t onTime, int32_t offTime, int32_t vetoOffTime, int32_t intInterval, uint8_t verbose);
+    void SetThresholdValue(unsigned char channel, float thresholdVoltage, uint8_t verbose);
+    void SetDutClkSrc(unsigned int hdmiN, unsigned int source, uint8_t verbose);
+    void SetDACref(float vre, uint8_t verbosef);
 
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
@@ -212,8 +214,8 @@ namespace tlu {
     AD5665R m_zeDAC1, m_zeDAC2;
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
-    PWRLED m_pwrled;
-    LCD09052 m_lcddisp;
+    PWRLED *m_pwrled;
+    LCD09052 *m_lcddisp;
 
 
     // Define constants such as number of DUTs and trigger inputs
@@ -221,8 +223,11 @@ namespace tlu {
     int m_nTrgIn;
     // Define reference voltage for DACs
     float m_vref;
+    // Used for log purposes
+    std::string m_myStates[2] = {"disabled", "enabled"};
 
     std::deque<fmctludata*> m_data;
+
 
   };
 
