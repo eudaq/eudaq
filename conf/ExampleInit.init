@@ -5,7 +5,7 @@
 
 [LogCollector]
 
-[DataCollector]
+[euDataCollector]
 
 [Producer.Example]
 InitParameter = 1
