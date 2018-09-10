@@ -1,8 +1,8 @@
-#include "FmctluController.hh"
-#include "FmctluHardware.hh"
-#include "FmctluPowerModule.hh"
+#include "AidaTluController.hh"
+#include "AidaTluHardware.hh"
+#include "AidaTluPowerModule.hh"
 #include "AidaTluDisplay.hh"
-#include "FmctluI2c.hh"
+#include "AidaTluI2c.hh"
 #include <iomanip>
 #include <thread>
 #include <chrono>
@@ -14,22 +14,21 @@
 #include "uhal/uhal.hpp"
 
 namespace tlu {
-  FmctluController::FmctluController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_DACaddr(0), m_IDaddr(0) {
+  AidaTluController::AidaTluController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_DACaddr(0), m_IDaddr(0) {
 
-    //m_i2c = new i2cCore(connectionFilename, deviceName);
-    std::cout << "Configuring from " << connectionFilename << " the device " << deviceName << std::endl;
+    std::string myMsg= "CONFIGURING FROM " + connectionFilename + " THE DEVICE " + deviceName + "\t";
+    EUDAQ_INFO(myMsg);
     if(!m_hw) {
       ConnectionManager manager ( connectionFilename );
-      uhal::setLogLevelTo(uhal::Error()); //  Get rid of initial flood of messages for address map
+      SetUhalLogLevel(2); //  Get rid of initial flood of messages for address map
       m_hw = new uhal::HwInterface(manager.getDevice( deviceName )); // <<
-      //std::cout << m_hw->uri() << std::endl;
       m_i2c = new i2cCore(m_hw);
       GetFW();
-
+      m_IPaddress= parseURI();
     }
   }
 
-  void FmctluController::configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose){
+  void AidaTluController::configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose){
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
@@ -63,21 +62,21 @@ namespace tlu {
     }
   }
 
-  void FmctluController::DefineConst(int nDUTs, int nTrigInputs){
+  void AidaTluController::DefineConst(int nDUTs, int nTrigInputs){
     m_nTrgIn= nTrigInputs;
     m_nDUTs= nDUTs;
     std::cout << "  TLU (" << m_nDUTs << " DUTs; " << m_nTrgIn << " Trigger inputs)" << std::endl;
   }
 
-  void FmctluController::DumpEventsBuffer() {
-    std::cout<<"FmctluController::DumpEvents......"<<std::endl;
+  void AidaTluController::DumpEventsBuffer() {
+    std::cout<<"AidaTluController::DumpEvents......"<<std::endl;
     for(auto&& i: m_data){
       std::cout<<i<<std::endl;
     }
-    std::cout<<"FmctluController::DumpEvents end"<<std::endl;
+    std::cout<<"AidaTluController::DumpEvents end"<<std::endl;
   }
 
-  void FmctluController::enableClkLEMO(bool enable, bool verbose= false){
+  void AidaTluController::enableClkLEMO(bool enable, bool verbose= false){
     int bank=1;
     unsigned char mask= 0x10;
     unsigned char oldStatus;
@@ -97,7 +96,7 @@ namespace tlu {
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
-  void FmctluController::enableHDMI(unsigned int hdmiN, bool enable, bool verbose= false){
+  void AidaTluController::enableHDMI(unsigned int hdmiN, bool enable, bool verbose= false){
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
@@ -131,7 +130,7 @@ namespace tlu {
     }
   }
 
-  uint32_t FmctluController::GetBoardID() {
+  uint32_t AidaTluController::GetBoardID() {
     // Return the board unique ID. The ID is generally comprised of
     // 6 characters (48 bits) but the first 3 are manufacturer specific so, in order to have just
     // 32-bit, we can just skip the first two characters.
@@ -148,7 +147,7 @@ namespace tlu {
     return shortID;
   }
 
-  uint32_t FmctluController::GetEventFifoCSR(int verbose) {
+  uint32_t AidaTluController::GetEventFifoCSR(int verbose) {
     uint32_t res;
     bool empty, alm_empty, alm_full, full, prog_full;
     res= ReadRRegister("eventBuffer.EventFifoCSR");
@@ -165,7 +164,7 @@ namespace tlu {
     return res;
   }
 
-  uint32_t FmctluController::GetEventFifoFillLevel() {
+  uint32_t AidaTluController::GetEventFifoFillLevel() {
     uint32_t res;
     uint32_t fifomax= 8192;
 
@@ -174,92 +173,95 @@ namespace tlu {
     return res;
   };
 
-  uint32_t FmctluController::GetFW(){
+  uint32_t AidaTluController::GetFW(){
     uint32_t res;
     res= ReadRRegister("version");
-    std::cout << "TLU FIRMWARE VERSION= " << std::hex<< res <<std::dec<< std::endl;
+    std::stringstream ss; //Use a string stream to do all the manipulation necessary
+    ss << "AIDA TLU FIRMWARE VERSION " << std::hex << std::showbase  << res << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
     return res;
   }
 
-  uint32_t FmctluController::GetDUTMask(){
+  uint32_t AidaTluController::GetDUTMask(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTMaskR");
-    std::cout << "\tDUTMask read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTMask read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetDUTMaskMode(){
+  uint32_t AidaTluController::GetDUTMaskMode(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTInterfaceModeR");
-    std::cout << "\tDUTMaskMode read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTMaskMode read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetDUTMaskModeModifier(){
+  uint32_t AidaTluController::GetDUTMaskModeModifier(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.DUTInterfaceModeModifierR");
-    std::cout << "\tDUTMaskModifier read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTMaskModifier read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetDUTIgnoreBusy(){
+  uint32_t AidaTluController::GetDUTIgnoreBusy(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.IgnoreDUTBusyR");
-    std::cout << "\tDUTIgnore busy read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTIgnore busy read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetDUTIgnoreShutterVeto(){
+  uint32_t AidaTluController::GetDUTIgnoreShutterVeto(){
     uint32_t res;
     res= ReadRRegister("DUTInterfaces.IgnoreShutterVetoR");
-    std::cout << "\tDUTIgnoreShutterVeto read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tDUTIgnoreShutterVeto read back as= 0x" << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetShutterControl(){
+  uint32_t AidaTluController::GetShutterControl(){
     uint32_t res;
     res= ReadRRegister("Shutter.ControlRW");
-    std::cout << "\tShutter Control read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutter Control read back as (dec)= " << std::hex<< res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetShutterInternalInterval(){
+  uint32_t AidaTluController::GetShutterInternalInterval(){
     uint32_t res;
     res= ReadRRegister("Shutter.InternalShutterPeriodRW");
-    std::cout << "\tInternalShutterPeriod read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tInternalShutterPeriod read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetShutterSource(){
+  uint32_t AidaTluController::GetShutterSource(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterSelectRW");
-    std::cout << "\tShutterSelect read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutterSelect read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
 
-  uint32_t FmctluController::GetShutterOnTime(){
+  uint32_t AidaTluController::GetShutterOnTime(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterOnTimeRW");
-    std::cout << "\tShutterOnTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutterOnTime read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetShutterOffTime(){
+  uint32_t AidaTluController::GetShutterOffTime(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterOffTimeRW");
-    std::cout << "\tShutterOffTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tShutterOffTime read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetShutterVetoOffTime(){
+  uint32_t AidaTluController::GetShutterVetoOffTime(){
     uint32_t res;
     res= ReadRRegister("Shutter.ShutterVetoOffTimeRW");
-    std::cout << "\tVetoOffTime read back as= " << std::hex<< res <<std::dec<< std::endl;
+    std::cout << "\tVetoOffTime read back as (dec)= " << res <<std::dec<< std::endl;
     return res;
   }
 
-  uint32_t FmctluController::GetInternalTriggerInterval(int verbose){
+  uint32_t AidaTluController::GetInternalTriggerInterval(int verbose){
     uint32_t interval;
     uint32_t true_freq;
 
@@ -275,7 +277,32 @@ namespace tlu {
     }
   }
 
-  unsigned int* FmctluController::SetBoardID(){
+  std::string AidaTluController::parseURI(){
+    std::string myURI= m_hw->uri();
+    std::string delimiter;
+    std::stringstream ss;
+    if (myURI.find("ipbusudp") != std::string::npos) {
+      //std::cout << myURI << std::endl;
+      delimiter = "://";
+      myURI = myURI.substr(myURI.find(delimiter)+3);
+      delimiter = ":";
+      myURI = myURI.substr(0, myURI.find(delimiter));
+      ss << "USING IPBus WITH IP= " << myURI << "\t";
+    }
+    if (myURI.find("chtcp") != std::string::npos) {
+      //std::cout << myURI << std::endl;
+      delimiter = "et="; //end of "target="
+      myURI = myURI.substr(myURI.find(delimiter)+3);
+      delimiter = ":";
+      myURI = myURI.substr(0, myURI.find(delimiter));
+      ss << "USING ControlHub WITH IP= " << myURI << "\t";
+    }
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
+    return myURI;
+  }
+
+  unsigned int* AidaTluController::SetBoardID(){
     m_IDaddr= m_I2C_address.EEPROM;
     unsigned char myaddr= 0xfa;
     int nwords= 6;
@@ -286,16 +313,21 @@ namespace tlu {
       m_BoardID[iaddr]= ((uint)nibble)&0xff;
     }
 
-    std::cout << "  TLU unique ID:";
-    for(int iaddr =0; iaddr < nwords; iaddr++) {
-      std::cout << " " << std::setw(2) << std::setfill('0') << std::hex <<  m_BoardID[iaddr];
+    std::stringstream ss; //Use a string stream to do all the manipulation necessary
+    ss << "AIDA TLU UNIQUE ID:" ;
+    for(int iaddr =0; iaddr < nwords/2; iaddr++) {
+      ss << " " << std::setw(2) << std::setfill('0') << std::hex <<  m_BoardID[2*iaddr] << m_BoardID[2*iaddr+1];
     }
-    std::cout << " " << std::endl;
-    std::cout.flags( coutflags );
+    ss << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
+
+    //std::cout << " " << std::endl;
+    //std::cout.flags( coutflags );
     return m_BoardID;
   }
 
-  uint64_t FmctluController::GetTriggerMask(){
+  uint64_t AidaTluController::GetTriggerMask(){
     uint32_t maskHi, maskLo;
     maskLo= ReadRRegister("triggerLogic.TriggerPattern_lowR");
     maskHi= ReadRRegister("triggerLogic.TriggerPattern_highR");
@@ -304,7 +336,7 @@ namespace tlu {
     return triggerPattern;
   }
 
-  uint32_t FmctluController::I2C_enable(char EnclustraExpAddr)
+  uint32_t AidaTluController::I2C_enable(char EnclustraExpAddr)
   // This must be executed at least once after powering up the TLU or the I2C bus will not work.
   {
     std::cout << "  Enabling I2C bus" << std::endl;
@@ -313,14 +345,16 @@ namespace tlu {
     std::bitset<8> resbit(res);
     if (resbit.test(7))
       {
-	std::cout << "\tWarning: enabling Enclustra I2C bus might have failed. This could prevent from talking to the I2C slaves on the TLU." << int(res) << std::endl;
+	       std::cout << "\tWarning: enabling Enclustra I2C bus might have failed. This could prevent from talking to the I2C slaves on the TLU." << int(res) << std::endl;
+         EUDAQ_WARN("The Enclustra I2C bus is not correctly enabled.");
       }else{
       std::cout << "\tSuccess." << std::endl;
     }
   }
 
-  int FmctluController::InitializeClkChip(const std::string & filename){
+  int AidaTluController::InitializeClkChip(const std::string & filename){
     std::vector< std::vector< unsigned int> > tmpConf;
+    std::stringstream ss;
     m_zeClock.SetI2CPar(m_i2c, m_I2C_address.clockChip);
     m_zeClock.getDeviceVersion();
     //std::string filename = "/users/phpgb/workspace/myFirmware/AIDA/bitFiles/TLU_CLK_Config.txt";
@@ -329,11 +363,14 @@ namespace tlu {
       return -1;
     }
     m_zeClock.writeConfiguration(tmpConf, false);
-    m_zeClock.checkDesignID();
+
+    ss << "Si5345 design Id: " << m_zeClock.checkDesignID() << "\t";
+    std::string myMsg = ss.str();
+    EUDAQ_INFO(myMsg);
     return 0;
   }
 
-  void FmctluController::InitializeDAC(bool intRef, float Vref) {
+  void AidaTluController::InitializeDAC(bool intRef, float Vref) {
     m_zeDAC1.SetI2CPar(m_i2c, m_I2C_address.DAC1);
     m_zeDAC1.SetIntRef(intRef, true);
     m_zeDAC2.SetI2CPar(m_i2c, m_I2C_address.DAC2);
@@ -341,7 +378,7 @@ namespace tlu {
     SetDACref(Vref);
   }
 
-  void FmctluController::InitializeIOexp(){
+  void AidaTluController::InitializeIOexp(){
     m_IOexpander1.SetI2CPar(m_i2c, m_I2C_address.expander1);
     m_IOexpander2.SetI2CPar(m_i2c, m_I2C_address.expander2);
 
@@ -365,7 +402,7 @@ namespace tlu {
     std::cout << "  I/O expanders: initialized" << std::endl;
   }
 
-  void FmctluController::InitializeI2C() {
+  void AidaTluController::InitializeI2C() {
     std::ios::fmtflags coutflags( std::cout.flags() );// Store cout flags to be able to restore them
 
     SetI2CClockPrescale(0x30);
@@ -388,44 +425,43 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave CORE" << std::endl;
         }
         else if (myaddr== m_I2C_address.clockChip){
-          std::cout << "\tFOUND I2C slave CLOCK (0x" << std::hex << myaddr << ")"<< std::endl;
+          std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : CLOCK CHIP found."<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC1){
-          std::cout << "\tFOUND I2C slave DAC1 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : DAC1 found."<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC2){
-          std::cout << "\tFOUND I2C slave DAC2 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : DAC2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.EEPROM){
           m_IDaddr= myaddr;
-          std::cout << "\tFOUND I2C slave EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : EEPROM found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.expander1){
-          std::cout << "\tFOUND I2C slave EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER1 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.expander2){
-          std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : EXPANDER2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.ledxp1addr){
-          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER1 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.ledxp2addr){
-          std::cout << "\tFOUND I2C slave POWER MODULE DAC EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EXPANDER2 found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.pwraddr){
-          std::cout << "\tFOUND I2C slave POWER MODULE DAC (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE DAC found."<< std::endl;
         }
         else if (myaddr==m_I2C_address.pwrId){
-          std::cout << "\tFOUND I2C slave POWER MODULE EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : POWER MODULE EEPROM found."<< std::endl;
           m_powerModuleType= myaddr;
         }
         else if (myaddr==m_I2C_address.lcdDisp){
-          std::cout << "\tFOUND I2C slave LCD DISPLAY (0x" << std::hex << myaddr << ")" << std::endl;
+          std::cout << "\t0x" << std::hex << myaddr << " : LCD DISPLAY found."<< std::endl;
           m_hasDisplay= true;
-          m_lcddisp.setParameters(m_i2c, myaddr, 2, 16);
         }
         else{
-          std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
+          std::cout << "\t0x" << std::setw(2) << std::setfill('0') << std::hex << myaddr << " : UNKNOWN DEVICE. Not on AIDA TLU address list." << std::endl;
         }
       }
       SetI2CTX(0x0);
@@ -443,22 +479,18 @@ namespace tlu {
     std::cout.flags( coutflags ); // Restore cout flags
 
     if (m_hasDisplay){
-      EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.");
+      EUDAQ_INFO("AIDA TLU: LCD display detected. This is a 19-inch rack unit.\t");
+      m_lcddisp.setParameters(m_i2c, m_I2C_address.lcdDisp, 2, 16);
+      std::cout << "  AIDA_TLU LCD: Initialising" << std::endl;
+
       m_lcddisp.clear();
       m_lcddisp.writeString("Please wait...");
       m_lcddisp.pulseLCD(1);
-      // retrieve IP device from uhal and show it on display
-      std::string myip= m_hw->uri();
-      std::string delimiter = "://";
-      myip = myip.substr(myip.find(delimiter)+3);
-      delimiter = ":";
-      myip = myip.substr(0, myip.find(delimiter));
-      //
-      m_lcddisp.writeAll("AIDA TLU", myip);
+      m_lcddisp.writeAll("AIDA TLU", m_IPaddress);
     }
   }
 
-  void FmctluController::pwrled_Initialize(int verbose, unsigned int type) {
+  void AidaTluController::pwrled_Initialize(int verbose, unsigned int type) {
     std::cout << "  TLU_POWERMODULE: Initialising" << std::endl;
     m_pwrled.setI2CPar( m_i2c , m_I2C_address.pwraddr, m_I2C_address.ledxp1addr, m_I2C_address.ledxp2addr, type);
     m_pwrled.initI2Cslaves(false, verbose);
@@ -474,7 +506,7 @@ namespace tlu {
     m_pwrled.testLED();
   }
 
-  void FmctluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose) {
+  void AidaTluController::pwrled_setVoltages(float v1, float v2, float v3, float v4, int verbose) {
     // Note that ordering is not 1:1. Mapping is done in here.
     std::cout << "  TLU_POWERMODULE: Setting voltages" << std::endl;
     if (verbose > 0){
@@ -489,7 +521,7 @@ namespace tlu {
     m_pwrled.setVchannel(3, v1, verbose);
   }
 
-  unsigned int FmctluController::PackBits(std::vector< unsigned int>  rawValues){
+  unsigned int AidaTluController::PackBits(std::vector< unsigned int>  rawValues){
     //Pack 6 number using only 5-bits for each.
     int nChannels= m_nTrgIn;
     unsigned int packedbits= 0;
@@ -507,18 +539,18 @@ namespace tlu {
     return packedbits;
   }
 
-  void FmctluController::PulseT0(){
+  void AidaTluController::PulseT0(){
     SetWRegister("Shutter.PulseT0", 0x1);
     std::cout << "  PULSE T0: done"  << std::endl;
   }
 
-  fmctludata* FmctluController::PopFrontEvent(){
+  fmctludata* AidaTluController::PopFrontEvent(){
     fmctludata *e = m_data.front();
     m_data.pop_front();
     return e;
   }
 
-  uint32_t FmctluController::ReadRRegister(const std::string & name) {
+  uint32_t AidaTluController::ReadRRegister(const std::string & name) {
     try {
       ValWord< uint32_t > test = m_hw->getNode(name).read();
       m_hw->dispatch();
@@ -533,7 +565,7 @@ namespace tlu {
     }
   }
 
-  void FmctluController::ReceiveEvents(int verbose){
+  void AidaTluController::ReceiveEvents(int verbose){
     //bool verbose= 0;
     uint32_t nevent = GetEventFifoFillLevel()/6;
     uint32_t fifoStatus= GetEventFifoCSR(verbose);
@@ -562,14 +594,14 @@ namespace tlu {
     }
   }
 
-  void FmctluController::ResetEventsBuffer(){
+  void AidaTluController::ResetEventsBuffer(){
     for(auto &&i: m_data){
       delete i;
     }
     m_data.clear();
   }
 
-  void FmctluController::SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose= false){
+  void AidaTluController::SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose= false){
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
@@ -624,100 +656,100 @@ namespace tlu {
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
-  void FmctluController::SetDUTMask(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTMask(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTMaskW",value);
     if (verbose){
-      std::cout << "Writing DUTMask: " << (uint32_t)value  << std::endl;
+      std::cout << "  Writing DUTMask: 0x" << std::hex << (uint32_t)value  << std::endl;
       GetDUTMask();
     }
   };
 
-  void FmctluController::SetDUTMaskMode(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTMaskMode(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeW",value);
     if (verbose){
-      std::cout << "Writing DUTInterfaceMode: " <<  std::hex<< value  <<std::dec << std::endl;
+      std::cout << "  Writing DUTInterfaceMode: 0x" << std::hex << value  <<std::dec << std::endl;
       GetDUTMaskMode();
     }
   };
 
-  void FmctluController::SetDUTMaskModeModifier(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTMaskModeModifier(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value);
     if (verbose){
-      std::cout << "Writing DUTModeModifier: " << value << std::endl;
+      std::cout << "  Writing DUTModeModifier: 0x" << std::hex << value << std::endl;
       GetDUTMaskModeModifier();
     }
   };
 
-  void FmctluController::SetDUTIgnoreBusy(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTIgnoreBusy(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Busy: " << value << std::endl;
+      std::cout << "  Writing DUT Ignore Busy: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreBusy();
     }
   };
 
-  void FmctluController::SetShutterControl(uint32_t value, bool verbose){
+  void AidaTluController::SetShutterControl(uint32_t value, bool verbose){
     SetWRegister("Shutter.ControlRW",value);
     if (verbose){
-      std::cout << "Writing ShutterControl: " << value << std::endl;
+      std::cout << "  Writing ShutterControl (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
 
-  void FmctluController::SetShutterInternalInterval(uint32_t value, bool verbose){
+  void AidaTluController::SetShutterInternalInterval(uint32_t value, bool verbose){
     SetWRegister("Shutter.InternalShutterPeriodRW",value);
     if (verbose){
-      std::cout << "Writing InternalShutterPeriod: " << value << std::endl;
+      std::cout << "  Writing InternalShutterPeriod (dec): " << value << std::endl;
       GetShutterInternalInterval();
     }
   };
 
-  void FmctluController::SetShutterSource(uint32_t value, bool verbose){
+  void AidaTluController::SetShutterSource(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterSelectRW",value);
     if (verbose){
-      std::cout << "Writing ShutterSource: " << value << std::endl;
+      std::cout << "  Writing ShutterSource (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
 
-   void FmctluController::SetShutterOnTime(uint32_t value, bool verbose){
+   void AidaTluController::SetShutterOnTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterOnTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterOnTime: " << value << std::endl;
+      std::cout << "  Writing ShutterOnTime (dec): " << value << std::endl;
       GetShutterControl();
     }
   };
 
-   void FmctluController::SetShutterOffTime(uint32_t value, bool verbose){
+   void AidaTluController::SetShutterOffTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterOffTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterOffTime: " << value << std::endl;
+      std::cout << "  Writing ShutterOffTime (dec): " << value << std::endl;
       GetShutterOffTime();
     }
   };
 
-   void FmctluController::SetShutterVetoOffTime(uint32_t value, bool verbose){
+   void AidaTluController::SetShutterVetoOffTime(uint32_t value, bool verbose){
     SetWRegister("Shutter.ShutterVetoOffTimeRW",value);
     if (verbose){
-      std::cout << "Writing ShutterVetoOffTime: " << value << std::endl;
+      std::cout << "  Writing ShutterVetoOffTime (dec): " << value << std::endl;
       GetShutterVetoOffTime();
     }
   };
 
-  void FmctluController::SetDUTIgnoreShutterVeto(uint32_t value, bool verbose){
+  void AidaTluController::SetDUTIgnoreShutterVeto(uint32_t value, bool verbose){
     SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value);
     if (verbose){
-      std::cout << "Writing DUT Ignore Veto: " << value << std::endl;
+      std::cout << "  Writing DUT Ignore Veto: 0x" << std::hex << value << std::endl;
       GetDUTIgnoreShutterVeto();
     }
   };
 
-  void FmctluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
+  void AidaTluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
     uint32_t max_freq= 160000000;
     uint32_t interval;
     uint32_t actual_interval;
     if (user_freq > max_freq){
-      std::cout << "SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
+      std::cout << "  SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
       user_freq= max_freq;
     }
     if (user_freq==0){
@@ -732,20 +764,20 @@ namespace tlu {
     actual_interval= GetInternalTriggerInterval(1);
   }
 
-  void FmctluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){
+  void AidaTluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){
     SetPulseStretch( (int)PackBits(valuesVec) );
   }
 
-  void FmctluController::SetPulseDelayPack(std::vector< unsigned int>  valuesVec){
+  void AidaTluController::SetPulseDelayPack(std::vector< unsigned int>  valuesVec){
     SetPulseDelay( (int)PackBits(valuesVec) );
   }
 
-  void FmctluController::SetDACref(float vref){
+  void AidaTluController::SetDACref(float vref){
     m_vref= vref;
     std::cout << "  DAC will use Vref= " << m_vref << " V" << std::endl;
   }
 
-  void FmctluController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
+  void AidaTluController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
     //Channel can either be [0, 5] or 7 (all channels).
     int nChannels= m_nTrgIn; //We should read this from conf file, ideally.
     bool intRef= false; //We should read this from conf file, ideally.
@@ -781,7 +813,7 @@ namespace tlu {
 
   }
 
-  void FmctluController::SetTriggerMask(uint64_t value){
+  void AidaTluController::SetTriggerMask(uint64_t value){
     uint32_t maskHi, maskLo;
     maskHi = (uint32_t)(value>>32);
     maskLo = (uint32_t)value;
@@ -790,20 +822,20 @@ namespace tlu {
     SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
   }
 
-  void FmctluController::SetTriggerMask(uint32_t maskHi, uint32_t maskLo){
+  void AidaTluController::SetTriggerMask(uint32_t maskHi, uint32_t maskLo){
     std::cout << std::hex << "  TRIGGER PATTERN (for external triggers) SET TO 0x" << maskHi << " --- 0x"<< maskLo << " (Two 32-bit words)" << std::dec << std::endl;
     SetWRegister("triggerLogic.TriggerPattern_lowW",  maskLo);
     SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
   }
 
-  void FmctluController::SetTriggerVeto(int value){
+  void AidaTluController::SetTriggerVeto(int value){
     uint32_t vetoStatus;
     SetWRegister("triggerLogic.TriggerVetoW",value);
     vetoStatus= GetTriggerVeto();
     std::cout << "  TRIGGER VETO SET TO: " << vetoStatus << std::endl;
   }
 
-  void FmctluController::SetWRegister(const std::string & name, int value){
+  void AidaTluController::SetWRegister(const std::string & name, int value){
     try {
       m_hw->getNode(name).write(static_cast< uint32_t >(value));
       m_hw->dispatch();
@@ -812,7 +844,7 @@ namespace tlu {
     }
   }
 
-  void FmctluController::SetUhalLogLevel(uchar_t l){
+  void AidaTluController::SetUhalLogLevel(uchar_t l){
     switch(l){
     case 0:
       uhal::disableLogging();
