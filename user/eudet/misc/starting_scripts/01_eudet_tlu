@@ -7,7 +7,7 @@ xterm -T "Log Collector" -e 'euLog -r tcp://192.168.22.1' &
 sleep 1
 
 # Start TLU Producer
-xterm -T "EUDET TLU Producer" -e 'euCliProducer -n TluProducer -t eudet_tlu -r tcp://192.168.22.1:44000' & 
+xterm -T "EUDET TLU Producer" -e 'euCliProducer -n EudetTluProducer -t eudet_tlu -r tcp://192.168.22.1:44000' & 
 
 # Start one DataCollector
 # name (-t) in conf file

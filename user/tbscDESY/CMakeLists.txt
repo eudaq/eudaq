@@ -4,10 +4,10 @@ get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 
-option(USER_TBSCDESY "build DESY Test Beam Slow Control")
+option(USER_TBSCDESY_BUILD "build DESY Test Beam Slow Control")
 
-if(NOT USER_TBSCDESY)
-    message(STAUS "disable building of user/tbscDESY  (USER_TBSCDESY=OFF)")
+if(NOT USER_TBSCDESY_BUILD)
+    message(STATUS "disable building of user/tbscDESY  (USER_TBSCDESY_BUILD=OFF)")
   return()
 endif()
 
