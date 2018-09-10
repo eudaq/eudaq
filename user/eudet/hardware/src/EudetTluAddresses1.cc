@@ -1,5 +1,5 @@
-#include "TLUAddresses.hh"
-#include "TLU_address_map.h"
+#include "EudetTluAddresses.hh"
+#include "EudetTlu_address_map.h"
 
 #define REGISTERED_BUFFER_POINTER_ADDRESS_BASE                                 \
   REGISTERED_BUFFER_POINTER_ADDRESS_0

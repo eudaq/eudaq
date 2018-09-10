@@ -1,5 +1,5 @@
-#ifndef H_TLUController_hh
-#define H_TLUController_hh
+#ifndef H_EudetTluController_hh
+#define H_EudetTluController_hh
 
 #include <cstdint>
 #include <string>

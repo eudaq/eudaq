@@ -1,6 +1,6 @@
 #include "ZestSC1.h"
-#include "TLUController.hh"
-#include "TLUAddresses.hh"
+#include "EudetTluController.hh"
+#include "EudetTluAddresses.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"

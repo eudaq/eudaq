@@ -11,7 +11,7 @@ if(NOT USER_BUILD_NI)
 endif()
 
 if(NOT USER_BUILD_EUDET_TLU)
-  list(REMOVE_ITEM MODULE_SRC src/TluProducer.cc)
+  list(REMOVE_ITEM MODULE_SRC src/EudetTluProducer.cc)
 endif()
 
 if(NOT USER_BUILD_AIDA_TLU)

@@ -1,6 +1,6 @@
 #include "eudaq/Producer.hh"
 
-#include "TLUController.hh"
+#include "EudetTluController.hh"
 
 #include <iostream>
 #include <ostream>
@@ -18,9 +18,9 @@ using tlu::Timestamp2Seconds;
 // char *ZestSC1_ErrorStrings[] = {"bla bla", "blub"};
 // #endif
 
-class TluProducer : public eudaq::Producer {
+class EudetTluProducer : public eudaq::Producer {
 public:
-  TluProducer(const std::string name, const std::string &runcontrol); //TODO: check para no ref
+  EudetTluProducer(const std::string name, const std::string &runcontrol); //TODO: check para no ref
   void DoConfigure() override;
   void DoStartRun() override;
   void DoStopRun() override;
@@ -29,7 +29,7 @@ public:
   void DoStatus() override;
   void RunLoop() override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("TluProducer");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("EudetTluProducer");
 private:
   bool m_exit_of_run;
   uint32_t m_trigger_n;
@@ -57,10 +57,10 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<TluProducer, const std::string&, const std::string&>(TluProducer::m_id_factory);
+    Register<EudetTluProducer, const std::string&, const std::string&>(EudetTluProducer::m_id_factory);
 }
 
-TluProducer::TluProducer(const std::string name, const std::string &runcontrol)
+EudetTluProducer::EudetTluProducer(const std::string name, const std::string &runcontrol)
   : eudaq::Producer(name, runcontrol), m_trigger_n(0),
   trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
   or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
@@ -74,7 +74,7 @@ TluProducer::TluProducer(const std::string name, const std::string &runcontrol)
   }
 }
 
-void TluProducer::RunLoop(){
+void EudetTluProducer::RunLoop(){
   bool isbegin = true;
   if (timestamp_per_run)
     m_tlu->ResetTimestamp();
@@ -139,7 +139,7 @@ void TluProducer::RunLoop(){
   m_tlu->Stop();
 }
 
-void TluProducer::DoConfigure() {
+void EudetTluProducer::DoConfigure() {
   auto conf = GetConfiguration();  
   if(!conf)
     EUDAQ_THROW("No configuration exists for tlu");
@@ -201,24 +201,24 @@ void TluProducer::DoConfigure() {
 
 }
 
-void TluProducer::DoStartRun(){
+void EudetTluProducer::DoStartRun(){
   m_exit_of_run = false;
 }
 
-void TluProducer::DoStopRun(){
+void EudetTluProducer::DoStopRun(){
   m_exit_of_run = true;
 }
 
-void TluProducer::DoTerminate(){
+void EudetTluProducer::DoTerminate(){
   m_exit_of_run = true;
 }
 
-void TluProducer::DoReset(){
+void EudetTluProducer::DoReset(){
   m_exit_of_run = true;
   m_tlu.reset();
 }
 
-void TluProducer::DoStatus(){
+void EudetTluProducer::DoStatus(){
   SetStatusTag("TRIG", std::to_string(m_trigger_n));
   SetStatusTag("TIMESTAMP", std::to_string(m_TIMESTAMP));
   SetStatusTag("LASTTIME", std::to_string(m_LASTTIME));
