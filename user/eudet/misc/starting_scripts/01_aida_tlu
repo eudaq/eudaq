@@ -11,5 +11,5 @@ xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r t
 
 # Start one DataCollector
 # name (-t) in conf file
-# or: -n Ex0TgDataCollector
+# or: -n TriggerIDSyncDataCollecor
 xterm -T "Data Collector TLU" -e 'euCliCollector -n DirectSaveDataCollector -t tlu_dc -r tcp://192.168.22.1:44000' &
