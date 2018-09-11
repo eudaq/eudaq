@@ -1,30 +1,22 @@
-# EUDET-type beam telescopes using EUDAQ2 and AIDA TLU and EUDET TLU
+# Trigger Logic Units (TLU) supported in EUDAQ2
 
-Description of config files and usage (scripts)
+Find the application (starting scripts and conf-file) for EUDET telescope in user/eudet/misc
 
-## Hardware
+## EUDET TLU 
 
-### Mimosa Sensors / NI DAQ
-
-### FEI4, USBPix / STControl
-
-### EUDET TLU 
-
-- tlufirmware
-- ZestSC1
+It is only built if cmake finds the external dependencies:
+- tlufirmware (copy these in user/tlu/extern)
+- ZestSC1 (copy these in user/tlu/extern)
 - libusb (Ubuntu: ```sudo apt install libusb-dev```)
+On Unix: Copy udev-rule in the proper folder of the OS.
 
-### AIDA TLU
+## AIDA TLU
 
-- Cactus Ipbus
+It is only built if cmake finds the external dependencies:
+- Cactus/Ipbus
 
-## Running modes
+Follow these instructions: https://ipbus.web.cern.ch/ipbus/doc/user/html/software/install/compile.html#instructions
 
-### Standard mode
-
-EUDAQ1-EUDET TLU like
-
-### Mixed mode
 
 
 

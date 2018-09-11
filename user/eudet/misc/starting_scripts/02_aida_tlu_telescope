@@ -8,11 +8,15 @@ sleep 1
 
 # Start one DataCollector
 # name (-t) in conf file
-xterm -T "Data Collector Trigger" -e 'euCliCollector -n Ex0TgDataCollector -t trigger_dc -r tcp://192.168.22.1:44000' &
+# or: -n TriggerIDSyncDataCollecor
+xterm -T "Data Collector TLU" -e 'euCliCollector -n DirectSaveDataCollector -t tlu_dc -r tcp://192.168.22.1:44000' &
+sleep 1
+
+xterm -T "Data Collector NI/Mimosa" -e 'euCliCollector -n DirectSaveDataCollector -t ni_dc -r tcp://192.168.22.1:44000' &
 sleep 1
 
 # Start TLU Producer
-xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://192.168.22.1:44000' &
+xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://192.168.22.1:44000' & 
 sleep 1
 
 # Start NI Producer locally connect to LV via TCP/IP

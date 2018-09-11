@@ -56,6 +56,7 @@ ROOT 6 is required for the Online Monitor GUI.
 - [stcontrol](user/stcontrol/README.md): USBPix/FEI4 
 - [tbscDESY](user/tbscDESY/README.md): Slow Control System at DESY test beam
 - [timepix3](user/timepix3/README.md): Timepix3 read out, required: Spidr
+- [tlu](user/tlu/README.md): folder for Trigger Logic Units: EUDET and AIDA TLU
 - [torch](user/torch/README.md): test beam user
 - [experimental](user/experimental/README.md): developed, not tested (with hardware)
 
@@ -81,12 +82,12 @@ cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deact
 - ```USER_AIDASTRIP=OFF```
 - ```USER_CALICE_BUILD=OFF```
 - ```USER_EUDET_BUILD=ON```
-- ```USER_EUDET_BUILD_NI=ON```
 - ```USER_EXAMPLE_BUILD=ON```
 - ```USER_EXPERIMENTAL_BUILD=ON```
 - ```USER_ITKSTRIP_BUILD=OFF```
 - ```USER_STCONTROL_BUILD=ON```
 - ```USER_TBSCDESY=OFF```
+- ```USER_TLU_BUILD=OFF```
 - ```USER_TIMEPIX3_BUILD=OFF```
 
 If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder by ```rm -rf *``` before a new try.
