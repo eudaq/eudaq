@@ -1,4 +1,4 @@
-#include "TLUController.hh"
+#include "EudetTluController.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"

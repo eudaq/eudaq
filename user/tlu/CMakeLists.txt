@@ -34,3 +34,5 @@ set(USER_BUILD_EUDET_TLU ${USER_TLU_BUILD_EUDET})
 include_directories(hardware/include)
 add_subdirectory(hardware)
 add_subdirectory(module)
+
+add_subdirectory(exe)
