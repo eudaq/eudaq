@@ -211,6 +211,7 @@ void AidaTluProducer::DoConfigure() {
   ss.clear();
   m_delayStart= conf->Get("delayStart", 0);
   ss << "AIDA_TLU DELAY START SET TO: " << m_delayStart << " ms\t" ;
+  myMsg = ss.str();
   EUDAQ_INFO(myMsg);
 
 
