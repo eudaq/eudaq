@@ -1,0 +1,27 @@
+# Start Run Control
+xterm -T "Run Control" -e 'euRun' &
+sleep 2
+
+# Start Logger
+xterm -T "Log Collector" -e 'euLog -r tcp://192.168.22.1' &
+sleep 1
+
+# Start one DataCollector
+# name (-t) in conf file
+xterm -T "Data Collector Trigger" -e 'euCliCollector -n TriggerIDSyncDataCollecor -t one_dc -r tcp://192.168.22.1:44000' &
+sleep 1
+
+# Start TLU Producer
+xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://192.168.22.1:44000' & 
+sleep 1
+
+# Start NI Producer locally connect to LV via TCP/IP
+xterm -T "NI/Mimosa Producer" -e 'euCliProducer -n NiProducer -t ni_mimosa -r tcp://192.168.22.1:44000' &
+sleep 1
+
+# Start STcontrol Producer
+xterm -T "STcontrol" -e 'sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH /opt/STcontrol_5.3/bin/STcontrol_eudaq -r 192.168.22.1' &
+sleep 1
+
+# OnlineMonitor
+xterm -T "Online Monitor" -e 'StdEventMonitor -t StdEventMonitor -r tcp://192.168.22.1' &

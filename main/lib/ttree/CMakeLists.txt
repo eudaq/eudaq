@@ -1,6 +1,6 @@
 if(WIN32)
   message(STATUS "TTree Conversion is no supported in Windows, disable building of eudaq ttree library")
-    return()
+  return()
 endif()
 
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
@@ -11,7 +11,9 @@ cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "build eduaq lib/ttree library"
   "ROOT_FOUND" OFF)
 
 if(NOT EUDAQ_LIBRARY_BUILD_TTREE)
-    message(STATUS "disable building of eudaq lib/ttree library (EUDAQ_LIBRARY_BUILD_TTREE=OFF)")
+  message(STATUS "disable building of eudaq lib/ttree library (EUDAQ_LIBRARY_BUILD_TTREE=OFF)")
+  unset(EUDAQ_TTREE_LIBRARY CACHE)
+  unset(TTREE_LIBRARIES CACHE)
   return()
 endif()
 
@@ -36,22 +38,22 @@ include_directories(${CMAKE_BINARY_DIR})
 
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
+add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(TTREE_LIBRARIES
       ${EUDAQ_INSTALL_PREFIX}/extern/lib/libttree.dylib
       CACHE INTERNAL "external ttree library")
   else()
-    set(LCIO_LIBRARIES
-      ${EUDAQ_INSTALL_PREFIX}/extern/lib/liblcio.so
+    set(TTREE_LIBRARIES
+      ${EUDAQ_INSTALL_PREFIX}/extern/lib/libttree.so
       CACHE INTERNAL "external ttree library")
   endif()
 
-
  if((CMAKE_COMPILER_IS_GNUCC) AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0))
-  set_property(TARGET ${EUDAQ_COMPONENT} PROPERTY CXX_STANDARD 14)
+   set_property(TARGET ${EUDAQ_COMPONENT} PROPERTY CXX_STANDARD 14)
 endif()
 
-add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
 
 target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
 
