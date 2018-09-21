@@ -15,7 +15,7 @@ It is only built if cmake finds the external dependencies:
 - tlufirmware (copy these in user/tlu/extern)
 - ZestSC1 (copy these in user/tlu/extern)
 - libusb (Ubuntu: ```sudo apt install libusb-dev```)
-On Unix: Copy the [udev-rule](misc/eudet-tlu/54-tlu.rules) in the proper folder of the OS.
+On Unix: Copy the [udev-rule](misc/eudet_tlu/54-tlu.rules) in the proper folder of the OS.
 
 To start the EUDET TLU producer: 
 ```euCliProducer -n EudetTluProducer```
