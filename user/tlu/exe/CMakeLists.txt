@@ -1,4 +1,4 @@
-if(USER_BUILD_EUDET_TLU)
+if(USER_TLU_BUILD_EUDET)
   message(STATUS "Building EUDET TLU stand-alone executables (USER_BUILD_EUDET_TLU=ON)")
 
   set(EXE_EUDET_TLU_CONTROL EudetTluControl)
