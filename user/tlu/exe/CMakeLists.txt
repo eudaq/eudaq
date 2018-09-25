@@ -1,7 +1,7 @@
-#if(NOT EUDAQ_BUILD_EXECUTABLE)
-#  message(STATUS "Disable the building of main EUDAQ executables (EUDAQ_BUILD_EXECUTABLE=OFF)")
-#  return()
-#endif()
+if(NOT EUDAQ_BUILD_EXECUTABLE)
+  message(STATUS "Disable the building of main EUDAQ executables (EUDAQ_BUILD_EXECUTABLE=OFF)")
+  return()
+endif()
 
 set(EXE_CLI_TLU_READER euCliTluReader)
 add_executable(${EXE_CLI_TLU_READER} src/euCliTluReader.cxx)
