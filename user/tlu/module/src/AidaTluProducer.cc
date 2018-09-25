@@ -29,7 +29,9 @@ private:
   std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
 
   std::unique_ptr<tlu::AidaTluController> m_tlu;
+  uint64_t m_starttime;
   uint64_t m_lasttime;
+  double m_duration; 
 
   uint8_t m_verbose;
   uint32_t m_delayStart;
@@ -65,18 +67,18 @@ void AidaTluProducer::RunLoop(){
 
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
+    if(isbegin) m_starttime = m_lasttime;
     m_tlu->ReceiveEvents(m_verbose);
     while (!m_tlu->IsBufferEmpty()){
       tlu::fmctludata *data = m_tlu->PopFrontEvent();
       uint32_t trigger_n = data->eventnumber;
       uint64_t ts_raw = data->timestamp;
-      // uint64_t ts_ns = ts_raw; //TODO: to ns
       uint64_t ts_ns = ts_raw*25;
       auto ev = eudaq::Event::MakeUnique("TluRawDataEvent");
-      ev->SetTimestamp(ts_ns, ts_ns+25, false);//TODO, duration
+      ev->SetTimestamp(ts_ns, ts_ns+25, false);
       ev->SetTriggerN(trigger_n);
 
-      std::stringstream  triggerss;
+      std::stringstream triggerss;
       //triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
       triggerss<< std::to_string(data->input5) << std::to_string(data->input4) << std::to_string(data->input3) << std::to_string(data->input2) << std::to_string(data->input1) << std::to_string(data->input0);
       ev->SetTag("TRIGGER", triggerss.str());
@@ -124,7 +126,8 @@ void AidaTluProducer::DoInitialise(){
      Define the main hardware parameters.
   */
   auto ini = GetInitConfiguration();
-  std::cout << "  INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
+  //std::cout << "  INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
+  EUDAQ_INFO("TLU INITIALIZE ID: " + std::to_string(ini->Get("initid", 0)));
   //std::string uhal_conn = "file://./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_connection.xml";
   //std::string uhal_node = "fmctlu.udp";
   std::string uhal_conn;
@@ -134,22 +137,18 @@ void AidaTluProducer::DoInitialise(){
   m_tlu = std::unique_ptr<tlu::AidaTluController>(new tlu::AidaTluController(uhal_conn, uhal_node));
 
   if( ini->Get("skipini", false) ){
-    std::cout << "SKIPPING INITIALIZATION (skipini= 1)" << std::endl;
+    EUDAQ_INFO("TLU SKIPPING INITIALIZATION (skipini = 1)");
   }
   else{
 
-    m_verbose= abs(ini->Get("verbose", 0));
-    std::stringstream ss;
-    ss << "AIDA_TLU VERBOSITY SET TO: " << int(m_verbose) << "\t";
-    std::string myMsg = ss.str();
-    EUDAQ_INFO(myMsg);
-    ss.str(std::string());
-    ss.clear();
+    m_verbose = abs(ini->Get("verbose", 0));
+    EUDAQ_INFO("TLU VERBOSITY SET TO: " + std::to_string(m_verbose));
+    
     // Define constants
     m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
 
-    //Import I2C addresses for hardware
-    //Populate address list for I2C elements
+    // Import I2C addresses for hardware
+    // Populate address list for I2C elements
     m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
     m_tlu->SetI2C_clockChip_addr(ini->Get("I2C_CLK_Addr", 0x68));
     m_tlu->SetI2C_DAC1_addr(ini->Get("I2C_DAC1_Addr",0x13) );
@@ -176,12 +175,12 @@ void AidaTluProducer::DoInitialise(){
       std::string defaultCfgFile= "./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_clock_config.txt";
       clkConfFile= ini->Get("CLOCK_CFG_FILE", defaultCfgFile);
       if (clkConfFile== defaultCfgFile){
-        EUDAQ_WARN("AIDA TLU: Could not find the parameter for clock configuration in the INI file. Using the default.");
+        EUDAQ_WARN("TLU: Could not find the parameter for clock configuration in the INI file. Using the default.");
       }
       int clkres;
       clkres= m_tlu->InitializeClkChip( clkConfFile, m_verbose  );
       if (clkres == -1){
-        EUDAQ_ERROR("AIDA TLU: clock configuration failed.");
+        EUDAQ_ERROR("TLU: clock configuration failed.");
       }
     }
 
@@ -200,29 +199,22 @@ void AidaTluProducer::DoInitialise(){
 void AidaTluProducer::DoConfigure() {
 
   auto conf = GetConfiguration();
-  std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
-  m_verbose= abs(conf->Get("verbose", 0));
-  std::stringstream ss;
-  ss << "AIDA_TLU VERBOSITY SET TO: " << int(m_verbose) << "\t";
-  std::string myMsg = ss.str();
-  EUDAQ_INFO(myMsg);
-
-  ss.str(std::string());
-  ss.clear();
-  m_delayStart= conf->Get("delayStart", 0);
-  ss << "AIDA_TLU DELAY START SET TO: " << m_delayStart << " ms\t" ;
-  EUDAQ_INFO(myMsg);
-
+  //std::cout << "" << std::dec << conf->Get("confid", 0) << std::endl;
+  EUDAQ_INFO("CONFIG ID: " + std::to_string(conf->Get("confid", 0)));
+  
+  m_verbose = abs(conf->Get("verbose", 0));
+  EUDAQ_INFO("TLU VERBOSITY SET TO: " + std::to_string(m_verbose));
+  
+  m_delayStart = conf->Get("delayStart", 0);
+  EUDAQ_INFO("TLU DELAY START SET TO: " + std::to_string(m_delayStart) + " ms");
 
   m_tlu->SetTriggerVeto(1, m_verbose);
   if( conf->Get("skipconf", false) ){
-    std::cout << "SKIPPING CONFIGURATION (skipconf= 1)" << std::endl;
+    EUDAQ_INFO("TLU SKIPPING CONFIGURATION (skipconf = 1)");
   }
   else{
     // Enable HDMI connectors
-    if(m_verbose > 0){
-      std::cout << " -DUT CONFIGURATION:" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -DUT CONFIGURATION");
     m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), m_verbose);
     m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), m_verbose);
     m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), m_verbose);
@@ -235,15 +227,11 @@ void AidaTluProducer::DoConfigure() {
     m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), m_verbose);
 
     //Set lemo clock
-    if(m_verbose > 0){
-      std::cout << " -CLOCK OUTPUT CONFIGURATION:" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -CLOCK OUTPUT CONFIGURATION");
     m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), m_verbose);
 
     // Set thresholds
-    if(m_verbose > 0){
-      std::cout << " -DISCRIMINATOR THRESHOLDS CONFIGURATION:" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -DISCRIMINATOR THRESHOLDS CONFIGURATION");
     m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2), m_verbose);
     m_tlu->SetThresholdValue(1, conf->Get("DACThreshold1", 1.2), m_verbose);
     m_tlu->SetThresholdValue(2, conf->Get("DACThreshold2", 1.2), m_verbose);
@@ -265,38 +253,28 @@ void AidaTluProducer::DoConfigure() {
                                           (unsigned int)conf->Get("in3_DEL",0),
                                           (unsigned int)conf->Get("in4_DEL",0),
                                           (unsigned int)conf->Get("in5_DEL",0)};
-    if(m_verbose > 0){
-      std::cout << " -ADJUST STRETCH AND DELAY" << std::endl;
-    }
+
+    if(m_verbose > 0) EUDAQ_INFO(" -ADJUST STRETCH AND DELAY");
     m_tlu->SetPulseStretchPack(stretcVec, m_verbose);
     m_tlu->SetPulseDelayPack(delayVec, m_verbose);
 
     // Set triggerMask
     // The conf function does not seem happy with a 32-bit default. Need to check.
-    if(m_verbose > 0){
-      std::cout << " -DEFINE TRIGGER MASK" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -DEFINE TRIGGER MASK");
     m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
     // Set PMT power
-    if(m_verbose > 0){
-      std::cout << " -PMT OUTPUT VOLTAGES" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -PMT OUTPUT VOLTAGES");
     m_tlu->pwrled_setVoltages(conf->Get("PMT1_V", 0.0), conf->Get("PMT2_V", 0.0), conf->Get("PMT3_V", 0.0), conf->Get("PMT4_V", 0.0), m_verbose);
 
-
-    if(m_verbose > 0){
-      std::cout << " -DUT OPERATION MODE" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -DUT OPERATION MODE");
     m_tlu->SetDUTMask( (int32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
     m_tlu->SetDUTMaskMode( (int32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
     m_tlu->SetDUTMaskModeModifier( (int32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
     m_tlu->SetDUTIgnoreBusy( (int32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode
     m_tlu->SetDUTIgnoreShutterVeto( (int32_t)(conf->Get("DUTIgnoreShutterVeto",1)), m_verbose); //
 
-    if(m_verbose > 0){
-      std::cout << " -SHUTTER OPERATION MODE" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -SHUTTER OPERATION MODE");
     m_tlu->SetShutterParameters( (bool)conf->Get("EnableShutterMode",0),
                                  (int8_t)(conf->Get("ShutterSource",0)),
                                  (int32_t)(conf->Get("ShutterOnTime",0)),
@@ -306,14 +284,10 @@ void AidaTluProducer::DoConfigure() {
                                   m_verbose);
 
 
-    if(m_verbose > 0){
-      std::cout << " -AUTO TRIGGER SETTINGS" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -AUTO TRIGGER SETTINGS");
     m_tlu->SetInternalTriggerFrequency( (int32_t)( conf->Get("InternalTriggerFreq", 0)), m_verbose );
 
-    if(m_verbose > 0){
-      std::cout << " -FINALIZING AIDA TLU CONFIGURATION" << std::endl;
-    }
+    if(m_verbose > 0) EUDAQ_INFO(" -FINALIZING TLU CONFIGURATION");
     m_tlu->SetEnableRecordData( (uint32_t)(conf->Get("EnableRecordData", 1)) );
     m_tlu->GetEventFifoCSR();
     m_tlu->GetEventFifoFillLevel();
@@ -322,46 +296,43 @@ void AidaTluProducer::DoConfigure() {
 
 void AidaTluProducer::DoStartRun(){
   m_exit_of_run = false;
-  std::cout << "TLU START command received" << std::endl;
+  EUDAQ_INFO("TLU START command received");
 }
 
 void AidaTluProducer::DoStopRun(){
   m_exit_of_run = true;
-  std::cout << "TLU STOP command received" << std::endl;
+  EUDAQ_INFO("TLU STOP command received");
 }
 
 void AidaTluProducer::DoTerminate(){
   m_exit_of_run = true;
-  std::cout << "TLU TERMINATE command received" << std::endl;
+  EUDAQ_INFO("TLU TERMINATE command received");
 }
 
 void AidaTluProducer::DoReset(){
   m_exit_of_run = true;
-  std::cout << "TLU RESET command received" << std::endl;
+  EUDAQ_INFO("TLU RESET command received");
   std::unique_lock<std::mutex> lk(m_mtx_tlu); //waiting for the runloop's return
   m_tlu.reset();
 }
 
 void AidaTluProducer::DoStatus() {
   if (m_tlu) {
-    uint64_t time = m_tlu->GetCurrentTimestamp();
-    time = time/40000000; // in second
-
-    SetStatusTag("TIMESTAMP", std::to_string(time));
-    SetStatusTag("LASTTIME", std::to_string(m_lasttime));
-
-    uint32_t sl0,sl1,sl2,sl3,sl4,sl5, pret, post;
-    pret=m_tlu->GetPreVetoTriggers();
-    post=m_tlu->GetPostVetoTriggers();
-    m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
+    m_duration = double(m_lasttime - m_starttime) / 1000000000; // in seconds
+    uint32_t sl0, sl1, sl2, sl3, sl4, sl5, pret, post;
+    pret = m_tlu->GetPreVetoTriggers();
+    post = m_tlu->GetPostVetoTriggers();
+    m_tlu->GetScaler(sl0, sl1, sl2, sl3, sl4, sl5);
     //Is tlu controller safe to be accessed by 2 threads (RunLoop and DoStatus) at some time?
-    SetStatusTag("SCALER0", std::to_string(sl0));
-    SetStatusTag("SCALER1", std::to_string(sl1));
-    SetStatusTag("SCALER2", std::to_string(sl2));
-    SetStatusTag("SCALER3", std::to_string(sl3));
-    SetStatusTag("SCALER4", std::to_string(sl4));
-    SetStatusTag("SCALER5", std::to_string(sl5));
-    SetStatusTag("PARTICLES", std::to_string(pret));
-    SetStatusTag("TRIG", std::to_string(post));
+    SetStatusTag("IDTrig", std::to_string(post));
+    SetStatusTag("Freq. (avg.) [kHz]", std::to_string(post/m_duration/1000));
+    SetStatusTag("Run duration [s]", std::to_string(m_duration));
+    SetStatusTag("Particles", std::to_string(pret));
+    SetStatusTag("Scaler0", std::to_string(sl0));
+    SetStatusTag("Scaler1", std::to_string(sl1));
+    SetStatusTag("Scaler2", std::to_string(sl2));
+    SetStatusTag("Scaler3", std::to_string(sl3));
+    //SetStatusTag("SCALER4", std::to_string(sl4));
+    //SetStatusTag("SCALER5", std::to_string(sl5));
   }
 }
