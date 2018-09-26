@@ -87,7 +87,7 @@ cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deact
 - ```USER_ITKSTRIP_BUILD=OFF```
 - ```USER_STCONTROL_BUILD=ON```
 - ```USER_TBSCDESY=OFF```
-- ```USER_TLU_BUILD=OFF```
+- ```USER_TLU_BUILD=ON```
 - ```USER_TIMEPIX3_BUILD=OFF```
 
 If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder by ```rm -rf *``` before a new try.
