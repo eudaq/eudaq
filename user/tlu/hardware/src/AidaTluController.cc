@@ -616,10 +616,7 @@ namespace tlu {
     else{
       runState= "STOP";
     }
-
-    ss << "AIDA TLU SET TO " << runState << "\t";
-    std::string myMsg = ss.str();
-    EUDAQ_INFO(myMsg);
+    EUDAQ_INFO("TLU SET TO " + runState);
   }
 
   fmctludata* AidaTluController::PopFrontEvent(){
@@ -807,7 +804,7 @@ namespace tlu {
       return;
     }
     if (value & 0x1){
-      EUDAQ_INFO("AIDA TLU is configured to use shutter.\t");
+      EUDAQ_INFO("TLU is configured to use shutter.\t");
     }
 
     if (value > 3){
@@ -842,10 +839,7 @@ namespace tlu {
     // Selects the input to be used as shutter source (0, 5)
     uint32_t res;
     if ((value < 0) | (value > 5)){
-      std::stringstream ss;
-      ss << "Shutter source can only be in range [0, 5]. Value " << value << " ignored.\t";
-      std::string myMsg = ss.str();
-      EUDAQ_ERROR(myMsg);
+      EUDAQ_ERROR("Shutter source can only be in range [0, 5]. Value " + std::to_string(value) + " ignored.\t");
       return;
     }
     else{

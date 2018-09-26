@@ -37,5 +37,4 @@ endif()
 include_directories(hardware/include)
 add_subdirectory(hardware)
 add_subdirectory(module)
-
 add_subdirectory(exe)
