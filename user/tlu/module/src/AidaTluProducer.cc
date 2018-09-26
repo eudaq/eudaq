@@ -31,7 +31,7 @@ private:
   std::unique_ptr<tlu::AidaTluController> m_tlu;
   uint64_t m_starttime;
   uint64_t m_lasttime;
-  double m_duration; 
+  double m_duration;
 
   uint8_t m_verbose;
   uint32_t m_delayStart;
@@ -143,7 +143,7 @@ void AidaTluProducer::DoInitialise(){
 
     m_verbose = abs(ini->Get("verbose", 0));
     EUDAQ_INFO("TLU VERBOSITY SET TO: " + std::to_string(m_verbose));
-    
+
     // Define constants
     m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
 
@@ -199,12 +199,10 @@ void AidaTluProducer::DoInitialise(){
 void AidaTluProducer::DoConfigure() {
 
   auto conf = GetConfiguration();
-  //std::cout << "" << std::dec << conf->Get("confid", 0) << std::endl;
+
   EUDAQ_INFO("CONFIG ID: " + std::to_string(conf->Get("confid", 0)));
-  
   m_verbose = abs(conf->Get("verbose", 0));
   EUDAQ_INFO("TLU VERBOSITY SET TO: " + std::to_string(m_verbose));
-  
   m_delayStart = conf->Get("delayStart", 0);
   EUDAQ_INFO("TLU DELAY START SET TO: " + std::to_string(m_delayStart) + " ms");
 
