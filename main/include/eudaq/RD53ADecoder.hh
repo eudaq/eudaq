@@ -57,6 +57,8 @@ namespace eudaq
     // Chip morphology
     static const unsigned int RD53A_NCOLS = 400;
     static const unsigned int RD53A_NROWS = 192;
+    static const float RD53A_XSIZE = 20.0;
+    static const float RD53A_YSIZE = 9.6;
 
     class RD53ADecoder
     {
