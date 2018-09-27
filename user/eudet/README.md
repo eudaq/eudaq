@@ -1,9 +1,10 @@
 # EUDET-type beam telescopes using EUDAQ2
 
-## Hardware
+## Components
 
 - Mimosa Sensors and NI DAQ: EUDAQ2 code here in ```user/eudet```
 - EUDET or AIDA TLU: EUDAQ2 code in ```user/tlu```
+- StdEventMonitor which is the EUDAQ1 OnlineMon (```EUDAQ_BUILD_STDEVENT_MONITOR=ON```)
 - Reference Plane, for example FEI4, USBPix / STControl: EUDAQ2 code which is currently working is here: ```https://github.com/beam-telescopes/USBpix/tree/release_5.3_eudaq20```
 
 ## Running modes
