@@ -61,9 +61,9 @@ namespace eudaq
     //static const char* EVENT_TYPE   = "BDAQ53";
     static const char* EVENT_TYPE   = "bdaq53a";
     
-#if USE_LCIO && USE_EUTELESCOPE
+//#if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 30;
-#endif
+//#endif
 
 
     // Declare a new class that inherits from DataConverterPlugin
@@ -120,11 +120,11 @@ namespace eudaq
                     _boards.emplace_back(board_id);
                     _board_channels[board_id] = std::vector<int>();
                     _board_initialized[board_id] = false;
-                    EUDAQ_INFO("[BDAQ53A::New Kintex KC705 board added. Board ID: "+std::to_string(board_id)+"]");
                     // Set the layout
                     set_geometry_layout(sensor_flavour,board_id);
-                    EUDAQ_INFO("[BDAQ53A::-------Sensor pitch: "
-                            +std::to_string(int(get_x_pitch(board_id)*1e3))+
+                    EUDAQ_INFO("[BDAQ53A::New Kintex KC705 board added. Board ID: "+
+                            std::to_string(board_id)+", layout:"+
+                            std::to_string(int(get_x_pitch(board_id)*1e3))+
                             "x"+std::to_string(int(get_y_pitch(board_id)*1e3))+" um]");
                 }
             }
@@ -195,7 +195,7 @@ namespace eudaq
                 if(static_cast<uint32_t>(trigger_number) == -1)
                 {
                     // Dummy plane
-                    StandardPlane plane(board_id, EVENT_TYPE,plane_name);
+                    StandardPlane plane(get_chip_id(ev_raw.GetID(0),board_id), EVENT_TYPE,plane_name);
                     plane.SetSizeZS(get_ncols(board_id),get_nrows(board_id),0,RD53A_MAX_TRG_ID,
                             StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
                     sev.AddPlane(plane);
@@ -213,7 +213,7 @@ namespace eudaq
                 for(size_t i = 0; i < ev_raw.NumBlocks(); ++i) 
                 {
                     // Create a standard plane representing one sensor plane
-                    StandardPlane plane(i, EVENT_TYPE,plane_name);
+                    StandardPlane plane(get_chip_id(ev_raw.GetID(i),board_id), EVENT_TYPE,plane_name);
                     // FIXME: Understand what is the meaning of those flags!! 
                     plane.SetSizeZS(get_ncols(board_id),get_nrows(board_id),0,RD53A_MAX_TRG_ID,
                             StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
@@ -304,7 +304,8 @@ namespace eudaq
                         currentDetector->setMode("ZS");
                         setupDescription.push_back( new eutelescope::EUTelSetupDescription(currentDetector)) ;
                     }
-                    zsDataEncoder["sensorID"] = ev_raw.GetID(chip)+(10*board_id+chip_id_offset);  
+                    //zsDataEncoder["sensorID"] = ev_raw.GetID(chip)+(10*board_id+chip_id_offset);  
+                    zsDataEncoder["sensorID"] = get_chip_id(ev_raw.GetID(chip),board_id);  
                     zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
                     
                     // prepare a new TrackerData object for the ZS data
@@ -381,6 +382,11 @@ namespace eudaq
                     _data_map->emplace(chip,RD53ADecoder(raw_data));
                 }
                 return _data_map->at(chip); //_data_map->find(chip)->second;
+            }
+
+            const int get_chip_id(const int & evt_chip_id,const unsigned int & board_id) const
+            {
+                return evt_chip_id+(10*board_id+chip_id_offset);
             }
 
             // Helper function to deal with diferent pixels geometry
