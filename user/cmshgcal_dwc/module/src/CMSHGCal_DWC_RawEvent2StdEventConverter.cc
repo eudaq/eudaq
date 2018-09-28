@@ -2,6 +2,8 @@
 #include "eudaq/RawEvent.hh"
 #include "CAEN_v1290_Unpacker.h"
 
+const std::string EVENT_TYPE = "CMSHGCal_DWC_RawEvent";
+
 class CMSHGCAL_DWC_RawEvent2StdEventConverter: public eudaq::StdEventConverter {
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
@@ -19,21 +21,19 @@ auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
 }
 
 CMSHGCAL_DWC_RawEvent2StdEventConverter::CMSHGCAL_DWC_RawEvent2StdEventConverter() : eudaq::StdEventConverter() {
+  //values could come from a config...TODO
   tdc_unpacker = new CAENv1290Unpacker(16);
+  NHits_forReadout = 20;    
 }
 
 CMSHGCAL_DWC_RawEvent2StdEventConverter::~CMSHGCAL_DWC_RawEvent2StdEventConverter() { delete tdc_unpacker;}
 
 bool CMSHGCAL_DWC_RawEvent2StdEventConverter::Converting(eudaq::EventSPC rev, eudaq::StdEventSP sev, eudaq::ConfigSPC conf) const {
-  std::cout<<"Converting"<<std::endl;
-
   // If the event type is used for different sensors
   // they can be differentiated here
   const std::string sensortype = "DWC";
-  const std::string EVENT_TYPE = "DWC";
   
   sev->SetTag("cpuTime_dwcProducer_mus", rev->GetTimestampBegin());
-
 
   std::vector<tdcData*> unpacked;
   std::map<std::pair<int, int>, uint32_t> time_of_arrivals;
@@ -49,7 +49,6 @@ bool CMSHGCAL_DWC_RawEvent2StdEventConverter::Converting(eudaq::EventSPC rev, eu
     std::memcpy(&Words[0], &bl[0], bl.size());
 
     unpacked.push_back(tdc_unpacker->ConvertTDCData(Words));
-
   }
 
 

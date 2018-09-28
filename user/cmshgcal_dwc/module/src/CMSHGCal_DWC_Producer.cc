@@ -17,7 +17,7 @@ enum RUNMODE {
   TDC_RUN
 };
 
-static const std::string EVENT_TYPE = "DWC";
+static const std::string EVENT_TYPE = "CMSHGCal_DWC_RawEvent";
 
 class CMSHGCal_DWC_Producer : public eudaq::Producer {
 public:
@@ -245,7 +245,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
     timeSinceStart = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - startTime).count();
     if (!(m_ev % 1000)) std::cout <<  "[EVENT " << m_ev << "]  " << timeSinceStart / 1000. << " ms" << std::endl;
     //making an EUDAQ event
-    eudaq::EventUP ev = eudaq::Event::MakeUnique("CMSHGCal_DWC_RawEvent");
+    eudaq::EventUP ev = eudaq::Event::MakeUnique(EVENT_TYPE);
     ev->SetRunN(m_run);
     ev->SetEventN(m_ev);
     ev->SetTriggerN(m_ev); 
