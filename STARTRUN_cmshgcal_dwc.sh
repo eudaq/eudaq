@@ -24,4 +24,4 @@ xterm -r -sb -sl 100000 -T "DirectSaveData collector" -e 'bin/euCliCollector -n 
 xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL-DWC" -e 'bin/euCliProducer -n CMSHGCal_DWC_Producer -t cms-hgcal-dwc -r tcp://$HOSTIP:$RCPORT '&
 
 
-xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --reset -r tcp://$HOSTIP:$RCPORT |tee -a logs/mon.log ; read' &
+#xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --reset -r tcp://$HOSTIP:$RCPORT |tee -a logs/mon.log ; read' &
