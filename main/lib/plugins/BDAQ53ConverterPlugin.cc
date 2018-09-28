@@ -90,11 +90,12 @@ namespace eudaq
                 // Obtain the offline modifications at layout if needed
                 // otherwise from the config file
                 std::ifstream flayout("sensor_layouts_offline.cfg");
+
                 if( flayout.good() )
                 {
                     // do things as modify the BORE with the new tags
                     theconfig = new eudaq::Configuration("cfg_offline");
-                    theconfig->Load(flayout,"BDAQ53A.SensorsLayout");
+                    theconfig->Load(flayout,"bdaq53a.Producer");
                     theconfig_todelete=false;
                 }
                 else
