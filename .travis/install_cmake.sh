@@ -30,7 +30,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 else
 	#sudo apt-get install --force-yes -y cmake 
 	wget $CMAKE_DOWNLOAD_PATH/$CMAKE_FILENAME_LINUX
-	tar -xvf $CMAKE_FILENAME_LINUX
+	tar -xf $CMAKE_FILENAME_LINUX
 	export PATH="~/${CMAKE_FILENAME_LINUX%.*.*}/bin:$PATH"
 fi
 

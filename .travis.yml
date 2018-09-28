@@ -12,9 +12,6 @@ branches:
 # set here versions / file paths
 env:
    global:
-      - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.11-clang70.tar.gz
-      - ROOT6_FILENAME_LINUX=root_v6.14.00.Linux-ubuntu17-x86_64-gcc7.2.tar.gz
       - ROOT6_FILENAME_MAC=root_v6.14.00.macosx64-10.13-clang91.tar.gz
       
       - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.11
@@ -44,7 +41,7 @@ env:
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
       - BUILD_onlinemon=ON
-      - BUILD_palpidefs=ON
+      - BUILD_palpidefs=OFF
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=ON
@@ -57,14 +54,13 @@ env:
 # possible options:
 # Linux/Mac
 # gcc/clang
-# ROOT 5/6
-# QT 4/5
+# ROOT 6
+# QT 5
 # Python 2/3    not realized yet
 
 # in order to reduce options:
 # Linux/Mac
 # gcc/clang
-# modern (ROOT 6, QT 5, Python 3) / old (ROOT 5, QT 4, Python 2)
 # results in 8 combinations
 # documentation to be "compiled" in maximum one option
 
@@ -85,23 +81,48 @@ before_cache:
   - unzip aliceitsalpidesoftwaremaster.zip
 
 matrix:      
-   include:   
+   include:      
       - os: linux
-        compiler: clang      
-        python: 3.6
-        env: OPTION=modern
+        addons:
+          apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-4.8      
+        env:
+            - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
+            - ROOT6_FILENAME_LINUX=root_v6.14.02.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - os: linux
-        compiler: clang     
-        python: 2.7
-        env: OPTION=old   
+        addons:
+          apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-5      
+        env:
+            - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+            - ROOT6_FILENAME_LINUX=root_v6.14.02.Linux-ubuntu16-x86_64-gcc5.4.tar.gz
       - os: linux
-        compiler: gcc
-        python: 3.6        
-        env: OPTION=modern BUILD_manual=ON
-      - os: linux      
-        compiler: gcc
-        python: 2.7        
-        env: OPTION=old
+        addons:
+          apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-7      
+        env:
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+            - ROOT6_FILENAME_LINUX=root_v6.14.02.Linux-ubuntu17-x86_64-gcc7.2.tar.gz
+      - os: linux
+        addons:
+          apt:
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - g++-7      
+        env:
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+            - ROOT6_FILENAME_LINUX=root_v6.14.02.Linux-ubuntu18-x86_64-gcc7.3.tar.gz
+            - BUILD_manual=ON
       - os: osx
         osx_image: xcode9.3
         compiler: clang      
@@ -112,24 +133,15 @@ matrix:
         compiler: clang
         python: 2.7        
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF           
-      - os: osx      
-        osx_image: xcode9.3
-        compiler: gcc    
-        python: 3.6        
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF        
-      - os: osx
-        osx_image: xcode9.3
-        compiler: gcc
-        python: 2.7    
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
 
-#before_install:
+before_install:
+  - eval "${MATRIX_EVAL}"
       
 install:
   - export AFS_REQUIRED="NO"
   - source .travis/set_compilers.sh
   - source .travis/update_repositories.sh  
-  - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
+  # - if [[ $BUILD_tlu == "ON" ]]; then export AFS_REQUIRED="YES"; fi
   - if [[ $AFS_REQUIRED == "YES" ]]; then source .travis/install_afs.sh; fi
   - source .travis/install_cmake.sh
   - source .travis/install_python.sh  
@@ -144,8 +156,8 @@ install:
   - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi
 
 before_script:
-  - $CXX --version
-  - $CC --version
+#  - $CXX --version
+#  - $CC --version
   - echo $PATH
   - echo $LD_LIBRARY_PATH
 
