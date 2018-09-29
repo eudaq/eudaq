@@ -24,8 +24,12 @@ namespace eudaq {
     static inline std::string LastSockErrorString(const std::string & msg) {
       const size_t buflen = 79;
       char buf[buflen] = "";
-      strerror_r(errno, buf, buflen);
-      return msg + ": " + buf;
+      auto strerr_return = strerror_r(errno, buf, buflen);
+      if (buf[0] == '\0') {
+	return strerror(errno);
+      } else {
+	return msg + ": " + buf;
+      }
     }
 
     static void setup_socket(SOCKET sock) {
