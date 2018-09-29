@@ -1,10 +1,10 @@
 EUDAQ version 1
 =======
 
-[![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=v1.7-dev)](https://travis-ci.org/eudaq/eudaq) 
-[![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/v1.6-dev?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/v1.7-dev)
+[![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=v1.x-dev)](https://travis-ci.org/eudaq/eudaq) 
+[![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/v1.x-dev?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/v1.x-dev)
 
-**Note: EUDAQ version 1.8 requires a C++14 compliant compiler.**
+**Note: EUDAQ version 1.10 requires a C++14 compliant compiler.**
 
 EUDAQ is a Generic Multi-platform Data Acquisition Framework.
 Version 1 uses a central data collector which synchronize multiple data streams by event number. 
@@ -46,15 +46,19 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 
 EUDAQ requires a C++14 compliant compiler. 
 We recommend a gcc version 5.0 or later. 
-Qt version 4/5 or higher is required to build GUIs. 
-ROOT 5/6 is required for the Online Monitor GUI.
+Qt version 5 or higher is required to build GUIs. 
+ROOT 6 is required for the Online Monitor GUI.
 
 ### For specific Producers and Components
 
 #### EUDET TLU producer
 
-- install **ZestSC1** driver package (if AFS is accessible on the machine, this will be installed automatically when running CMake; otherwise, manually copy full folder with sub-directories from /afs/desy.de/group/telescopes/tlu/ZestSC1 to into ./extern subfolder in EUDAQ sources)
-- install **tlufirmware** bitfiles (if AFS is accessible on the machine, this will be installed automatically when runnig CMake; otherwise, manually copy /afs/desy.de/group/telescopes/tlu/tlufirmware into ./extern)
+- install **ZestSC1** driver package 
+-- if github is available this will be installed automatically when running CMake
+-- otherwise, checkout https://github.com/eudaq/tlu-dependencies to ./extern subfolder in EUDAQ sources
+- install **tlufirmware** bitfiles 
+-- if github is available this will be installed automatically when runnig CMake
+-- otherwise, checkout https://github.com/eudaq/tlu-dependencies to ./extern subfolder in EUDAQ sources
 - libusb: 
 -- Windows: install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki) into ./extern/libusb-w32
 -- Linux: install libusb development package, e.g. for Ubuntu ```sudo apt install libusb-dev```
@@ -110,7 +114,7 @@ If problems occur during installation, please have a look in the issues, if a si
 ### Quick installation
 
 ```
-git clone -b v1.7-dev https://github.com/eudaq/eudaq.git
+git clone -b v1.x-dev https://github.com/eudaq/eudaq.git
 mkdir -p eudaq/build
 cd eudaq/build
 cmake ..
@@ -121,8 +125,8 @@ make install
 
 #### Visual Studio for compiling (MSVC)
 
-- The recommended windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 2013 and later
-- Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
+- The recommended windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 2015 and later
+- Download Visual Studio Express Desktop (e.g. 2017 Version)
 
 #### Compiling using cmake syntax
 
