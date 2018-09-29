@@ -2,7 +2,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 ########################################################
 # project name
-PROJECT( EUDAQ LANGUAGES CXX)
+PROJECT( EUDAQ )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
