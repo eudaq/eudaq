@@ -60,8 +60,10 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
 #if USE_LCIO
 	/** Returns the LCIO version of the event.*/
 virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eudaqEvent) const {
+	#if USE_EUTELESCOPE
 	streamlog::logscope scope(streamlog::out);
 	scope.setName("EUDAQ:ConverterPlugin:USBPixGen2");
+	#endif
 	
 	if(eudaqEvent.IsBORE() || eudaqEvent.IsEORE()) return true;
 
@@ -70,7 +72,11 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 	
 	if(boardInitialized.find(boardID) == boardInitialized.end()) {
 		boardInitialized[boardID] = false;
+		#if USE_EUTELESCOPE
 		streamlog_out(WARNING) << "Board with ID " << boardID << " has been missing and was added to boardInitialized with value false." << std::endl;
+		#else
+		std::cout << "Board with ID " << boardID << " has been missing and was added to boardInitialized with value false." << std::endl;
+		#endif
 	}
 	if(!boardInitialized.at(boardID)) {
 		//getChannels will determine all the channels from a board, making the assumption that every channel (i.e. FrontEnd)
@@ -82,7 +88,11 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 		catch(const std::out_of_range& oor){
 			//std::cout << "Data block is missing" << std::endl;
 			number_of_events_with_missing_data_blocks++;
+			#if USE_EUTELESCOPE
 			streamlog_out(WARNING) << "Number of data blocks missing for USBpixGen2: " << number_of_events_with_missing_data_blocks << std::endl;
+			#else
+			std::cout << "Number of data blocks missing for USBpixGen2: " << number_of_events_with_missing_data_blocks << std::endl;
+			#endif
 			return true;
 		}
 		if(!boardChannels.at(boardID).empty()) boardInitialized.at(boardID) = true;
@@ -129,7 +139,11 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 	
 	std::cout.rdbuf(old_buf);
 	
+	#ifdef USE_EUTELESCOPE
 	if(!ss.str().empty()) streamlog_out(WARNING) << ss.str() << std::endl;
+	#else
+	if(!ss.str().empty()) std::cout << ss.str() << std::endl;
+	#endif
  
 	for(auto& hitPixel: pixelVec) {
 		frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
@@ -245,8 +259,10 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 
 
 virtual unsigned GetTriggerID(const Event & ev) const {
+	#ifdef USE_EUTELESCOPE
 	streamlog::logscope scope(streamlog::out);
 	scope.setName("EUDAQ:ConverterPlugin:USBPixGen2");
+	#endif
 	
 	auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
 	bool invalid_response = false;
@@ -254,7 +270,11 @@ virtual unsigned GetTriggerID(const Event & ev) const {
 		auto data = evRaw.GetBlock(0);
 	}
 	catch (const std::out_of_range& oor) {
+		#ifdef USE_EUTELESCOPE
 		streamlog_out(WARNING) << "Data block 0 for USBpixGen2 in GetTriggerID not found!" << '\n';
+		#else
+		std::cout << "Data block 0 for USBpixGen2 in GetTriggerID not found!" << '\n';
+		#endif
 		invalid_response = true;
 	}
 	if(invalid_response) {
