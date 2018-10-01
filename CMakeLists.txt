@@ -2,11 +2,11 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 ########################################################
 # project name
-PROJECT( EUDAQ LANGUAGES CXX)
+PROJECT( EUDAQ )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 9 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 10 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # some macros are redefined if not exisiting
@@ -78,7 +78,7 @@ ENDIF()
 
 # include directories
 #INCLUDE_DIRECTORIES( ./main/include )
-INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
+INCLUDE_DIRECTORIES( ./extern/jsoncons-0.110.0/include)
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )

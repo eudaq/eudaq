@@ -31,6 +31,9 @@
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelRunHeaderImpl.h"
+
+// to be imported from ilcutil
+#include "streamlog/streamlog.h"
 #endif
 
 
@@ -46,26 +49,53 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
     std::vector<int> attachedBoards;
     mutable std::map<int, bool> boardInitialized;
     mutable std::map<int, std::vector<int>> boardChannels;
+    mutable unsigned int number_of_events_with_missing_data_blocks;
 
   public:
-  USBPixGen2ConverterPlugin(): DataConverterPlugin(USBPIX_GEN2_NAME) {};
+  USBPixGen2ConverterPlugin(): DataConverterPlugin(USBPIX_GEN2_NAME) {
+	number_of_events_with_missing_data_blocks=0;
+	};
 
 	std::string EVENT_TYPE = USBPIX_GEN2_NAME;
 
 #if USE_LCIO
 	/** Returns the LCIO version of the event.*/
 virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eudaqEvent) const {
-
+	#if USE_EUTELESCOPE
+	streamlog::logscope scope(streamlog::out);
+	scope.setName("EUDAQ:ConverterPlugin:USBPixGen2");
+	#endif
+	
 	if(eudaqEvent.IsBORE() || eudaqEvent.IsEORE()) return true;
 
 	auto evRaw = dynamic_cast<RawDataEvent const &>(eudaqEvent);
 	int boardID = evRaw.GetTag("board", int());
-
+	
+	if(boardInitialized.find(boardID) == boardInitialized.end()) {
+		boardInitialized[boardID] = false;
+		#if USE_EUTELESCOPE
+		streamlog_out(WARNING) << "Board with ID " << boardID << " has been missing and was added to boardInitialized with value false." << std::endl;
+		#else
+		std::cout << "Board with ID " << boardID << " has been missing and was added to boardInitialized with value false." << std::endl;
+		#endif
+	}
 	if(!boardInitialized.at(boardID)) {
 		//getChannels will determine all the channels from a board, making the assumption that every channel (i.e. FrontEnd)
 		//wrote date into the data block. This holds true if the FE is responding. Then for every trigger there will be
 		//data headers (DHs) in the data stream
-		boardChannels.at(boardID) = getChannels(evRaw.GetBlock(0));
+		try{
+			boardChannels.at(boardID) = getChannels(evRaw.GetBlock(0));
+		}
+		catch(const std::out_of_range& oor){
+			//std::cout << "Data block is missing" << std::endl;
+			number_of_events_with_missing_data_blocks++;
+			#if USE_EUTELESCOPE
+			streamlog_out(WARNING) << "Number of data blocks missing for USBpixGen2: " << number_of_events_with_missing_data_blocks << std::endl;
+			#else
+			std::cout << "Number of data blocks missing for USBpixGen2: " << number_of_events_with_missing_data_blocks << std::endl;
+			#endif
+			return true;
+		}
 		if(!boardChannels.at(boardID).empty()) boardInitialized.at(boardID) = true;
     	}
 
@@ -103,7 +133,19 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 	
 	int hitDiscConf = 0;
 
+	std::stringstream ss;
+	auto old_buf = std::cout.rdbuf(ss.rdbuf());
+	
 	auto pixelVec = decodeFEI4DataGen2(evRaw.GetBlock(0));
+	
+	std::cout.rdbuf(old_buf);
+	
+	#ifdef USE_EUTELESCOPE
+	if(!ss.str().empty()) streamlog_out(WARNING) << ss.str() << std::endl;
+	#else
+	if(!ss.str().empty()) std::cout << ss.str() << std::endl;
+	#endif
+ 
 	for(auto& hitPixel: pixelVec) {
 		frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
 	}
@@ -126,14 +168,13 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
       (void)cnf; // just to suppress a warning about unused parameter cnf
 //#endif
       int boardID = bore.GetTag("board", -999);
-      //cnf.Print(std::cout);
-      // [JDC] WHY the F*ck was it commented?
-      if(boardID != -999) 
-      {
+      cnf.Print(std::cout);
+
+      if(boardID != -999) {
           attachedBoards.emplace_back(boardID);
           boardChannels[boardID] = std::vector<int>();
           boardInitialized[boardID] = false;
-          EUDAQ_INFO(std::string("Added USBPixGen2 Board: "+std::to_string(boardID)));
+          std::cout << "Added USBPix Board: " << boardID << " to list!" << std::endl;
       }
     }
 
@@ -226,26 +267,41 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
     }
 
 virtual unsigned GetTriggerID(const Event & ev) const {
+	#ifdef USE_EUTELESCOPE
+	streamlog::logscope scope(streamlog::out);
+	scope.setName("EUDAQ:ConverterPlugin:USBPixGen2");
+	#endif
+	
 	auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
-        // [JDC] It is possible that there is no data because there
-        // were no read out from the USBPix (WHY?!!!!)
-        if(evRaw.NumBlocks() == 0 )
-        {
-            return (unsigned) -1;
-        }
-	auto data = evRaw.GetBlock(0);
-	auto dataLen = data.size();
-	uint32_t i =( static_cast<uint32_t>(data[dataLen-8]) << 24 ) |
-		    ( static_cast<uint32_t>(data[dataLen-7]) << 16 ) |
-                    ( static_cast<uint32_t>(data[dataLen-6]) << 8 ) |
-                    ( static_cast<uint32_t>(data[dataLen-5]) );
+	bool invalid_response = false;
+	try{
+		auto data = evRaw.GetBlock(0);
+	}
+	catch (const std::out_of_range& oor) {
+		#ifdef USE_EUTELESCOPE
+		streamlog_out(WARNING) << "Data block 0 for USBpixGen2 in GetTriggerID not found!" << '\n';
+		#else
+		std::cout << "Data block 0 for USBpixGen2 in GetTriggerID not found!" << '\n';
+		#endif
+		invalid_response = true;
+	}
+	if(invalid_response) {
+		return 0;
+	} else {
+		auto data = evRaw.GetBlock(0);
+		auto dataLen = data.size();
+		uint32_t i =( static_cast<uint32_t>(data[dataLen-8]) << 24 ) |
+			( static_cast<uint32_t>(data[dataLen-7]) << 16 ) |
+			( static_cast<uint32_t>(data[dataLen-6]) << 8 ) |
+			( static_cast<uint32_t>(data[dataLen-5]) );
 
-	uint32_t j =( static_cast<uint32_t>(data[dataLen-1]) << 24 ) |
-		    ( static_cast<uint32_t>(data[dataLen-2]) << 16 ) |
-                    ( static_cast<uint32_t>(data[dataLen-3]) << 8 ) |
-                    ( static_cast<uint32_t>(data[dataLen-4]) );
+		uint32_t j =( static_cast<uint32_t>(data[dataLen-1]) << 24 ) |
+			( static_cast<uint32_t>(data[dataLen-2]) << 16 ) |
+			( static_cast<uint32_t>(data[dataLen-3]) << 8 ) |
+			( static_cast<uint32_t>(data[dataLen-4]) );
 
-	return get_tr_no_2(i, j);
+		return get_tr_no_2(i, j);
+	}
 }
 	static USBPixGen2ConverterPlugin m_instance;
 

@@ -41,7 +41,7 @@ namespace eudaq {
     json_header["packetNumber"] = m_packet->GetPacketNumber();
     data["header"] = json_header;
 
-    json json_metaData(json::an_array);
+    json json_metaData(json::make_array());
     for (auto data : m_packet->GetMetaData().getArray()) {
       json_metaData.add(data);
     }
