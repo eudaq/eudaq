@@ -35,7 +35,7 @@ int main(int /*argc*/, const char **argv) {
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
   uint32_t event_count = 0;
 
-  std::cout<< "runNumber,eventNumber,triggerNumber,timeStampBegin,timeStampEnd,particles,triggersFired,scaler0,scaler1,scaler2,scaler3,scaler4,scaler5,finets0,finets1,finets2,finets3,finets4,finets5" <<std::endl;
+  std::cout<< "run,event,trigger,timestamp_low,timestamp_high,particles,triggersFired,scaler0,scaler1,scaler2,scaler3,scaler4,scaler5,finets0,finets1,finets2,finets3,finets4,finets5" <<std::endl;
 
   while(1) {
     auto ev = reader->GetNextEvent();

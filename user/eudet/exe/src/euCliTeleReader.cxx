@@ -34,7 +34,7 @@ int main(int /*argc*/, const char **argv) {
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
   uint32_t event_count = 0;
 
-  std::cout << "run_number,event_number,trigger_number,ni_trigger_number,ni_pivot_pixel,timestamp_low,timestamp_high" << std::endl;
+  std::cout << "run,event,trigger,timestamp_low,timestamp_high,ni_trigger_number,ni_pivot_pixel" << std::endl;
   while(1){
     auto ev = reader->GetNextEvent();
     if(!ev)
@@ -94,10 +94,10 @@ int main(int /*argc*/, const char **argv) {
       std::cout << run_number << "," 
           << event_number << "," 
           << trigger_number << "," 
-          << ni_trigger_number << "," 
-          << ni_pivot_pixel << "," 
           << ts_low << "," 
-          << ts_high << std::endl; 
+          << ts_high << "," 
+          << ni_trigger_number << "," 
+          << ni_pivot_pixel << std::endl; 
     }
 
     event_count ++;
