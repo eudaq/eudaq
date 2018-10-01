@@ -35,18 +35,18 @@ RD53ADecoder::RD53ADecoder(const RawDataEvent::data_t & raw_data) :
     {
         // Build the 32-bit FE word 
         uint32_t data_word = _reassemble_word(raw_data,it);
-        // Spot potential problems with the data format
-        // [XXX To be deprecated eventually]
-        // Two approaches: using _n_event_headers < RD53A_MAX_TRIG_ID
-        //                 using id trigger as strictly increasing 
-        if( _trig_id.size() > 0 && RD53A_TRG_ID(data_word) < _trig_id.back() )
-        {
-            // Send a message an return !!
-            EUDAQ_WARN("RD53ADecoder: Found inconsistencies in the data format.");
-            return;
-        }
         if( RD53A_IS_DATAHEADER(data_word) )
         {
+            // Spot potential problems with the data format
+            // [XXX To be deprecated eventually]
+            // Two approaches: using _n_event_headers < RD53A_MAX_TRIG_ID
+            //                 using id trigger as strictly increasing 
+            if( _trig_id.size() > 0 && RD53A_TRG_ID(data_word) < _trig_id.back() )
+            {
+                // Send a message an return !!
+                EUDAQ_WARN("RD53ADecoder: Found inconsistencies in the data format.");
+                return;
+            }
             _bcid.push_back(RD53A_BCID(data_word));
             _trig_id.push_back(RD53A_TRG_ID(data_word));
             _trig_tag.push_back(RD53A_TRG_TAG(data_word));
