@@ -8,6 +8,11 @@ add_executable(${EXE_CLI_TLU_READER} src/euCliTluReader.cxx)
 target_link_libraries(${EXE_CLI_TLU_READER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_TLU_READER})
 
+set(EXE_CLI_TRIGGER_READER euCliTriggerReader)
+add_executable(${EXE_CLI_TRIGGER_READER} src/euCliTriggerReader.cxx)
+target_link_libraries(${EXE_CLI_TRIGGER_READER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_TRIGGER_READER})
+
 if(USER_TLU_BUILD_EUDET)
   message(STATUS "Building EUDET TLU stand-alone executables (USER_BUILD_EUDET_TLU=ON)")
 
@@ -33,5 +38,3 @@ install(TARGETS ${INSTALL_TARGETS}
   DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
-
-  

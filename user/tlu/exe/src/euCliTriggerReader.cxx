@@ -34,7 +34,7 @@ int main(int /*argc*/, const char **argv) {
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
   uint32_t event_count = 0;
 
-  std::cout << "run,event,trigger,timestamp_low,timestamp_high,ni_trigger_number,ni_pivot_pixel" << std::endl;
+  std::cout << "number,number,number,timestamp_low,timestamp_high" << std::endl;
   while(1){
     auto ev = reader->GetNextEvent();
     if(!ev)
@@ -77,27 +77,18 @@ int main(int /*argc*/, const char **argv) {
       uint32_t trigger_number = ev->GetTriggerN();
       uint32_t ts_low = ev->GetTimestampBegin();
       uint32_t ts_high = ev->GetTimestampEnd();
-      uint32_t ni_trigger_number = 0;
-      uint16_t ni_pivot_pixel = 0;
       auto sub_events = ev->GetSubEvents();
       for(auto &sub_event : sub_events){
           if (sub_event->GetDescription() == "TluRawDataEvent") {
               ts_low = sub_event->GetTimestampBegin();
               ts_high = sub_event->GetTimestampEnd();
           }
-          if (sub_event->GetDescription() == "NiRawDataEvent") {
-              ni_trigger_number = sub_event->GetTriggerN();
-              const std::vector<uint8_t> &data0 = sub_event->GetBlock(0);
-              ni_pivot_pixel = eudaq::getlittleendian<uint16_t>(&data0[4]);
-          }
       }
       std::cout << run_number << "," 
           << event_number << "," 
           << trigger_number << "," 
           << ts_low << "," 
-          << ts_high << "," 
-          << ni_trigger_number << "," 
-          << ni_pivot_pixel << std::endl; 
+          << ts_high << std::endl; 
     }
 
     event_count ++;
