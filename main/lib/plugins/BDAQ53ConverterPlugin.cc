@@ -5,7 +5,6 @@
  * 
  */
 
-#define DEBUG_1 0
 
 #include "eudaq/RD53ADecoder.hh"
 
@@ -49,10 +48,6 @@ using eutelescope::EUTELESCOPE;
 #include <functional>
 #include <istream>
 
-#ifdef DEBUG_1
-#include <bitset>
-#include <iomanip>
-#endif 
 
 namespace eudaq 
 {
@@ -227,11 +222,6 @@ namespace eudaq
                         uint32_t trig_id = decoded_data.trig_id()[dh];
                         uint32_t trig_tag = decoded_data.trig_tag()[dh];
                         //decoded_data->header_number;
-#if DEBUG_1
-                        std::cout << "EH  " << std::setw(9) << bcid
-                            << std::setw(9) << trig_id << std::setw(9) 
-                            << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
-#endif
                         for(const auto & hits: decoded_data.hits(dh))
                         {
                             plane.PushPixel(get_pixel_column.at(board_id)(hits[0],hits[1]),

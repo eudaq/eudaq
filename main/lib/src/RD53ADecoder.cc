@@ -3,12 +3,19 @@
  * jorge.duarte.campderros@cern.ch (CERN/IFCA) 2018-03-29
 */
 
+#define DEBUG_1 0
+
 #include "eudaq/RD53ADecoder.hh"
 
 #include "eudaq/Utils.hh"
 // XXX TO BE REMOVED
 #include "eudaq/Logger.hh"
 // XXX TO BE REMOVED
+
+#ifdef DEBUG_1
+#include <bitset>
+#include <iomanip>
+#endif 
 
 using namespace eudaq;
 
@@ -28,12 +35,28 @@ RD53ADecoder::RD53ADecoder(const RawDataEvent::data_t & raw_data) :
     {
         // Build the 32-bit FE word 
         uint32_t data_word = _reassemble_word(raw_data,it);
+        // Spot potential problems with the data format
+        // [XXX To be deprecated eventually]
+        // Two approaches: using _n_event_headers < RD53A_MAX_TRIG_ID
+        //                 using id trigger as strictly increasing 
+        if( _trig_id.size() > 0 && RD53A_TRG_ID(data_word) < _trig_id.back() )
+        {
+            // Send a message an return !!
+            EUDAQ_WARN("RD53ADecoder: Found inconsistencies in the data format.");
+            return;
+        }
         if( RD53A_IS_DATAHEADER(data_word) )
         {
             _bcid.push_back(RD53A_BCID(data_word));
             _trig_id.push_back(RD53A_TRG_ID(data_word));
             _trig_tag.push_back(RD53A_TRG_TAG(data_word));
             ++_n_event_headers;
+#if DEBUG_1
+            std::cout << "EH  " << std::setw(9) << _bcid.back()
+                << std::setw(9) << _trig_id.back() << std::setw(9) 
+                << _trig_tag.back() << " " 
+                << std::bitset<32>(data_word) << std::endl;
+#endif
         }
         else
         {
@@ -63,6 +86,11 @@ RD53ADecoder::RD53ADecoder(const RawDataEvent::data_t & raw_data) :
                 }
             }
         }
+    }
+    // [ XXX Correcting data format problems]
+    if( _n_event_headers == (unsigned int)(-1) )
+    {
+        _n_event_headers = 0;
     }
 }
 
