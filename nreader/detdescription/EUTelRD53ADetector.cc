@@ -2,23 +2,30 @@
 #include "EUTELESCOPE.h"
 #include "EUTelRD53ADetector.h"
 
+// To extract RD53A_SIZE
+#include "eudaq/RD53ADecoder.hh"
+
 #include <iomanip>
 
 using namespace eutelescope;
 
+
 EUTelRD53ADetector::EUTelRD53ADetector(float xpitch_mm, float ypitch_mm)
     : EUTelPixelDetector() 
 {
-    _xMin = 0;
-    _xMax = 399;
-    
-    _yMin = 0;
-    _yMax = 191;
-    
-    _name = "RD53A"; 
-    
     _xPitch = xpitch_mm; // mm
     _yPitch = ypitch_mm; // mm
+
+    _xMin = 0;
+    _xMax = int(eudaq::RD53A_XSIZE/_xPitch)-1; 
+    
+    _yMin = 0;
+    _yMax = int(eudaq::RD53A_YSIZE/_yPitch)-1;
+
+    // Note that 50x50 should give xMax=400 columns and
+    // yMax=192 rows
+    
+    _name = "RD53A";    
 }
 
 bool EUTelRD53ADetector::hasMarker() const 

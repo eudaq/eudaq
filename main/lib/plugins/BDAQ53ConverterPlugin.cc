@@ -5,7 +5,6 @@
  * 
  */
 
-#define DEBUG_1 0
 
 #include "eudaq/RD53ADecoder.hh"
 
@@ -15,6 +14,7 @@
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/Configuration.hh"
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -45,11 +45,9 @@ using eutelescope::EUTELESCOPE;
 #include <vector>
 #include <array>
 #include <memory>
+#include <functional>
+#include <istream>
 
-#ifdef DEBUG_1
-#include <bitset>
-#include <iomanip>
-#endif 
 
 namespace eudaq 
 {
@@ -58,33 +56,73 @@ namespace eudaq
     //static const char* EVENT_TYPE   = "BDAQ53";
     static const char* EVENT_TYPE   = "bdaq53a";
     
-#if USE_LCIO && USE_EUTELESCOPE
+//#if USE_LCIO && USE_EUTELESCOPE
     static const int chip_id_offset = 30;
-#endif
+//#endif
+
 
     // Declare a new class that inherits from DataConverterPlugin
     class BDAQ53ConverterPlugin : public DataConverterPlugin 
     {
         public:
+            enum LAYOUT_FLAVOUR 
+            {
+                L100X25 = 0,
+                L25x100 = 0,
+                L50X50  = 1,
+                DEFAULT = 1,
+                _UNDF
+            };
+
             // This is called once at the beginning of each run.
             // You may extract information from the BORE and/or configuration
             // and store it in member variables to use during the decoding later.
             virtual void Initialize(const Event & bore, const Configuration & cnf) 
             {
-//#ifndef WIN32
-                (void)cnf; // just to suppress a warning about unused parameter cnf
-//#endif
+                // -- Obtain the PIXEL LAYOUT
+                eudaq::Configuration * theconfig = nullptr;
+                bool theconfig_todelete = false;
+                // Obtain the offline modifications at layout if needed
+                // otherwise from the config file
+                std::ifstream flayout("sensor_layouts_offline.cfg");
+
+                if( flayout.good() )
+                {
+                    // do things as modify the BORE with the new tags
+                    theconfig = new eudaq::Configuration("cfg_offline");
+                    theconfig->Load(flayout,"bdaq53a.Producer");
+                    theconfig_todelete=false;
+                }
+                else
+                {
+                    // -- Try to obtain it from the config file 
+                    theconfig = const_cast<eudaq::Configuration*>(&cnf);
+                }
                 // Extract board id
                 const unsigned int board_id = bore.GetTag("board", -999);
+                // Get the pixel layout
+                const std::string layout_cfg("layout_DUT"+std::to_string(board_id));
+                // Default layout: 50x50
+                const std::string sensor_flavour = theconfig->Get(layout_cfg,"50x50");
+                if(theconfig_todelete)
+                {
+                    delete theconfig;
+                    theconfig = nullptr;
+                }
+                    
                 
                 if(board_id != -999)
                 {
                     _boards.emplace_back(board_id);
                     _board_channels[board_id] = std::vector<int>();
                     _board_initialized[board_id] = false;
-                    EUDAQ_INFO("New Kintex KC705 board added. Board ID: "+std::to_string(board_id));
+                    // Set the layout
+                    set_geometry_layout(sensor_flavour,board_id);
+                    EUDAQ_INFO("[BDAQ53A::New Kintex KC705 board added. Board ID: "+
+                            std::to_string(board_id)+", layout:"+
+                            std::to_string(int(get_x_pitch(board_id)*1e3))+
+                            "x"+std::to_string(int(get_y_pitch(board_id)*1e3))+" um]");
                 }
-
             }
             
             // This should return the trigger ID (as provided by the TLU)
@@ -145,13 +183,16 @@ namespace eudaq
                 // Trigger number is the same for all blocks (sensors)
                 uint32_t const trigger_number = GetTriggerID(ev);
                 const unsigned int board_id = ev_raw.GetTag("board",int());
+                // --- Get the pixel pitch X and Y 
+                const float x_pitch = get_x_pitch(board_id);
+                const float y_pitch = get_y_pitch(board_id);
                 
                 const std::string plane_name("KC705_"+std::to_string(board_id)+":RD53A");
                 if(static_cast<uint32_t>(trigger_number) == -1)
                 {
                     // Dummy plane
-                    StandardPlane plane(board_id, EVENT_TYPE,plane_name);
-                    plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,RD53A_MAX_TRG_ID,
+                    StandardPlane plane(get_chip_id(ev_raw.GetID(0),board_id), EVENT_TYPE,plane_name);
+                    plane.SetSizeZS(get_ncols(board_id),get_nrows(board_id),0,RD53A_MAX_TRG_ID,
                             StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
                     sev.AddPlane(plane);
                     return false;
@@ -168,9 +209,9 @@ namespace eudaq
                 for(size_t i = 0; i < ev_raw.NumBlocks(); ++i) 
                 {
                     // Create a standard plane representing one sensor plane
-                    StandardPlane plane(i, EVENT_TYPE,plane_name);
+                    StandardPlane plane(get_chip_id(ev_raw.GetID(i),board_id), EVENT_TYPE,plane_name);
                     // FIXME: Understand what is the meaning of those flags!! 
-                    plane.SetSizeZS(RD53A_NCOLS,RD53A_NROWS,0,RD53A_MAX_TRG_ID,
+                    plane.SetSizeZS(get_ncols(board_id),get_nrows(board_id),0,RD53A_MAX_TRG_ID,
                             StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
                     const auto & decoded_data = get_decoded_data(ev_raw.GetBlock(i),i);
@@ -182,15 +223,11 @@ namespace eudaq
                         uint32_t trig_id = decoded_data.trig_id()[dh];
                         uint32_t trig_tag = decoded_data.trig_tag()[dh];
                         //decoded_data->header_number;
-#if DEBUG_1
-                        std::cout << "EH  " << std::setw(9) << bcid
-                            << std::setw(9) << trig_id << std::setw(9) 
-                            << trig_tag << " " << std::bitset<32>(data_word) << std::endl;
-#endif
                         for(const auto & hits: decoded_data.hits(dh))
                         {
-                            // hits[i] = {col, row, ToT}
-                            plane.PushPixel(hits[0],hits[1],hits[2],false,trig_id);
+                            plane.PushPixel(get_pixel_column.at(board_id)(hits[0],hits[1]),
+                                    get_pixel_row.at(board_id)(hits[0],hits[1]),
+                                    hits[2],false,trig_id);
                         }
                     }
                     sev.AddPlane(plane);
@@ -254,12 +291,12 @@ namespace eudaq
                     const RawDataEvent::data_t & raw_data = ev_raw.GetBlock(chip);
                     if (lcioEvent.getEventNumber() == 0) 
                     {
-                        // XXX - Hardcoded pitch (50x50 um)
-                        eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelRD53ADetector(0.05,0.05);
+                        eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelRD53ADetector(get_x_pitch(board_id),get_y_pitch(board_id));
                         currentDetector->setMode("ZS");
                         setupDescription.push_back( new eutelescope::EUTelSetupDescription(currentDetector)) ;
                     }
-                    zsDataEncoder["sensorID"] = ev_raw.GetID(chip)+(10*board_id+chip_id_offset);  
+                    //zsDataEncoder["sensorID"] = ev_raw.GetID(chip)+(10*board_id+chip_id_offset);  
+                    zsDataEncoder["sensorID"] = get_chip_id(ev_raw.GetID(chip),board_id);  
                     zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
                     
                     // prepare a new TrackerData object for the ZS data
@@ -285,7 +322,10 @@ namespace eudaq
                     {
                         for(const auto & hits: decoded_data.hits(dh))
                         {
-                            sparseFrame->emplace_back(hits[0],hits[1],hits[2],decoded_data.trig_id()[dh]);
+                            //sparseFrame->emplace_back(hits[0],hits[1],hits[2],decoded_data.trig_id()[dh]);
+                            sparseFrame->emplace_back(get_pixel_column.at(board_id)(hits[0],hits[1]),
+                                    get_pixel_row.at(board_id)(hits[0],hits[1]),
+                                    hits[2],decoded_data.trig_id()[dh]);
                         }
                     }
                     // write TrackerData object that contains info from one sensor to LCIO collection
@@ -334,16 +374,107 @@ namespace eudaq
                 }
                 return _data_map->at(chip); //_data_map->find(chip)->second;
             }
+
+            const int get_chip_id(const int & evt_chip_id,const unsigned int & board_id) const
+            {
+                return evt_chip_id+(10*board_id+chip_id_offset);
+            }
+
+            // Helper function to deal with diferent pixels geometry
+            // -- Figure out the geometry type
+            void set_geometry_layout(const std::string & layout, const unsigned int & board_id)
+            {
+                float xpitch = -1;
+                float ypitch = -1;
+                // RD53A layout is 50x50, if 100x25 --> 200 columns
+                if(layout == "100x25" || layout == "25x100")
+                {
+                    //_sensor_layout[board_id] = LAYOUT_FLAVOUR::L100X25;
+                    // the functors to map the roc to pixels
+                    get_pixel_column[board_id] = _column_map_100x50;
+                    get_pixel_row[board_id]    = _row_map_100x50;
+                    xpitch=0.100;
+                    ypitch=0.025;
+                }
+                else if(layout == "50x50")
+                {
+                    //_sensor_layout[board_id] = LAYOUT_FLAVOUR::L505X50;
+                    // identity (no need to mapping)
+                    get_pixel_column[board_id] = _identity_col;
+                    get_pixel_row[board_id] = _identity_row;
+                    xpitch = ypitch = 0.05;
+                }
+                else
+                {
+                    EUDAQ_ERROR("Unexistent layout '"+layout+"'");
+                    std::cout << "BDAQ53A ERROR: Unexistent sensor layout read from config '" 
+                        << layout << "'" << std::endl;
+                    exit(-1);
+                }
+
+                // Set the pitch
+                _sensor_xypitch[board_id] = std::pair<float,float>(xpitch,ypitch);
+                // Set the number of columsn/rows
+                _sensor_colrows[board_id] = std::pair<unsigned int,unsigned int>(
+                        int(RD53A_XSIZE/xpitch),int(RD53A_YSIZE/ypitch));
+            }
+
+            // -- The pixel size
+            const float get_x_pitch(unsigned int board_id) const
+            {
+                return _sensor_xypitch.at(board_id).first;
+            }
+            const float get_y_pitch(unsigned int board_id) const
+            {
+                return _sensor_xypitch.at(board_id).second;
+            }
+            // The total number of rows and columns
+            const float get_ncols(unsigned int board_id) const
+            {
+                return _sensor_colrows.at(board_id).first;
+            }
+            const float get_nrows(unsigned int board_id) const
+            {
+                return _sensor_colrows.at(board_id).second;
+            }
+            // The mapping from ROC to 100x25 pixel
+            static int _column_map_100x50(unsigned int column_roc, unsigned int row_roc)
+            {
+                return int(floor(column_roc/2.0));
+            }
+
+            static int _row_map_100x50(unsigned int column_roc, unsigned int row_roc)
+            {
+                return 2*row_roc+(column_roc%2);
+            }
+            // No mapping
+            static int _identity_col(unsigned int column_roc,unsigned int row_roc)
+            {
+                return column_roc;
+            }
+            static int _identity_row(unsigned int column_roc,unsigned int row_roc)
+            {
+                return row_roc;
+            }
+
+            // The mapping function
+            std::map<unsigned int,std::function<int(unsigned int,unsigned int)> > get_pixel_column;
+            std::map<unsigned int,std::function<int(unsigned int,unsigned int)> > get_pixel_row;
             
             // The decoded data memory (pointer to avoid constantness of the Get** functions)
             std::unique_ptr<std::map<int,RD53ADecoder> >  _data_map;
             
             // The number of BDAQ/Kintex boards present
             std::vector<unsigned int> _boards;
-            // I dont' know yet
+            // I dont' know yet --> TO BE DEPRECATED
             std::map<unsigned int,std::vector<int> > _board_channels;
-            // i
+            // i--- > TO BE DEPRECATED
             std::map<unsigned int,bool> _board_initialized;
+            // --- Dealing with different pixel layouts
+            // the x_pitch/y_pitch
+            std::map<unsigned int,std::pair<float,float> > _sensor_xypitch;
+            // the sensor geometry
+            std::map<unsigned int,std::pair<unsigned int,unsigned int> > _sensor_colrows;
 
             // The constructor can be private, only one static instance is created
             // The DataConverterPlugin constructor must be passed the event type

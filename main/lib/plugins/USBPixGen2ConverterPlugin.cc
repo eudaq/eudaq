@@ -3,6 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Timer.hh"
+#include "eudaq/Logger.hh"
 
 #include "eudaq/FEI4Decoder.hh"
 
@@ -163,8 +164,10 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 
 
     virtual void Initialize(const Event & bore, const Configuration & cnf) {
+//#ifndef WIN32
+      (void)cnf; // just to suppress a warning about unused parameter cnf
+//#endif
       int boardID = bore.GetTag("board", -999);
-
       cnf.Print(std::cout);
 
       if(boardID != -999) {
@@ -196,6 +199,12 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
     /** Returns the StandardEvent version of the event.
      */
     virtual bool GetStandardSubEvent(StandardEvent& sev, eudaq::Event const & ev) const {
+      // [JDC] WHY the F*ck was not checked?
+      if (ev.IsBORE() || ev.IsEORE()) 
+      {
+          // nothing to do
+          return true;
+      }
       auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
       int boardID = evRaw.GetTag("board", int());
       std::string planeName = "USBPIX_GEN2_BOARD_" + to_string(boardID);
@@ -256,7 +265,6 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
     }*/
       return true;
     }
-
 
 virtual unsigned GetTriggerID(const Event & ev) const {
 	#ifdef USE_EUTELESCOPE

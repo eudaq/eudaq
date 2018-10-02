@@ -68,10 +68,10 @@ std::vector<APIXPix> decodeFEI4DataGen2(std::vector<unsigned char> const & data)
 					//If tot2 != 0b1111 (0xF) then the tot2 is the tot code for pixel (col, row+1)
                     auto lv1 = static_cast<int>(no_data_headers)-1;
                     if(lv1 == -1) {
-                        std::cout << "Lv1 -1 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
+                        //std::cout << "Lv1 -1 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
 			lv1 = 0;
                     } else if(lv1 == 16 ) {
-			std::cout << "Lv1 16 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
+			//std::cout << "Lv1 16 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
                         lv1 = 15;
                     } else if (lv1 > 16) lv1 = 15;
 			else if(lv1 < 0) lv1 = 0;
@@ -85,7 +85,7 @@ std::vector<APIXPix> decodeFEI4DataGen2(std::vector<unsigned char> const & data)
         }
     }
 
-    if(!(no_data_headers == 16 || no_data_headers == 0)) std::cout << "Missing DHS, got only: " <<  no_data_headers << std::endl;
+//    if(!(no_data_headers == 16 || no_data_headers == 0)) std::cout << "Missing DHS, got only: " <<  no_data_headers << std::endl;
 	return result;
 }
 
