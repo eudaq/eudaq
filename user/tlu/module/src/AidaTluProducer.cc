@@ -330,7 +330,7 @@ void AidaTluProducer::DoStatus() {
     SetStatusTag("Scaler1", std::to_string(sl1));
     SetStatusTag("Scaler2", std::to_string(sl2));
     SetStatusTag("Scaler3", std::to_string(sl3));
-    //SetStatusTag("SCALER4", std::to_string(sl4));
-    //SetStatusTag("SCALER5", std::to_string(sl5));
+    SetStatusTag("SCALER4", std::to_string(sl4));
+    SetStatusTag("SCALER5", std::to_string(sl5));
   }
 }
