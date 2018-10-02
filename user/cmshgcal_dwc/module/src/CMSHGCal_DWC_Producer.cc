@@ -250,6 +250,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
     ev->SetEventN(m_ev);
     ev->SetTriggerN(m_ev); 
     ev->SetTimestamp(timeSinceStart, timeSinceStart);
+    if (m_ev==1) ev->SetBORE();
 
     
     readoutError = CAEN_V1290::ERR_NONE;
