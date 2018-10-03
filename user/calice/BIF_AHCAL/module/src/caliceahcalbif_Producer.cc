@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+//#include <memory> //unique_ptr
 
 using eudaq::to_string;
 using eudaq::to_hex;
@@ -15,15 +16,17 @@ using namespace tlu;
 class caliceahcalbifProducer: public eudaq::Producer {
    public:
       caliceahcalbifProducer(const std::string name, const std::string &runcontrol);
-      void OnStatus() override;
-      void OnUnrecognised(const std::string & cmd, const std::string & param) override;
+      //      void OnStatus() override final;
+      //void OnUnrecognised(const std::string & cmd, const std::string & param) override;
 
-      void DoConfigure() override;
-      void DoStartRun() override;
-      void DoStopRun() override;
-      void DoTerminate() override;
-      void DoReset() override;
-      void Exec() override;
+      void DoInitialise() override final;
+      void DoConfigure() override final;
+      void DoStartRun() override final;
+      void DoStopRun() override final;
+      void DoTerminate() override final;
+      void DoReset() override final;
+      void RunLoop() override final;
+      //void Exec() override final;
 
       void MainLoop();
       void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
@@ -38,9 +41,9 @@ class caliceahcalbifProducer: public eudaq::Producer {
       void sendallevents(std::deque<eudaq::EventUP> & deqEvent, int minimumsize);
       void buildEudaqEventsROC(std::deque<eudaq::EventUP>& deqEvent);
       void buildEudaqEventsTriggers(std::deque<eudaq::EventUP>& deqEvent);
-
+      void buildEudaqEventsBxid(std::deque<eudaq::EventUP>& deqEvent);
       enum class EventBuildingMode {
-         ROC, TRIGGERS
+         ROC, TRIGGERS, BXID
       };
       enum class EventNumbering {
          TRIGGERNUMBER, TIMESTAMP
@@ -68,6 +71,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
       bool _writerawfilename_timestamp; //whether to append timestamp to the raw file
       bool _word1WrittenPreviously; //word was already stored to raw file in previous processing
       int _ReadoutCycle; //current ReadoutCycle in the run
+      int _countRocFrom; //from which ReadOutCycle number should be counted. By default (_countRocFrom==0)the first ROC=0. This number will be added to ReadOutCycles_counted_from_0 and will make the ROC in the data
       uint64_t _lastTriggerTime; //Timestamp of last trigger. Used for filtering double trigger event
       int _consecutiveTriggerIgnorePeriod;
       uint64_t _acq_start_ts; //timestamp of last start acquisition (shutter on)
@@ -83,6 +87,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
       int _firstTriggerNumber;
       uint64_t _firstBxidOffsetBins; //when the bxid0 in AHCAL starts. In 0.78125 ns tics.
       uint32_t _bxidLengthNs; //How long is the BxID in AHCAL. Typically 4000 ns in TB mode
+      int _bxidLengthBins;
       const double timestamp_resolution_ns = 0.78125;
       struct {
             uint64_t runStartTS;
@@ -119,41 +124,34 @@ caliceahcalbifProducer::caliceahcalbifProducer(const std::string name, const std
 
 }
 
-void caliceahcalbifProducer::Exec() {
-   StartCommandReceiver();
-   while (IsActiveCommandReceiver()) {
-      MainLoop();
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-   }
-}
+//void caliceahcalbifProducer::Exec() {
+//   StartCommandReceiver();
+//   while (IsActiveCommandReceiver()) {
+//      MainLoop();
+//      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//   }
+//}
 
-void caliceahcalbifProducer::MainLoop() {
+void caliceahcalbifProducer::RunLoop() {
    std::cout << "Main loop!" << std::endl;
    _last_readout_time = std::time(NULL);
    //         eudaq::RawDataEvent CycleEvent; //
-   _ROC_started = false;
    _firstTrigger = true;
+   bool justStopped = false;
+   bool done = false;
    do {
       if ((!m_tlu) && (!_redirectedInputFileName.length())) {
-         eudaq::mSleep(50);
+         EUDAQ_ERROR_STREAMOUT("No connection to TLU or file", std::cout, std::cerr);
+         eudaq::mSleep(500);
          continue;
       }
-      bool JustStopped = _TLUJustStopped;
-      if (JustStopped) {
-         //m_tlu->Stop();
-         eudaq::mSleep(10);
-      }
-      if (_TLUStarted || JustStopped) {
-         //	std::cout << "... " << TLUStarted << " - " << JustStopped << std::endl;
-         // eudaq::mSleep(readout_delay);
+      justStopped = _TLUJustStopped; //copy  this variable, so that it doesnt change within the main loop
+      if (_TLUStarted || justStopped) {
+         if (_redirectedInputFileName.length()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(3000)); //otherwise we might be too early with data sending, even before ahcal connects to the datacollector
+         }
          while (true) {               //loop until all data from BIF is processed
-            //std::cout << "." << std::flush;
             bool FetchResult = FetchBifDataWasSuccessfull();
-            //if (!FetchBifDataWasSuccessfull()) {
-            //   eudaq::mSleep(100);
-            //   //continue;
-            //}
-            //std::cout<<"/"<<std::flush;
             auto controller_queue_size = _redirectedInputFileName.length() ? _redirectedInputData.size() : m_tlu->GetEventData()->size(); //number of 64-bit words in the local data vector
             if (controller_queue_size) {
                //std::cout << "size: " << controller_queue_size << std::endl;//DEBUG
@@ -163,18 +161,25 @@ void caliceahcalbifProducer::MainLoop() {
                break;
             }
             sendallevents(_deqEvent, 1);
+            SetStatusTag("TRIG", to_string(_stats.triggers)); //to_string(_ReadoutCycle));
+            SetStatusTag("ROC", to_string(_ReadoutCycle)); //to_string(_ReadoutCycle));
          }
       } else {
          eudaq::mSleep(50);
       }
-      if (JustStopped) {
+      if (justStopped) {
          if (std::difftime(std::time(NULL), _last_readout_time) < _WaitAfterStopSeconds) continue; //wait for safe time after last packet arrived
          sendallevents(_deqEvent, 0);
          _ReadoutCycle++;
          // SendEvent(eudaq::RawDataEvent::EORE("CaliceObject", m_run, ++_ReadoutCycle));
          _TLUJustStopped = false;
+         done = true;
       }
    } while (!done);
+}
+
+void caliceahcalbifProducer::DoInitialise() {
+   //nothing to do for BIF.
 }
 
 void caliceahcalbifProducer::DoConfigure() {
@@ -193,12 +198,15 @@ void caliceahcalbifProducer::DoConfigure() {
    _writerawfilename_timestamp = param.Get("WriteRawFileNameTimestamp", 0);
    _firstBxidOffsetBins = param.Get("FirstBxidOffsetBins", 0);
    _bxidLengthNs = param.Get("BxidLengthNs", 4000);
+   _bxidLengthBins = static_cast<int>(((double) _bxidLengthNs) / timestamp_resolution_ns);
+   std::cout << "DEBUG bxid length in bins: " << _bxidLengthBins << std::endl;
    _WaitAfterStopSeconds = param.Get("WaitAfterStopSeconds", 1.0);
    _redirectedInputFileName = param.Get("RedirectInputFromFile", "");
 
    std::string eventBuildingMode = param.Get("EventBuildingMode", "ROC");
    if (!eventBuildingMode.compare("ROC")) _eventBuildingMode = caliceahcalbifProducer::EventBuildingMode::ROC;
    if (!eventBuildingMode.compare("TRIGGERS")) _eventBuildingMode = caliceahcalbifProducer::EventBuildingMode::TRIGGERS;
+   if (!eventBuildingMode.compare("BXID")) _eventBuildingMode = caliceahcalbifProducer::EventBuildingMode::BXID;
    std::cout << "Creating events in \"" << eventBuildingMode << "\" mode" << std::endl;
 
    std::string eventNumberingMode = param.Get("EventNumberingPreference", "TRIGGERID");
@@ -206,13 +214,14 @@ void caliceahcalbifProducer::DoConfigure() {
    if (!eventNumberingMode.compare("TIMESTAMP")) _eventNumberingPreference = caliceahcalbifProducer::EventNumbering::TIMESTAMP;
    std::cout << "Preferring event numbering type: \"" << eventNumberingMode << "\"" << std::endl;
    _consecutiveTriggerIgnorePeriod = param.Get("ConsecutiveTriggerIgnorePeriod", 0);
-
+   _countRocFrom = param.Get("CountRocFrom", 0);
    std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
    if (m_tlu) m_tlu = nullptr;
    if (!_redirectedInputFileName.length()) {
       //	int errorhandler = param.Get("ErrorHandler", 2);
 
-      m_tlu = std::unique_ptr<caliceahcalbifController>(new caliceahcalbifController(param.Get("ConnectionFile", "file:///bif_connections.xml"), param.Get("DeviceName", "minitlu_bif")));
+      m_tlu = std::unique_ptr<caliceahcalbifController>(
+            new caliceahcalbifController(param.Get("ConnectionFile", "file:///bif_connections.xml"), param.Get("DeviceName", "minitlu_bif")));
 
       std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
       std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
@@ -262,7 +271,7 @@ void caliceahcalbifProducer::OpenRawFile(unsigned param, bool _writerawfilename_
       sprintf(file_timestamp, "__%02dp%02dp%02d__%02dp%02dp%02d.raw", Tm->tm_mday, Tm->tm_mon + 1, Tm->tm_year + 1900, Tm->tm_hour, Tm->tm_min, Tm->tm_sec);
       myString.assign(file_timestamp, 26);
    } else
-      myString = ".raw";
+   myString = ".raw";
 
    std::string _rawFilenameTimeStamp;
    //if chosen like this, add the local time to the filename
@@ -320,6 +329,8 @@ void caliceahcalbifProducer::DoStartRun() {
       }
    }
    _TLUStarted = true;
+   std::cout << "Starting Run DoStartRun finished" << std::endl;
+
 }
 
 void caliceahcalbifProducer::DoStopRun() {
@@ -372,17 +383,18 @@ void caliceahcalbifProducer::DoTerminate() {
 void caliceahcalbifProducer::DoReset() {
 }
 
-void caliceahcalbifProducer::OnStatus() {
-   SetStatusTag("TRIG", to_string(_stats.triggers)); //to_string(_ReadoutCycle));
-   SetStatusTag("PARTICLES", to_string(_stats.triggers));
-}
+//void caliceahcalbifProducer::OnStatus() {
+//   SetStatusTag("TRIG", to_string(_stats.triggers)); //to_string(_ReadoutCycle));
+//   //SetStatusTag("PARTICLES", to_string(_stats.triggers));
+//   setStatusTag("EventN",)
+//}
 
-void caliceahcalbifProducer::OnUnrecognised(const std::string & cmd, const std::string & param) {
-   std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
-   if (param.length() > 0) std::cout << " (" << param << ")";
-   std::cout << std::endl;
-   EUDAQ_WARN("Unrecognised command");
-}
+//void caliceahcalbifProducer::OnUnrecognised(const std::string & cmd, const std::string & param) {
+//   std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
+//   if (param.length() > 0) std::cout << " (" << param << ")";
+//   std::cout << std::endl;
+//   EUDAQ_WARN("Unrecognised command");
+//}
 
 bool caliceahcalbifProducer::FetchBifDataWasSuccessfull() {
    if (_redirectedInputFileName.length()) { //reading from file instead of bif
@@ -525,7 +537,8 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
                std::cout << std::hex << "BIF cycle not in sequence! _ReadoutCycle: " << _ReadoutCycle << "\t expected_cycle_modulo:" << expected_cycle_modulo;
                std::cout << "\tarrived modulo: " << arrived_cycle_modulo << std::dec << std::endl;
                char errorMessage[200];
-               sprintf(errorMessage, "BIF Cycle not in sequence in Run %d! expected: %04X arrived: %04X. Possible data loss", m_run, expected_cycle_modulo, arrived_cycle_modulo);
+               sprintf(errorMessage, "BIF Cycle not in sequence in Run %d! expected: %04X arrived: %04X. Possible data loss", m_run, expected_cycle_modulo,
+                     arrived_cycle_modulo);
                EUDAQ_WARN(errorMessage);
                uint16_t difference = (arrived_cycle_modulo - expected_cycle_modulo) & 0x0FFF;
                //                                 if (difference==0x0FFF) differnece=-1;//differnece is too big for correction
@@ -569,6 +582,10 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
             }
             cycleLengthBxids = (timestamp_resolution_ns * ((timestamp - _acq_start_ts) << 5) - _firstBxidOffsetBins) / _bxidLengthNs;
             switch (_dumpCycleInfoLevel) {
+               case 3:
+                  std::cout << std::dec << (int) _ReadoutCycle << " " << _acq_start_ts << " " << " 1 " << (timestamp - _acq_start_ts) << " #start" << std::endl;
+                  std::cout << std::dec << (int) _ReadoutCycle << " " << timestamp << " " << " 0 " << (timestamp - _acq_start_ts) << " #stop" << std::endl;
+                  break;
                case 2:
                   std::cout << std::dec << "ROC: " << (int) _ReadoutCycle;
                   std::cout << "\tLength[BXings]: " << (int) cycleLengthBxids;
@@ -633,7 +650,7 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
 
             switch (_dumpTriggerInfoLevel) {
                case 2:
-                  std::cout << std::hex << "trigger TS: " << (timestamp << 5) << "\tinputs: " << inputs;
+                  std::cout << std::hex << "Internal trigger TS: " << (timestamp << 5) << "\tinputs: " << inputs;
                   std::cout << std::dec << "\teventNo: " << (word2 & 0x00000000FFFFFFFF) << std::endl;
                   std::cout << std::hex << "ts0: " << (uint32_t) fineStamps[0];
                   std::cout << std::hex << "\tts1: " << (uint32_t) fineStamps[1];
@@ -647,13 +664,13 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
                default:
                   break;
             }
-            trigger_push_back(_cycleData, 0, (uint32_t) evtNumber, (uint32_t) ((timestamp << 5) | fineStamps[0]));
+            trigger_push_back(_cycleData, 0x01000000, (uint32_t) evtNumber, (uint32_t) ((timestamp << 5) | fineStamps[0]));
             break;
          case 0x01: //external trigger
             if ((timestamp << 5) - _lastTriggerTime > _consecutiveTriggerIgnorePeriod) {
                _triggersInCycle++;
                _lastTriggerTime = (timestamp << 5);
-               for (uint16_t input = 0; input < 4; ++input) {
+               for (int input = 3; input >= 0; --input) {
                   if ((inputs >> 8) & (1 << input)) {
                      switch (_dumpTriggerInfoLevel) {
                         case 2:
@@ -665,6 +682,9 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
                            break;
                         case 1:
                            std::cout << "," << std::flush;
+                           break;
+                        case 3:
+                           std::cout << input << std::flush;
                            break;
                         default:
                            break;
@@ -716,10 +736,10 @@ void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deq
    CycleEvent->AddBlock(1, s.c_str(), s.length());
    ev->SetTag("ROCStartTS", _acq_start_ts);
    ev->SetTimestamp(_acq_start_ts << 5, _acq_stop_ts << 5, false);
-   ev->SetTriggerN(_ReadoutCycle, false); //ROC is used as a trigger number
+   ev->SetTriggerN(_ReadoutCycle, false); //RAW ROC is used as a trigger number
    if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
    if (_eventNumberingPreference == EventNumbering::TRIGGERNUMBER) ev->SetFlagTrigger();
-   ev->SetTag("ROC", _ReadoutCycle);
+   ev->SetTag("ROC", _ReadoutCycle + _countRocFrom);
    unsigned int times[2];
    struct timeval tv;
    ::gettimeofday(&tv, NULL);
@@ -765,10 +785,11 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
       auto ev = eudaq::Event::MakeUnique("CaliceObject");
       ev->SetTag("ROCStartTS", _acq_start_ts);
       std::string s = "EUDAQDataBIF";
-      auto CycleEvent = dynamic_cast<eudaq::RawEvent*>(ev.get());
-      CycleEvent->AddBlock(0, s.c_str(), s.length());
+      //auto CycleEvent = dynamic_cast<eudaq::RawEvent*>(ev.get());
+      ev->AddBlock(0, s.c_str(), s.length());
+      //CycleEvent->AddBlock(0, s.c_str(), s.length());
       s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
-      CycleEvent->AddBlock(1, s.c_str(), s.length());
+      ev->AddBlock(1, s.c_str(), s.length());
       //std::cout << ":" << std::flush;
       uint64_t trig_ts = ((uint64_t) trigger[2] + (((uint64_t) trigger[3]) << 32));
       uint32_t trig_number = trigger[1];
@@ -776,28 +797,32 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
       ev->SetTriggerN(trig_number - _firstTriggerNumber, false);
       if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
       if (_eventNumberingPreference == EventNumbering::TRIGGERNUMBER) ev->SetFlagTrigger();
-      ev->SetTag("ROC", _ReadoutCycle);
+      ev->SetTag("ROC", _ReadoutCycle + _countRocFrom);
+      int bxid = (((int64_t) trig_ts - (int64_t) (_acq_start_ts << 5) - (int64_t) _firstBxidOffsetBins) / _bxidLengthBins);
+      ev->SetTag("BXID", bxid);
+//      std::cout << "DEBUG: trig_ts=" << trig_ts << ", _acq_start_ts=" << _acq_start_ts << ", _firstBxidOffsetBins=" << _firstBxidOffsetBins
+//            << ", _bxidLengthBins=" << _bxidLengthBins << std::endl;
       unsigned int times[2];
       struct timeval tv;
       ::gettimeofday(&tv, NULL);
       times[0] = tv.tv_sec;
       times[1] = tv.tv_usec;
-      CycleEvent->AddBlock(2, times, sizeof(times));
-      CycleEvent->AddBlock(3, std::vector<uint8_t>());
-      CycleEvent->AddBlock(4, std::vector<uint8_t>());
-      CycleEvent->AddBlock(5, std::vector<uint8_t>());
+      ev->AddBlock(2, times, sizeof(times));
+      ev->AddBlock(3, std::vector<uint8_t>());
+      ev->AddBlock(4, std::vector<uint8_t>());
+      ev->AddBlock(5, std::vector<uint8_t>());
       std::vector<uint32_t> data;
       std::copy(start_packet.begin(), start_packet.end(), std::back_inserter(data));
       std::copy(trigger.begin(), trigger.end(), std::back_inserter(data));
       std::copy(stop_packet.begin(), stop_packet.end(), std::back_inserter(data));
 
-      //std::cout << "Data: ";
-      //for (auto value : data) {
-      //   std::cout << to_hex(value, 8) << " ";
-      //}
-      //std::cout << std::endl;
+//      std::cout << "Data: ";
+//      for (auto value : data) {
+//         std::cout << to_hex(value, 8) << " ";
+//      }
+//      std::cout << std::endl;
 
-      CycleEvent->AddBlock(6, data);
+      ev->AddBlock(6, data);
       deqEvent.push_back(std::move(ev));
       //   SendEvent(std::move(ev));
    }
@@ -805,8 +830,114 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
    _cycleData.clear();
 }
 
+void caliceahcalbifProducer::buildEudaqEventsBxid(std::deque<eudaq::EventUP>& deqEvent) {
+   //cherrypicking just the triggers + adding copy of the start acq and stop acq
+   //std::cout << "<" << std::flush;
+   std::vector<uint32_t> start_packet;
+   std::vector<uint32_t> stop_packet;
+   std::vector<std::vector<uint32_t>> trigger_packets;
+
+   //prepare list of trigger by extracting them from the _cycleData
+   //TODO quite inefficient due to memory copy
+   for (int i = 0; i < (static_cast<int>(_cycleData.size()) - 3); i += 4) {
+      switch (_cycleData[i] & 0xFF000000) {
+         case 0x03000000:
+            start_packet = std::vector<uint32_t>(&_cycleData[i], &_cycleData[i + 4]);
+            break;
+         case 0x02000000:
+            stop_packet = std::vector<uint32_t>(&_cycleData[i], &_cycleData[i + 4]);
+            break;
+         case 0x01000000:
+            trigger_packets.push_back(std::vector<uint32_t>(&_cycleData[i], &_cycleData[i + 4]));
+            break;
+         default:
+            break;
+      }
+   }
+   int lastBxid = INT_MIN;
+   int lastTrigNumber = INT_MIN;
+   std::vector<uint32_t> data;   //data field for eudaq packet
+   auto ev = eudaq::Event::MakeUnique("CaliceObject");
+   if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
+   if (_eventNumberingPreference == EventNumbering::TRIGGERNUMBER) ev->SetFlagTrigger();
+   ev->SetTag("ROCStartTS", _acq_start_ts);
+   std::string s = "EUDAQDataBIF";
+   ev->AddBlock(0, s.c_str(), s.length());
+   s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
+   ev->AddBlock(1, s.c_str(), s.length());
+   unsigned int times[2];
+   struct timeval tv;
+   ::gettimeofday(&tv, NULL);
+   times[0] = tv.tv_sec;
+   times[1] = tv.tv_usec;
+   ev->AddBlock(2, times, sizeof(times));
+   ev->AddBlock(3, std::vector<uint8_t>());
+   ev->AddBlock(4, std::vector<uint8_t>());
+   ev->AddBlock(5, std::vector<uint8_t>());
+   std::copy(start_packet.begin(), start_packet.end(), std::back_inserter(data));
+   ev->SetTag("ROC", _ReadoutCycle + _countRocFrom);
+//   std::cout << "< ROC=" << _ReadoutCycle + _countRocFrom << ", ";
+   for (auto trigger : trigger_packets) {
+      uint64_t trig_ts = ((uint64_t) trigger[2] + (((uint64_t) trigger[3]) << 32));
+      uint32_t trig_number = trigger[1];
+      int bxid = (((int64_t) trig_ts - (int64_t) (_acq_start_ts << 5) - (int64_t) _firstBxidOffsetBins) / _bxidLengthBins);
+      if (lastBxid != INT_MIN) {   //if ev already contains a trigger record
+         if ((trig_number == lastTrigNumber) || (bxid == lastBxid)) {   //the same bxid
+            //std::copy(trigger.begin(), trigger.end(), std::back_inserter(data));
+            //we will addpend this event to the same bxid
+            std::cout<<"+";
+            //std::cout << "#Adding trigger. ROC=" << _ReadoutCycle + _countRocFrom << ", BXID=" << bxid << ", Trig#= " << trig_number  << std::endl;
+         } else {            //different bxid
+            //previous event must be closed and send out first
+            ev->SetTimestamp(trig_ts, trig_ts + 1, false);
+            std::copy(stop_packet.begin(), stop_packet.end(), std::back_inserter(data));
+            ev->AddBlock(6, data);
+            deqEvent.push_back(std::move(ev));
+            data.clear();
+            lastBxid = INT_MIN;
+            //initialize new event:
+            ev = eudaq::Event::MakeUnique("CaliceObject");
+            if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
+            if (_eventNumberingPreference == EventNumbering::TRIGGERNUMBER) ev->SetFlagTrigger();
+            ev->SetTag("ROCStartTS", _acq_start_ts);
+            std::string s = "EUDAQDataBIF";
+            ev->AddBlock(0, s.c_str(), s.length());
+            s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
+            ev->AddBlock(1, s.c_str(), s.length());
+            unsigned int times[2];
+            struct timeval tv;
+            ::gettimeofday(&tv, NULL);
+            times[0] = tv.tv_sec;
+            times[1] = tv.tv_usec;
+            ev->AddBlock(2, times, sizeof(times));
+            ev->AddBlock(3, std::vector<uint8_t>());
+            ev->AddBlock(4, std::vector<uint8_t>());
+            ev->AddBlock(5, std::vector<uint8_t>());
+            std::copy(start_packet.begin(), start_packet.end(), std::back_inserter(data));
+            ev->SetTriggerN(trig_number - _firstTriggerNumber, false);            //save the trigger number only for the first trigger
+            ev->SetTag("ROC", _ReadoutCycle + _countRocFrom);
+         }
+      } else {            //no trigger in the event yet
+         ev->SetTriggerN(trig_number - _firstTriggerNumber, false);            //save the trigger number only for the first trigger
+         std::copy(trigger.begin(), trigger.end(), std::back_inserter(data));
+         ev->SetTriggerN(trig_number - _firstTriggerNumber, false);            //save the trigger number only for the first trigger
+         lastTrigNumber = trig_number - _firstTriggerNumber;
+      }
+      ev->SetTag("BXID", bxid);
+      lastBxid = bxid;
+      std::copy(trigger.begin(), trigger.end(), std::back_inserter(data));
+   }
+   if (lastBxid != INT_MIN) {
+      std::copy(stop_packet.begin(), stop_packet.end(), std::back_inserter(data));
+      ev->AddBlock(6, data);
+      deqEvent.push_back(std::move(ev));
+   }
+   data.clear();
+   //std::cout << ">" << std::flush;
+   _cycleData.clear();
+}
+
 void caliceahcalbifProducer::buildEudaqEvents(std::deque<eudaq::EventUP> & deqEvent) {
-//std::cout << "-----------------------------" << std::endl;   //DEBUG
    switch (_eventBuildingMode) {
       case EventBuildingMode::ROC:
          // eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
@@ -814,6 +945,9 @@ void caliceahcalbifProducer::buildEudaqEvents(std::deque<eudaq::EventUP> & deqEv
          break;
       case EventBuildingMode::TRIGGERS:
          buildEudaqEventsTriggers(deqEvent);
+         break;
+      case EventBuildingMode::BXID:
+         buildEudaqEventsBxid(deqEvent);
          break;
       default:
          break;
@@ -823,42 +957,41 @@ void caliceahcalbifProducer::buildEudaqEvents(std::deque<eudaq::EventUP> & deqEv
 void caliceahcalbifProducer::sendallevents(std::deque<eudaq::EventUP> & deqEvent, int minimumsize) {
    while (deqEvent.size() > minimumsize) {
       //std::this_thread::sleep_for(std::chrono::seconds(1));
-
       std::lock_guard<std::mutex> lock(_deqEventAccessMutex); //minimal lock for pushing ne
-      if (deqEvent.front()) {
-         if (!_BORESent) {
-            deqEvent.front()->SetBORE();
-            _BORESent = true;
-            deqEvent.front()->SetTag("FirstROCStartTS", _stats.runStartTS << 5);
-            if (!_redirectedInputFileName.length()) {
-               deqEvent.front()->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
-               deqEvent.front()->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
-            }
+      if (!_BORESent) {
+         deqEvent.front()->SetBORE();
+         _BORESent = true;
+         deqEvent.front()->SetTag("FirstROCStartTS", _stats.runStartTS << 5);
+         if (!_redirectedInputFileName.length()) {
+            deqEvent.front()->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
+            deqEvent.front()->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
          }
-         if ((minimumsize == 0) && (deqEvent.size() == 1)) {
-            deqEvent.front()->SetEORE();
-            deqEvent.front()->SetTag("RunFirstROC", _firstStutterCycle);
-            deqEvent.front()->SetTag("RunFirstTriggerNumber", _firstTriggerNumber);
-         }
-         SendEvent(std::move(deqEvent.front()));
       }
+      if ((minimumsize == 0) && (deqEvent.size() == 1)) {
+         deqEvent.front()->SetEORE();
+         deqEvent.front()->SetTag("RunFirstROC", _firstStutterCycle);
+         deqEvent.front()->SetTag("RunFirstTriggerNumber", _firstTriggerNumber);
+      }
+//         std::cout<<"DEBUG sending evt";
+//         deqEvent.front()->Print(std::cout,0);
+      SendEvent(std::move(deqEvent.front()));
       deqEvent.pop_front();
    }
 }
 
-int main(int /*argc*/, const char ** argv) {
-   eudaq::OptionParser op("EUDAQ AHCAL BIF Producer", "1.0", "The Producer task for the BIF (based on mini-tlu)");
-   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address", "The address of the RunControl application");
-   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level", "The minimum level for displaying log messages locally");
-
-   try {
-      op.Parse(argv);
-      EUDAQ_LOG_LEVEL(level.Value());
-      auto app = eudaq::Factory<eudaq::Producer>::MakeShared<const std::string&, const std::string&>
-            (eudaq::cstr2hash("caliceahcalbifProducer"), "caliceahcalbifProducer", rctrl.Value());
-      app->Exec();
-   } catch (...) {
-      return op.HandleMainException();
-   }
-   return 0;
-}
+//int main(int /*argc*/, const char ** argv) {
+//   eudaq::OptionParser op("EUDAQ AHCAL BIF Producer", "1.0", "The Producer task for the BIF (based on mini-tlu)");
+//   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address", "The address of the RunControl application");
+//   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level", "The minimum level for displaying log messages locally");
+//
+//   try {
+//      op.Parse(argv);
+//      EUDAQ_LOG_LEVEL(level.Value());
+//      auto app = eudaq::Factory<eudaq::Producer>::MakeShared<const std::string&, const std::string&>
+//            (eudaq::cstr2hash("caliceahcalbifProducer"), "caliceahcalbifProducer", rctrl.Value());
+//      app->Exec();
+//   } catch (...) {
+//      return op.HandleMainException();
+//   }
+//   return 0;
+//}

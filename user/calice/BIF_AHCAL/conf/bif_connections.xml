@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <connections>
-<!--  <connection id="minitlu" uri="chtcp-2.0://128.141.139.11:10203?target=192.168.200.16:50001"	address_table="file://miniTLU.xml" /> -->
-  <connection id="minitlu_bif" uri="ipbusudp-2.0://192.168.200.16:50001" address_table="file://bif_registers.xml" /> 
+  <!--  <connection id="minitlu" uri="chtcp-2.0://128.141.139.11:10203?target=192.168.200.16:50001"	address_table="file://miniTLU.xml" /> -->
+  <connection id="minitlu_bif" uri="ipbusudp-2.0://192.168.200.16:50001" address_table="file://bif_registers.xml" />
+  <!-- <connection id="minitlu_bif" uri="chtcp-2.0://localhost:10203?target=192.168.200.16:50001" address_table="file://bif_registers.xml" />  -->
 </connections>
 

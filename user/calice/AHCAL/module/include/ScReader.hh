@@ -6,6 +6,8 @@
 
 #include <deque>
 
+#define TERMCOLOR_MAGENTA_BOLD "\033[35;1m"
+
 namespace eudaq {
 
    class ScReader: public AHCALReader {
@@ -16,9 +18,11 @@ namespace eudaq {
          virtual void OnConfigLED(std::string _fname) override; //chose configuration file for LED runs
          virtual void buildEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll) override;
 
-         virtual std::deque<eudaq::RawEvent *> NewEvent_createRawDataEvent(std::deque<eudaq::RawEvent *> deqEvent, bool tempcome, int LdaRawcycle, bool newForced);
+         virtual std::deque<eudaq::RawEvent *> NewEvent_createRawDataEvent(std::deque<eudaq::RawEvent *> deqEvent, bool tempcome, int LdaRawcycle,
+               bool newForced);
          virtual void readTemperature(std::deque<char>& buf);
 
+         int updateCntModulo(const int oldCnt, const int newCntModulo, const int bits, const int maxBack);
          void appendOtherInfo(eudaq::RawEvent * ev);
 
          ScReader(AHCALProducer *r); //:
@@ -64,6 +68,9 @@ namespace eudaq {
          };
 
          const ScReader::RunTimeStatistics& getRunTimesStatistics() const;
+         unsigned int getCycleNo() const;
+         unsigned int getTrigId() const;
+         uint16_t grayRecode(const uint16_t partiallyDecoded);
 
       private:
          enum class UnfinishedPacketStates {
@@ -76,9 +83,7 @@ namespace eudaq {
             e_sizeLdaHeader = 10 // 8bytes + 0xcdcd
          };
          enum BufferProcessigExceptions {
-            ERR_INCOMPLETE_INFO_CYCLE,
-            OK_ALL_READ,
-            OK_NEED_MORE_DATA
+            ERR_INCOMPLETE_INFO_CYCLE, OK_ALL_READ, OK_NEED_MORE_DATA
          };
 
       private:
@@ -90,6 +95,7 @@ namespace eudaq {
          void buildValidatedBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
          void insertDummyEvent(std::deque<eudaq::EventUP> &EventQueue, int eventNumber, int triggerid, bool triggeridFlag);
          void prepareEudaqRawPacket(eudaq::RawEvent * ev);
+         void colorPrint(const std::string &colorString, const std::string& msg);
 
          static const unsigned char C_TSTYPE_START_ACQ = 0x01;
          static const unsigned char C_TSTYPE_STOP_ACQ = 0x02;
@@ -107,7 +113,7 @@ namespace eudaq {
          UnfinishedPacketStates _unfinishedPacketState;
 
          int _runNo;
-         unsigned int _cycleNo; //last successfully read readoutcycle
+         int _cycleNo; //last successfully read readoutcycle
          unsigned int _trigID; //last successfully read trigger ID from LDA timestamp. Next trigger should be _trigID+1
          unsigned int length; //length of the packed derived from LDA Header
 
@@ -118,13 +124,18 @@ namespace eudaq {
          std::vector<std::pair<std::pair<int, int>, int> > _vecTemp;            // (lda, port), data;
          std::vector<int> slowcontrol;
          std::vector<int> ledInfo;
+         std::vector<int> HVAdjInfo;// Bias Voltage adjustments. Data structure: entry is an 8x integer in following format: LDA, Port, Module, 0 HV1, HV2, HV3, 0
          std::vector<uint32_t> cycleData;
 
          int _lastBuiltEventNr;            //last event number for keeping track of missed events in the stream (either ROC, trigger number or arbitrary number)
 
-         std::map<int, LDATimeData> _LDATimestampData;          //maps READOUTCYCLE to LDA timestamps for that cycle (comes asynchronously with the data and tends to arrive before the ASIC packets)
+         std::map<int, LDATimeData> _LDATimestampData; //maps READOUTCYCLE to LDA timestamps for that cycle (comes asynchronously with the data and tends to arrive before the ASIC packets)
 
          std::map<int, std::vector<std::vector<int> > > _LDAAsicData;              //maps readoutcycle to vector of "infodata"
+
+         std::map<int, int> _DaqErrors;              // <ReadoutCycleNumber, ErrorMask> if errormas is 0, everything is OK
+
+         std::map<int,int> MaxBxid;//stores the lowest bxid number  for any memory cell 16 (cell 15 when counting from 0)
 
          RunTimeStatistics _RunTimesStatistics;
    }
