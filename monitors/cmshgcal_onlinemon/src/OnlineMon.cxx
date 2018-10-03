@@ -49,8 +49,8 @@
 using namespace std;
 
 RootMonitor::RootMonitor(const std::string & runcontrol,
-			 int /*x*/, int /*y*/, int /*w*/, int /*h*/,
-			 int argc, int offline, const std::string & conffile, const std::string & monname)
+       int /*x*/, int /*y*/, int /*w*/, int /*h*/,
+       int argc, int offline, const std::string & conffile, const std::string & monname)
   :eudaq::Monitor(monname, runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
   if (_offline <= 0)
   {
@@ -76,7 +76,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   // beamTelescopeHitCollection = new HitmapCollection();
   // beamTelescopeCorrCollection = new CorrelationCollection();
   // //dwcToHGCALCorrelationCollection = new DWCToHGCALCorrelationCollection();
-  // digitizerCollection = new DigitizerCollection();
+  digitizerCollection = new DigitizerCollection();
 
   
   cout << "--- Done ---"<<endl<<endl;
@@ -95,7 +95,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   //_colls.push_back(beamTelescopeHitCollection);
   //_colls.push_back(beamTelescopeCorrCollection);
   //_colls.push_back(dwcToHGCALCorrelationCollection);
-  //  _colls.push_back(digitizerCollection);
+   _colls.push_back(digitizerCollection);
  
   // set the root Monitor
   if (_offline <= 0) {
@@ -107,7 +107,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
     // beamTelescopeHitCollection->setRootMonitor(this);
     // beamTelescopeCorrCollection->setRootMonitor(this);
     // //dwcToHGCALCorrelationCollection->setRootMonitor(this);
-    // digitizerCollection->setRootMonitor(this);
+    digitizerCollection->setRootMonitor(this);
     // hmCollection->setRootMonitor(this);
     // corrCollection->setRootMonitor(this);
     // monCollection->setRootMonitor(this);
@@ -290,10 +290,10 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
         ostringstream eudaq_warn_message;
         eudaq_warn_message << "Plane Mismatch in Event "<<ev.GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
         EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
-	_planesInitialized = false;
-	num = (unsigned int) ev.NumPlanes();
-	eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
-	myevent.setNPlanes(num);
+  _planesInitialized = false;
+  num = (unsigned int) ev.NumPlanes();
+  eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
+  myevent.setNPlanes(num);
       }
       else {
         myevent.setNPlanes(num);
@@ -346,13 +346,13 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
     if(!_planesInitialized)
       {
 #ifdef DEBUG
-	cout << "Waiting for booking of Histograms..." << endl;
+  cout << "Waiting for booking of Histograms..." << endl;
 #endif
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 #ifdef DEBUG
-	cout << "...long enough"<< endl;
+  cout << "...long enough"<< endl;
 #endif
-	_planesInitialized = true;
+  _planesInitialized = true;
       }
 
     //stop the Stop watch
@@ -367,19 +367,19 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
     for (unsigned int i = 0 ; i < _colls.size(); ++i)
       {
 
-	_colls.at(i)->Fill(ev, ev.GetEventNumber());
+  _colls.at(i)->Fill(ev, ev.GetEventNumber());
 
-	// CollType is used to check which kind of Collection we are having
-	if (_colls.at(i)->getCollectionType()==HITMAP_COLLECTION_TYPE) // Calculate is only implemented for HitMapCollections
-	  {
-	    _colls.at(i)->Calculate(ev.GetEventNumber());
-	  }
+  // CollType is used to check which kind of Collection we are having
+  if (_colls.at(i)->getCollectionType()==HITMAP_COLLECTION_TYPE) // Calculate is only implemented for HitMapCollections
+    {
+      _colls.at(i)->Calculate(ev.GetEventNumber());
+    }
 
       }
     if (_offline <= 0)
       {
-	onlinemon->setEventNumber(ev.GetEventNumber());
-	onlinemon->increaseAnalysedEventsCounter();
+  onlinemon->setEventNumber(ev.GetEventNumber());
+  onlinemon->increaseAnalysedEventsCounter();
       }
   } // end of reduce if
   my_event_processing_time.Stop();
@@ -487,7 +487,7 @@ int main(int argc, const char ** argv) {
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
   eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
-  eudaq::Option<std::string>     monitorname(op, "t", "monitor_name"," ", "StdEventMonitor","Name for onlinemon");	
+  eudaq::Option<std::string>     monitorname(op, "t", "monitor_name"," ", "StdEventMonitor","Name for onlinemon");  
   eudaq::OptionFlag do_rootatend (op, "rf","root","Write out root-file after each run");
   eudaq::OptionFlag do_resetatend (op, "rs","reset","Reset Histograms when run stops");
 
@@ -498,8 +498,8 @@ int main(int argc, const char ** argv) {
     if (!rctrl.IsSet()) rctrl.SetValue("null://");
     TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
     RootMonitor mon(rctrl.Value(),
-		    x.Value(), y.Value(), w.Value(), h.Value(),
-		    argc, offline.Value(), configfile.Value(),monitorname.Value());
+        x.Value(), y.Value(), w.Value(), h.Value(),
+        argc, offline.Value(), configfile.Value(),monitorname.Value());
     mon.setWriteRoot(do_rootatend.IsSet());
     mon.autoReset(do_resetatend.IsSet());
     mon.setReduce(reduce.Value());
