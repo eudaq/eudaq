@@ -177,7 +177,7 @@ void CMSHGCal_DWC_Producer::DoStartRun() {
   m_ev = 0;
 
   EUDAQ_INFO("Start Run: " + m_run);
-  
+
   if (_mode == TDC_RUN) {
     if (initialized)
       for (size_t i = 0; i < tdcs.size(); i++) tdcs[i]->BufferClear();
@@ -218,15 +218,15 @@ void CMSHGCal_DWC_Producer::DoTerminate() {
 }
 
 void CMSHGCal_DWC_Producer::RunLoop() {
-  while (!done) {  
+  while (!done) {
     usleep(m_readoutSleep);
 
     if (_mode == TDC_RUN) {
       performReadout = false;
       for (int i = 0; i < tdcs.size(); i++) {
-  tdcDataReady[i] = tdcs[i]->DataReady();
-  performReadout = performReadout || tdcDataReady[i];
-        if (tdcDataReady[i] == true) {std::cout<<"TDC "<<i<<" ready for readout..."<<std::endl; continue;}
+        tdcDataReady[i] = tdcs[i]->DataReady();
+        performReadout = performReadout || tdcDataReady[i];
+        //if (tdcDataReady[i] == true) {std::cout<<"TDC "<<i<<" ready for readout..."<<std::endl; continue;}
       }
       if (!performReadout) {
         if (stopping) {stopping = false; SetStatus(eudaq::Status::STATE_CONF, "Stopped"); return;}
@@ -246,11 +246,11 @@ void CMSHGCal_DWC_Producer::RunLoop() {
     eudaq::EventUP ev = eudaq::Event::MakeUnique(EVENT_TYPE);
     ev->SetRunN(m_run);
     ev->SetEventN(m_ev);
-    ev->SetTriggerN(m_ev); 
+    ev->SetTriggerN(m_ev);
     ev->SetTimestamp(timeSinceStart, timeSinceStart);
-    if (m_ev==1) ev->SetBORE();
+    if (m_ev == 1) ev->SetBORE();
 
-    
+
     readoutError = CAEN_V1290::ERR_NONE;
     for (int i = 0; i < tdcs.size(); i++) {
       dataStream.clear();
@@ -261,7 +261,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
         tdcs[i]->generatePseudoData(m_ev, dataStream);
         readoutError = CAEN_V1290::ERR_NONE;
       }
-  std::cout<<"Block size for TDC "<<i<< ": "<<dataStream.size()<<std::endl;
+      //std::cout << "Block size for TDC " << i << ": " << dataStream.size() << std::endl;
       ev->AddBlock(i, dataStream);
     }
 
