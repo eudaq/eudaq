@@ -314,7 +314,7 @@ int CAEN_V1742::DataReady() {
     return ErrCode ;
   }
 
-  return (data & (1 << 0));
+  return (data & (1 << 0)) * 1000;    //return 0: no error and no data, return 1000: no error and data, anything else: error
 }
 
 

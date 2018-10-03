@@ -345,7 +345,7 @@ void CMSHGCal_MCP_Producer::RunLoop() {
     usleep(m_readoutSleep);
 
     if (_mode == MCP_RUN) {
-      if (CAENV1742_instance->DataReady() == 0) {
+      if (CAENV1742_instance->DataReady() != 1000) {
         if (stopping) return;
         else continue;   //successful readout <--> error code is zero = NONE
       }
