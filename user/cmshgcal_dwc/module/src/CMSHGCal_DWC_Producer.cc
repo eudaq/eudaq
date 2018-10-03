@@ -236,7 +236,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
       if (stopping) {stopping = false; SetStatus(eudaq::Status::STATE_CONF, "Stopped"); return;}
     }
 
-    usleep(1000);
+    usleep(100);
     //When this point is reached, there is an event to read from the TDCs...
     m_ev++;
     //get the timestamp since start:
