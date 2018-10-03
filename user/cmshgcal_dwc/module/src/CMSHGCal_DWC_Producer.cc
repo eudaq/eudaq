@@ -74,12 +74,36 @@ CMSHGCal_DWC_Producer::CMSHGCal_DWC_Producer(const std::string & name, const std
 
 
 void CMSHGCal_DWC_Producer::DoInitialise() {
+  if (connection_initialized) return;
   auto ini = GetInitConfiguration();
-
   std::cout << "Initialisation of the CMS HGCal DWC Producer..." << std::endl;
-  try {
-    if (connection_initialized) return;
-    std::cout << "Reading: " << ini->Name() << std::endl;
+ 
+    //run the debug mode or run with real TDCs?
+    int mode = ini->Get("AcquisitionMode", 0);
+    switch ( mode ) {
+    case 0 :
+      _mode = TDC_DEBUG;
+      break;
+    case 1:
+    default :
+      _mode = TDC_RUN;
+      break;
+    }
+    std::cout << "Mode at initialisation: " << _mode << std::endl;
+
+    if (_mode == TDC_RUN) {
+      //necessary: setup the communication board (VX2718)
+      //corresponding values for the init function are taken from September 2016 configuration
+      //https://github.com/cmsromadaq/H4DAQ/blob/master/data/H2_2016_08_HGC/config_pcminn03_RC.xml#L26
+      VX2718handle = new int;
+      int status = CAENVME_Init(static_cast<CVBoardTypes>(1), 0, 0, VX2718handle);
+      if (status) {
+        std::cout << "[CAEN_VX2718]::[ERROR]::Cannot open VX2718 board...Is it connected and powered?" << std::endl;
+        SetStatus(eudaq::Status::STATE_ERROR, "Initialisation Error");
+  initialized = false;
+  return;
+      }
+  }
 
     //Define the number of TDCs
     if (NumberOfTDCs == -1) { //do not allow for dynamic changing of TDCs because the number of DQM plots depend on it and are determined at first runtime.
@@ -95,51 +119,22 @@ void CMSHGCal_DWC_Producer::DoInitialise() {
       std::cout << "Number of TDCs(=" << NumberOfTDCs << ") has not been changed. Restart the producer to change the number of TDCs." << std::endl;
     }
 
-    //run the debug mode or run with real TDCs?
-    int mode = ini->Get("AcquisitionMode", 0);
-    switch ( mode ) {
-    case 0 :
-      _mode = TDC_DEBUG;
-      break;
-    case 1:
-    default :
-      _mode = TDC_RUN;
-      break;
-    }
-    std::cout << "Mode at configuration: " << _mode << std::endl;
-
     if (_mode == TDC_RUN) {
-      //necessary: setup the communication board (VX2718)
-      //corresponding values for the init function are taken from September 2016 configuration
-      //https://github.com/cmsromadaq/H4DAQ/blob/master/data/H2_2016_08_HGC/config_pcminn03_RC.xml#L26
-      VX2718handle = new int;
-      int status = CAENVME_Init(static_cast<CVBoardTypes>(1), 0, 0, VX2718handle);
-      if (status) {
-        std::cout << "[CAEN_VX2718]::[ERROR]::Cannot open VX2718 board." << std::endl;
-      } else {
         bool tdcs_initialized = true;
         for (int i = 0; i < NumberOfTDCs; i++) {
           tdcs[i]->SetHandle(*VX2718handle);
           tdcs_initialized = tdcs[i]->Init() && tdcs_initialized;
         }
         initialized = tdcs_initialized;
-      }
-
     }
 
     connection_initialized = true;
-    SetStatus(eudaq::Status::STATE_UNCONF, "Initialised (" + ini->Name() + ")");
-  }
-  catch (...) {
-    std::cout << "Unknown exception" << std::endl;
-    EUDAQ_ERROR("Error occurred in initialization phase of DWCProducer");
-    SetStatus(eudaq::Status::STATE_ERROR, "Initialisation Error");
-  }
-
+    if (initialized) SetStatus(eudaq::Status::STATE_UNCONF, "Initialised (" + ini->Name() + ")");
 }
 
 
 void CMSHGCal_DWC_Producer::DoConfigure() {
+  if (!initialized) SetStatus(eudaq::Status::STATE_ERROR, "Configuration Error"); 
   auto conf = GetConfiguration();
   SetStatus(eudaq::Status::STATE_UNCONF, "Configuring (" + conf->Name() + ")");
   std::cout << "Configuring: " << conf->Name() << std::endl;
@@ -165,11 +160,11 @@ void CMSHGCal_DWC_Producer::DoConfigure() {
         _config.windowWidth = conf->Get(("windowWidth_" + std::to_string(i + 1)).c_str(), 0x40);
         _config.windowOffset = conf->Get(("windowOffset_" + std::to_string(i + 1)).c_str(), -1);
         tdcs[i]->Config(_config);
-        tdcs[i]->SetupModule();
+        initialized = (tdcs[i]->SetupModule()==0) && initialized;
       }
     }
   }
-  SetStatus(eudaq::Status::STATE_CONF, "Configured (" + conf->Name() + ")");
+  if (initialized) SetStatus(eudaq::Status::STATE_CONF, "Configured (" + conf->Name() + ")");
 }
 
 void CMSHGCal_DWC_Producer::DoStartRun() {
@@ -218,6 +213,7 @@ void CMSHGCal_DWC_Producer::DoTerminate() {
 }
 
 void CMSHGCal_DWC_Producer::RunLoop() {
+  if (!initialized) return;
   while (!done) {
     usleep(m_readoutSleep);
 
@@ -256,7 +252,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
       dataStream.clear();
       if (_mode == TDC_RUN && initialized) {
         tdc_error = tdcs[i]->Read(dataStream);
-        if (readoutError != CAEN_V1290::ERR_READ) readoutError = tdc_error;
+        readoutError = tdc_error;
       } else if (_mode == TDC_DEBUG) {
         tdcs[i]->generatePseudoData(m_ev, dataStream);
         readoutError = CAEN_V1290::ERR_NONE;
@@ -266,7 +262,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
     }
 
     //Adding the event to the EUDAQ format
-    SendEvent(std::move(ev));
+    if (readoutError==CAEN_V1290::ERR_NONE) SendEvent(std::move(ev)); //only send event when there was no readout error
     for (int i = 0; i < tdcs.size(); i++) {
       tdcDataReady[i] = false;
     }

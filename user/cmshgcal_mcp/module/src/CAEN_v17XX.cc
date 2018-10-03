@@ -9,7 +9,7 @@ int CAEN_V1742::Init ()
 {
 
   s.str("");
-  if (_isInitialized) return _isInitialized;
+  if (_isInitialized) return true;
 
   char* software_version = new char[100];
   CAENVME_SWRelease(software_version);

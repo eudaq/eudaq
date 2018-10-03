@@ -73,7 +73,7 @@ void CMSHGCal_MCP_Producer::DoInitialise() {
 
   if (CAENV1742_instance != NULL) return;
   std::cout << "Initialisation of the MCP Producer..." << std::endl;
-  try {
+
     std::cout << "Reading: " << ini->Name() << std::endl;
 
     int mode = ini->Get("AcquisitionMode", 0);
@@ -92,12 +92,8 @@ void CMSHGCal_MCP_Producer::DoInitialise() {
     CAENV1742_instance->Init();
 
     SetStatus(eudaq::Status::STATE_UNCONF, "Initialised (" + ini->Name() + ")");
-  }
-  catch (...) {
-    std::cout << "Unknown exception" << std::endl;
-    EUDAQ_ERROR("Error occurred in initialization phase of MCP Producer");
-    SetStatus(eudaq::Status::STATE_ERROR, "Initialisation Error");
-  }
+  
+
 }
 
 
@@ -275,14 +271,19 @@ void CMSHGCal_MCP_Producer::DoConfigure() {
     }
     CAENV1742_instance->Config(_config);
     //actual application of the configuration of the physical digitizer only in the MCP_RUN mode
-    if (!initialized) CAENV1742_instance->Init(); //will be executed only once after the intitial configuration
+    if (!initialized) initialized = (CAENV1742_instance->Init()==1); //will be executed only once after the intitial configuration
+    if (!initialized) {
+  std::cout << "Digitizer could not be initialised..."<<std::endl;
+  return;}
     CAENV1742_instance->SetupModule();
+    CAENV1742_instance->Print(0);
   } else {
     CAENV1742_instance->setDefaults();
-  }
-
-  CAENV1742_instance->Print(0);
   initialized = true;
+  } 
+
+  
+  
 
 
   SetStatus(eudaq::Status::STATE_CONF, "Configured (" + conf->Name() + ")");
@@ -298,7 +299,7 @@ void CMSHGCal_MCP_Producer::DoStartRun() {
     if (initialized)
       CAENV1742_instance->StartAcquisition();
     else {
-      EUDAQ_INFO("ATTENTION !!! Communication to the MCP has not been established");
+      EUDAQ_INFO("ATTENTION !!! Communication to the digitizer has not been established");
       SetStatus(eudaq::Status::STATE_ERROR, "Communication to the TDC has not been established");
     }
   }
@@ -341,6 +342,7 @@ void CMSHGCal_MCP_Producer::DoTerminate() {
 }
 
 void CMSHGCal_MCP_Producer::RunLoop() {
+  if (!initialized) return;
   while (!done) {
     usleep(m_readoutSleep);
 
@@ -349,7 +351,10 @@ void CMSHGCal_MCP_Producer::RunLoop() {
         if (stopping) return;
         else continue;   //successful readout <--> error code is zero = NONE
       }
-      if (CAENV1742_instance->Read(dataStream) != 0) continue;
+      if (CAENV1742_instance->Read(dataStream) != 0) {
+        if (stopping) return;
+        else continue;   //successful readout <--> error code is zero = NONE
+      }
     } else {
       if (stopping) {stopping = false; SetStatus(eudaq::Status::STATE_CONF, "Stopped"); return;}
       CAENV1742_instance->generateFakeData(m_ev + 1, dataStream);
