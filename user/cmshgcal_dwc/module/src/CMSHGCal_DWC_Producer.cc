@@ -222,13 +222,11 @@ void CMSHGCal_DWC_Producer::RunLoop() {
     usleep(m_readoutSleep);
 
     if (_mode == TDC_RUN) {
-      performReadout = true;
+      performReadout = false;
       for (int i = 0; i < tdcs.size(); i++) {
-        if (tdcDataReady[i] == true) continue;
-        else {
-          tdcDataReady[i] = tdcs[i]->DataReady();
-          performReadout = performReadout && tdcDataReady[i];
-        }
+  tdcDataReady[i] = tdcs[i]->DataReady();
+  performReadout = performReadout || tdcDataReady[i];
+        if (tdcDataReady[i] == true) {std::cout<<"TDC "<<i<<" ready for readout..."<<std::endl; continue;}
       }
       if (!performReadout) {
         if (stopping) {stopping = false; SetStatus(eudaq::Status::STATE_CONF, "Stopped"); return;}
@@ -238,7 +236,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
       if (stopping) {stopping = false; SetStatus(eudaq::Status::STATE_CONF, "Stopped"); return;}
     }
 
-
+    usleep(1000);
     //When this point is reached, there is an event to read from the TDCs...
     m_ev++;
     //get the timestamp since start:
@@ -263,7 +261,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
         tdcs[i]->generatePseudoData(m_ev, dataStream);
         readoutError = CAEN_V1290::ERR_NONE;
       }
-
+  std::cout<<"Block size for TDC "<<i<< ": "<<dataStream.size()<<std::endl;
       ev->AddBlock(i, dataStream);
     }
 
