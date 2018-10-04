@@ -1,6 +1,8 @@
 #include "eudaq/DataCollector.hh"
 #include "eudaq/Event.hh"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <deque>
 #include <map>
 #include <string>
@@ -75,6 +77,11 @@ namespace eudaq {
       if(!match){
 	EUDAQ_WARN("EventNumbers are Mismatched");
       }
+      boost::posix_time::ptime epoch = boost::posix_time::time_from_string("1970-01-01 00:00:00.000");
+      boost::posix_time::ptime current_time = boost::posix_time::microsec_clock::local_time();
+      uint64_t t0=(current_time-epoch).total_milliseconds() & 0xffffffffffffffff;
+      uint64_t t1=0;//no need for more than 64 bits a priori
+      ev_wrap->SetTimestamp( t0,t1 ) ;
       WriteEvent(std::move(ev_wrap));
     }
   }
