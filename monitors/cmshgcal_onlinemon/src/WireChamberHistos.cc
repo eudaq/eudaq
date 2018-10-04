@@ -14,7 +14,7 @@ WireChamberHistos::WireChamberHistos(eudaq::StandardPlane p, RootMonitor *mon)
   char out[1024], out2[1024];
 
   _mon = mon;
-
+  //_mon->mon_configdata.getMainFrameTS();
   // std::cout << "WireChamberHistos::Sensorname: " << _sensor << " "<< _id<<
   // std::endl;
 

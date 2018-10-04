@@ -15,7 +15,8 @@ class RootMonitor;
 
 class CMSHGCalLayerSumHistos {
 public:
-  CMSHGCalLayerSumHistos(RootMonitor *mon, NoisyChannelList noisyCells);
+  //CMSHGCalLayerSumHistos(RootMonitor *mon, NoisyChannelList noisyCells);
+  CMSHGCalLayerSumHistos(RootMonitor *mon);
   void Fill(const eudaq::StandardEvent &event, int evNumber=-1);
   void Reset();
   void Write();
@@ -31,8 +32,9 @@ public:
   TH2F *getEnergyVSNhitHisto(){return h_energy_nhit;}
   TH2F *getEnergyVSCoGZHisto(){return h_energy_cogz;}
   TProfile *getLongitudinalProfile(){return h_energy_layer->ProfileX();}
-private:
   void setRootMonitor(RootMonitor *mon) { m_mon = mon; }
+  
+private:
   RootMonitor *m_mon;
   NoisyChannelList m_noisyCells;
   int m_mainFrameTS;

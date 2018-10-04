@@ -78,6 +78,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   // //dwcToHGCALCorrelationCollection = new DWCToHGCALCorrelationCollection();
   // digitizerCollection = new DigitizerCollection();
 
+
+  cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();
   
   cout << "--- Done ---"<<endl<<endl;
 
@@ -90,6 +92,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   _colls.push_back(hexaCollection);
   // _colls.push_back(hexaCorrelationCollection);
   _colls.push_back(wcCollection);
+  _colls.push_back(cmshgcalLayerSumCollection);
   // _colls.push_back(tdchitsCollection);
   // _colls.push_back(wccorrCollection);
   //_colls.push_back(beamTelescopeHitCollection);
@@ -102,6 +105,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
     hexaCollection->setRootMonitor(this);
     // hexaCorrelationCollection->setRootMonitor(this);
      wcCollection->setRootMonitor(this);
+     cmshgcalLayerSumCollection->setRootMonitor(this);
     // tdchitsCollection->setRootMonitor(this);
     // wccorrCollection->setRootMonitor(this);
     // beamTelescopeHitCollection->setRootMonitor(this);
