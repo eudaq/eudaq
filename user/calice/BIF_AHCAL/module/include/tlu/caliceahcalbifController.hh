@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ostream>
 #include <memory>
+#include <cstdint> //uintxx_t types
 
 #include "eudaq/Utils.hh"
 #include "eudaq/Time.hh"
@@ -279,7 +280,7 @@ namespace tlu {
          void ConfigureInternalTriggerInterval(unsigned int value);
 
          void DumpEvents();
-      private:
+         private:
          HwInterface * m_hw;
          bool m_checkConfig;
          void SetRWRegister(const std::string & name, int value);
