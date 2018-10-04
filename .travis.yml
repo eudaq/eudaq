@@ -98,7 +98,7 @@ matrix:
             sources:
                 - ubuntu-toolchain-r-test
             packages:
-                - g++-5      
+                - g++-5.4      
         env:
             - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
             - ROOT6_FILENAME_LINUX=root_v6.14.02.Linux-ubuntu16-x86_64-gcc5.4.tar.gz
@@ -108,7 +108,7 @@ matrix:
             sources:
                 - ubuntu-toolchain-r-test
             packages:
-                - g++-7      
+                - g++-7.2      
         env:
             - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
             - ROOT6_FILENAME_LINUX=root_v6.14.02.Linux-ubuntu17-x86_64-gcc7.2.tar.gz
@@ -118,7 +118,7 @@ matrix:
             sources:
                 - ubuntu-toolchain-r-test
             packages:
-                - g++-7      
+                - g++-7.3      
         env:
             - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
             - ROOT6_FILENAME_LINUX=root_v6.14.02.Linux-ubuntu18-x86_64-gcc7.3.tar.gz
