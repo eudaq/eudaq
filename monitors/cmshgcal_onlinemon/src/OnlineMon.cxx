@@ -70,7 +70,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
 
   hexaCollection = new HexagonCollection();
   // hexaCorrelationCollection = new HexagonCorrelationCollection();
-  // wcCollection = new WireChamberCollection();
+  wcCollection = new WireChamberCollection();
   // tdchitsCollection = new TDCHitsCollection();
   // wccorrCollection = new WireChamberCorrelationCollection();
   // beamTelescopeHitCollection = new HitmapCollection();
@@ -89,7 +89,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   // _colls.push_back(paraCollection);
   _colls.push_back(hexaCollection);
   // _colls.push_back(hexaCorrelationCollection);
-  // _colls.push_back(wcCollection);
+  _colls.push_back(wcCollection);
   // _colls.push_back(tdchitsCollection);
   // _colls.push_back(wccorrCollection);
   //_colls.push_back(beamTelescopeHitCollection);
@@ -101,7 +101,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   if (_offline <= 0) {
     hexaCollection->setRootMonitor(this);
     // hexaCorrelationCollection->setRootMonitor(this);
-    // wcCollection->setRootMonitor(this);
+     wcCollection->setRootMonitor(this);
     // tdchitsCollection->setRootMonitor(this);
     // wccorrCollection->setRootMonitor(this);
     // beamTelescopeHitCollection->setRootMonitor(this);
