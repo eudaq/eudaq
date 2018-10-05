@@ -33,7 +33,7 @@ const unsigned int WIRECHAMBER_CORRELATION_COLLECTION_TYPE = 10;
 const unsigned int DWCTOHGCAL_COLLECTION_TYPE = 11;
 const unsigned int TDCHITS_COLLECTION_TYPE = 12;
 const unsigned int DIGITIZER_COLLECTION_TYPE = 13;
-
+const unsigned int CMSHGCAL_LAYERSUM_COLLECTION_TYPE = 14;
 
 //!BaseCollection class
 /*!
