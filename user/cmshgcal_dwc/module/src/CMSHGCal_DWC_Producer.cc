@@ -218,10 +218,10 @@ void CMSHGCal_DWC_Producer::RunLoop() {
     usleep(m_readoutSleep);
 
     if (_mode == TDC_RUN) {
-      performReadout = false;
+      performReadout = true;
       for (int i = 0; i < tdcs.size(); i++) {
-        tdcDataReady[i] = tdcs[i]->DataReady();
-        performReadout = performReadout || tdcDataReady[i];
+        if(!tdcDataReady[i]) {usleep(50); tdcDataReady[i] = tdcs[i]->DataReady();}
+        performReadout = performReadout && tdcDataReady[i];        
         //if (tdcDataReady[i] == true) {std::cout<<"TDC "<<i<<" ready for readout..."<<std::endl; continue;}
       }
       if (!performReadout) {
@@ -232,7 +232,7 @@ void CMSHGCal_DWC_Producer::RunLoop() {
       if (stopping) {stopping = false; SetStatus(eudaq::Status::STATE_CONF, "Stopped"); return;}
     }
 
-    usleep(100);
+    
     //When this point is reached, there is an event to read from the TDCs...
     m_ev++;
     //get the timestamp since start:
@@ -263,9 +263,8 @@ void CMSHGCal_DWC_Producer::RunLoop() {
 
     //Adding the event to the EUDAQ format
     if (readoutError==CAEN_V1290::ERR_NONE) SendEvent(std::move(ev)); //only send event when there was no readout error
-    for (int i = 0; i < tdcs.size(); i++) {
-      tdcDataReady[i] = false;
-    }
+    for (int i = 0; i < tdcs.size(); i++) tdcDataReady[i] = false;
+    
 
     if (readoutError == CAEN_V1290::ERR_READ) {
       for (int i = 0; i < tdcs.size(); i++) {
