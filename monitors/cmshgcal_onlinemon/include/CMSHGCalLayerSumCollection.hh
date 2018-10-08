@@ -19,28 +19,40 @@
 // Project Includes
 #include "SimpleStandardEvent.hh"
 #include "CMSHGCalLayerSumHistos.hh"
-#include "NoisyChannel.hh"
+//#include "NoisyChannel.hh"
 #include "BaseCollection.hh"
+
+using namespace std;
 
 class CMSHGCalLayerSumCollection : public BaseCollection {
   RQ_OBJECT("CMSHGCalLayerSumCollection")
+
 public:
   CMSHGCalLayerSumCollection() : BaseCollection() {
+    mymonhistos = NULL;
+    histos_init = false; 
     std::cout << " Initialising CMSHGCalLayerSum Collection" << std::endl;
     CollectionType = CMSHGCAL_LAYERSUM_COLLECTION_TYPE;
   }
+
+  //virtual ~CMSHGCalLayerSumCollection();
+  
   void setRootMonitor(RootMonitor *mon) { _mon = mon; }
-  void Fill(const SimpleStandardEvent &simpev) { ; };
+  void Fill(const SimpleStandardEvent &simpev) {};
   void Fill(const eudaq::StandardEvent &ev, int evNumber=-1);
   void Reset();
   virtual void Write(TFile *file);
   virtual void Calculate(const unsigned int currentEventNumber);
-
-  void setReduce(const unsigned int red);
+  //void bookHistograms(const SimpleStandardEvent &simpev);
+  void bookHistograms(const eudaq::StandardEvent &ev);
+  CMSHGCalLayerSumHistos *getCMSHGCalLayerSumHistos();
+  //void setReduce(const unsigned int red);
   unsigned int getCollectionType();
-private:
-  void initHistograms
-  bool histoInitialized;
+  
+protected:
+  void fillHistograms(const SimpleStandardEvent &ev);
+  bool histos_init;
+  CMSHGCalLayerSumHistos *mymonhistos;
 };
 
 #ifdef __CINT__

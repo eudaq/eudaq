@@ -1,25 +1,27 @@
 //ARNAUD : need to add energy and nhit max parameters in config file, onlinemonconfiguration.hh(.cc) and here
 //ARNAUD : 1 module is still corresponding to 1 layer -> be careful with geometry when filling number of hits per FH sections or longitudinal profile and cogz 
 
-#include <CMSHGCalLayerSumHistos.cc>
+#include <CMSHGCalLayerSumHistos.hh>
+#include "OnlineMon.hh"
 
 #define N_TIMESAMPLE 13
 #define LG_TO_MIP 0.198 //mean value of lgcoeff, extracted from injection data
 
-CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon, NoisyChannelList noisyCells)
+//CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon, NoisyChannelList noisyCells)
+CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon)
 {
   m_mon=mon;
-  m_noisyCells=noisyCells;
+  //m_noisyCells=noisyCells;
   m_mainFrameTS = m_mon->mon_configdata.getMainFrameTS();
   
   h_energyMIP = new TH1F("energyMIP","",4000,0,40000);
-  h_energyLG->GetXaxis()->SetTitle("Energy [MIP] (from LG)");
+  h_energyMIP->GetXaxis()->SetTitle("Energy [MIP] (from LG)");
   
   h_energyLG = new TH1I("energyLG","",1000,0,100000);
   h_energyLG->GetXaxis()->SetTitle("LG [ADC counts]");
   
   h_energyHG = new TH1I("energyHG","",1000,0,800000);
-  henergyHG->GetXaxis()->SetTitle("HG [ADC counts]");
+  h_energyHG->GetXaxis()->SetTitle("HG [ADC counts]");
 
   h_energyTOT = new TH1I("energyTOT","",1000,0,10000);
   h_energyTOT->GetXaxis()->SetTitle("TOT [ADC counts]");
@@ -36,7 +38,7 @@ CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon, NoisyChannelLis
   h_nhitFH1 = new TH1I("mhitFH1","",1000,0,2000);
   h_nhitFH1->GetXaxis()->SetTitle("Nhit FH1");
     
-  h_energy_nhit = new TH2F("energy_VS_nhit","",,4000,0,40000,1000,0,3000);
+  h_energy_nhit = new TH2F("energy_VS_nhit","",4000,0,40000,1000,0,3000);
   h_energy_nhit->GetXaxis()->SetTitle("Nhit");
   h_energy_nhit->GetYaxis()->SetTitle("Energy [MIP]");
 
@@ -49,14 +51,15 @@ CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon, NoisyChannelLis
   h_energy_layer->GetYaxis()->SetTitle("Energy [MIP]");
 }
 
-void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumber=-1)
+void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumber)
 {
   float energyMIP(0.),cogz(0.);
   int energyLG(0),energyHG(0),energyTOT(0),nhit(0),nhitEE(0),nhitFH0(0),nhitFH1(0);
   std::vector<float> energyLayer;
   for( size_t ip=0; ip<event.NumPlanes(); ip++ ){
-    const StandardPlane plane=event.GetPlane(ip);
-    energyLayer.push_back(ip,0.0);
+    const eudaq::StandardPlane plane=event.GetPlane(ip);
+    //energyLayer.push_back(ip,0.0);
+    energyLayer.push_back(0.0);
     for (unsigned int ipix = 0; ipix < plane.HitPixels(); ipix++){
       int pedLG = plane.GetPixel(ipix,0);//pedestal approx: first time sample 
       int sigLG = plane.GetPixel(ipix,m_mainFrameTS);
@@ -119,4 +122,5 @@ void CMSHGCalLayerSumHistos::Write()
   h_energy_cogz->Write();
   h_energy_layer->Write();
 }
+
 

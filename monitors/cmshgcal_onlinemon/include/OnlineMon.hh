@@ -39,6 +39,8 @@
 #include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
 
+#include "CMSHGCalLayerSumCollection.hh"
+
 #include "CheckEOF.hh"
 
 // STL includes
@@ -103,6 +105,8 @@ private:
   //DWCToHGCALCorrelationCollection *dwcToHGCALCorrelationCollection;
   DigitizerCollection* digitizerCollection;
 
+  CMSHGCalLayerSumCollection *cmshgcalLayerSumCollection;
+  
   //HitmapCollection *hmCollection;
   //CorrelationCollection *corrCollection;
   //EUDAQMonitorCollection *eudaqCollection;
