@@ -50,10 +50,24 @@ public:
 private:
   std::vector<HGCalHit> GetZeroSuppressHits(const Skiroc2CMSData skdata, int layer, int chip) const;
   const std::map<int, int> m_orm_module_sum = { //{ormId,nModuleBeforeThisORM}
-    { 0, 0 }, // 1st orm, no module before
-    { 1, 6 }, // 2nd orm, 6 modules before
-    { 2, 14 },// 3rd orm, 6+8 modules before
-    { 3, 21 } // 4th orm, 6+8+7 modules before
+    { 0, 0 }, 
+    { 1, 7 }, 
+    { 2, 14 },
+    { 3, 21 },
+    { 4, 28 }, 
+    { 5, 35 }, 
+    { 6, 42 },
+    { 7, 49 },
+    { 8, 56 }, 
+    { 9, 63 }, 
+    { 10, 70 },
+    { 11, 77 },
+    { 12, 84 }, 
+    { 13, 91 }
+    // { 0, 0 }, // 1st orm, no module before
+    // { 1, 6 }, // 2nd orm, 6 modules before
+    // { 2, 14 },// 3rd orm, 6+8 modules before
+    // { 3, 21 } // 4th orm, 6+8+7 modules before
   };
 };
 
