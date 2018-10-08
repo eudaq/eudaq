@@ -401,8 +401,14 @@ void AHCALProducer::RunLoop() {
       }
    }   //_running && ! _terminated
    std::cout << "sending the rest of the event" << std::endl;
-   _reader->buildEvents(deqEvent, true);
-   if (!_stopped) sendallevents(deqEvent, 0);
+   try{
+      _reader->buildEvents(deqEvent, true);
+      if (!_stopped) sendallevents(deqEvent, 0);
+   }
+   catch (Exception& e) {
+      std::cout<<"Exception raised when sending the rest of the data: "<<e.what()<<std::endl;
+      std::cout<<"Gracefully recovering..."<<std::endl;
+   }
    _stopped = 1;
    bufRead.clear();
    deqEvent.clear();
