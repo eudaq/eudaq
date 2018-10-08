@@ -126,7 +126,7 @@ void CMSHGCal_DWC_Producer::DoInitialise() {
           tdcs_initialized = tdcs[i]->Init() && tdcs_initialized;
         }
         initialized = tdcs_initialized;
-    }
+    } else initialized = true;
 
     connection_initialized = true;
     if (initialized) SetStatus(eudaq::Status::STATE_UNCONF, "Initialised (" + ini->Name() + ")");
