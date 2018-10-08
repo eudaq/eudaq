@@ -1,6 +1,8 @@
-source /afs/desy.de/project/ilcsoft/sw/x86_64_gcc44_sl6/v01-17-08/init_ilcsoft.sh
-source /afs/cern.ch/sw/lcg/external/gcc/4.9/x86_64-slc6-gcc49-opt/setup.sh
-source /afs/cern.ch/sw/lcg/app/releases/ROOT/6.06.08/x86_64-slc6-gcc49-opt/root/bin/thisroot.sh
+#source /afs/cern.ch/sw/lcg/external/gcc/4.9/x86_64-slc6-gcc49-opt/setup.sh
+source /cvmfs/cms.cern.ch/cmsset_default.sh
+cd /cvmfs/cms.cern.ch/slc6_amd64_gcc493/cms/cmssw/CMSSW_8_0_1/src/
+eval `scramv1 runtime -sh`
+cd -
 
 export CMAKEDIR=/afs/cern.ch/sw/lcg/contrib/CMake/3.5.2/Linux-x86_64
 export QTDIR=/afs/cern.ch/sw/lcg/external/qt/5.0.0/x86_64-slc6-gcc47-opt

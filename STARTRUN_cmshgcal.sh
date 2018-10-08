@@ -15,18 +15,26 @@ export HOSTNAME=192.168.222.1
 ./bin/euRun -n RunControl -a tcp://${RCPORT} &
 sleep 2
 #################  Log collector #################
-./bin/euLog -r tcp://${HOSTIP}:${RCPORT} &
+./bin/euCliLogger -r tcp://${HOSTIP}:${RCPORT} -a tcp:44002 &
 sleep 1
 #################  Data collector #################
 xterm -r -sb -sl 100000 -T "EventnumberSyncData collector" -e 'bin/euCliCollector -n EventnumberSyncDataCollector -t dc1 -r tcp://${HOSTIP}:${RCPORT}; read' &
 
 #################  Producer #################
-#gnome-terminal --geometry=80x600-280-900 -t "CMS HGCal Producer" -e "bash -c \"source ../setup_eudaq_cmshgcal.sh; ./HGCalProducer -r tcp://$HOSTIP:$RCPORT\" " &
-#xterm -r -sb -sl 100000 -geometry 160x30 -T "Ex0-Producer" -e 'bin/euCliProducer -n Ex0Producer -t exo -r tcp://$HOSTIP:$RCPORT |tee -a logs/ex0.log ; read'&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL0" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal0 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL1" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal1 -r tcp://$HOSTIP:$RCPORT '&
 xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL2" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal2 -r tcp://$HOSTIP:$RCPORT '&
 xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL3" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal3 -r tcp://$HOSTIP:$RCPORT '&
 xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL4" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal4 -r tcp://$HOSTIP:$RCPORT '&
 xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL5" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal5 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL6" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal6 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL7" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal7 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL8" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal8 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL9" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal9 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL10" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal10 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL11" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal11 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL12" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal12 -r tcp://$HOSTIP:$RCPORT '&
+xterm -r -sb -sl 100000 -geometry 160x30 -T "CMS-HGCAL13" -e 'bin/euCliProducer -n HGCalProducer -t cms-hgcal13 -r tcp://$HOSTIP:$RCPORT '&
 
 
 xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --reset -r tcp://$HOSTIP:$RCPORT |tee -a logs/mon.log ; read' &
