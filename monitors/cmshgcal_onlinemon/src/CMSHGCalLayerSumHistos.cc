@@ -123,6 +123,9 @@ void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumbe
   for( size_t ip=0; ip<event.NumPlanes(); ip++ ){
     const eudaq::StandardPlane plane=event.GetPlane(ip);
 
+    bool isHGCAL = plane.Sensor().find("HexaBoard")!=std::string::npos;
+    
+    if(!isHGCAL) continue;
     
     float energyMIP_pp(0.);
     int energyLG_pp(0),energyHG_pp(0),energyTOT_pp(0),nhit_pp(0),nhitEE_pp(0),nhitFH0_pp(0),nhitFH1_pp(0);
