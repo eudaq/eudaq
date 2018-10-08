@@ -1,10 +1,10 @@
 get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 
-option(USER_CMSHGCAL_BUILD "build user example" ON)
+option(CMSHGCAL_BUILD "build user example" OFF)
 
-if(NOT USER_CMSHGCAL_BUILD)
-  message("disable building of user/example  (USER_EXAMPLE_BUILD=OFF)")
+if(NOT CMSHGCAL_BUILD)
+  message("disable building of user/cmshgcal  (CMSHGCAL_BUILD=OFF)")
   return()
 endif()
 
