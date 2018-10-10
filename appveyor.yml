@@ -8,7 +8,7 @@ branches:
   - master
   - v1.x-dev
 
-image: Visual Studio 2017
+image: Visual Studio 2015
 
 configuration: Release
 
@@ -137,7 +137,7 @@ init:
 
 install:
 #- '"C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /x86'
-- call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
+- call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
 # - cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
@@ -162,7 +162,7 @@ install:
 - "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
-- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.14.00.win32.vc15.zip' -storageLocation 'C:\\root_v6.14.00.win32.vc15.zip'; 7z -y x C:\\root_v6.14.00.win32.vc15.zip -oC:\; 
+- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.14.04.win32.vc15.zip' -storageLocation 'C:\\root_v6.14.04.win32.vc15.zip'; 7z -y x C:\\root_v6.14.04.win32.vc15.zip -oC:\; 
 
 - ps: appveyor\install_afs.ps1;
 
@@ -190,7 +190,7 @@ build_script:
 
 - cmd: cmake -DIGNORE_KNOWN_ISSUES=%IGNORE_KNOWN_ISSUES% -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_drs4=%BUILD_drs4% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% %PALPIDEFS_SPECIAL_PARAMETER% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu%  ..
 
-# - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - cmd: msbuild INSTALL.vcxproj
 
