@@ -79,7 +79,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   digitizerCollection = new DigitizerCollection();
 
 
-  cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();
+  //cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();
   
   cout << "--- Done ---"<<endl<<endl;
 
@@ -515,6 +515,7 @@ int main(int argc, const char ** argv) {
     cout <<"Monitor Settings:" <<endl;
     cout <<"Update Interval :" <<update.Value() <<" ms" <<endl;
     cout <<"Reduce Events   :" <<reduce.Value() <<endl;
+    cout <<"do_rootatend   :" <<do_rootatend.Value() <<endl;
     //TODO: run cmd data thread
     eudaq::Monitor *m = dynamic_cast<eudaq::Monitor*>(&mon);
     m->Connect();

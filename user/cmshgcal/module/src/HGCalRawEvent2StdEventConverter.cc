@@ -14,7 +14,7 @@
 #define HighEnergyThr 500
 #define STDPLANE_SIZE 30 //13 low gain, 13 high gain, toa fall and rise, tot fast and slow
 
-#define RUNMODE 0 // 0 for pedestal data, 1 for TOA selection, 2 for Time sample 3 selection
+#define RUNMODE 2 // 0 for pedestal data, 1 for TOA selection, 2 for Time sample 3 selection
 
 struct HGCalHit
 {

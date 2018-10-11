@@ -2,25 +2,42 @@
 
 <connections>
 
-  <connection id="RDOUT_ORM0" uri="chtcp-2.0://localhost:10203?target=192.168.222.200:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM1" uri="chtcp-2.0://localhost:10203?target=192.168.222.201:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM2" uri="chtcp-2.0://localhost:10203?target=192.168.222.202:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM3" uri="chtcp-2.0://localhost:10203?target=192.168.222.203:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM0" uri="udp-2.0://192.168.222.200:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM1" uri="udp-2.0://192.168.222.201:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM2" uri="udp-2.0://192.168.222.202:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM3" uri="udp-2.0://192.168.222.203:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM4" uri="udp-2.0://192.168.222.204:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM5" uri="udp-2.0://192.168.222.205:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM6" uri="udp-2.0://192.168.222.206:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM7" uri="udp-2.0://192.168.222.207:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM8" uri="udp-2.0://192.168.222.208:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM9" uri="udp-2.0://192.168.222.209:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM10" uri="udp-2.0://192.168.222.210:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM11" uri="udp-2.0://192.168.222.211:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM12" uri="udp-2.0://192.168.222.212:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM13" uri="udp-2.0://192.168.222.213:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM14" uri="udp-2.0://192.168.222.214:50001" address_table="file://rdout.xml"/>
+  <connection id="RDOUT_ORM15" uri="udp-2.0://192.168.222.215:50001" address_table="file://rdout.xml"/>
 
-  <connection id="RDOUT_ORM4" uri="chtcp-2.0://localhost:10203?target=192.168.222.204:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM5" uri="chtcp-2.0://localhost:10203?target=192.168.222.205:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM6" uri="chtcp-2.0://localhost:10203?target=192.168.222.206:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM7" uri="chtcp-2.0://localhost:10203?target=192.168.222.207:50001" address_table="file://rdout.xml"/>
+  <!-- <connection id="RDOUT_ORM0" uri="chtcp-2.0://localhost:10203?target=192.168.222.200:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM1" uri="chtcp-2.0://localhost:10203?target=192.168.222.201:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM2" uri="chtcp-2.0://localhost:10203?target=192.168.222.202:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM3" uri="chtcp-2.0://localhost:10203?target=192.168.222.203:50001" address_table="file://rdout.xml"/> -->
 
-  <connection id="RDOUT_ORM8" uri="chtcp-2.0://localhost:10203?target=192.168.222.208:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM9" uri="chtcp-2.0://localhost:10203?target=192.168.222.209:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM10" uri="chtcp-2.0://localhost:10203?target=192.168.222.210:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM11" uri="chtcp-2.0://localhost:10203?target=192.168.222.211:50001" address_table="file://rdout.xml"/>
+  <!-- <connection id="RDOUT_ORM4" uri="chtcp-2.0://localhost:10203?target=192.168.222.204:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM5" uri="chtcp-2.0://localhost:10203?target=192.168.222.205:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM6" uri="chtcp-2.0://localhost:10203?target=192.168.222.206:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM7" uri="chtcp-2.0://localhost:10203?target=192.168.222.207:50001" address_table="file://rdout.xml"/> -->
 
-  <connection id="RDOUT_ORM12" uri="chtcp-2.0://localhost:10203?target=192.168.222.212:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM13" uri="chtcp-2.0://localhost:10203?target=192.168.222.213:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM14" uri="chtcp-2.0://localhost:10203?target=192.168.222.214:50001" address_table="file://rdout.xml"/>
-  <connection id="RDOUT_ORM15" uri="chtcp-2.0://localhost:10203?target=192.168.222.215:50001" address_table="file://rdout.xml"/>
+  <!-- <connection id="RDOUT_ORM8" uri="chtcp-2.0://localhost:10203?target=192.168.222.208:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM9" uri="chtcp-2.0://localhost:10203?target=192.168.222.209:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM10" uri="chtcp-2.0://localhost:10203?target=192.168.222.210:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM11" uri="chtcp-2.0://localhost:10203?target=192.168.222.211:50001" address_table="file://rdout.xml"/> -->
+
+  <!-- <connection id="RDOUT_ORM12" uri="chtcp-2.0://localhost:10203?target=192.168.222.212:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM13" uri="chtcp-2.0://localhost:10203?target=192.168.222.213:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM14" uri="chtcp-2.0://localhost:10203?target=192.168.222.214:50001" address_table="file://rdout.xml"/> -->
+  <!-- <connection id="RDOUT_ORM15" uri="chtcp-2.0://localhost:10203?target=192.168.222.215:50001" address_table="file://rdout.xml"/> -->
 
 </connections>
 
