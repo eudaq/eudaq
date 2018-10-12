@@ -1,15 +1,20 @@
 dirID=$1
 
-
-rm data logs data_root unpacker_output vmeraw
+rm data logs data_root unpacker_output vmeraw ahcalEUraw ahcalSlcio ahcalRaw
 mkdir /disk${dirID}_2TB/October2018
 mkdir /disk${dirID}_2TB/October2018/raw
 mkdir /disk${dirID}_2TB/October2018/logs
 mkdir /disk${dirID}_2TB/October2018/onlineMon
 mkdir /disk${dirID}_2TB/October2018/vmeraw
 mkdir /disk${dirID}_2TB/October2018/unpacked
+mkdir /disk${dirID}_2TB/October2018/ahcalEUraw
+mkdir /disk${dirID}_2TB/October2018/ahcalSlcio
+mkdir /disk${dirID}_2TB/October2018/ahcalRaw
 ln -s /disk${dirID}_2TB/October2018/raw data
 ln -s /disk${dirID}_2TB/October2018/logs logs
 ln -s /disk${dirID}_2TB/October2018/onlineMon data_root
 ln -s /disk${dirID}_2TB/October2018/unpacked unpacker_output
 ln -s /disk${dirID}_2TB/October2018/vmeraw vmeraw
+ln -s /disk${dirID}_2TB/October2018/ahcalEUraw ahcalEUraw
+ln -s /disk${dirID}_2TB/October2018/ahcalSlcio ahcalSlcio
+ln -s /disk${dirID}_2TB/October2018/ahcalRaw ahcalRaw

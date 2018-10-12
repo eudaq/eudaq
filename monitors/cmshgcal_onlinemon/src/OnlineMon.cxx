@@ -228,6 +228,7 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
       myevent.setNPlanes(num);
     }
     else {
+
       myevent.setNPlanes(num);
     }
   }
@@ -306,8 +307,7 @@ void RootMonitor::DoStartRun() {
   onlinemon->UpdateStatus("Starting run..");
 
   char out[255];
-  sprintf(out, "data_root/dqm_run%d.root", runnumber);
-  
+  sprintf(out, "data_root/dqm_run%04d.root",param);
   rootfilename = std::string(out);
   onlinemon->setRunNumber(runnumber);
   onlinemon->setRootFileName(rootfilename);
