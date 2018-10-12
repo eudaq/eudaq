@@ -94,7 +94,7 @@ bool AHCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
       HBUHits.push_back(0);
    }
    unsigned int nblock = 7; // the first 7 blocks contain other information
-   std::cout << ev->GetEventNumber() << "<" << std::flush;
+   // std::cout << ev->GetEventNumber() << "<" << std::flush;
 
    while ((nblock < ev->NumBlocks())&(nblocks > 6 + eventSizeLimit)) {         //iterate over all asic packets from (hopefully) same BXID
       std::vector<int> data;
@@ -133,7 +133,9 @@ bool AHCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
                //int coorx = planesYsize - getYcoordFromChipChannel(chipid, ichan) - 1;
 
                int coordIndex = coorx * planesXsize + coory;
-               if (HBUs[planeNumber][coordIndex] >= 0) std::cout << "ERROR: channel already has a value" << std::endl;
+	       // --> Andrey: Comment it out -- too many messages
+               // if (HBUs[planeNumber][coordIndex] >= 0) std::cout << "ERROR: channel already has a value" << std::endl;
+	       // <---
                HBUs[planeNumber][coordIndex] = gainbit ? adc : 10 * adc;
                //HBUs[planeNumber][coordIndex] = 1;
                if (HBUs[planeNumber][coordIndex] < 0) HBUs[planeNumber][coordIndex] = 0;
@@ -141,7 +143,7 @@ bool AHCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
             }
          }
       }
-      std::cout << "." << std::flush;
+      // std::cout << "." << std::flush;
    }
    for (int i = 0; i < HBUs.size(); ++i) {
       std::unique_ptr<eudaq::StandardPlane> plane(new eudaq::StandardPlane(i, "CaliceObject", sensortype));
@@ -160,9 +162,9 @@ bool AHCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
       //save planes with hits hits to the onlinedisplay
 
       d2->AddPlane(*plane);
-      std::cout << ":" << std::flush;
+      //std::cout << ":" << std::flush;
    }
-   std::cout << ">" << std::endl;
+   //std::cout << ">" << std::endl;
    return true;
 }
 
