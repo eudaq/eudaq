@@ -80,11 +80,35 @@ bool CMSHGCAL_DWC_RawEvent2StdEventConverter::Converting(eudaq::EventSPC rev, eu
   if (nBlocks >= 1) {  //at least one TDC
     eudaq::StandardPlane DWCExt_plane(0, EVENT_TYPE, sensortype);
     DWCExt_plane.SetSizeRaw(4, 1, 1);
-    DWCExt_plane.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(1, 5)]);   //left
-    DWCExt_plane.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(1, 4)]);   //right
-    DWCExt_plane.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(1, 7)]);   //up
-    DWCExt_plane.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(1, 6)]);   //down
+    DWCExt_plane.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(0, 5)]);   //left
+    DWCExt_plane.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(0, 4)]);   //right
+    DWCExt_plane.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(0, 7)]);   //up
+    DWCExt_plane.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(0, 6)]);   //down
     sev->AddPlane(DWCExt_plane);
+
+    eudaq::StandardPlane DWCC_plane_2(1, EVENT_TYPE, sensortype);
+    DWCC_plane_2.SetSizeRaw(4, 1, 1);
+    DWCC_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(0, 9)]);   //left
+    DWCC_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(0, 8)]);   //right
+    DWCC_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(0, 11)]);   //up
+    DWCC_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(0, 10)]);   //down
+    sev->AddPlane(DWCC_plane_2);
+
+    eudaq::StandardPlane DWCD_plane_2(2, EVENT_TYPE, sensortype);
+    DWCD_plane_2.SetSizeRaw(4, 1, 1);
+    DWCD_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(0, 13)]);   //left
+    DWCD_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(0, 12)]);   //right
+    DWCD_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(0, 15)]);   //up
+    DWCD_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(0, 14)]);   //down
+    sev->AddPlane(DWCD_plane_2);
+
+    eudaq::StandardPlane DWCE_plane_2(3, EVENT_TYPE, sensortype);
+    DWCE_plane_2.SetSizeRaw(4, 1, 1);
+    DWCE_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(0, 1)]);   //left
+    DWCE_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(0, 0)]);   //right
+    DWCE_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(0, 3)]);   //up
+    DWCE_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(0, 2)]);   //down
+    sev->AddPlane(DWCE_plane_2);
   }
 
 
@@ -92,37 +116,13 @@ bool CMSHGCAL_DWC_RawEvent2StdEventConverter::Converting(eudaq::EventSPC rev, eu
   //note: for the DWC correlation plots, the indexing must start at 0!
   if (nBlocks >= 2) {  //at least two TDCs
     
-    eudaq::StandardPlane DWCC_plane_2(1, EVENT_TYPE, sensortype);
-    DWCC_plane_2.SetSizeRaw(4, 1, 1);
-    DWCC_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(0, 1)]);   //left
-    DWCC_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(0, 0)]);   //right
-    DWCC_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(0, 3)]);   //up
-    DWCC_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(0, 2)]);   //down
-    sev->AddPlane(DWCC_plane_2); 
-
-    eudaq::StandardPlane DWCA_plane_2(2, EVENT_TYPE, sensortype);
+    eudaq::StandardPlane DWCA_plane_2(4, EVENT_TYPE, sensortype);
     DWCA_plane_2.SetSizeRaw(4, 1, 1);
-    DWCA_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(1, 9)]);   //left
-    DWCA_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(1, 8)]);   //right
-    DWCA_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(1, 11)]);   //up
-    DWCA_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(1, 10)]);   //down
+    DWCA_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(1, 1)]);   //left
+    DWCA_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(1, 0)]);   //right
+    DWCA_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(1, 3)]);   //up
+    DWCA_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(1, 2)]);   //down
     sev->AddPlane(DWCA_plane_2); 
-
-    eudaq::StandardPlane DWCD_plane_2(3, EVENT_TYPE, sensortype);
-    DWCD_plane_2.SetSizeRaw(4, 1, 1);
-    DWCD_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(1, 13)]);   //left
-    DWCD_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(1, 12)]);   //right
-    DWCD_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(1, 15)]);   //up
-    DWCD_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(1, 14)]);   //down
-    sev->AddPlane(DWCD_plane_2);
-
-    eudaq::StandardPlane DWCE_plane_2(4, EVENT_TYPE, sensortype);
-    DWCE_plane_2.SetSizeRaw(4, 1, 1);
-    DWCE_plane_2.SetPixel(0, 0, 0, time_of_arrivals[std::make_pair(1, 1)]);   //left
-    DWCE_plane_2.SetPixel(1, 0, 0, time_of_arrivals[std::make_pair(1, 0)]);   //right
-    DWCE_plane_2.SetPixel(2, 0, 0, time_of_arrivals[std::make_pair(1, 3)]);   //up
-    DWCE_plane_2.SetPixel(3, 0, 0, time_of_arrivals[std::make_pair(1, 2)]);   //down
-    sev->AddPlane(DWCE_plane_2);
 
   }
 

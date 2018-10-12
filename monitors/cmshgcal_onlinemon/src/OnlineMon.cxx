@@ -232,9 +232,9 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   }
   
   auto &ev = *(stdev.get());
-  while(_offline <= 0 && onlinemon==NULL){
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  //while(_offline <= 0 && onlinemon==NULL){
+  //  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  //}
     
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
@@ -443,7 +443,7 @@ void RootMonitor::DoStartRun() {
   std::cout << "Called on start run" << param <<std::endl;
   onlinemon->UpdateStatus("Starting run..");
   char out[255];
-  sprintf(out, "data_root/dqm_run%d.root",param);
+  sprintf(out, "data_root/dqm_run%04d.root",param);
   rootfilename = std::string(out);
   runnumber = param;
 
