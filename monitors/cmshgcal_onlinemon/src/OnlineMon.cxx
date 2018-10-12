@@ -69,7 +69,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   tdchitsCollection = new TDCHitsCollection();
   wccorrCollection = new WireChamberCorrelationCollection();
   digitizerCollection = new DigitizerCollection();
-
+  cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();
 
   // put collections into the vector
   //_colls.push_back(monCollection);
@@ -78,6 +78,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   _colls.push_back(tdchitsCollection);
   _colls.push_back(wccorrCollection);
   _colls.push_back(digitizerCollection);
+  _colls.push_back(cmshgcalLayerSumCollection);
   
   //monCollection->setRootMonitor(this);
   
@@ -86,6 +87,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   tdchitsCollection->setRootMonitor(this);
   wccorrCollection->setRootMonitor(this);
   digitizerCollection->setRootMonitor(this);
+  cmshgcalLayerSumCollection->setRootMonitor(this);
   
   onlinemon->setCollections(_colls);
 
@@ -307,7 +309,7 @@ void RootMonitor::DoStartRun() {
   onlinemon->UpdateStatus("Starting run..");
 
   char out[255];
-  sprintf(out, "data_root/dqm_run%04d.root",param);
+  sprintf(out, "data_root/dqm_run%04d.root", runnumber);
   rootfilename = std::string(out);
   onlinemon->setRunNumber(runnumber);
   onlinemon->setRootFileName(rootfilename);
@@ -341,7 +343,7 @@ uint64_t OfflineReading(eudaq::Monitor *mon, eudaq::FileReaderSP reader, uint32_
   while(1){
     auto ev = std::const_pointer_cast<eudaq::Event>(reader->GetNextEvent());
     if(!ev){
-      std::cout<<"end of data file with "<< ev_c << " events" <<std::endl;
+      std::cout<<"End of data file with "<<std::dec<< ev_c << " events" <<std::endl;
       break;
     }
     mon->DoReceive(ev);

@@ -177,7 +177,7 @@ std::vector<HGCalHit> HGCalRawEvent2StdEventConverter::GetZeroSuppressHits(const
     int hgTS6=skdata.ADCHigh(ichan,6);//undershoot
     if( RUNMODE==0 ){;}
     else if( RUNMODE==1 && skdata.TOAFall(ichan)==4 ) continue;
-    else if( RUNMODE==2 && hgTS3-hgTS0<HighEnergyThr && (hgTS3-hgTS0<HalfMipCut || hgTS4-hgTS6<0 || hgTS0-hgTS6<0) ) continue;
+    else if( RUNMODE==2 && hgTS3-hgTS0<HighEnergyThr && (hgTS3-hgTS0<HalfMipCut || hgTS4-hgTS6<0 || hgTS0-hgTS6<0 ) && skdata.TOAFall(ichan)==4) continue;
     HGCalHit hit(layer, chip, ichan);
     for(int ts=0; ts<HGC_NUMBER_OF_TS; ts++){
       hit.highgain[ts]=skdata.ADCHigh(ichan,ts);
