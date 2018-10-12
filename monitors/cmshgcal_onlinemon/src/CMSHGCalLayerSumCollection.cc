@@ -105,6 +105,65 @@ void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) 
       _mon->getOnlineMon()->makeTreeItemSummary(
         performance_folder_name.c_str()); // make summary page
 
+
+      stringstream namestring;
+      string name_root = performance_folder_name + "/Planes";
+      for (unsigned int i = 0; i < mymonhistos->getNplanes(); i++) {
+	stringstream namestring_hits;
+	namestring_hits << name_root << "/Energy in MIP LG " << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getEnergyMIPHisto_pp(i));
+
+
+	namestring_hits << name_root << "/Energy in LG in ADC " << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getEnergyLGHisto_pp(i));
+
+	namestring_hits << name_root << "/Energy in HG in ADC " << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getEnergyHGHisto_pp(i));
+
+	namestring_hits << name_root << "/Energy from ToT in ADC " << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getEnergyTOTHisto_pp(i));
+	
+	namestring_hits << name_root << "/Number of Hits in EEFH" << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getNhitHisto_pp(i));
+
+
+	namestring_hits << name_root << "/Number of Hits in EE " << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getNhitEEHisto_pp(i));
+
+	namestring_hits << name_root << "/Number of Hits in FH0 " << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getNhitFH0Histo_pp(i));
+
+	namestring_hits << name_root << "/Number of Hits in FH1 " << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getNhitFH1Histo_pp(i));
+
+
+	namestring_hits << name_root << "/Energy VS number of hits" << i;
+	_mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+	_mon->getOnlineMon()->registerHisto(namestring_hits.str(),
+					    mymonhistos->getEnergyVSNhitHisto_pp(i));
+
+
+
+      }
+      _mon->getOnlineMon()->makeTreeItemSummary(
+						name_root.c_str()); // make summary page
+
   }//if (_mon != NULL)
 }
 
@@ -117,9 +176,10 @@ void CMSHGCalLayerSumCollection::Calculate(
 
 //void CMSHGCalLayerSumCollection::Fill(const SimpleStandardEvent &simpev) {
 void CMSHGCalLayerSumCollection::Fill(const eudaq::StandardEvent &simpev, int evNumber) {
+//void CMSHGCalLayerSumCollection::Fill(const SimpleStandardEvent  &simpev) {
   if (histos_init == false) {
     //mymonhistos = new CMSHGCalLayerSumHistos(_mon,noisyCells);
-    mymonhistos = new CMSHGCalLayerSumHistos(_mon);
+    mymonhistos = new CMSHGCalLayerSumHistos(_mon,simpev);
     if (mymonhistos == NULL) {
       cout << "CMSHGCalLayerSumCollection:: Can't book histograms " << endl;
       exit(-1);

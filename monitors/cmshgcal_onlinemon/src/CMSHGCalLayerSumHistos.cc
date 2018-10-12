@@ -8,7 +8,7 @@
 #define LG_TO_MIP 0.198 //mean value of lgcoeff, extracted from injection data
 
 //CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon, NoisyChannelList noisyCells)
-CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon)
+CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon,const eudaq::StandardEvent &ev)
 {
   m_mon=mon;
   //m_noisyCells=noisyCells;
@@ -49,15 +49,87 @@ CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon)
   h_energy_layer = new TH2F("energy_VS_layer","",4000,0,40000,40,0,40);
   h_energy_layer->GetXaxis()->SetTitle("Layer");
   h_energy_layer->GetYaxis()->SetTitle("Energy [MIP]");
+
+  ////per-plane histos
+  nplanes = ev.NumPlanes();
+  h_energyMIP_pp = new TH1F *[nplanes];
+  h_energyLG_pp = new TH1I *[nplanes];
+  h_energyHG_pp = new TH1I *[nplanes];
+  h_energyTOT_pp = new TH1I *[nplanes];
+  h_nhit_pp = new TH1I *[nplanes];
+  h_nhitEE_pp = new TH1I *[nplanes];
+  h_nhitFH0_pp = new TH1I *[nplanes];
+  h_nhitFH1_pp = new TH1I *[nplanes];
+  h_energy_nhit_pp = new TH2F *[nplanes];
+
+
+  for (unsigned int i = 0; i < nplanes; i++) {
+
+    stringstream number;
+    stringstream histolabel;
+    number << i;
+    string name = ev.GetPlane(i).Sensor() + " " + number.str();
+    
+    histolabel << "energyMIP" << name;
+    h_energyMIP_pp[i] = new TH1F(histolabel.str().c_str(),
+				 histolabel.str().c_str(), 4000,0,40000);
+
+    histolabel << "energyLG" << name;
+    h_energyLG_pp[i] = new TH1I(histolabel.str().c_str(),
+				histolabel.str().c_str(), 1000,0,100000);
+
+    histolabel << "energyHG" << name;
+    h_energyHG_pp[i] = new TH1I(histolabel.str().c_str(),
+				histolabel.str().c_str(), 1000,0,100000);
+
+    histolabel << "energyTOT" << name;
+    h_energyTOT_pp[i] = new TH1I(histolabel.str().c_str(),
+				histolabel.str().c_str(), 1000,0,100000);
+
+    histolabel << "nHits" << name;
+    h_nhit_pp[i] = new TH1I(histolabel.str().c_str(),
+			    histolabel.str().c_str(), 1000,0,3000);
+
+    histolabel << "nHitsEE" << name;
+    h_nhitEE_pp[i] = new TH1I(histolabel.str().c_str(),
+			    histolabel.str().c_str(), 1000,0,2000);
+
+    histolabel << "nHitsFH0" << name;
+    h_nhitFH0_pp[i] = new TH1I(histolabel.str().c_str(),
+			    histolabel.str().c_str(), 1000,0,2000);
+
+
+    histolabel << "nHitsFH1" << name;
+    h_nhitFH1_pp[i] = new TH1I(histolabel.str().c_str(),
+			    histolabel.str().c_str(), 1000,0,2000);
+
+    histolabel << "energyVSnHits" << name;
+    h_energy_nhit_pp[i] = new TH2F(histolabel.str().c_str(),
+				   histolabel.str().c_str(), 4000,0,40000,1000,0,3000);
+
+
+
+  }//for (unsigned int i = 0; i < nplanes; i++)
+  
 }
 
 void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumber)
+//void CMSHGCalLayerSumHistos::Fill(const SimpleStandardEvent &event, int evNumber)
 {
   float energyMIP(0.),cogz(0.);
   int energyLG(0),energyHG(0),energyTOT(0),nhit(0),nhitEE(0),nhitFH0(0),nhitFH1(0);
+  
   std::vector<float> energyLayer;
   for( size_t ip=0; ip<event.NumPlanes(); ip++ ){
     const eudaq::StandardPlane plane=event.GetPlane(ip);
+
+    bool isHGCAL = plane.Sensor().find("HexaBoard")!=std::string::npos;
+    
+    if(!isHGCAL) continue;
+    
+    float energyMIP_pp(0.);
+    int energyLG_pp(0),energyHG_pp(0),energyTOT_pp(0),nhit_pp(0),nhitEE_pp(0),nhitFH0_pp(0),nhitFH1_pp(0);
+    
     //energyLayer.push_back(ip,0.0);
     energyLayer.push_back(0.0);
     for (unsigned int ipix = 0; ipix < plane.HitPixels(); ipix++){
@@ -75,8 +147,30 @@ void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumbe
       else nhitFH1++;
       energyLayer.at(ip)+=(sigLG-pedLG)*LG_TO_MIP;
       cogz+=(sigLG-pedLG)*LG_TO_MIP*ip;
-    }
-  }
+
+      ////now fill per-plane histos
+      energyLG_pp += (sigLG-pedLG);
+      energyHG_pp += (sigHG-pedHG);
+      energyMIP_pp += (sigLG-pedLG)*LG_TO_MIP;
+      energyTOT_pp += plane.GetPixel(ipix,2*N_TIMESAMPLE+3);//hardcoded: tot_slow is last(29) index
+      nhit_pp++;
+      if(ip<28) nhitEE_pp++;
+      else if(ip<34) nhitFH0_pp++;
+      else nhitFH1_pp++;
+    }//for (unsigned int ipix = 0; ipix < plane.HitPixels(); ipix++)
+    
+    ///now fill per plane histo
+    h_energyMIP_pp[ip]->Fill(energyMIP_pp);
+    h_energyLG_pp[ip]->Fill(energyLG_pp);
+    h_energyHG_pp[ip]->Fill(energyHG_pp);
+    h_energyTOT_pp[ip]->Fill(energyTOT_pp);
+    h_nhit_pp[ip]->Fill(nhit_pp);
+    h_nhitEE_pp[ip]->Fill(nhitEE_pp);
+    h_nhitFH0_pp[ip]->Fill(nhitFH0_pp);
+    h_nhitFH1_pp[ip]->Fill(nhitFH1_pp);
+    h_energy_nhit_pp[ip]->Fill(nhit_pp,energyMIP_pp);
+
+  }//for( size_t ip=0; ip<event.NumPlanes(); ip++ )
   cogz/=energyMIP;
 
   h_energyMIP->Fill(energyMIP);
@@ -93,6 +187,9 @@ void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumbe
     h_energy_layer->Fill(ip,energyLayer.at(ip));
 }
 
+
+unsigned int CMSHGCalLayerSumHistos::getNplanes() const { return nplanes; }
+
 void CMSHGCalLayerSumHistos::Reset()
 {
   h_energyMIP->Reset();
@@ -106,6 +203,21 @@ void CMSHGCalLayerSumHistos::Reset()
   h_energy_nhit->Reset();
   h_energy_cogz->Reset();
   h_energy_layer->Reset();
+
+  for (unsigned int i = 0; i < nplanes; i++) {
+    h_energyMIP_pp[i]->Reset();
+    h_energyLG_pp[i]->Reset();
+    h_energyHG_pp[i]->Reset();
+    h_energyTOT_pp[i]->Reset();
+    h_nhit_pp[i]->Reset();
+    h_nhitEE_pp[i]->Reset();
+    h_nhitFH0_pp[i]->Reset();
+    h_nhitFH1_pp[i]->Reset();
+    h_energy_nhit_pp[i]->Reset();
+
+  }
+
+  
 }
 
 void CMSHGCalLayerSumHistos::Write()
@@ -121,6 +233,21 @@ void CMSHGCalLayerSumHistos::Write()
   h_energy_nhit->Write();
   h_energy_cogz->Write();
   h_energy_layer->Write();
+
+for (unsigned int i = 0; i < nplanes; i++) {
+    h_energyMIP_pp[i]->Write();
+    h_energyLG_pp[i]->Write();
+    h_energyHG_pp[i]->Write();
+    h_energyTOT_pp[i]->Write();
+    h_nhit_pp[i]->Write();
+    h_nhitEE_pp[i]->Write();
+    h_nhitFH0_pp[i]->Write();
+    h_nhitFH1_pp[i]->Write();
+    h_energy_nhit_pp[i]->Write();
+
+  }
+
+  
 }
 
 
