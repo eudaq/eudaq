@@ -98,10 +98,6 @@ private:
   DigitizerCollection* digitizerCollection;
   CMSHGCalLayerSumCollection *cmshgcalLayerSumCollection;
 
-  //HitmapCollection *hmCollection;
-  //CorrelationCollection *corrCollection;
-  //EUDAQMonitorCollection *eudaqCollection;
-  //ParaMonitorCollection *paraCollection;
 
   string snapshotdir;
   EventSanityChecker myevent; // FIXME
