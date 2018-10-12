@@ -319,8 +319,8 @@ void OnlineMonConfiguration::PrintConfiguration() {
   cout << endl;
 
   cout << "CMSHGCAL-OnlineMon" << endl;
-  cout << "DqmColorMap : " << endl;
-  cout << "run : " << runMode << endl;
+  cout << "DqmColorMap : " <<DqmColorMap<< endl;
+  cout << "runMode : " << runMode << endl;
   cout << "mainFrameTS : " << mainFrameTS << endl;
   cout << "thresh_HG : " << thresh_HG << endl;
   cout << "thresh_LG : " << thresh_LG << endl;

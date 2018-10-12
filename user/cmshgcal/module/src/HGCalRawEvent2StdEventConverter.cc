@@ -78,11 +78,13 @@ namespace {
 
 HGCalRawEvent2StdEventConverter::HGCalRawEvent2StdEventConverter()
 {
+  //std::cout<<"Initialize HGCAL Converter"<<std::endl;  
 }
 
 
 bool HGCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const
 {
+  // std::cout<<"Converting HGCAL"<<std::endl;
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   size_t nblocks = ev->NumBlocks();
   int event_nr=ev->GetEventNumber();
@@ -155,7 +157,7 @@ bool HGCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
       }
     }
   }
-  if (event_nr%1000==0) {
+  if (event_nr%100==0) {
     std::cout<<"Processing event "<<std::dec<<event_nr<<" with "<<nblocks<<" blocks" << std::endl;
     for( int iblo=0; iblo<nblocks; iblo++ )
       if( iblo%2!=0 )

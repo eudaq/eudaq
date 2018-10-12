@@ -19,11 +19,12 @@
 #include "eudaq/OptionParser.hh"
 #endif
 
-// #include "HitmapCollection.hh"
-// #include "CorrelationCollection.hh"
-// #include "MonitorPerformanceCollection.hh"
-// #include "EUDAQMonitorCollection.hh"
-// #include "ParaMonitorCollection.hh"
+//#include "HitmapCollection.hh"
+//#include "CorrelationCollection.hh"
+//#include "MonitorPerformanceCollection.hh"
+//#include "EUDAQMonitorCollection.hh"
+//#include "ParaMonitorCollection.hh"
+
 
 #include "HexagonCollection.hh"
 #include "HexagonCorrelationCollection.hh"
@@ -33,15 +34,12 @@
 #include "WireChamberCorrelationCollection.hh"
 #include "HitmapCollection.hh"
 #include "CorrelationCollection.hh"
+#include "CMSHGCalLayerSumCollection.hh"
 
 #include "OnlineMonWindow.hh"
 #include "SimpleStandardEvent.hh"
 #include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
-
-#include "CMSHGCalLayerSumCollection.hh"
-
-#include "CheckEOF.hh"
 
 // STL includes
 #include <string>
@@ -51,13 +49,12 @@ using namespace std;
 
 class OnlineMonWindow;
 class BaseCollection;
-class CheckEOF;
 
 class RootMonitor : public eudaq::Monitor{
   RQ_OBJECT("RootMonitor")
 public:
-  RootMonitor(const std::string &runcontrol, 
-	      int x, int y, int w, int h, int argc, int offline,
+  RootMonitor(const std::string &runcontrol,
+	      int x, int y, int w, int h,
               const std::string &conffile = "", const std::string &monname = "");
   ~RootMonitor() override;
   void DoConfigure() override;
@@ -65,15 +62,14 @@ public:
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReceive(eudaq::EventSP) override;
-  
-  void registerSensorInGUI(std::string name, int id);
+
   void autoReset(const bool reset);
 
   void setWriteRoot(const bool write);
   void setReduce(const unsigned int red);
   void setUpdate(const unsigned int up);
-  // void setCorr_width(const unsigned c_w);
-  // void setCorr_planes(const unsigned c_p);
+  void setCorr_width(const unsigned c_w);
+  void setCorr_planes(const unsigned c_p);
   void setUseTrack_corr(const bool t_c);
   void setTracksPerEvent(const unsigned int tracks);
   void SetSnapShotDir(string s);
@@ -84,15 +80,11 @@ public:
   OnlineMonWindow *getOnlineMon() const;
   OnlineMonConfiguration mon_configdata; // FIXME
 private:
-  bool histos_booked;
   std::vector<BaseCollection *> _colls;
   OnlineMonWindow *onlinemon;
   std::string rootfilename;
   std::string configfilename;
-  int runnumber;
   bool _writeRoot;
-  int _offline;
-  CheckEOF _checkEOF;
   bool _planesInitialized;
 
   HexagonCollection *hexaCollection;
@@ -104,13 +96,13 @@ private:
   CorrelationCollection *beamTelescopeCorrCollection;
   //DWCToHGCALCorrelationCollection *dwcToHGCALCorrelationCollection;
   DigitizerCollection* digitizerCollection;
-
   CMSHGCalLayerSumCollection *cmshgcalLayerSumCollection;
-  
+
   //HitmapCollection *hmCollection;
   //CorrelationCollection *corrCollection;
   //EUDAQMonitorCollection *eudaqCollection;
   //ParaMonitorCollection *paraCollection;
+
   string snapshotdir;
   EventSanityChecker myevent; // FIXME
   bool useTrackCorrelator;
@@ -121,6 +113,8 @@ private:
   double previous_event_clustering_time;
   double previous_event_correlation_time;
   unsigned int tracksPerEvent;
+  uint32_t m_plane_c;
+  uint32_t m_ev_rec_n = 0;
 };
 
 #ifdef __CINT__
