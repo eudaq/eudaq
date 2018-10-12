@@ -9,7 +9,7 @@
 #define planesXsize 24
 #define planesYsize 24
 
-#define planeCount 54
+#define planeCount 40
 #define pedestalLimit 0 //minimum adc value, that will be displayed
 #define eventSizeLimit 1 //minimum size of the event which will be displayed
 
@@ -23,22 +23,21 @@ class AHCalRawEvent2StdEventConverter: public eudaq::StdEventConverter {
       int getXcoordFromChipChannel(int chipid, int channelNr) const;
       int getYcoordFromChipChannel(int chipid, int channelNr) const;
       const std::map<int, int> layerOrder = { //{module,layer}
-         { 42, 1 }, // 1st module
-         { 2, 2 }, { 3, 3 }, { 4, 4 }, { 5, 5 },
-         { 6, 6 }, { 8, 7 }, { 9, 8 }, { 10, 9 },
-         { 11, 10 }, { 13, 11 }, { 14, 12 }, { 19, 13 },
-         { 21, 14 }, { 23, 15 }, { 24, 16 }, { 25, 17 },
-         { 30, 18 }, { 12, 19 }, { 15, 20 }, { 16, 21 },
-         { 17, 22 }, { 18, 23 }, { 22, 24 }, { 28, 25 },
-         { 39, 26 }, { 1, 27 }, { 20, 28 }, { 26, 29 },
-         { 32, 30 }, { 40, 31 }, { 27, 32 }, { 31, 33 },
-         { 38, 34 }, { 37, 35 }, { 29, 36 }, { 33, 37 },
-         { 34, 38 }, 
-         { 41, 39 }, //tokyo module
-         { 36, 40 },
-         { 43, 41 },//SM100
-         { 44, 42 }, { 45, 43 }, { 46, 44 }, { 47, 45 }, {48, 46}, //SM_1,2,4,5,7
-         { 49, 47 }, {50,48}, {51,49},{52,50},{53,51},{54,52}//HBU3_1..6
+         { 2, 1 }, { 3, 2 }, { 4, 3 }, { 5, 4 },
+         { 6, 5 }, { 8, 6 }, { 9, 7 }, { 10, 8 },
+         { 11, 9 }, { 13, 10 }, { 14, 11 }, { 19, 12 },
+         { 21, 13 }, { 23, 14 }, { 24, 15 }, { 25, 16 },
+         { 30, 17 }, { 12, 18 }, { 15, 19 }, { 16, 20 },
+         { 17, 21 }, { 18, 22 }, { 22, 23 }, { 28, 24 },
+         { 39, 25 }, { 1, 26 }, { 20, 27 }, { 26, 28 },
+         { 32, 29 }, { 40, 30 }, { 27, 31 }, { 31, 32 },
+         { 38, 33 }, { 37, 34 }, { 29, 35 }, { 33, 36 },
+         { 34, 37 }, 
+         { 41, 38 }, //tokyo module
+         { 36, 39 }// , unconnected layers
+         // { 43, 41 },//SM100
+         // { 44, 42 }, { 45, 43 }, { 46, 44 }, { 47, 45 }, {48, 46}, //SM_1,2,4,5,7
+         // { 49, 47 }, {50,48}, {51,49},{52,50},{53,51},{54,52}//HBU3_1..6
       };
 
       const std::map<int, std::tuple<int, int>> mapping = { //chipid to tuple: layer, xcoordinate, ycoordinate

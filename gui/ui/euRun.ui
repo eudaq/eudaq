@@ -9,12 +9,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>350</width>
-    <height>373</height>
+    <width>700</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>eudaq Run Control</string>
+   <string>HGCal+AHCal TB October 2018 Run Control</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout">

@@ -232,9 +232,9 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   }
   
   auto &ev = *(stdev.get());
-  while(_offline <= 0 && onlinemon==NULL){
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  //while(_offline <= 0 && onlinemon==NULL){
+  //  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  //}
     
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
@@ -289,15 +289,15 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
       if (myevent.getNPlanes()!=num) {
 
         cout << "Plane Mismatch on " <<ev.GetEventNumber()<<endl;
-        cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
+        cout << "Current/Previous " <<std::dec <<num<<"/"<<myevent.getNPlanes()<<endl;
         skip_dodgy_event=false; //we may want to skip this FIXME
         ostringstream eudaq_warn_message;
         eudaq_warn_message << "Plane Mismatch in Event "<<ev.GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
         EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
-  _planesInitialized = false;
-  num = (unsigned int) ev.NumPlanes();
-  eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
-  myevent.setNPlanes(num);
+	_planesInitialized = false;
+	num = (unsigned int) ev.NumPlanes();
+	eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
+	myevent.setNPlanes(num);
       }
       else {
         myevent.setNPlanes(num);
@@ -443,7 +443,7 @@ void RootMonitor::DoStartRun() {
   std::cout << "Called on start run" << param <<std::endl;
   onlinemon->UpdateStatus("Starting run..");
   char out[255];
-  sprintf(out, "data_root/dqm_run%d.root",param);
+  sprintf(out, "data_root/dqm_run%04d.root",param);
   rootfilename = std::string(out);
   runnumber = param;
 
