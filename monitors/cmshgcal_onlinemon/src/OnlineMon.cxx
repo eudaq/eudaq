@@ -289,15 +289,15 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
       if (myevent.getNPlanes()!=num) {
 
         cout << "Plane Mismatch on " <<ev.GetEventNumber()<<endl;
-        cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
+        cout << "Current/Previous " <<std::dec <<num<<"/"<<myevent.getNPlanes()<<endl;
         skip_dodgy_event=false; //we may want to skip this FIXME
         ostringstream eudaq_warn_message;
         eudaq_warn_message << "Plane Mismatch in Event "<<ev.GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
         EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
-  _planesInitialized = false;
-  num = (unsigned int) ev.NumPlanes();
-  eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
-  myevent.setNPlanes(num);
+	_planesInitialized = false;
+	num = (unsigned int) ev.NumPlanes();
+	eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
+	myevent.setNPlanes(num);
       }
       else {
         myevent.setNPlanes(num);

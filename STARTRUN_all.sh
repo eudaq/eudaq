@@ -73,11 +73,11 @@ sleep 2
 ################## OnlineMonitor ##################
 printf '\033[22;33m\t  HGC Online Monitor  \033[0m \n'
 flog="./logs/Run${NEWRUNNUM}_HgcOnlineMon_$dt.log"
-config_file="user/cmshgcal/conf/onlinemon.conf"
+config_file="./user/cmshgcal/conf/onlinemon.conf"
 
-xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --update 500 --reset -r tcp://$HOSTIP:$RCPORT  --root |tee -a logs/mon.log ; read' &
+#xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --update 500 --reset -r tcp://$HOSTIP:$RCPORT  --root |tee -a logs/mon.log ; read' &
 
-#nohup ./bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file ${config_file} --reduce 10 --update 1000 --reset -r tcp://$HOSTIP:$RCPORT  --root > $flog 2>&1 &
+nohup ./bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file $config_file --reduce 10 --update 1000 --reset -r tcp://$HOSTIP:$RCPORT  --root > $flog 2>&1 &
 
 printf "The logs from the Online Monitor are in $flog file. \n"
 
@@ -86,6 +86,8 @@ printf '\033[22;33m\t  Standard (Ahcal) Online Monitor  \033[0m \n'
 flog="./logs/Run${NEWRUNNUM}_StdOnlineMon_$dt.log"
 # xterm -r -sb -sl 100000 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --reset -r tcp://$HODTIP:$RCPORT |tee -a logs/mon.log ; read' &
 #xterm -r -sb -sl 100000 -T "OnlineMon" -e './bin/euCliMonitor -n Ex0Monitor -t StdEventMonitor  -a tcp://45001 '&
-xterm -r -sb -sl 100000 -T "AHCAL online" -e 'bin/StdEventMonitor -c ahcalOnlineMonitor.conf --monitor_name StdEventMonitor --reset -r tcp://$HOSTIP:$RCPORT; read' & #online monitor for AHCA
+#xterm -r -sb -sl 100000 -T "AHCAL online" -e 'bin/StdEventMonitor -c ahcalOnlineMonitor.conf --monitor_name StdEventMonitor --reset -r tcp://$HOSTIP:$RCPORT; read' & #online monitor for AHCA
 
-#nohup ./bin/StdEventMonitor -c ahcalOnlineMonitor.conf --monitor_name StdEventMonitor --reset -r tcp://$HOSTIP:$RCPORT > $flog 2>&1 &
+nohup ./bin/StdEventMonitor -c ahcalOnlineMonitor.conf --monitor_name StdEventMonitor --reset -r tcp://$HOSTIP:$RCPORT > $flog 2>&1 &
+
+printf "The logs from this Monitor are in $flog file. \n"
