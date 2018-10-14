@@ -20,9 +20,9 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
 
 
   char out[1024], out2[1024];
-  
+
   _mon = mon;
-  
+
   _runMode = _mon->mon_configdata.getRunMode();
   //std::cout << "HexagonHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
   //std::cout <<"runMode = "<<_runMode<<std::endl;
@@ -32,11 +32,11 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
   else if (_runMode==1) sel="TOA";
   else if (_runMode==2) sel="MIP";
   else sel="PED";
-  
+
   sprintf(out, "%s::%02d, Occupancy based on %s", _sensor.c_str(), _id, sel.c_str());
   sprintf(out2, "h_hexagons_occ_selection_%s_%02d", _sensor.c_str(), _id);
   _hexagons_occ_selection = get_th2poly(out2,out);
-  
+
   sprintf(out, "%s::%02d,  ADC_HG Occupancy", _sensor.c_str(), _id);
   sprintf(out2, "h_hexagons_occ_adc_%s_%02d", _sensor.c_str(), _id);
   _hexagons_occ_adc = get_th2poly(out2,out);
@@ -71,7 +71,7 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
   _sigAdcHG = new TH1I(out2, out, 500, -100, 2600);
   SetHistoAxisLabelx(_sigAdcHG, "HG (peak) - PED, ADC counts");
 
-  
+
   sprintf(out, "%s::%02d, Pedestal LG", _sensor.c_str(), _id);
   sprintf(out2, "h_pedLG_%s_%02d", _sensor.c_str(), _id);
   _pedLG = new TH1I(out2, out, 100, 0, 350);
@@ -81,13 +81,13 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
   sprintf(out2, "h_pedHG_%s_%02d", _sensor.c_str(), _id);
   _pedHG = new TH1I(out2, out, 100, 0, 400);
   SetHistoAxisLabelx(_pedHG, "HG ADC counts");
-  
+
   if (_maxX != -1 && _maxY != -1) {
     sprintf(out, "%s::%02d, Raw Hitmap", _sensor.c_str(), _id);
     sprintf(out2, "h_hit2Dmap_%s_%02d", _sensor.c_str(), _id);
     _hit2Dmap = new TH2I(out2, out, _maxX + 1, 0, _maxX, _maxY + 1, 0, _maxY);
     SetHistoAxisLabels(_hit2Dmap, "SkiRoc ID", "Channel ID");
-    
+
     sprintf(out, "%s::%02d, Suspicious Pixels", _sensor.c_str(), _id);
     sprintf(out2, "h_badpixelmap_%s_%02d", _sensor.c_str(), _id);
     _BadPixelMap = new TH2D(out2, out, _maxX + 1, 0, _maxX, _maxY + 1, 0, _maxY);
@@ -175,11 +175,11 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
   mainFrameTS = _mon->mon_configdata.getMainFrameTS();
   thresh_LG = _mon->mon_configdata.getThreshLG();
   thresh_HG = _mon->mon_configdata.getThreshHG();
-  
+
   //const int tmp_int = _mon->mon_configdata.getDqmColorMap();
   //std::cout<<"DQM value from config file: "<<tmp_int<<std::endl;
 
-  
+
   Set_SkiToHexaboard_ChannelMap();
 }
 
@@ -187,10 +187,10 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
 void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
   //std::cout<< "FILL with a plane." << std::endl;
 
-  
+
   int nHit=0, nHot=0, nBad=0;
-  
-  // Temporary let's just not fill events with too many channels 
+
+  // Temporary let's just not fill events with too many channels
   /* if (plane.HitPixels()>250 && _runMode!=0) */
   /*   return; */
 
@@ -209,7 +209,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       const int pixel_y = plane.GetY(pix);
       const int ch  = _ski_to_ch_map.find(make_pair(pixel_x,pixel_y))->second;
 
-      
+
       // ----- Maskig noisy channels ----
       // These are noisy pixels in most hexaboards. Let's just mask them from DQM:
       if ( pixel_x==0 && pixel_y==22 )
@@ -218,15 +218,24 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       if ( pixel_x==3 && pixel_y==44 )
       	continue;
 
-      /* // Masking for June 2018 beam tests: */
-
-      // Wholle chip 3 is bad on this board
-      if ( (_sensor=="HexaBoard-RDB00" && _id==0 ) && 
-       	   pixel_x==3)  
-       	continue; 
-
+      if ( pixel_x==0 && pixel_y==28 )
+	continue;
 
       /* // Masking for October 2018 beam tests: */
+
+      // Whole chip 3 is bad on this board
+      if ( _id==0 && pixel_x==3)
+	continue;
+
+
+      if (  (_id==17 || _id==20 || _id==23 || _id==28 || _id==38 || _id==41 || _id==48 || _id==56 || _id==57 || _id==58 ||
+	     _id==66 || _id==69 || _id==70 || _id==71 || _id==73 || _id==79 || _id==89 || _id==91 ) &&
+	    pixel_x==0 && pixel_y==58)
+       	continue;
+
+
+
+      /* // Masking for June 2018 beam tests: */
 
       /* // Mask 3, 44 in many modules */
       /* if ( (_sensor=="HexaBoard-RDB1" && _id==1 ) && */
@@ -315,7 +324,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       if ( _sensor=="HexaBoard-RDB2" && _id==2 &&
 	   ( pixel_x==0 && pixel_y==58 ) )
 	continue;
-      
+
       // Module #62
       if ( _sensor=="HexaBoard-RDB2" && _id==5 &&
 	   ( pixel_x==0 && pixel_y==58 ) )
@@ -373,7 +382,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       sig_LG[10] /= 10;
       sig_HG[9]  /= 10;
       sig_HG[10] /= 10;
-      
+
       const auto max_LG = std::max_element(std::begin(sig_LG), std::end(sig_LG));
       const int pos_max_LG = std::distance(std::begin(sig_LG), max_LG);
       //std::cout << "Max element in LG is " << *max_LG << " at position " << pos_max_LG << std::endl;
@@ -387,9 +396,9 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       //const int ped_LG = std::accumulate(sig_LG.begin(), sig_LG.begin()+2, 0)/2; // average of the first two TS
       //const int ped_HG = std::accumulate(sig_HG.begin(), sig_HG.begin()+2, 0)/2; // average of the first two TS
       // Pedestals from the first (0th) TS:
-      const int ped_LG = sig_LG[0]; 
-      const int ped_HG = sig_HG[0]; 
-      
+      const int ped_LG = sig_LG[0];
+      const int ped_HG = sig_HG[0];
+
       if (_pedLG!=NULL)
 	_pedLG->Fill(ped_LG);
       if (_pedHG!=NULL)
@@ -401,18 +410,18 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 	_posOfMaxADCinHG->Fill(pos_max_HG);
 
       // Average of three TS around main frame:
-      //const int avg_LG = std::accumulate(sig_LG.begin()+mainFrameTS-1, sig_LG.begin()+mainFrameTS+2, 0)/3; 
+      //const int avg_LG = std::accumulate(sig_LG.begin()+mainFrameTS-1, sig_LG.begin()+mainFrameTS+2, 0)/3;
       const int avg_HG = std::accumulate(sig_HG.begin()+mainFrameTS-1, sig_HG.begin()+mainFrameTS+2, 0)/3;
 
       const int peak_LG = sig_LG[mainFrameTS];
       const int peak_HG = sig_HG[mainFrameTS];
-      
+
       if (_sigAdcLG!=NULL)
 	_sigAdcLG->Fill(peak_LG - ped_LG);
 
       if (_sigAdcHG!=NULL)
 	_sigAdcHG->Fill(peak_HG - ped_HG);
-      
+
       const int toa_fall = plane.GetPixel(pix, 26);
       const int toa_rise = plane.GetPixel(pix, 27);
       const int tot_fast = plane.GetPixel(pix, 28);
@@ -420,7 +429,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 
 
       if (_waveformHG!=NULL && _waveformLG!=NULL &&_waveformNormHG!=NULL && _waveformNormLG!=NULL){
-	
+
 	// Only fill these if maximum is above some threshold (ie, it is signal)
 	if ( (*max_LG) - ped_LG > thresh_LG) {
 	  for (int ts=0; ts<nSCA; ts++){
@@ -449,11 +458,11 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 	  _BadPixelMap->Fill(pixel_x, pixel_y);
       }
 
-      
+
       if ( (toa_rise==4 || toa_fall==4) && _BadPixelMap != NULL)
 	// This is bad because the hits are slected based on HA bit, which should be equivalent to TOA
 	_BadPixelMap->Fill(pixel_x, pixel_y);
-	            
+
 
       if (_LGvsTOTfast != NULL)
 	_LGvsTOTfast->Fill(tot_fast, peak_LG);
@@ -463,7 +472,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 	_HGvsLG->Fill(peak_LG, peak_HG);
       if (_TOAvsChId != NULL)
 	_TOAvsChId->Fill(pixel_x*64+pixel_y, toa_fall);
-	  
+
       // Loop over the bins and Fill the one matched to our channel
       for (int icell = 0; icell < 133 ; icell++) {
 
@@ -498,16 +507,16 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       nHit++;
 
     }
-  
+
   if (_nHits != NULL){
     _nHits->Fill(nHit);
     handleOverflowBins(_nHits);
   }
-  
+
   //if ((_nbadHits != NULL)) {
   //_nbadHits->Fill(2);
   //}
-  
+
   if (_nHotPixels != NULL)
     _nHotPixels->Fill(nHot);
 
@@ -520,7 +529,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
   // Since this Fill() method is done once per plane, let's just increment it at zeros plane
   //if (plane.Sensor()=="HexaBoard-RDB2" && plane.ID()==0)
   //filling_counter += 1;
- 
+
 }
 
 void HexagonHistos::Reset() {
@@ -555,7 +564,7 @@ void HexagonHistos::Reset() {
   _LGvsTOTslow->Reset();
   _HGvsLG->Reset();
   _TOAvsChId->Reset();
-  
+
 }
 
 void HexagonHistos::Calculate(const int currentEventNum) {
@@ -602,12 +611,12 @@ void HexagonHistos::Write() {
   _HGvsLG->Write();
   _TOAvsChId->Write();
 
-  
+
   TIter next(ev_display_list);
   while (TObject *obj = next()){
     obj->Write();
   }
-  
+
   ev_display_list->Clear();
 
   //std::cout<<"Doing HexagonHistos::Write() before canvas drawing"<<std::endl;
