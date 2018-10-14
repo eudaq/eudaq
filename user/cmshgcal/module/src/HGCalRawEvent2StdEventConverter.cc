@@ -137,7 +137,7 @@ bool HGCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
       }
       for( std::map< int,std::vector<HGCalHit> >::iterator it=hitMap.begin(); it!=hitMap.end(); ++it ){
 	os.str("");
-	os<<"HexaBoard-RDB"<<ormId;
+	os<<"HexaBoard-RDB"<<std::setfill('0') << std::setw(2)<<ormId;
 	std::unique_ptr<eudaq::StandardPlane> plane(new eudaq::StandardPlane(it->first, "HexaBoardRawDataEvent", os.str()));
 	plane->SetSizeZS(STDPLANE_X_SIZE,STDPLANE_Y_SIZE,it->second.size(),STDPLANE_SIZE);
 	int nhit=0;
@@ -157,7 +157,7 @@ bool HGCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
       }
     }
   }
-  if (event_nr%100==0) {
+  if (event_nr%1000==0) {
     std::cout<<"Processing event "<<std::dec<<event_nr<<" with "<<nblocks<<" blocks" << std::endl;
     for( int iblo=0; iblo<nblocks; iblo++ )
       if( iblo%2!=0 )

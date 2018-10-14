@@ -20,9 +20,9 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
 
 
   char out[1024], out2[1024];
-  
+
   _mon = mon;
-  
+
   _runMode = _mon->mon_configdata.getRunMode();
   //std::cout << "HexagonHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
   //std::cout <<"runMode = "<<_runMode<<std::endl;
@@ -32,81 +32,81 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
   else if (_runMode==1) sel="TOA";
   else if (_runMode==2) sel="MIP";
   else sel="PED";
-  
-  sprintf(out, "%s-%i, Occupancy based on %s", _sensor.c_str(), _id, sel.c_str());
-  sprintf(out2, "h_hexagons_occ_selection_%s_%i", _sensor.c_str(), _id);
+
+  sprintf(out, "%s::%02d, Occupancy based on %s", _sensor.c_str(), _id, sel.c_str());
+  sprintf(out2, "h_hexagons_occ_selection_%s_%02d", _sensor.c_str(), _id);
   _hexagons_occ_selection = get_th2poly(out2,out);
-  
-  sprintf(out, "%s-%i,  ADC_HG Occupancy", _sensor.c_str(), _id);
-  sprintf(out2, "h_hexagons_occ_adc_%s_%i", _sensor.c_str(), _id);
+
+  sprintf(out, "%s::%02d,  ADC_HG Occupancy", _sensor.c_str(), _id);
+  sprintf(out2, "h_hexagons_occ_adc_%s_%02d", _sensor.c_str(), _id);
   _hexagons_occ_adc = get_th2poly(out2,out);
 
-  sprintf(out, "%s-%i,  TOT (slow) Occupancy", _sensor.c_str(), _id);
-  sprintf(out2, "h_hexagons_occ_tot_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d,  TOT (slow) Occupancy", _sensor.c_str(), _id);
+  sprintf(out2, "h_hexagons_occ_tot_%s_%02d", _sensor.c_str(), _id);
   _hexagons_occ_tot = get_th2poly(out2,out);
 
-  sprintf(out, "%s-%i,  TOA (fall) Occupancy", _sensor.c_str(), _id);
-  sprintf(out2, "h_hexagons_occ_toa_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d,  TOA (fall) Occupancy", _sensor.c_str(), _id);
+  sprintf(out2, "h_hexagons_occ_toa_%s_%02d", _sensor.c_str(), _id);
   _hexagons_occ_toa = get_th2poly(out2,out);
 
 
-  sprintf(out, "%s-%i,  ADC HG Charge", _sensor.c_str(), _id);
-  sprintf(out2, "h_hexagons_charge_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d,  ADC HG Charge", _sensor.c_str(), _id);
+  sprintf(out2, "h_hexagons_charge_%s_%02d", _sensor.c_str(), _id);
   _hexagons_charge = get_th2poly(out2,out);
 
 
-  sprintf(out, "%s-%i, 1D Hit occupancy", _sensor.c_str(), _id);
-  sprintf(out2, "h_hit1Docc_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, 1D Hit occupancy", _sensor.c_str(), _id);
+  sprintf(out2, "h_hit1Docc_%s_%02d", _sensor.c_str(), _id);
   _hit1Docc = new TH1I(out2, out, 256, 0, 256);
   SetHistoAxisLabelx(_hit1Docc, "(SkiRoc ID * 64 ) + ChID");
 
 
-  sprintf(out, "%s-%i, Signal at LG", _sensor.c_str(), _id);
-  sprintf(out2, "h_sigAdcLG_TS3_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Signal at LG", _sensor.c_str(), _id);
+  sprintf(out2, "h_sigAdcLG_TS3_%s_%02d", _sensor.c_str(), _id);
   _sigAdcLG = new TH1I(out2, out, 200, -50, 500);
   SetHistoAxisLabelx(_sigAdcLG, "LG (peak) - PED, ADC counts");
 
-  sprintf(out, "%s-%i, Signal at HG", _sensor.c_str(), _id);
-  sprintf(out2, "h_sigAdcHG_TS3_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Signal at HG", _sensor.c_str(), _id);
+  sprintf(out2, "h_sigAdcHG_TS3_%s_%02d", _sensor.c_str(), _id);
   _sigAdcHG = new TH1I(out2, out, 500, -100, 2600);
   SetHistoAxisLabelx(_sigAdcHG, "HG (peak) - PED, ADC counts");
 
-  
-  sprintf(out, "%s-%i, Pedestal LG", _sensor.c_str(), _id);
-  sprintf(out2, "h_pedLG_%s_%i", _sensor.c_str(), _id);
+
+  sprintf(out, "%s::%02d, Pedestal LG", _sensor.c_str(), _id);
+  sprintf(out2, "h_pedLG_%s_%02d", _sensor.c_str(), _id);
   _pedLG = new TH1I(out2, out, 100, 0, 350);
   SetHistoAxisLabelx(_pedLG, "LG ADC counts");
 
-  sprintf(out, "%s-%i, Pedestal HG", _sensor.c_str(), _id);
-  sprintf(out2, "h_pedHG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Pedestal HG", _sensor.c_str(), _id);
+  sprintf(out2, "h_pedHG_%s_%02d", _sensor.c_str(), _id);
   _pedHG = new TH1I(out2, out, 100, 0, 400);
   SetHistoAxisLabelx(_pedHG, "HG ADC counts");
-  
+
   if (_maxX != -1 && _maxY != -1) {
-    sprintf(out, "%s-%i, Raw Hitmap", _sensor.c_str(), _id);
-    sprintf(out2, "h_hit2Dmap_%s_%i", _sensor.c_str(), _id);
+    sprintf(out, "%s::%02d, Raw Hitmap", _sensor.c_str(), _id);
+    sprintf(out2, "h_hit2Dmap_%s_%02d", _sensor.c_str(), _id);
     _hit2Dmap = new TH2I(out2, out, _maxX + 1, 0, _maxX, _maxY + 1, 0, _maxY);
     SetHistoAxisLabels(_hit2Dmap, "SkiRoc ID", "Channel ID");
-    
-    sprintf(out, "%s-%i, Suspicious Pixels", _sensor.c_str(), _id);
-    sprintf(out2, "h_badpixelmap_%s_%i", _sensor.c_str(), _id);
+
+    sprintf(out, "%s::%02d, Suspicious Pixels", _sensor.c_str(), _id);
+    sprintf(out2, "h_badpixelmap_%s_%02d", _sensor.c_str(), _id);
     _BadPixelMap = new TH2D(out2, out, _maxX + 1, 0, _maxX, _maxY + 1, 0, _maxY);
     SetHistoAxisLabels(_BadPixelMap, "SkiRoc ID", "Channel ID");
   }
 
-  sprintf(out, "%s-%i, Number of Hits", _sensor.c_str(), _id);
-  sprintf(out2, "h_raw_nHits_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Number of Hits", _sensor.c_str(), _id);
+  sprintf(out2, "h_raw_nHits_%s_%02d", _sensor.c_str(), _id);
   _nHits = new TH1I(out2, out, 50, 0, 50);
   SetHistoAxisLabelx(_nHits, "Number of Hits above ZS");
   //_nHits->SetStats(1);
 
-  sprintf(out, "%s-%i, Number of Invalid Hits", _sensor.c_str(), _id);
-  sprintf(out2, "h_nbadHits_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Number of Invalid Hits", _sensor.c_str(), _id);
+  sprintf(out2, "h_nbadHits_%s_%02d", _sensor.c_str(), _id);
   _nbadHits = new TH1I(out2, out, 50, 0, 50);
   SetHistoAxisLabelx(_nbadHits, "n_{BadHits}");
 
-  sprintf(out, "%s-%i, Number of Hot Pixels", _sensor.c_str(), _id);
-  sprintf(out2, "h_nhotpixels_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Number of Hot Pixels", _sensor.c_str(), _id);
+  sprintf(out2, "h_nhotpixels_%s_%02d", _sensor.c_str(), _id);
   _nHotPixels = new TH1I(out2, out, 50, 0, 50);
   SetHistoAxisLabelx(_nHotPixels, "n_{HotPixels}");
 
@@ -115,55 +115,55 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
   // ---------
   // Waveforms
   // ---------
-  sprintf(out, "%s-%i Waveform LG", _sensor.c_str(), _id);
-  sprintf(out2, "h_waveform_LG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s-%02d Waveform LG", _sensor.c_str(), _id);
+  sprintf(out2, "h_waveform_LG_%s_%02d", _sensor.c_str(), _id);
   _waveformLG = new TH2I(out2, out, 2*nSCA, 0, nSCA, 100, 0, 1500);
   SetHistoAxisLabels(_waveformLG, "Time Sample of 25 ns", "LG ADC");
 
-  sprintf(out, "%s-%i, Waveform HG", _sensor.c_str(), _id);
-  sprintf(out2, "h_waveform_HG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Waveform HG", _sensor.c_str(), _id);
+  sprintf(out2, "h_waveform_HG_%s_%02d", _sensor.c_str(), _id);
   _waveformHG = new TH2I(out2, out, 2*nSCA, 0, nSCA, 100, 0, 2600);
   SetHistoAxisLabels(_waveformHG, "Time Sample of 25 ns", "HG ADC");
 
 
-  sprintf(out, "%s-%i, Waveform LG Norm", _sensor.c_str(), _id);
-  sprintf(out2, "p_waveform_LG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Waveform LG Norm", _sensor.c_str(), _id);
+  sprintf(out2, "p_waveform_LG_%s_%02d", _sensor.c_str(), _id);
   _waveformNormLG = new TProfile(out2, out, 2*nSCA, 0, nSCA);
   SetHistoAxisLabels(_waveformNormLG, "Time Sample of 25 ns", "Normalized");
 
-  sprintf(out, "%s-%i, Waveform HG Norm", _sensor.c_str(), _id);
-  sprintf(out2, "p_waveform_HG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, Waveform HG Norm", _sensor.c_str(), _id);
+  sprintf(out2, "p_waveform_HG_%s_%02d", _sensor.c_str(), _id);
   _waveformNormHG = new TProfile(out2, out, 2*nSCA, 0, nSCA);
   SetHistoAxisLabels(_waveformNormHG, "Time Sample of 25 ns", "Normalized");
 
 
-  sprintf(out, "%s-%i, TS of Maximum at LG", _sensor.c_str(), _id);
-  sprintf(out2, "h_posOfMaxADC_LG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, TS of Maximum at LG", _sensor.c_str(), _id);
+  sprintf(out2, "h_posOfMaxADC_LG_%s_%02d", _sensor.c_str(), _id);
   _posOfMaxADCinLG = new TH1I(out2, out, 2*nSCA, 0, nSCA);
   SetHistoAxisLabels(_posOfMaxADCinLG, "Time Sample of 25 ns","Events");
 
-  sprintf(out, "%s-%i, TS of Maximum at HG", _sensor.c_str(), _id);
-  sprintf(out2, "h_posOfMaxADC_HG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, TS of Maximum at HG", _sensor.c_str(), _id);
+  sprintf(out2, "h_posOfMaxADC_HG_%s_%02d", _sensor.c_str(), _id);
   _posOfMaxADCinHG = new TH1I(out2, out, 2*nSCA, 0, nSCA);
   SetHistoAxisLabels(_posOfMaxADCinHG, "Time Sample of 25 ns","Events");
 
-  sprintf(out, "%s-%i, LG vs TOT (fast)", _sensor.c_str(), _id);
-  sprintf(out2, "h_LGvsTOTfast_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, LG vs TOT (fast)", _sensor.c_str(), _id);
+  sprintf(out2, "h_LGvsTOTfast_%s_%02d", _sensor.c_str(), _id);
   _LGvsTOTfast = new TH2I(out2, out, 20, 0, 4100, 60, 0, 2000);
   SetHistoAxisLabels(_LGvsTOTfast, "TOT (fast) ADC", "LG ADC");
 
-  sprintf(out, "%s-%i, LG vs TOT (slow)", _sensor.c_str(), _id);
-  sprintf(out2, "h_LGvsTOTslow_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, LG vs TOT (slow)", _sensor.c_str(), _id);
+  sprintf(out2, "h_LGvsTOTslow_%s_%02d", _sensor.c_str(), _id);
   _LGvsTOTslow = new TH2I(out2, out, 20, 0, 800, 60, 0, 2000);
   SetHistoAxisLabels(_LGvsTOTslow, "TOT (slow) ADC", "LG ADC");
 
-  sprintf(out, "%s-%i, HG vs LG", _sensor.c_str(), _id);
-  sprintf(out2, "h_HGvsLG_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, HG vs LG", _sensor.c_str(), _id);
+  sprintf(out2, "h_HGvsLG_%s_%02d", _sensor.c_str(), _id);
   _HGvsLG = new TH2I(out2, out, 200, 0, 2000, 200, 0, 4100);
   SetHistoAxisLabels(_HGvsLG, "LG ADC", "HG ADC");
 
-  sprintf(out, "%s-%i, TOA vs Channel", _sensor.c_str(), _id);
-  sprintf(out2, "h_TOAvsChId_%s_%i", _sensor.c_str(), _id);
+  sprintf(out, "%s::%02d, TOA vs Channel", _sensor.c_str(), _id);
+  sprintf(out2, "h_TOAvsChId_%s_%02d", _sensor.c_str(), _id);
   _TOAvsChId = new TH2I(out2, out, 256, 0, 256, 60, 1000, 3000);
   SetHistoAxisLabels(_TOAvsChId, "(SkiRoc ID * 64 ) + ChID", "TOA (fall), ADC");
 
@@ -175,11 +175,11 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
   mainFrameTS = _mon->mon_configdata.getMainFrameTS();
   thresh_LG = _mon->mon_configdata.getThreshLG();
   thresh_HG = _mon->mon_configdata.getThreshHG();
-  
+
   //const int tmp_int = _mon->mon_configdata.getDqmColorMap();
   //std::cout<<"DQM value from config file: "<<tmp_int<<std::endl;
 
-  
+
   Set_SkiToHexaboard_ChannelMap();
 }
 
@@ -187,10 +187,10 @@ HexagonHistos::HexagonHistos(eudaq::StandardPlane p, RootMonitor *mon)
 void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
   //std::cout<< "FILL with a plane." << std::endl;
 
-  
+
   int nHit=0, nHot=0, nBad=0;
-  
-  // Temporary let's just not fill events with too many channels 
+
+  // Temporary let's just not fill events with too many channels
   /* if (plane.HitPixels()>250 && _runMode!=0) */
   /*   return; */
 
@@ -209,11 +209,31 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       const int pixel_y = plane.GetY(pix);
       const int ch  = _ski_to_ch_map.find(make_pair(pixel_x,pixel_y))->second;
 
-      
+
       // ----- Maskig noisy channels ----
       // These are noisy pixels in most hexaboards. Let's just mask them from DQM:
       if ( pixel_x==0 && pixel_y==22 )
       	continue;
+
+      if ( pixel_x==3 && pixel_y==44 )
+      	continue;
+
+      if ( pixel_x==0 && pixel_y==28 )
+	continue;
+
+      /* // Masking for October 2018 beam tests: */
+
+      // Whole chip 3 is bad on this board
+      if ( _id==0 && pixel_x==3)
+	continue;
+
+
+      if (  (_id==17 || _id==20 || _id==23 || _id==28 || _id==38 || _id==41 || _id==48 || _id==56 || _id==57 || _id==58 ||
+	     _id==66 || _id==69 || _id==70 || _id==71 || _id==73 || _id==79 || _id==89 || _id==91 ) &&
+	    pixel_x==0 && pixel_y==58)
+       	continue;
+
+
 
       /* // Masking for June 2018 beam tests: */
 
@@ -304,7 +324,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       if ( _sensor=="HexaBoard-RDB2" && _id==2 &&
 	   ( pixel_x==0 && pixel_y==58 ) )
 	continue;
-      
+
       // Module #62
       if ( _sensor=="HexaBoard-RDB2" && _id==5 &&
 	   ( pixel_x==0 && pixel_y==58 ) )
@@ -362,7 +382,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       sig_LG[10] /= 10;
       sig_HG[9]  /= 10;
       sig_HG[10] /= 10;
-      
+
       const auto max_LG = std::max_element(std::begin(sig_LG), std::end(sig_LG));
       const int pos_max_LG = std::distance(std::begin(sig_LG), max_LG);
       //std::cout << "Max element in LG is " << *max_LG << " at position " << pos_max_LG << std::endl;
@@ -376,9 +396,9 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       //const int ped_LG = std::accumulate(sig_LG.begin(), sig_LG.begin()+2, 0)/2; // average of the first two TS
       //const int ped_HG = std::accumulate(sig_HG.begin(), sig_HG.begin()+2, 0)/2; // average of the first two TS
       // Pedestals from the first (0th) TS:
-      const int ped_LG = sig_LG[0]; 
-      const int ped_HG = sig_HG[0]; 
-      
+      const int ped_LG = sig_LG[0];
+      const int ped_HG = sig_HG[0];
+
       if (_pedLG!=NULL)
 	_pedLG->Fill(ped_LG);
       if (_pedHG!=NULL)
@@ -390,18 +410,18 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 	_posOfMaxADCinHG->Fill(pos_max_HG);
 
       // Average of three TS around main frame:
-      //const int avg_LG = std::accumulate(sig_LG.begin()+mainFrameTS-1, sig_LG.begin()+mainFrameTS+2, 0)/3; 
+      //const int avg_LG = std::accumulate(sig_LG.begin()+mainFrameTS-1, sig_LG.begin()+mainFrameTS+2, 0)/3;
       const int avg_HG = std::accumulate(sig_HG.begin()+mainFrameTS-1, sig_HG.begin()+mainFrameTS+2, 0)/3;
 
       const int peak_LG = sig_LG[mainFrameTS];
       const int peak_HG = sig_HG[mainFrameTS];
-      
+
       if (_sigAdcLG!=NULL)
 	_sigAdcLG->Fill(peak_LG - ped_LG);
 
       if (_sigAdcHG!=NULL)
 	_sigAdcHG->Fill(peak_HG - ped_HG);
-      
+
       const int toa_fall = plane.GetPixel(pix, 26);
       const int toa_rise = plane.GetPixel(pix, 27);
       const int tot_fast = plane.GetPixel(pix, 28);
@@ -409,7 +429,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 
 
       if (_waveformHG!=NULL && _waveformLG!=NULL &&_waveformNormHG!=NULL && _waveformNormLG!=NULL){
-	
+
 	// Only fill these if maximum is above some threshold (ie, it is signal)
 	if ( (*max_LG) - ped_LG > thresh_LG) {
 	  for (int ts=0; ts<nSCA; ts++){
@@ -438,11 +458,11 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 	  _BadPixelMap->Fill(pixel_x, pixel_y);
       }
 
-      
+
       if ( (toa_rise==4 || toa_fall==4) && _BadPixelMap != NULL)
 	// This is bad because the hits are slected based on HA bit, which should be equivalent to TOA
 	_BadPixelMap->Fill(pixel_x, pixel_y);
-	            
+
 
       if (_LGvsTOTfast != NULL)
 	_LGvsTOTfast->Fill(tot_fast, peak_LG);
@@ -452,7 +472,7 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 	_HGvsLG->Fill(peak_LG, peak_HG);
       if (_TOAvsChId != NULL)
 	_TOAvsChId->Fill(pixel_x*64+pixel_y, toa_fall);
-	  
+
       // Loop over the bins and Fill the one matched to our channel
       for (int icell = 0; icell < 133 ; icell++) {
 
@@ -487,29 +507,29 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       nHit++;
 
     }
-  
+
   if (_nHits != NULL){
     _nHits->Fill(nHit);
     handleOverflowBins(_nHits);
   }
-  
+
   //if ((_nbadHits != NULL)) {
   //_nbadHits->Fill(2);
   //}
-  
+
   if (_nHotPixels != NULL)
     _nHotPixels->Fill(nHot);
 
 
   if (_hexagons_charge!=NULL && evNumber%100==0)
-    ev_display_list->Add(_hexagons_charge->Clone(Form("%s_%i_HG_Display_Event_%05i",
+    ev_display_list->Add(_hexagons_charge->Clone(Form("%s_%02d_HG_Display_Event_%05i",
 						      _sensor.c_str(), _id,
 						      evNumber)));
   // We need to increase the counter once per event.
   // Since this Fill() method is done once per plane, let's just increment it at zeros plane
   //if (plane.Sensor()=="HexaBoard-RDB2" && plane.ID()==0)
   //filling_counter += 1;
- 
+
 }
 
 void HexagonHistos::Reset() {
@@ -544,7 +564,7 @@ void HexagonHistos::Reset() {
   _LGvsTOTslow->Reset();
   _HGvsLG->Reset();
   _TOAvsChId->Reset();
-  
+
 }
 
 void HexagonHistos::Calculate(const int currentEventNum) {
@@ -591,12 +611,12 @@ void HexagonHistos::Write() {
   _HGvsLG->Write();
   _TOAvsChId->Write();
 
-  
+
   TIter next(ev_display_list);
   while (TObject *obj = next()){
     obj->Write();
   }
-  
+
   ev_display_list->Clear();
 
   //std::cout<<"Doing HexagonHistos::Write() before canvas drawing"<<std::endl;

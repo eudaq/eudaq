@@ -48,7 +48,7 @@ void TDCHitsCollection::bookHistograms(const eudaq::StandardEvent &ev) {
 
 
   for (int plane = 0; plane < ev.NumPlanes(); plane++) {
-    const eudaq::StandardPlane Plane = ev.GetPlane(plane);
+    const eudaq::StandardPlane &Plane = ev.GetPlane(plane);
     if (!isPlaneRegistered(Plane)) {
       if (Plane.Sensor() == "DWC_fullTDC") registerPlane(Plane);
     }

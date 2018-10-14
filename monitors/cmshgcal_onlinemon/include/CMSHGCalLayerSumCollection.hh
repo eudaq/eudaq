@@ -17,7 +17,6 @@
 #include "eudaq/StandardEvent.hh"
 
 // Project Includes
-#include "SimpleStandardEvent.hh"
 #include "CMSHGCalLayerSumHistos.hh"
 //#include "NoisyChannel.hh"
 #include "BaseCollection.hh"
@@ -38,9 +37,9 @@ public:
   //virtual ~CMSHGCalLayerSumCollection();
   
   void setRootMonitor(RootMonitor *mon) { _mon = mon; }
-  void Fill(const SimpleStandardEvent &simpev){};
+  void Fill(const SimpleStandardEvent &ev){};
   void Fill(const eudaq::StandardEvent &ev, int evNumber=-1);
-  //void Fill(const SimpleStandardEvent &simpev, int evNumber=-1);
+
   void Reset();
   virtual void Write(TFile *file);
   virtual void Calculate(const unsigned int currentEventNumber);
@@ -51,7 +50,7 @@ public:
   unsigned int getCollectionType();
   
 protected:
-  void fillHistograms(const SimpleStandardEvent &ev);
+  //void fillHistograms(const SimpleStandardEvent &ev);
   bool histos_init;
   CMSHGCalLayerSumHistos *mymonhistos;
 };

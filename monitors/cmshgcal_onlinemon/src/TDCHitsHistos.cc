@@ -90,6 +90,10 @@ void TDCHitsHistos::Calculate(const int currentEventNum) {
 void TDCHitsHistos::Write() {
 
   _hitOccupancy->Write();
+  _hitProbability->Write();;
+  _occupancy->Write();
+  _hitSumCount->Write();
+  _hitCount->Write();
 
 }
 
