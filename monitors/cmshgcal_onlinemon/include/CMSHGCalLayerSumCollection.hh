@@ -38,8 +38,9 @@ public:
   //virtual ~CMSHGCalLayerSumCollection();
   
   void setRootMonitor(RootMonitor *mon) { _mon = mon; }
-  void Fill(const SimpleStandardEvent &simpev) {};
+  void Fill(const SimpleStandardEvent &simpev){};
   void Fill(const eudaq::StandardEvent &ev, int evNumber=-1);
+  //void Fill(const SimpleStandardEvent &simpev, int evNumber=-1);
   void Reset();
   virtual void Write(TFile *file);
   virtual void Calculate(const unsigned int currentEventNumber);
