@@ -4,9 +4,9 @@
 
 
 
-void CMSHGCalLayerSumCollection::fillHistograms(const SimpleStandardEvent &ev) {
-  Fill(ev);
-}
+//void CMSHGCalLayerSumCollection::fillHistograms(const SimpleStandardEvent &ev) {
+//  Fill(ev);
+//}
 
 void CMSHGCalLayerSumCollection::Reset() {
   if (mymonhistos != NULL)
@@ -31,7 +31,7 @@ void CMSHGCalLayerSumCollection::Write(TFile *file) {
 void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) {
   if (_mon != NULL) {
     cout << "CMSHGCalLayerSumCollection:: Monitor running in online-mode" << endl;
-    string performance_folder_name = "CMSHGCalLayerSum Monitor";
+    string performance_folder_name = "HGCal-EnergySum";
     _mon->getOnlineMon()->registerTreeItem(
         (performance_folder_name + "/Energy in MIP LG"));
     _mon->getOnlineMon()->registerHisto(
@@ -94,18 +94,18 @@ void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) 
           (performance_folder_name + "/Energy VS CoGZ"),
           mymonhistos->getEnergyVSCoGZHisto());
 
-
+      
       _mon->getOnlineMon()->registerTreeItem(
           (performance_folder_name + "/Longitudinal shower profile"));
       _mon->getOnlineMon()->registerHisto(
           (performance_folder_name + "/Longitudinal shower profile"),
           mymonhistos->getLongitudinalProfile());
-
+      
       
       _mon->getOnlineMon()->makeTreeItemSummary(
         performance_folder_name.c_str()); // make summary page
 
-
+      /*
       stringstream namestring;
       string name_root = performance_folder_name + "/Planes";
       for (unsigned int i = 0; i < mymonhistos->getNplanes(); i++) {
@@ -163,6 +163,7 @@ void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) 
       }
       _mon->getOnlineMon()->makeTreeItemSummary(
 						name_root.c_str()); // make summary page
+      */
 
   }//if (_mon != NULL)
 }
@@ -174,18 +175,16 @@ CMSHGCalLayerSumHistos *CMSHGCalLayerSumCollection::getCMSHGCalLayerSumHistos() 
 void CMSHGCalLayerSumCollection::Calculate(
     const unsigned int /*currentEventNumber*/) {}
 
-//void CMSHGCalLayerSumCollection::Fill(const SimpleStandardEvent &simpev) {
-void CMSHGCalLayerSumCollection::Fill(const eudaq::StandardEvent &simpev, int evNumber) {
-//void CMSHGCalLayerSumCollection::Fill(const SimpleStandardEvent  &simpev) {
+
+void CMSHGCalLayerSumCollection::Fill(const eudaq::StandardEvent &stdev, int evNumber) {
   if (histos_init == false) {
-    //mymonhistos = new CMSHGCalLayerSumHistos(_mon,noisyCells);
-    mymonhistos = new CMSHGCalLayerSumHistos(_mon,simpev);
+    mymonhistos = new CMSHGCalLayerSumHistos(_mon,stdev);
     if (mymonhistos == NULL) {
       cout << "CMSHGCalLayerSumCollection:: Can't book histograms " << endl;
       exit(-1);
     }
-    bookHistograms(simpev);
+    bookHistograms(stdev);
     histos_init = true;
   }
-  mymonhistos->Fill(simpev);
+  mymonhistos->Fill(stdev);
 }

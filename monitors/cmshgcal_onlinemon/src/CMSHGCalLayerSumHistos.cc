@@ -14,42 +14,44 @@ CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon,const eudaq::Sta
   //m_noisyCells=noisyCells;
   m_mainFrameTS = m_mon->mon_configdata.getMainFrameTS();
   
-  h_energyMIP = new TH1F("energyMIP","",4000,0,40000);
+  h_energyMIP = new TH1F("energyMIP","",200,0,100000);
   h_energyMIP->GetXaxis()->SetTitle("Energy [MIP] (from LG)");
   
-  h_energyLG = new TH1I("energyLG","",1000,0,100000);
+  h_energyLG = new TH1I("energyLG","",200,0,400000);
   h_energyLG->GetXaxis()->SetTitle("LG [ADC counts]");
   
-  h_energyHG = new TH1I("energyHG","",1000,0,800000);
+  h_energyHG = new TH1I("energyHG","",200,0,700000);
   h_energyHG->GetXaxis()->SetTitle("HG [ADC counts]");
 
-  h_energyTOT = new TH1I("energyTOT","",1000,0,10000);
+  h_energyTOT = new TH1I("energyTOT","",200,0,50000);
   h_energyTOT->GetXaxis()->SetTitle("TOT [ADC counts]");
 
-  h_nhit = new TH1I("nhit","",1000,0,3000);
+  h_nhit = new TH1I("nhit","",200,0,2000);
   h_nhit->GetXaxis()->SetTitle("Nhit");
   
-  h_nhitEE = new TH1I("nhitEE","",1000,0,2000);
+  h_nhitEE = new TH1I("nhitEE","",200,0,2000);
   h_nhitEE->GetXaxis()->SetTitle("Nhit EE");
   
-  h_nhitFH0 = new TH1I("nhitFH0","",1000,0,2000);
+  h_nhitFH0 = new TH1I("nhitFH0","",200,0,200);
   h_nhitFH0->GetXaxis()->SetTitle("Nhit FH0");
 
-  h_nhitFH1 = new TH1I("mhitFH1","",1000,0,2000);
+  h_nhitFH1 = new TH1I("mhitFH1","",200,0,600);
   h_nhitFH1->GetXaxis()->SetTitle("Nhit FH1");
     
-  h_energy_nhit = new TH2F("energy_VS_nhit","",4000,0,40000,1000,0,3000);
+  h_energy_nhit = new TH2I("energy_VS_nhit","", 50,0,2000, 50,0,100000);
   h_energy_nhit->GetXaxis()->SetTitle("Nhit");
   h_energy_nhit->GetYaxis()->SetTitle("Energy [MIP]");
 
-  h_energy_cogz = new TH2F("energy_VS_cogz","",4000,0,40000,400,0,40);
+  h_energy_cogz = new TH2I("energy_VS_cogz","", 50,0,50, 50,0,100000);
   h_energy_cogz->GetXaxis()->SetTitle("CoG Z");
   h_energy_cogz->GetYaxis()->SetTitle("Energy [MIP]");
 
-  h_energy_layer = new TH2F("energy_VS_layer","",4000,0,40000,40,0,40);
+  h_energy_layer = new TH2I("energy_VS_layer","", 50,0,40, 50,0,20000);
   h_energy_layer->GetXaxis()->SetTitle("Layer");
   h_energy_layer->GetYaxis()->SetTitle("Energy [MIP]");
 
+
+  /*
   ////per-plane histos
   nplanes = ev.NumPlanes();
   h_energyMIP_pp = new TH1F *[nplanes];
@@ -110,7 +112,8 @@ CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon,const eudaq::Sta
 
 
   }//for (unsigned int i = 0; i < nplanes; i++)
-  
+
+  */  
 }
 
 void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumber)
@@ -160,6 +163,7 @@ void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumbe
     }//for (unsigned int ipix = 0; ipix < plane.HitPixels(); ipix++)
     
     ///now fill per plane histo
+    /*
     h_energyMIP_pp[ip]->Fill(energyMIP_pp);
     h_energyLG_pp[ip]->Fill(energyLG_pp);
     h_energyHG_pp[ip]->Fill(energyHG_pp);
@@ -169,7 +173,7 @@ void CMSHGCalLayerSumHistos::Fill(const eudaq::StandardEvent &event, int evNumbe
     h_nhitFH0_pp[ip]->Fill(nhitFH0_pp);
     h_nhitFH1_pp[ip]->Fill(nhitFH1_pp);
     h_energy_nhit_pp[ip]->Fill(nhit_pp,energyMIP_pp);
-
+    */
   }//for( size_t ip=0; ip<event.NumPlanes(); ip++ )
   cogz/=energyMIP;
 
@@ -204,6 +208,7 @@ void CMSHGCalLayerSumHistos::Reset()
   h_energy_cogz->Reset();
   h_energy_layer->Reset();
 
+  /*
   for (unsigned int i = 0; i < nplanes; i++) {
     h_energyMIP_pp[i]->Reset();
     h_energyLG_pp[i]->Reset();
@@ -216,7 +221,7 @@ void CMSHGCalLayerSumHistos::Reset()
     h_energy_nhit_pp[i]->Reset();
 
   }
-
+  */
   
 }
 
@@ -234,7 +239,8 @@ void CMSHGCalLayerSumHistos::Write()
   h_energy_cogz->Write();
   h_energy_layer->Write();
 
-for (unsigned int i = 0; i < nplanes; i++) {
+  /*
+  for (unsigned int i = 0; i < nplanes; i++) {
     h_energyMIP_pp[i]->Write();
     h_energyLG_pp[i]->Write();
     h_energyHG_pp[i]->Write();
@@ -247,7 +253,7 @@ for (unsigned int i = 0; i < nplanes; i++) {
 
   }
 
-  
+  */
 }
 
 

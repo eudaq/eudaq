@@ -31,10 +31,12 @@ public:
   TH1I *getNhitEEHisto(){return h_nhitEE;}
   TH1I *getNhitFH0Histo(){return h_nhitFH0;}
   TH1I *getNhitFH1Histo(){return h_nhitFH1;}
-  TH2F *getEnergyVSNhitHisto(){return h_energy_nhit;}
-  TH2F *getEnergyVSCoGZHisto(){return h_energy_cogz;}
-  TProfile *getLongitudinalProfile(){return h_energy_layer->ProfileX();}
+  TH2I *getEnergyVSNhitHisto(){return h_energy_nhit;}
+  TH2I *getEnergyVSCoGZHisto(){return h_energy_cogz;}
+  TH2I *getLongitudinalProfile(){return h_energy_layer;}
+  //TProfile *getLongitudinalProfile(){return h_energy_layer->ProfileX();}
   ///return per-plane histo
+  /*
   TH1F *getEnergyMIPHisto_pp(unsigned int iplane){return h_energyMIP_pp[iplane];}
   TH1I *getEnergyLGHisto_pp(unsigned int iplane){return h_energyLG_pp[iplane];}
   TH1I *getEnergyHGHisto_pp(unsigned int iplane){return h_energyHG_pp[iplane];}
@@ -44,6 +46,7 @@ public:
   TH1I *getNhitFH0Histo_pp(unsigned int iplane){return h_nhitFH0_pp[iplane];}
   TH1I *getNhitFH1Histo_pp(unsigned int iplane){return h_nhitFH1_pp[iplane];}
   TH2F *getEnergyVSNhitHisto_pp(unsigned int iplane){return h_energy_nhit_pp[iplane];}
+  */
   unsigned int getNplanes() const;
 
 
@@ -71,11 +74,12 @@ private:
   TH1I *h_nhitEE;
   TH1I *h_nhitFH0;
   TH1I *h_nhitFH1;
-  TH2F *h_energy_nhit;
-  TH2F *h_energy_cogz;
-  TH2F *h_energy_layer;
+  TH2I *h_energy_nhit;
+  TH2I *h_energy_cogz;
+  TH2I *h_energy_layer;
 
   //per-plane histos
+  /*
   TH1F **h_energyMIP_pp;
   TH1I **h_energyLG_pp;
   TH1I **h_energyHG_pp;
@@ -86,7 +90,7 @@ private:
   TH1I **h_nhitFH1_pp;
   TH2F **h_energy_nhit_pp;
 
-
+  */
 
 };
 

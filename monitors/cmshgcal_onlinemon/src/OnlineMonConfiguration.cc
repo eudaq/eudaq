@@ -218,7 +218,7 @@ OnlineMonConfiguration::OnlineMonConfiguration(string confname) {
 
 void OnlineMonConfiguration::SetDefaults() {
   // general settings
-  SnapShotDir = "../snapshots/";
+  SnapShotDir = "./snapshots/";
   SnapShotFormat = ".png";
   DqmColorMap = 54;
   runMode = 0;

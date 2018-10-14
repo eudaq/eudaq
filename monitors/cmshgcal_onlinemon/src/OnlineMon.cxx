@@ -67,8 +67,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   hexaCollection = new HexagonCollection();
   wcCollection = new WireChamberCollection();
   tdchitsCollection = new TDCHitsCollection();
-  wccorrCollection = new WireChamberCorrelationCollection();
-  digitizerCollection = new DigitizerCollection();
+  //wccorrCollection = new WireChamberCorrelationCollection();
+  //digitizerCollection = new DigitizerCollection();
   cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();
 
   // put collections into the vector
@@ -76,8 +76,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   _colls.push_back(hexaCollection);
   _colls.push_back(wcCollection);
   _colls.push_back(tdchitsCollection);
-  _colls.push_back(wccorrCollection);
-  _colls.push_back(digitizerCollection);
+  //_colls.push_back(wccorrCollection);
+  //_colls.push_back(digitizerCollection);
   _colls.push_back(cmshgcalLayerSumCollection);
   
   //monCollection->setRootMonitor(this);
@@ -85,8 +85,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   hexaCollection->setRootMonitor(this);
   wcCollection->setRootMonitor(this);
   tdchitsCollection->setRootMonitor(this);
-  wccorrCollection->setRootMonitor(this);
-  digitizerCollection->setRootMonitor(this);
+  //wccorrCollection->setRootMonitor(this);
+  //digitizerCollection->setRootMonitor(this);
   cmshgcalLayerSumCollection->setRootMonitor(this);
   
   onlinemon->setCollections(_colls);
@@ -187,11 +187,12 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
     eudaq::StdEventConverter::Convert(evsp, stdev, nullptr); //no conf
   }
 
-  //auto &ev = *(stdev.get());
-
   
   uint32_t ev_plane_c = stdev->NumPlanes();
-  //cout<<"Num planes: "<<ev_plane_c<<endl;
+  cout<<"EventN (evsp) = "<< evsp->GetEventN()<<"   Event (stdev) ="<<stdev->GetEventNumber()<<"  Event ID ="<<std::dec<<stdev->GetEventID()
+      <<"  Number planes: "<<std::dec<<ev_plane_c<<endl;
+
+  /*
   if(m_ev_rec_n < 10){
     m_ev_rec_n ++;
     if(ev_plane_c > m_plane_c){
@@ -199,44 +200,47 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
     }
     return;
   }
-
-  if(ev_plane_c != m_plane_c){
-    std::cout<< "do nothing for this event at "<< evsp->GetEventN()<< ", ev_plane_c "<<ev_plane_c<<std::endl;
-    return;
-  }
+  */
+  
+  //if(ev_plane_c != m_plane_c){
+  //std::cout<< "do nothing for this event at "<< evsp->GetEventN()<< ", ev_plane_c "<<ev_plane_c<<std::endl;
+  //return;
+  //}
 
   while(onlinemon==NULL){
+    cout<<"We are sleeping here 0"<<endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   my_event_processing_time.Start(true);
 
-  unsigned int num = (unsigned int) stdev->NumPlanes();
+  //unsigned int num = (unsigned int) stdev->NumPlanes();
   // Initialize the geometry with the first event received:
-  if(!_planesInitialized) {
-    myevent.setNPlanes(num);
-    std::cout << "Initialized geometry: " << num << " planes." << std::endl;
-  }
-  else {
-    if (myevent.getNPlanes()!=num) {
-      cout << "Plane Mismatch on " <<stdev->GetEventNumber()<<endl;
-      cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
-      ostringstream eudaq_warn_message;
-      eudaq_warn_message << "Plane Mismatch in Event "<<stdev->GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
-      EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
-      _planesInitialized = false;
-      num = (unsigned int) stdev->NumPlanes();
-      eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
-      myevent.setNPlanes(num);
-    }
-    else {
+  //if(!_planesInitialized) {
+  //myevent.setNPlanes(num);
+  //std::cout << "Initialized geometry: " << num << " planes." << std::endl;
+  //}
+  //else {
+  //if (myevent.getNPlanes()!=num) {
+  //  cout << "Plane Mismatch on " <<stdev->GetEventNumber()<<endl;
+  //    cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
+  //  ostringstream eudaq_warn_message;
+  //  eudaq_warn_message << "Plane Mismatch in Event "<<stdev->GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
+  //  EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
+  //  _planesInitialized = false;
+  //  num = (unsigned int) stdev->NumPlanes();
+  //  eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
+  //  myevent.setNPlanes(num);
+  //}
+  //else {
 
-      myevent.setNPlanes(num);
-    }
-  }
+  //  myevent.setNPlanes(num);
+  //}
+  //}
 
   
   if(!_planesInitialized){
+    cout<<"We are sleeping here 1"<<endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
     _planesInitialized = true;
   }
@@ -272,6 +276,7 @@ void RootMonitor::DoStopRun()
   m_plane_c = 0;
   m_ev_rec_n = 0;
   while(onlinemon==NULL){
+    cout<<"We are sleeping here 2"<<endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
@@ -292,6 +297,7 @@ void RootMonitor::DoStartRun() {
   m_ev_rec_n = 0;
   uint32_t runnumber = GetRunNumber();
   while(onlinemon==NULL){
+    cout<<"We are sleeping here 3"<<endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
