@@ -20,7 +20,7 @@ echo 'Last Run number: ' $RUNNUM 'New Run number:' $NEWRUNNUM
 
 #################  Run control ###################
 ./bin/euRun -n RunControl -a tcp://${RCPORT} &
-sleep 2
+sleep 5
 #################  Log collector #################
 ./bin/euCliLogger -r tcp://${HOSTIP}:${RCPORT} -a tcp://44002 &
 
@@ -77,7 +77,7 @@ config_file="./user/cmshgcal/conf/onlinemon.conf"
 
 #xterm -r -sb -sl 100000 -geometry 200x40+300+750 -T "OnlineMon" -e 'bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file user/cmshgcal/conf/onlinemon.conf --reduce 10 --update 500 --reset -r tcp://$HOSTIP:$RCPORT  --root |tee -a logs/mon.log ; read' &
 
-nohup ./bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file $config_file --reduce 10 --update 1000 --reset -r tcp://$HOSTIP:$RCPORT  --root > $flog 2>&1 &
+nohup ./bin/CMSHGCalMonitor  --monitor_name CMSHGCalMonitor --config_file $config_file --reduce 1 --update 1000 --reset -r tcp://$HOSTIP:$RCPORT  --root > $flog 2>&1 &
 
 printf "The logs from the Online Monitor are in $flog file. \n"
 

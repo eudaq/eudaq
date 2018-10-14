@@ -157,7 +157,7 @@ bool HGCalRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdE
       }
     }
   }
-  if (event_nr%100==0) {
+  if (event_nr%1000==0) {
     std::cout<<"Processing event "<<std::dec<<event_nr<<" with "<<nblocks<<" blocks" << std::endl;
     for( int iblo=0; iblo<nblocks; iblo++ )
       if( iblo%2!=0 )

@@ -215,7 +215,18 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
       if ( pixel_x==0 && pixel_y==22 )
       	continue;
 
+      if ( pixel_x==3 && pixel_y==44 )
+      	continue;
+
       /* // Masking for June 2018 beam tests: */
+
+      // Wholle chip 3 is bad on this board
+      if ( (_sensor=="HexaBoard-RDB00" && _id==0 ) && 
+       	   pixel_x==3)  
+       	continue; 
+
+
+      /* // Masking for October 2018 beam tests: */
 
       /* // Mask 3, 44 in many modules */
       /* if ( (_sensor=="HexaBoard-RDB1" && _id==1 ) && */

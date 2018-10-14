@@ -67,8 +67,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   hexaCollection = new HexagonCollection();
   wcCollection = new WireChamberCollection();
   tdchitsCollection = new TDCHitsCollection();
-  //wccorrCollection = new WireChamberCorrelationCollection();
-  //digitizerCollection = new DigitizerCollection();
+  wccorrCollection = new WireChamberCorrelationCollection();
+  digitizerCollection = new DigitizerCollection();
   cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();
 
   // put collections into the vector
@@ -76,8 +76,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   _colls.push_back(hexaCollection);
   _colls.push_back(wcCollection);
   _colls.push_back(tdchitsCollection);
-  //_colls.push_back(wccorrCollection);
-  //_colls.push_back(digitizerCollection);
+  _colls.push_back(wccorrCollection);
+  _colls.push_back(digitizerCollection);
   _colls.push_back(cmshgcalLayerSumCollection);
   
   //monCollection->setRootMonitor(this);
@@ -85,8 +85,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   hexaCollection->setRootMonitor(this);
   wcCollection->setRootMonitor(this);
   tdchitsCollection->setRootMonitor(this);
-  //wccorrCollection->setRootMonitor(this);
-  //digitizerCollection->setRootMonitor(this);
+  wccorrCollection->setRootMonitor(this);
+  digitizerCollection->setRootMonitor(this);
   cmshgcalLayerSumCollection->setRootMonitor(this);
   
   onlinemon->setCollections(_colls);
@@ -186,11 +186,12 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
     stdev = eudaq::StandardEvent::MakeShared();
     eudaq::StdEventConverter::Convert(evsp, stdev, nullptr); //no conf
   }
-
+  
   
   uint32_t ev_plane_c = stdev->NumPlanes();
-  cout<<"EventN (evsp) = "<< evsp->GetEventN()<<"   Event (stdev) ="<<stdev->GetEventNumber()<<"  Event ID ="<<std::dec<<stdev->GetEventID()
-      <<"  Number planes: "<<std::dec<<ev_plane_c<<endl;
+  if (evsp->GetEventN()%100 == 0)
+    cout<<"EventN (evsp) = "<< evsp->GetEventN()<<"   Event (stdev) ="<<stdev->GetEventNumber()<<"  Event ID ="<<std::dec<<stdev->GetEventID()
+	<<"\t DeviceN="<<stdev->GetDeviceN()<<"  Number planes: "<<std::dec<<ev_plane_c<<endl;
 
   /*
   if(m_ev_rec_n < 10){
@@ -251,13 +252,10 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   previous_event_analysis_time=my_event_processing_time.RealTime();
   //Filling
   my_event_processing_time.Start(true); //start the stopwatch again
-  for (unsigned int i = 0 ; i < _colls.size(); ++i)
-    {
-      //cout<<"We are in the loop in Receive  "<<i<<endl;
-
-      _colls.at(i)->Fill(*(stdev.get()), stdev->GetEventNumber());
-
-    }
+  for (unsigned int i = 0 ; i < _colls.size(); ++i) {
+    // cout<<"We are in the loop in Receive  "<<i<<endl;
+    _colls.at(i)->Fill(*(stdev.get()), stdev->GetEventNumber());  
+  }
 
   onlinemon->setEventNumber(stdev->GetEventNumber());
   onlinemon->increaseAnalysedEventsCounter();
@@ -265,7 +263,7 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   my_event_processing_time.Stop();
   previous_event_fill_time=my_event_processing_time.RealTime();
 
-  }
+}
 
 void RootMonitor::autoReset(const bool reset) {
   onlinemon->setAutoReset(reset);

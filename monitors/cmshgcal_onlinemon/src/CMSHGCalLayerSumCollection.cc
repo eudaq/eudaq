@@ -2,12 +2,6 @@
 #include "OnlineMon.hh"
 
 
-
-
-//void CMSHGCalLayerSumCollection::fillHistograms(const SimpleStandardEvent &ev) {
-//  Fill(ev);
-//}
-
 void CMSHGCalLayerSumCollection::Reset() {
   if (mymonhistos != NULL)
     mymonhistos->Reset();
@@ -30,7 +24,8 @@ void CMSHGCalLayerSumCollection::Write(TFile *file) {
 //void CMSHGCalLayerSumCollection::bookHistograms(const SimpleStandardEvent & /*simpev*/) {
 void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) {
   if (_mon != NULL) {
-    cout << "CMSHGCalLayerSumCollection:: Monitor running in online-mode" << endl;
+    cout << "CMSHGCalLayerSumCollection:: Monitor running in online-mode. Booking Histograms" << endl;
+    
     string performance_folder_name = "HGCal-EnergySum";
     _mon->getOnlineMon()->registerTreeItem(
         (performance_folder_name + "/Energy in MIP LG"));
@@ -94,13 +89,13 @@ void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) 
           (performance_folder_name + "/Energy VS CoGZ"),
           mymonhistos->getEnergyVSCoGZHisto());
 
-      
+      /*
       _mon->getOnlineMon()->registerTreeItem(
           (performance_folder_name + "/Longitudinal shower profile"));
       _mon->getOnlineMon()->registerHisto(
           (performance_folder_name + "/Longitudinal shower profile"),
           mymonhistos->getLongitudinalProfile());
-      
+      */
       
       _mon->getOnlineMon()->makeTreeItemSummary(
         performance_folder_name.c_str()); // make summary page
@@ -177,6 +172,8 @@ void CMSHGCalLayerSumCollection::Calculate(
 
 
 void CMSHGCalLayerSumCollection::Fill(const eudaq::StandardEvent &stdev, int evNumber) {
+  //cout<<"In CMSHGCalLayerSumCollection::Fill"<<endl;
+  
   if (histos_init == false) {
     mymonhistos = new CMSHGCalLayerSumHistos(_mon,stdev);
     if (mymonhistos == NULL) {
@@ -187,4 +184,7 @@ void CMSHGCalLayerSumCollection::Fill(const eudaq::StandardEvent &stdev, int evN
     histos_init = true;
   }
   mymonhistos->Fill(stdev);
+
+  // cout<<"End of CMSHGCalLayerSumCollection::Fill"<<endl;
+
 }
