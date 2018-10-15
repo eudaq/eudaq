@@ -56,14 +56,17 @@ void TDCHitsCollection::bookHistograms(const eudaq::StandardEvent &ev) {
 }
 
 void TDCHitsCollection::Write(TFile *file) {
+  cout << "TDCHitsCollection::Write"<<endl;
+
   if (file == NULL) {
-    // cout << "TDCHitsCollection::Write File pointer is NULL"<<endl;
+    cout << "TDCHitsCollection::Write File pointer is NULL"<<endl;
     exit(-1);
   }
 
   if (gDirectory != NULL) // check if this pointer exists
   {
-    gDirectory->mkdir("DelayWireChamber");
+    if (gDirectory->GetDirectory("DelayWireChamber")==NULL)
+      gDirectory->mkdir("DelayWireChamber");
     gDirectory->cd("DelayWireChamber");
 
     std::map<eudaq::StandardPlane, TDCHitsHistos *>::iterator it;
@@ -72,7 +75,7 @@ void TDCHitsCollection::Write(TFile *file) {
       char sensorfolder[255] = "";
       sprintf(sensorfolder, "%s_%d", it->first.Sensor().c_str(), it->first.ID());
 
-      // cout << "Making new subfolder " << sensorfolder << endl;
+      cout << "Making new subfolder " << sensorfolder << endl;
       gDirectory->mkdir(sensorfolder);
       gDirectory->cd(sensorfolder);
       it->second->Write();
@@ -82,6 +85,9 @@ void TDCHitsCollection::Write(TFile *file) {
     }
     gDirectory->cd("..");
   }
+
+  cout << "End of TDCHitsCollection::Write"<<endl;
+
 }
 
 void TDCHitsCollection::Calculate(const unsigned int currentEventNumber) {

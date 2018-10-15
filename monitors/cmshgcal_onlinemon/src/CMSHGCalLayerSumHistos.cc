@@ -46,9 +46,9 @@ CMSHGCalLayerSumHistos::CMSHGCalLayerSumHistos(RootMonitor *mon,const eudaq::Sta
   h_energy_cogz->GetXaxis()->SetTitle("CoG Z");
   h_energy_cogz->GetYaxis()->SetTitle("Energy [MIP]");
 
-  h_energy_layer = new TH2I("energy_VS_layer","", 50,0,40, 50,0,20000);
-  h_energy_layer->GetXaxis()->SetTitle("Layer");
-  h_energy_layer->GetYaxis()->SetTitle("Energy [MIP]");
+  //h_energy_layer = new TH2I("energy_VS_layer","", 50,0,40, 50,0,20000);
+  //h_energy_layer->GetXaxis()->SetTitle("Layer");
+  //h_energy_layer->GetYaxis()->SetTitle("Energy [MIP]");
 
 
 
@@ -258,7 +258,8 @@ void CMSHGCalLayerSumHistos::Reset()
   h_nhitFH1->Reset();
   h_energy_nhit->Reset();
   h_energy_cogz->Reset();
-  h_energy_layer->Reset();
+
+  //h_energy_layer->Reset();
 
   /*
   for (unsigned int i = 0; i < nplanes; i++) {
@@ -279,6 +280,8 @@ void CMSHGCalLayerSumHistos::Reset()
 
 void CMSHGCalLayerSumHistos::Write()
 {
+  cout << "CMSHGCalLayerSumHistos::Write" << endl;
+
   h_energyMIP->Write();
   h_energyLG->Write();
   h_energyHG->Write();
@@ -289,7 +292,9 @@ void CMSHGCalLayerSumHistos::Write()
   h_nhitFH1->Write();
   h_energy_nhit->Write();
   h_energy_cogz->Write();
-  h_energy_layer->Write();
+
+  
+  //h_energy_layer->Write();
 
   /*
   for (unsigned int i = 0; i < nplanes; i++) {

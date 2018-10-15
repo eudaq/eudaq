@@ -271,6 +271,7 @@ void RootMonitor::autoReset(const bool reset) {
 
 void RootMonitor::DoStopRun()
 {
+  std::cout<<"On RootMonitor::DoStopRun"<<std::endl;
   m_plane_c = 0;
   m_ev_rec_n = 0;
   while(onlinemon==NULL){
@@ -291,6 +292,9 @@ void RootMonitor::DoStopRun()
 }
 
 void RootMonitor::DoStartRun() {
+  
+  std::cout<<"On RootMonitor::DoStartRun"<<std::endl;
+    
   m_plane_c = 0;
   m_ev_rec_n = 0;
   uint32_t runnumber = GetRunNumber();

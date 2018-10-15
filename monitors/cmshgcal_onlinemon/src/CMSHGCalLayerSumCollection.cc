@@ -8,6 +8,8 @@ void CMSHGCalLayerSumCollection::Reset() {
 }
 
 void CMSHGCalLayerSumCollection::Write(TFile *file) {
+  cout << "CMSHGCalLayerSumCollection::Write" << endl;
+
   if (file == NULL) {
     cout << "CMSHGCalLayerSumCollection::Write File pointer is NULL" << endl;
     exit(-1);
@@ -81,13 +83,13 @@ void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) 
           (performance_folder_name + "/Energy VS number of hits"));
       _mon->getOnlineMon()->registerHisto(
           (performance_folder_name + "/Energy VS number of hits"),
-          mymonhistos->getEnergyVSNhitHisto());
+          mymonhistos->getEnergyVSNhitHisto(), "COLZ2");
 
       _mon->getOnlineMon()->registerTreeItem(
           (performance_folder_name + "/Energy VS CoGZ"));
       _mon->getOnlineMon()->registerHisto(
           (performance_folder_name + "/Energy VS CoGZ"),
-          mymonhistos->getEnergyVSCoGZHisto());
+          mymonhistos->getEnergyVSCoGZHisto(), "COLZ2");
 
       /*
       _mon->getOnlineMon()->registerTreeItem(
