@@ -12,7 +12,9 @@ void CMSHGCalLayerSumCollection::Write(TFile *file) {
     cout << "CMSHGCalLayerSumCollection::Write File pointer is NULL" << endl;
     exit(-1);
   }
-  if (gDirectory != NULL) // check if this pointer exists
+  if (mymonhistos == NULL) return; //histogram class does not exist, pointer is free, nothing to do -->return
+
+ if (gDirectory != NULL) // check if this pointer exists
   {
     gDirectory->mkdir("CMSHGCalLayerSum");
     gDirectory->cd("CMSHGCalLayerSum");
