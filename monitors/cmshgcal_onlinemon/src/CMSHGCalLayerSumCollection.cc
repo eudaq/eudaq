@@ -8,23 +8,25 @@ void CMSHGCalLayerSumCollection::Reset() {
 }
 
 void CMSHGCalLayerSumCollection::Write(TFile *file) {
-  cout << "CMSHGCalLayerSumCollection::Write" << endl;
-
   if (file == NULL) {
     cout << "CMSHGCalLayerSumCollection::Write File pointer is NULL" << endl;
     exit(-1);
   }
+  if (mymonhistos == NULL) return;
   if (gDirectory != NULL) // check if this pointer exists
   {
     gDirectory->mkdir("CMSHGCalLayerSum");
     gDirectory->cd("CMSHGCalLayerSum");
+    std::cout<<"Trying to write cms hgcal layer sum histos"<<std::endl;
     mymonhistos->Write();
+    std::cout<<"Done"<<std::endl;
     gDirectory->cd("..");
   }
 }
 
 //void CMSHGCalLayerSumCollection::bookHistograms(const SimpleStandardEvent & /*simpev*/) {
-void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) {
+//void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) {
+void CMSHGCalLayerSumCollection::bookHistograms() {
   if (_mon != NULL) {
     cout << "CMSHGCalLayerSumCollection:: Monitor running in online-mode. Booking Histograms" << endl;
     
@@ -83,22 +85,35 @@ void CMSHGCalLayerSumCollection::bookHistograms(const eudaq::StandardEvent &ev) 
           (performance_folder_name + "/Energy VS number of hits"));
       _mon->getOnlineMon()->registerHisto(
           (performance_folder_name + "/Energy VS number of hits"),
-          mymonhistos->getEnergyVSNhitHisto(), "COLZ2");
+          mymonhistos->getEnergyVSNhitHisto(),"COL2");
 
       _mon->getOnlineMon()->registerTreeItem(
           (performance_folder_name + "/Energy VS CoGZ"));
       _mon->getOnlineMon()->registerHisto(
           (performance_folder_name + "/Energy VS CoGZ"),
-          mymonhistos->getEnergyVSCoGZHisto(), "COLZ2");
+          mymonhistos->getEnergyVSCoGZHisto(),"COL2");
 
-      /*
+
+      _mon->getOnlineMon()->registerTreeItem(
+          (performance_folder_name + "/Longitudinal shower 2D"));
+      _mon->getOnlineMon()->registerHisto(
+          (performance_folder_name + "/Longitudinal shower 2D"),
+          mymonhistos->getLongitudinal2D(),"COL2");
+
+
       _mon->getOnlineMon()->registerTreeItem(
           (performance_folder_name + "/Longitudinal shower profile"));
       _mon->getOnlineMon()->registerHisto(
           (performance_folder_name + "/Longitudinal shower profile"),
           mymonhistos->getLongitudinalProfile());
-      */
-      
+
+      _mon->getOnlineMon()->registerTreeItem(
+          (performance_folder_name + "/CoGZ VS Nhits"));
+      _mon->getOnlineMon()->registerHisto(
+          (performance_folder_name + "/CoGZ VS Nhits"),
+          mymonhistos->getCoGZVSNhitsHisto(),"COL2");
+
+
       _mon->getOnlineMon()->makeTreeItemSummary(
         performance_folder_name.c_str()); // make summary page
 
@@ -175,14 +190,14 @@ void CMSHGCalLayerSumCollection::Calculate(
 
 void CMSHGCalLayerSumCollection::Fill(const eudaq::StandardEvent &stdev, int evNumber) {
   //cout<<"In CMSHGCalLayerSumCollection::Fill"<<endl;
-  
   if (histos_init == false) {
     mymonhistos = new CMSHGCalLayerSumHistos(_mon,stdev);
     if (mymonhistos == NULL) {
       cout << "CMSHGCalLayerSumCollection:: Can't book histograms " << endl;
       exit(-1);
     }
-    bookHistograms(stdev);
+    //bookHistograms(stdev);
+    bookHistograms();
     histos_init = true;
   }
   mymonhistos->Fill(stdev);

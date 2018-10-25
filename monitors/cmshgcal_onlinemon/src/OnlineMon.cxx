@@ -69,7 +69,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   tdchitsCollection = new TDCHitsCollection();
   wccorrCollection = new WireChamberCorrelationCollection();
   digitizerCollection = new DigitizerCollection();
-  cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();
+  cmshgcalLayerSumCollection = new CMSHGCalLayerSumCollection();	//comment this back in, T.Q. 15.10
 
   // put collections into the vector
   //_colls.push_back(monCollection);
@@ -77,8 +77,9 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   _colls.push_back(wcCollection);
   _colls.push_back(tdchitsCollection);
   _colls.push_back(wccorrCollection);
+  _colls.push_back(cmshgcalLayerSumCollection);	//comment this back in,	T.Q. 15.10
   _colls.push_back(digitizerCollection);
-  _colls.push_back(cmshgcalLayerSumCollection);
+
   
   //monCollection->setRootMonitor(this);
   
@@ -87,7 +88,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   tdchitsCollection->setRootMonitor(this);
   wccorrCollection->setRootMonitor(this);
   digitizerCollection->setRootMonitor(this);
-  cmshgcalLayerSumCollection->setRootMonitor(this);
+  cmshgcalLayerSumCollection->setRootMonitor(this);	//comment this back in,	T.Q. 15.10
   
   onlinemon->setCollections(_colls);
 
@@ -207,7 +208,6 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   //std::cout<< "do nothing for this event at "<< evsp->GetEventN()<< ", ev_plane_c "<<ev_plane_c<<std::endl;
   //return;
   //}
-
   while(onlinemon==NULL){
     cout<<"We are sleeping here 0"<<endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -282,12 +282,17 @@ void RootMonitor::DoStopRun()
   if (_writeRoot)
   {
     TFile *f = new TFile(rootfilename.c_str(),"RECREATE");
+    std::cout << "Trying to write collection in root file: " << std::endl;
     for (unsigned int i = 0 ; i < _colls.size(); ++i)
     {
+      std::cout << "collection " << i << "\t type = " << _colls.at(i)->getCollectionType() << std::endl;      
       _colls.at(i)->Write(f);
+	std::cout<<"Successful"<<std::endl;
     }
+    std::cout << "complete writting coll i root file" << std::endl;
     f->Close();
   }
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   onlinemon->UpdateStatus("Run stopped");
 }
 
@@ -297,21 +302,28 @@ void RootMonitor::DoStartRun() {
     
   m_plane_c = 0;
   m_ev_rec_n = 0;
+  std::cout << "Try to get run num";
   uint32_t runnumber = GetRunNumber();
+  std::cout << " OK " << std::endl;
   while(onlinemon==NULL){
     cout<<"We are sleeping here 3"<<endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+  std::cout << " onlinemon pointer not null OK " << std::endl;
+  std::cout << " try to reset collections ";
 
+  
   if (onlinemon->getAutoReset())
   {
     onlinemon->UpdateStatus("Resetting..");
     for (unsigned int i = 0 ; i < _colls.size(); ++i)
     {
+      std::cout << "collection " << i << "\t type = " << _colls.at(i)->getCollectionType() << std::endl;      
       if (_colls.at(i) != NULL)
         _colls.at(i)->Reset();
     }
   }
+  std::cout << " finish reseting collection " << std::endl;
 
   std::cout << "Called on start run " << runnumber <<std::endl;
   onlinemon->UpdateStatus("Starting run..");

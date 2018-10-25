@@ -73,10 +73,15 @@ void TDCHitsHistos::Fill(const eudaq::StandardPlane &plane, int eventNumber) {
 }
 
 void TDCHitsHistos::Reset() {
+  if (_hitOccupancy == NULL) return;
   _hitOccupancy->Reset();
+  if (_hitProbability == NULL) return;
   _hitProbability->Reset();
+ if (_occupancy == NULL) return;
   _occupancy->Reset();
+ if (_hitSumCount == NULL) return;
   _hitSumCount->Reset();
+ if (_hitCount == NULL) return;
   _hitCount->Reset();
   lastEventForRefresh = -1;
 }

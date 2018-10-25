@@ -21,7 +21,7 @@ test.ini
 *.xz
 *.bz
 *.bz2
-
+*log
 .*
 \#*#
 *~

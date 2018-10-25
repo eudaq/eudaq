@@ -80,7 +80,7 @@ void DigitizerHistos::Fill(const eudaq::StandardPlane &plane, int eventNumber) {
   }
 
 
-  if ((lastShownEvent == -1) || (eventNumber - lastShownEvent > 100))  { //refresh the explicit graphs every hunderd events
+  if ((lastShownEvent == -1) || (eventNumber - lastShownEvent > 2))  { //refresh the explicit graphs every hunderd events
     for (std::map<int, TH1F*>::iterator it2 = lastWaveform.begin(); it2 != lastWaveform.end(); it2++ )     {
       it2->second->Reset();
       char out[1024];

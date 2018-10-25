@@ -33,7 +33,10 @@ public:
   TH1I *getNhitFH1Histo(){return h_nhitFH1;}
   TH2I *getEnergyVSNhitHisto(){return h_energy_nhit;}
   TH2I *getEnergyVSCoGZHisto(){return h_energy_cogz;}
-  TH2I *getLongitudinalProfile(){return h_energy_layer;}
+  TH2I *getLongitudinal2D(){return h_energy_layer;}
+  TProfile *getLongitudinalProfile(){return h_energy_layerProfile;}
+  TH2I *getCoGZVSNhitsHisto(){return h_cogz_nhits;}
+  
   //TProfile *getLongitudinalProfile(){return h_energy_layer->ProfileX();}
   ///return per-plane histo
   /*
@@ -77,7 +80,9 @@ private:
   TH2I *h_energy_nhit;
   TH2I *h_energy_cogz;
   TH2I *h_energy_layer;
-
+  TProfile *h_energy_layerProfile;
+  TH2I *h_cogz_nhits;
+  
   //per-plane histos
   /*
   TH1F **h_energyMIP_pp;

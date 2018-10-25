@@ -116,29 +116,41 @@ void DigitizerCollection::registerPlane(const eudaq::StandardPlane &p) {
     char tree[1024], folder[1024];
 
 
-    for (int gr = 0; gr < 4; gr++) for (int ch = 0; ch < 9; ch++) {
+    for (int gr = 0; gr < 1; gr++) for (int ch = 0; ch < 9; ch++) {
         int key = gr * 100 + ch;
-        sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree, getDigitizerHistos(p.Sensor(), p.ID())->getIntegratedWaveform(key), "COLZ", 0);
+        //sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
+        //_mon->getOnlineMon()->registerTreeItem(tree);
+        //_mon->getOnlineMon()->registerHisto(tree, getDigitizerHistos(p.Sensor(), p.ID())->getIntegratedWaveform(key), "COLZ", 0);
 
         sprintf(tree, "%s/group%i/LastWaveform_ch%i", "DIGITIZER", gr, ch);
         _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree, getDigitizerHistos(p.Sensor(), p.ID())->getLastWaveform(key), "", 0);
+        _mon->getOnlineMon()->registerHisto(tree, getDigitizerHistos(p.Sensor(), p.ID())->getLastWaveform(key), "hist", 0);
         sprintf(folder, "%s/group%i", "DIGITIZER", gr);
         _mon->getOnlineMon()->addTreeItemSummary(folder, tree);
 
 
         //some are added as summary objects
         if ((gr == 0) && (ch == 0)) {
-          sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
-          _mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
+          //sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
+          //_mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
           sprintf(tree, "%s/group%i/LastWaveform_ch%i", "DIGITIZER", gr, ch);
           _mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
         }
         if ((gr == 0) && (ch == 1)) {
-          sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
+          //sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
+          //_mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
+          sprintf(tree, "%s/group%i/LastWaveform_ch%i", "DIGITIZER", gr, ch);
           _mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
+        }
+        if ((gr == 0) && (ch == 2)) {
+          //sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
+          //_mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
+          sprintf(tree, "%s/group%i/LastWaveform_ch%i", "DIGITIZER", gr, ch);
+          _mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
+        }
+        if ((gr == 0) && (ch == 3)) {
+          //sprintf(tree, "%s/group%i/IntegratedWaveform_ch%i", "DIGITIZER", gr, ch);
+          //_mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
           sprintf(tree, "%s/group%i/LastWaveform_ch%i", "DIGITIZER", gr, ch);
           _mon->getOnlineMon()->addTreeItemSummary("DIGITIZER", tree);
         }
