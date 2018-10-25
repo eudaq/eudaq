@@ -40,14 +40,17 @@ void WireChamberCollection::bookHistograms(const eudaq::StandardEvent &ev) {
 }
 
 void WireChamberCollection::Write(TFile *file) {
+  cout << "WireChamberCorrelationCollection::Write"<<endl;
+
   if (file == NULL) {
-    // cout << "WireChamberCollection::Write File pointer is NULL"<<endl;
+    cout << "WireChamberCollection::Write File pointer is NULL"<<endl;
     exit(-1);
   }
 
   if (gDirectory != NULL) // check if this pointer exists
   {
-    gDirectory->mkdir("DelayWireChamber");
+    if (gDirectory->GetDirectory("DelayWireChamber")==NULL)
+      gDirectory->mkdir("DelayWireChamber");
     gDirectory->cd("DelayWireChamber");
 
     std::map<eudaq::StandardPlane, WireChamberHistos *>::iterator it;

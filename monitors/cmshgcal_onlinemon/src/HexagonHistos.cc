@@ -212,20 +212,20 @@ void HexagonHistos::Fill(const eudaq::StandardPlane &plane, int evNumber) {
 
       // ----- Maskig noisy channels ----
       // These are noisy pixels in most hexaboards. Let's just mask them from DQM:
-      if ( pixel_x==0 && pixel_y==22 )
-      	continue;
+      // if ( pixel_x==0 && pixel_y==22 )
+      // 	continue;
 
       if ( pixel_x==3 && pixel_y==44 )
       	continue;
 
       if ( pixel_x==0 && pixel_y==28 )
-	continue;
+      	continue;
 
       /* // Masking for October 2018 beam tests: */
 
       // Whole chip 3 is bad on this board
-      if ( _id==0 && pixel_x==3)
-	continue;
+      // if ( _id==0 && pixel_x==3)
+      // 	continue;
 
 
       if (  (_id==17 || _id==20 || _id==23 || _id==28 || _id==38 || _id==41 || _id==48 || _id==56 || _id==57 || _id==58 ||

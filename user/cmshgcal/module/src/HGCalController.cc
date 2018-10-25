@@ -201,9 +201,17 @@ void HGCalController::run()
     readoutTimer.start();
     std::cout << "\t HGCalController starts reading the data" << std::endl;
     boost::thread threadVec[MAX_NUMBER_OF_ORM];
+    std::vector<uint32_t> count0,count1;
+    for( int i=0; i<MAX_NUMBER_OF_ORM; i++){
+      count0.push_back(0);
+      count1.push_back(0);
+    }
     for( int i=0; i<MAX_NUMBER_OF_ORM; i++)
-      if( (m_config.rdoutMask>>i)&1 )
+      if( (m_config.rdoutMask>>i)&1 ){
+	count0[i]=m_rdout_orms[i]->ReadRegister("CLK_COUNT0");
+	count1[i]=m_rdout_orms[i]->ReadRegister("CLK_COUNT1");
 	threadVec[i]=boost::thread(readFIFOThread,m_rdout_orms[i]);
+      }
     for( int i=0; i<MAX_NUMBER_OF_ORM; i++)
       if( (m_config.rdoutMask>>i)&1 )
 	threadVec[i].join();
@@ -216,11 +224,9 @@ void HGCalController::run()
 	uint32_t trailer=i;//8 bits for orm id
 	trailer|=m_triggerId<<8;//24 bits for trigger number
 	datablk.setValueInBlock( i, m_config.blockSize+0, trailer);
-	uint32_t count0=m_rdout_orms[i]->ReadRegister("CLK_COUNT0");
-	uint32_t count1=m_rdout_orms[i]->ReadRegister("CLK_COUNT1");
-	datablk.setValueInBlock( i, m_config.blockSize+1, count0 );
-	datablk.setValueInBlock( i, m_config.blockSize+2, count1 );
-	uint64_t clock_count=((uint64_t)count1<<32) | (uint64_t)count0;
+	datablk.setValueInBlock( i, m_config.blockSize+1, count0[i] );
+	datablk.setValueInBlock( i, m_config.blockSize+2, count1[i] );
+	uint64_t clock_count=((uint64_t)count1[i]<<32) | (uint64_t)count0[i];
 	std::cout << "trigger id = " << std::dec << m_triggerId << "\t clock count = " << std::dec << clock_count << std::endl;
       }
     }

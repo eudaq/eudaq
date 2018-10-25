@@ -50,8 +50,10 @@ void WireChamberCorrelationCollection::bookHistograms(const eudaq::StandardEvent
 }
 
 void WireChamberCorrelationCollection::Write(TFile *file) {
+  cout << "WireChamberCorrelationCollection::Write"<<endl;
+  
   if (file == NULL) {
-    // cout << "WireChamberCorrelationCollection::Write File pointer is NULL"<<endl;
+    cout << "WireChamberCorrelationCollection::Write File pointer is NULL"<<endl;
     exit(-1);
   }
 

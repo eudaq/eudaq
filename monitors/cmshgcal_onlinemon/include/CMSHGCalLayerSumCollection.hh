@@ -44,7 +44,7 @@ public:
   virtual void Write(TFile *file);
   virtual void Calculate(const unsigned int currentEventNumber);
   //void bookHistograms(const SimpleStandardEvent &simpev);
-  void bookHistograms(const eudaq::StandardEvent &ev);
+  void bookHistograms();
   CMSHGCalLayerSumHistos *getCMSHGCalLayerSumHistos();
   //void setReduce(const unsigned int red);
   unsigned int getCollectionType();
