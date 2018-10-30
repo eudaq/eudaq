@@ -49,6 +49,10 @@ We recommend a gcc version 5.0 or later.
 Qt version 5 or higher is required to build GUIs. 
 ROOT 6 is required for the Online Monitor GUI.
 
+#### Environments
+The ROOT environment has to be set for a successful installation. 
+Additionally, the installation shpuld work when using the standard system Python. Sometimes there can be a conflict if using a seperate installation of Python like Anaconda or Miniconda.
+
 ### For specific Producers and Components
 
 #### EUDET TLU producer
