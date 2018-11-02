@@ -8,7 +8,7 @@ sleep 1
 
 # Start one DataCollector
 # name (-t) in conf file
-xterm -T "Data Collector Trigger" -e 'euCliCollector -n EventIDSyncDataCollecor -t one_dc -r tcp://192.168.22.1:44000' &
+xterm -T "Data Collector Trigger" -e 'euCliCollector -n EventIDSyncDataCollector -t one_dc -r tcp://192.168.22.1:44000' &
 sleep 1
 
 # Start TLU Producer
