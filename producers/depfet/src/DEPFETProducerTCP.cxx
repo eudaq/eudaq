@@ -73,7 +73,7 @@ void DEPFETProducerTCP::Process() {
     Nmod = REQUEST;
     eudaq::Timer timer2;
     int rc = tcp_event_get(&data_host[0], buffer, &lenevent, &Nmod, &Kmod, &itrg);
-    if (itrg%400 == 0) std::cout << "##DEBUG## tcp_event_get " << timer2.mSeconds() << "ms" << std::endl;
+    if (itrg%2000 == 0) std::cout << "##DEBUG## tcp_event_get " << timer2.mSeconds() << "ms" << std::endl;
     if (rc < 0) {
         EUDAQ_WARN("tcp_event_get ERROR");
         SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Could not read from host!");
@@ -115,7 +115,7 @@ void DEPFETProducerTCP::Process() {
     ev->AddBlock(id++, buffer, lenevent*4);
 
   }  while (Kmod!=(Nmod-1));
-  if (itrg%100 == 0) std::cout << "##DEBUG## Reading took " << timer.mSeconds() << "ms" << std::endl;
+  if (itrg%2000 == 0) std::cout << "##DEBUG## Reading took " << timer.mSeconds() << "ms" << std::endl;
   timer.Restart();
 //    if (firstevent && itrg != 0) {
 //      printf("Ignoring bad event (%d)\n", itrg);
@@ -124,7 +124,7 @@ void DEPFETProducerTCP::Process() {
 //    }
   ++m_evt;
   SendEvent(*ev);
-  if (itrg%400 == 0) std::cout << "##DEBUG## Sending took " << timer.mSeconds() << "ms" << std::endl;
+  if (itrg%2000 == 0) std::cout << "##DEBUG## Sending took " << timer.mSeconds() << "ms" << std::endl;
 }
 
 int main(int /*argc*/, char ** argv) {
