@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+bool try_cmd_send(const std::string & command);
 int cmd_send(const std::string & command);
 int set_host(char *host, int port);
 
