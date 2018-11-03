@@ -83,7 +83,7 @@ int run_control (struct HOST* host) {
   //           TCP   connection  loop   
   //-------------------------------------------------------------------
   Buffer = (char *)malloc(Bytes);
-  if (Buffer == 0x0)
+  if (Buffer == nullptr)
     {
       printf("run_control()::could not malloc buffer of byte length %d\n",Bytes);
       exit (102);
