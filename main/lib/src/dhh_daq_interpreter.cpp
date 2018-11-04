@@ -623,9 +623,9 @@ int interprete_dhc_from_dhh_daq_format(std::vector<depfet_event> &return_data, c
 
             if((DHP_id==dhpNR)||(dhpNR==-1)) {
                 if(dhpData[(frame_size-2)*2 -1]==0  ){
-                    printf("Unwanted padding in data! SHOULD NOT HAPPEN! Ignoring event\n");
+                    //printf("Unwanted padding in data! SHOULD NOT HAPPEN! Ignoring event\n");
                     if (fill_info) info_map["ERROR,"+dhc_prefix+dhe_prefix + fr_prefix+"ERROR_INVALID_PADDING"]+=1;
-                    continue;
+                    //continue;
                 }
                 if(((dhpData[(frame_size-2)*2 -1]) >> 15) == 0 ){
 
