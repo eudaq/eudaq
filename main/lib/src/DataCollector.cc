@@ -123,6 +123,8 @@ namespace eudaq {
           m_buffer[i].events.clear();
         }
       }
+      m_ireceived.clear();
+
       SetConnectionState(ConnectionState::STATE_RUNNING);
     } catch (const Exception &e) {
       std::string msg =
@@ -153,9 +155,11 @@ namespace eudaq {
     inf.events.push_back(ev);
 
     // Print if the received event is the EORE of this producer:
-    if (inf.events.back()->IsEORE())
-      std::cout << "Received EORE Event from " << id << ": " << *ev
+    if (inf.events.back()->IsEORE()){
+         EUDAQ_INFO("Received EORE Event from " + id.GetName());
+         std::cout << "Received EORE Event from " << id << ": " << *ev
                 << std::endl;
+    }
 
 
     // There are two types of producers now: "fast" producer and slow producer.
