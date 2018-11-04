@@ -99,7 +99,7 @@ void DEPFETProducerTCP::Process() {
       //printf("DEBUG: BORE\n");
       return;
     } else if (itrg == EORE_TRIGGERID) {
-      printf("Sending EORE \n");
+      printf("Sending EORE for run %d with events: m_evt %d\n",m_run,m_evt);
       SendEvent(RawDataEvent::EORE(datatypename, m_run, ++m_evt));
       return;
     }

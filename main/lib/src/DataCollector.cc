@@ -123,6 +123,9 @@ namespace eudaq {
           m_buffer[i].events.clear();
         }
       }
+      // needs to be cleared - Scenario: 2 Producers.  Producer A had remaining data, which is deleted above.
+      // Now producer B sends data - event *seemingly* complete - OnCompleteEvent called, which accesses
+      // nonexistent Producer A data - segfault.
       m_ireceived.clear();
 
       SetConnectionState(ConnectionState::STATE_RUNNING);
@@ -135,10 +138,17 @@ namespace eudaq {
   }
 
   void DataCollector::OnStopRun() {
-    EUDAQ_INFO("Start stopping run" + to_string(m_runnumber));
-    eudaq::mSleep(2000);
-    EUDAQ_INFO("End of run " + to_string(m_runnumber));
     std::cout<<"Stop Run for datacollector called \n";
+    EUDAQ_INFO("Start stopping run" + to_string(m_runnumber));
+    eudaq::mSleep(6000); // lets give the other prducers time to sent the last data packets. Mimosa (NI) takes 5 Seconds - luetticke
+    auto fastwaiting = std::count_if(m_ireceived.begin(), m_ireceived.end(), [](std::pair<size_t, std::string> i) -> bool {return i.second != "SlowProducer";});
+    if (fastwaiting == m_buffer.size() - m_slow){
+        // Even late events are welcome. - luetticke
+        EUDAQ_WARN("Building unfinished events while stopping" + to_string(m_runnumber));
+        OnCompleteEvent();
+    }
+    EUDAQ_INFO("End of run " + to_string(m_runnumber));
+
     if(m_connectionstate.GetState()!= ConnectionState::STATE_ERROR)
       SetConnectionState(ConnectionState::STATE_CONF);
     // Leave the file open, more events could still arrive
@@ -239,13 +249,16 @@ namespace eudaq {
         ev.AddEvent(m_buffer[i].events.front());
         m_buffer[i].events.pop_front();
         if (m_buffer[i].events.size() == 0) {
+          // I am unsure if we want more = false here. What if the current producer is a slow producer? - luetticke
           more = false;
+          // keep track here about if data from producer x is available.  - luetticke
+          m_ireceived.erase(i);
         }
       }
 
       if (ev.IsBORE()) {
         ev.SetTag("STARTTIME", m_runstart.Formatted());
-	ev.SetTag("INIT", to_string(m_init));
+        ev.SetTag("INIT", to_string(m_init));
         ev.SetTag("CONFIG", to_string(m_config));
         found_bore = true;
       }
@@ -273,7 +286,11 @@ namespace eudaq {
       if (!found_bore)
         ++m_eventnumber;
     }
-    m_ireceived.clear();
+    // Don't delete all. What if events from everywhere but one place are still there
+    // and then and then the data from the last producer arrives?
+    // This is the reason why there sometimes are remaining events from
+    // all modules in the buffer. Better: Keep track upstream.  - luetticke
+    //m_ireceived.clear();
   }
 
   size_t DataCollector::GetInfo(const ConnectionInfo &id) {
