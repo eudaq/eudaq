@@ -73,7 +73,7 @@ void DEPFETProducerTCP::Process() {
     Nmod = REQUEST;
     eudaq::Timer timer2;
     int rc = tcp_event_get(&data_host[0], buffer, &lenevent, &Nmod, &Kmod, &itrg);
-    if (itrg%2000 == 0) std::cout << "##DEBUG## tcp_event_get " << timer2.mSeconds() << "ms" << std::endl;
+    if (itrg%50000 == 0) std::cout << "##DEBUG## tcp_event_get " << timer2.mSeconds() << "ms" << std::endl;
     if (rc < 0) {
         EUDAQ_WARN("tcp_event_get ERROR");
         SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Could not read from host!");
@@ -83,7 +83,7 @@ void DEPFETProducerTCP::Process() {
     int len2 = buffer[0] & 0xfffff;
     int evt_type = (buffer[0] >> 22) & 0x3;
     int dev_type = (buffer[0] >> 28) & 0xf;
-    if (itrg == BORE_TRIGGERID || itrg == EORE_TRIGGERID || itrg < last_trigger || evt_type != 2) {
+    if (itrg%5000 == 0 || itrg == BORE_TRIGGERID || itrg == EORE_TRIGGERID || itrg < last_trigger || evt_type != 2) {
       std::cout << "Received: Mod " << (Kmod+1) << " of " << Nmod << ", id=" << evtModID
                 << ", EvType=" << evt_type << ", DevType=" << dev_type
                 << ", NData=" << lenevent << " (" << len2 << ") "
@@ -115,7 +115,7 @@ void DEPFETProducerTCP::Process() {
     ev->AddBlock(id++, buffer, lenevent*4);
 
   }  while (Kmod!=(Nmod-1));
-  if (itrg%2000 == 0) std::cout << "##DEBUG## Reading took " << timer.mSeconds() << "ms" << std::endl;
+  if (itrg%50000 == 0) std::cout << "##DEBUG## Reading took " << timer.mSeconds() << "ms" << std::endl;
   timer.Restart();
 //    if (firstevent && itrg != 0) {
 //      printf("Ignoring bad event (%d)\n", itrg);
@@ -124,7 +124,7 @@ void DEPFETProducerTCP::Process() {
 //    }
   ++m_evt;
   SendEvent(*ev);
-  if (itrg%2000 == 0) std::cout << "##DEBUG## Sending took " << timer.mSeconds() << "ms" << std::endl;
+  if (itrg%50000 == 0) std::cout << "##DEBUG## Sending took " << timer.mSeconds() << "ms" << std::endl;
 }
 
 int main(int /*argc*/, char ** argv) {

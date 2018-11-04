@@ -92,10 +92,11 @@ namespace eudaq {
       bool isEventValid(const std::vector<unsigned char> & data) const {
         // ceck data consistency
         unsigned int dh_found = 0;
-        for (unsigned int i=4; i < data.size(); i += 4) {   // 8->4 trigger from pybar is 32bits
-          unsigned word = (((unsigned int)data[i]) << 24) | (((unsigned int)data[i +1]) << 16) | (((unsigned int)data[i + 2]) << 8) | (unsigned int)data[i+3];
+        if(data.size()%4!=0) return false;
+        const unsigned int * p=reinterpret_cast<const unsigned int *>(&(data[0]));
+        for (unsigned int i=1; i < data.size()/4; ++i)  {
           //printf("isEventValid word=%08x,masked=%08x, %d\n",word,(PYBAR_DATA_HEADER_MASK & word),int(PYBAR_DATA_HEADER_MACRO(word)));
-          if (PYBAR_DATA_HEADER_MACRO(word))	{
+          if (PYBAR_DATA_HEADER_MACRO(p[i]))	{  //direct casting needed for current versions of pybar  - luetticke
             dh_found++;
           }
         }
@@ -103,6 +104,7 @@ namespace eudaq {
 
         if (dh_found != consecutive_lvl1){
             //exit(0);
+            printf("isEventValid INVALID! sdb_found=%d\n",dh_found);
             return false;
         }
         else{
@@ -120,15 +122,17 @@ namespace eudaq {
         //}
         //printf("\n");
         //unsigned int i = data.size() - 4; // 8->4 hirono //splitted in 2x 32bit words
-        unsigned Trigger_word1 = (((unsigned int)data[0]) << 24) | (((unsigned int)data[1]) << 16) | (((unsigned int)data[2]) << 8) | (unsigned int)data[3];
-        //unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+        const unsigned int * p=reinterpret_cast<const unsigned int *>(&(data[0]));
 
-        unsigned int trigger_number = 0x7FFFFFFF & Trigger_word1;  //hirono 
+        //unsigned Trigger_word1 = (((unsigned int)data[0]) << 24) | (((unsigned int)data[1]) << 16) | (((unsigned int)data[2]) << 8) | (unsigned int)data[3];
+        //unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+        unsigned int trigger_number = 0x7FFFFFFF & p[0];  //lutticke. Hello Hirono :-)
+        //unsigned int trigger_number = 0x7FFFFFFF & Trigger_word1;  //hirono
         //std::cout << "getTrigger(): " << trigger_number << std::endl;
         return trigger_number;
       }
 
-      bool getHitData (unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
+      bool getHitData (const unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
         //printf("getHitData word=%08x col_masked=%08x %d\n",Word,PYBAR_DATA_RECORD_COLUMN_MASK & Word,PYBAR_DATA_RECORD_MACRO(Word));
         if ( !PYBAR_DATA_RECORD_MACRO(Word) ) return false;	// No Data Record
 
@@ -147,6 +151,21 @@ namespace eudaq {
         }
         //printf("getHitData() t_Col=%d,t_Row=%d,t_ToT=%d\n",t_Col,t_Row,t_ToT);
         //exit(0);
+
+
+        if(t_ToT== 15 && !second_hit){
+            ToT=17;
+            std::cout<< "Got FEI4 ToT 15 in first hit! This should never happen. Word" << std::hex<< Word<<std::dec << std::endl;
+            std::cout<< " TOT1: " <<PYBAR_DATA_RECORD_TOT1_MACRO(Word)
+                                << " COL1: " <<PYBAR_DATA_RECORD_COLUMN1_MACRO(Word)
+                                << " ROW1: " <<PYBAR_DATA_RECORD_ROW1_MACRO(Word)
+                                << " TOT2: " <<PYBAR_DATA_RECORD_TOT2_MACRO(Word)
+                                << " COL2: " <<PYBAR_DATA_RECORD_COLUMN2_MACRO(Word)
+                                << " ROW2: " <<PYBAR_DATA_RECORD_ROW2_MACRO(Word)
+                                << std::endl;
+
+            return false;
+        }
 
         // translate FE-I4 ToT code into tot
         if (tot_mode==1) {
@@ -204,8 +223,9 @@ namespace eudaq {
         unsigned int eventnr=0;
 
         // Get Events
-        for (unsigned int i=4; i < data.size(); i += 4) {
-          unsigned int Word = (((unsigned int)data[i]) << 24) | (((unsigned int)data[i+1]) << 16) | (((unsigned int)data[i+2]) << 8) | (unsigned int)data[i+3];
+        const unsigned int * p=reinterpret_cast<const unsigned int *>(&(data[0]));
+        for (unsigned int i=1; i < data.size()/4; ++i) {
+          const unsigned int &Word = p[i];  //direct casting needed for current versions of pybar  - luetticke
           //printf("ConvertPlane() word=%08x masked=%08x %d\n",Word,(PYBAR_DATA_HEADER_MASK & Word),PYBAR_DATA_HEADER_MACRO(Word));
           if (PYBAR_DATA_HEADER_MACRO(Word)) {
             lvl1++;
@@ -287,121 +307,7 @@ namespace eudaq {
         return true;
       }
 
-#if USE_LCIO && USE_EUTELESCOPE
-      // This is where the conversion to LCIO is done
-      virtual lcio::LCEvent * GetLCIOEvent(const Event * /*ev*/) const {
-        return 0;
-      }
 
-      virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
-        //std::cout << "getlciosubevent (I4) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
-        if (eudaqEvent.IsBORE()) {
-          // shouldn't happen
-          return true;
-        } else if (eudaqEvent.IsEORE()) {
-          // nothing to do
-          return true;
-        }
-
-        // set type of the resulting lcio event
-        lcioEvent.parameters().setValue( eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE );
-        // pointer to collection which will store data
-        LCCollectionVec * zsDataCollection;
-
-        // it can be already in event or has to be created
-        bool zsDataCollectionExists = false;
-        try {
-          zsDataCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "zsdata_apix" ) );
-          zsDataCollectionExists = true;
-        } catch ( lcio::DataNotAvailableException& e ) {
-          zsDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
-        }
-
-        //	create cell encoders to set sensorID and pixel type
-        CellIDEncoder< TrackerDataImpl > zsDataEncoder   ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection  );
-
-        // this is an event as we sent from Producer
-        // needs to be converted to concrete type RawDataEvent
-        const RawDataEvent & ev_raw = dynamic_cast <const RawDataEvent &> (eudaqEvent);
-
-        std::vector< eutelescope::EUTelSetupDescription * >  setupDescription;
-
-        for (size_t chip = 0; chip < ev_raw.NumBlocks(); ++chip) {
-          const std::vector <unsigned char> & buffer=dynamic_cast<const std::vector<unsigned char> &> (ev_raw.GetBlock(chip));
-
-          if (lcioEvent.getEventNumber() == 0) {
-            eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelAPIXMCDetector(2);
-            currentDetector->setMode( "ZS" );
-
-            setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
-          }
-
-          zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset + first_sensor_id; // formerly 14
-          zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
-
-          // prepare a new TrackerData object for the ZS data
-          // it contains all the hits for a particular sensor in one event
-          std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
-          // set some values of "Cells" for this object
-          zsDataEncoder.setCellID( zsFrame.get() );
-
-          // this is the structure that will host the sparse pixel
-          // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
-          // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-          std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
-            sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
-
-          unsigned int ToT = 0;
-          unsigned int Col = 0;
-          unsigned int Row = 0;
-          unsigned int lvl1 = 0;
-
-          for (unsigned int i=4; i < buffer.size(); i += 4) {
-            unsigned int Word = (((unsigned int)buffer[i]) << 24) | (((unsigned int)buffer[i+1]) << 16) | (((unsigned int)buffer[i+2]) << 8) | (unsigned int)buffer[i+3];
-
-            if (PYBAR_DATA_HEADER_MACRO(Word)) {
-              lvl1++;
-            } else {
-              // First Hit
-              if (getHitData(Word, false, Col, Row, ToT)) {
-                sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
-              }
-              // Second Hit
-              if (getHitData(Word, true, Col, Row, ToT)) {
-                sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
-              }
-            }
-          }
-
-          // write TrackerData object that contains info from one sensor to LCIO collection
-          zsDataCollection->push_back( zsFrame.release() );
-        }
-
-        // add this collection to lcio event
-        if ( ( !zsDataCollectionExists )  && ( zsDataCollection->size() != 0 ) ) lcioEvent.addCollection( zsDataCollection, "zsdata_apix" );
-
-        if (lcioEvent.getEventNumber() == 0) {
-          // do this only in the first event
-          LCCollectionVec * apixSetupCollection = NULL;
-
-          bool apixSetupExists = false;
-          try {
-            apixSetupCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "apix_setup" ) ) ;
-            apixSetupExists = true;
-          } catch (...) {
-            apixSetupCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
-          }
-
-          for ( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane ) {
-            apixSetupCollection->push_back( setupDescription.at( iPlane ) );
-          }
-
-          if (!apixSetupExists) lcioEvent.addCollection( apixSetupCollection, "apix_setup" );
-        }
-        return true;
-
-      }
-#endif
 
     private:
 
