@@ -47,11 +47,16 @@ namespace eudaq {
         return getlittleendian<unsigned>(&rawev.GetBlock(0)[4]);
       }
     private:
-      DEPFETConverterPlugin(const std::string name) : DataConverterPlugin(name) {interpreter=DepfetInterpreter();
-                                                                interpreter.setSkipRaw(true);
-                                                                            }
-      DepfetInterpreter interpreter;
+      DEPFETConverterPlugin(const std::string name) : DataConverterPlugin(name),isHybrid5(name=="DEPFE5" ){
+          interpreter=DepfetInterpreter();
+          interpreter.setSkipRaw(true);
+          if(isHybrid5){
+              interpreter.setMapping(Mapping::HYBRID5);
+          }
 
+          }
+      DepfetInterpreter interpreter;
+      const bool isHybrid5;
 
       static DEPFETConverterPlugin const m_instance;
       static DEPFETConverterPlugin const m_instance2;
@@ -84,7 +89,8 @@ namespace eudaq {
             std::cout<<"More than one event for block ID. Throwing away the additional ones"<<ev.GetID(i)<<std::endl;
         }
         StandardPlane plane(ev.GetID(i), "DEPFET", "DEPFET");
-        plane.SetSizeZS(768,256,all_events[0].zs_data.size());
+        if(isHybrid5)plane.SetSizeZS(64,64,all_events[0].zs_data.size());
+        else plane.SetSizeZS(768,256,all_events[0].zs_data.size());
         plane.SetTLUEvent(all_events[0].triggerNr);
         for(unsigned i=0;i<all_events[0].zs_data.size();i++){
             plane.SetPixel(i,all_events[0].zs_data[i].row,all_events[0].zs_data[i].col,all_events[0].zs_data[i].val);
