@@ -133,6 +133,8 @@ namespace eudaq {
   }
 
   void DataCollector::OnStopRun() {
+    EUDAQ_INFO("Start stopping run" + to_string(m_runnumber));
+    eudaq::mSleep(2000);
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
     std::cout<<"Stop Run for datacollector called \n";
     if(m_connectionstate.GetState()!= ConnectionState::STATE_ERROR)
