@@ -88,7 +88,18 @@ void DEPFETProducerTCP::Process() {
                 << ", EvType=" << evt_type << ", DevType=" << dev_type
                 << ", NData=" << lenevent << " (" << len2 << ") "
                 << ", TrigID=" << itrg << " (" << buffer[1] << ") last trigger "<<last_trigger << std::endl;
+      if(current_trigger_offset!=0){
+          std::cout << "WARNING! There is offset between internal and TLU Trigger of "<<current_trigger_offset << std::endl;
+
+      }
     }
+    if( itrg != BORE_TRIGGERID && itrg != EORE_TRIGGERID  && (1+m_evt)%32768 != (itrg + current_trigger_offset )%32768 ){
+            std::cout << "Current internal trigger %%32768: " << (1+m_evt)%32768 << ", current TLU Trigger> "<< itrg << std::endl;
+            int newTriggerOffset=(1+m_evt -itrg)%32768;
+            std::cout << "WARNING! Trigger offset shifted. It was "<<current_trigger_offset << " now it is" << newTriggerOffset << std::endl;
+            current_trigger_offset=newTriggerOffset;
+    }
+
     last_trigger=itrg;
 
     if (itrg == BORE_TRIGGERID) {
@@ -99,7 +110,7 @@ void DEPFETProducerTCP::Process() {
       //printf("DEBUG: BORE\n");
       return;
     } else if (itrg == EORE_TRIGGERID) {
-      printf("Sending EORE for run %d with events: m_evt %d\n",m_run,m_evt);
+      printf("Sending EORE for run %d with events: m_evt %d\n",m_run,m_evt+1);
       SendEvent(RawDataEvent::EORE(datatypename, m_run, ++m_evt));
       return;
     }

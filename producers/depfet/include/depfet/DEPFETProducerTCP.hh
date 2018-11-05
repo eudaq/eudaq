@@ -30,7 +30,8 @@ public:
       host_is_set(false),
       running(false),
       firstevent(false),
-      last_trigger(0)
+      last_trigger(0),
+      current_trigger_offset(0)
     {
       SetConnectionState(eudaq::ConnectionState::STATE_UNINIT, "Uninitialized");//
     }
@@ -48,6 +49,7 @@ private:
   int cmd_port;
   unsigned last_trigger;
   std::string data_host, cmd_host;
+  int current_trigger_offset;
 
   unsigned int buffer[BUFSIZE];
 };
