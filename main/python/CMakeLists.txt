@@ -28,6 +28,7 @@ ENDIF(PYTHONLIBS_FOUND)
 ADD_LIBRARY( PyEUDAQ SHARED 
   src/PyRunControl.cpp 
   src/PyProducer.cpp
+  src/PyTluProducer.cpp
   src/PyDataCollector.cpp
   src/PyLogCollector.cpp
 )

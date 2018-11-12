@@ -1,5 +1,5 @@
 import sys
-from ctypes import cdll, create_string_buffer, byref, c_uint, c_void_p, c_char_p, c_size_t, c_uint8, POINTER
+from ctypes import cdll, create_string_buffer, byref, c_uint, c_void_p, c_char_p, c_size_t, c_uint8, POINTER,c_long
 import numpy
 import os.path
 
@@ -120,6 +120,102 @@ class PyProducer(object):
     @property
     def Error(self):
         return lib.PyProducer_IsError(c_void_p(self.obj))
+
+
+
+##########################################
+lib.PyTluProducer_SendEvent.argtypes = [c_void_p,c_uint, c_long,c_char_p]
+lib.PyTluProducer_SendEventExtraInfo.argtypes = [c_void_p,c_uint, c_long,c_char_p,c_char_p,c_char_p]
+class PyTluProducer(object):
+    def __init__(sel0,frcaddr = "tcp://localhost:44000"):
+        lib.PyTluProducer_new.restype = c_void_p # Needed
+        self.obj = lib.PyTluProducer_new(create_string_buffer(rcaddr))
+    def SendEvent(self,data):
+
+        lib.PyTluProducer_SendEvent(c_void_p(self.obj),data[0],data[1],create_string_buffer(str(data[2])))
+
+    def SendEventExtraInfo(self, data,particles,scalers):
+
+        lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])),
+                                    create_string_buffer(str(particles)), create_string_buffer(str(scalers)))
+
+    def SendEventList(self, data_list,particles,scalers):
+        if len(data_list)==0:
+            print("got empty list")
+            return
+        for data in data_list[:-1]:
+            lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])))
+        data=data_list[-1]
+        lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])),
+                                    create_string_buffer(str(particles)), create_string_buffer(str(scalers)))
+    def GetRunNumber(self):
+        return lib.PyTluProducer_GetRunNumber(c_void_p(self.obj))
+    def GetConfigParameter(self, item,default=None):
+        buf_len = 1024
+        buf = create_string_buffer(buf_len)
+        str_len = lib.PyTluProducer_GetConfigParameter(c_void_p(self.obj), create_string_buffer(item), buf, buf_len)
+        if str_len < 0:
+            if default is None:
+                raise ValueError('Cannot find configuration parameter %s', item)
+            return default
+        if not str_len:
+            raise NotImplementedError('A configuration parameter with more than %d characters is not supported!', buf_len)
+        return buf.value
+
+    @property
+    def Configuring(self):
+        return lib.PyTluProducer_IsConfiguring(c_void_p(self.obj))
+    @Configuring.setter
+    def Configuring(self, value):
+        if value:
+            # try to set configured state, otherwise set error state
+            if not lib.PyTluProducer_SetConfigured(c_void_p(self.obj)):
+             lib.PyTluProducer_SetError(c_void_p(self.obj))
+        else:
+            # if we set configured to 'false' there has been an error
+            lib.PyTluProducer_SetError(c_void_p(self.obj))
+
+    @property
+    def StartingRun(self):
+        return lib.PyTluProducer_IsStartingRun(c_void_p(self.obj))
+    @StartingRun.setter
+    def StartingRun(self, value):
+        if value:
+            # try to set running state/send BORE, otherwise set error state
+            if not lib.PyTluProducer_SendBORE(c_void_p(self.obj)):
+             lib.PyTluProducer_SetError(c_void_p(self.obj))
+        else:
+            # if we set this property to 'false' there has been an error
+            lib.PyTluProducer_SetError(c_void_p(self.obj))
+    @property
+    def StoppingRun(self):
+        return lib.PyTluProducer_IsStoppingRun(c_void_p(self.obj))
+    @StoppingRun.setter
+    def StoppingRun(self, value):
+        if value:
+            # try to set stopped state/send EORE, otherwise set error state
+            if not lib.PyTluProducer_SendEORE(c_void_p(self.obj)):
+             lib.PyTluProducer_SetError(c_void_p(self.obj))
+        else:
+            # if we set this property to 'false' there has been an error
+            lib.PyTluProducer_SetError(c_void_p(self.obj))
+    @property
+    def Terminating(self):
+        return lib.PyTluProducer_IsTerminating(c_void_p(self.obj))
+    @property
+    def Error(self):
+        return lib.PyTluProducer_IsError(c_void_p(self.obj))
+##########################################
+
+
+
+
+
+
+
+
+
+
 
 
 class PyDataCollector(object):
