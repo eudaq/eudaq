@@ -127,7 +127,7 @@ class PyProducer(object):
 lib.PyTluProducer_SendEvent.argtypes = [c_void_p,c_uint, c_long,c_char_p]
 lib.PyTluProducer_SendEventExtraInfo.argtypes = [c_void_p,c_uint, c_long,c_char_p,c_char_p,c_char_p]
 class PyTluProducer(object):
-    def __init__(sel0,frcaddr = "tcp://localhost:44000"):
+    def __init__(self,rcaddr = "tcp://localhost:44000"):
         lib.PyTluProducer_new.restype = c_void_p # Needed
         self.obj = lib.PyTluProducer_new(create_string_buffer(rcaddr))
     def SendEvent(self,data):
