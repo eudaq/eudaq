@@ -155,8 +155,9 @@ virtual bool GetStandardSubEvent(StandardEvent& sev, eudaq::Event const & ev) co
     	}
 
 	for(auto channel: boardChannels.at(boardID)){
+		auto sensorID = 20 + channel;
 		std::string planeName = "USBPIX_GEN3_BOARD_" + to_string(boardID);
-		auto pair = std::make_pair(channel, StandardPlane(channel, EVENT_TYPE, planeName));
+		auto pair = std::make_pair(channel, StandardPlane(sensorID, EVENT_TYPE, planeName));
 		pair.second.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 		StandardPlaneMap.insert(pair);
 	}
