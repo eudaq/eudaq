@@ -307,6 +307,121 @@ namespace eudaq {
         return true;
       }
 
+#if USE_LCIO && USE_EUTELESCOPE
+      // This is where the conversion to LCIO is done
+      virtual lcio::LCEvent * GetLCIOEvent(const Event * /*ev*/) const {
+        return 0;
+      }
+
+      virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
+        //std::cout << "getlciosubevent (I4) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
+        if (eudaqEvent.IsBORE()) {
+          // shouldn't happen
+          return true;
+        } else if (eudaqEvent.IsEORE()) {
+          // nothing to do
+          return true;
+        }
+
+        // set type of the resulting lcio event
+        lcioEvent.parameters().setValue( eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE );
+        // pointer to collection which will store data
+        LCCollectionVec * zsDataCollection;
+
+        // it can be already in event or has to be created
+        bool zsDataCollectionExists = false;
+        try {
+          zsDataCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "zsdata_apix" ) );
+          zsDataCollectionExists = true;
+        } catch ( lcio::DataNotAvailableException& e ) {
+          zsDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
+        }
+
+        //	create cell encoders to set sensorID and pixel type
+        CellIDEncoder< TrackerDataImpl > zsDataEncoder   ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection  );
+
+        // this is an event as we sent from Producer
+        // needs to be converted to concrete type RawDataEvent
+        const RawDataEvent & ev_raw = dynamic_cast <const RawDataEvent &> (eudaqEvent);
+
+        std::vector< eutelescope::EUTelSetupDescription * >  setupDescription;
+
+        for (size_t chip = 0; chip < ev_raw.NumBlocks(); ++chip) {
+          const std::vector <unsigned char> & buffer=dynamic_cast<const std::vector<unsigned char> &> (ev_raw.GetBlock(chip));
+
+          if (lcioEvent.getEventNumber() == 0) {
+            eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelAPIXMCDetector(2);
+            currentDetector->setMode( "ZS" );
+
+            setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
+          }
+
+          zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset + first_sensor_id; // formerly 14
+          zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+
+          // prepare a new TrackerData object for the ZS data
+          // it contains all the hits for a particular sensor in one event
+          std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+          // set some values of "Cells" for this object
+          zsDataEncoder.setCellID( zsFrame.get() );
+
+          // this is the structure that will host the sparse pixel
+          // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
+          // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
+          std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+            sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
+
+          unsigned int ToT = 0;
+          unsigned int Col = 0;
+          unsigned int Row = 0;
+          unsigned int lvl1 = 0;
+
+          for (unsigned int i=4; i < buffer.size(); i += 4) {
+            unsigned int Word = (((unsigned int)buffer[i]) << 24) | (((unsigned int)buffer[i+1]) << 16) | (((unsigned int)buffer[i+2]) << 8) | (unsigned int)buffer[i+3];
+
+            if (PYBAR_DATA_HEADER_MACRO(Word)) {
+              lvl1++;
+            } else {
+              // First Hit
+              if (getHitData(Word, false, Col, Row, ToT)) {
+                sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
+              }
+              // Second Hit
+              if (getHitData(Word, true, Col, Row, ToT)) {
+                sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
+              }
+            }
+          }
+
+          // write TrackerData object that contains info from one sensor to LCIO collection
+          zsDataCollection->push_back( zsFrame.release() );
+        }
+
+        // add this collection to lcio event
+        if ( ( !zsDataCollectionExists )  && ( zsDataCollection->size() != 0 ) ) lcioEvent.addCollection( zsDataCollection, "zsdata_apix" );
+
+        if (lcioEvent.getEventNumber() == 0) {
+          // do this only in the first event
+          LCCollectionVec * apixSetupCollection = NULL;
+
+          bool apixSetupExists = false;
+          try {
+            apixSetupCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "apix_setup" ) ) ;
+            apixSetupExists = true;
+          } catch (...) {
+            apixSetupCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
+          }
+
+          for ( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane ) {
+            apixSetupCollection->push_back( setupDescription.at( iPlane ) );
+          }
+
+          if (!apixSetupExists) lcioEvent.addCollection( apixSetupCollection, "apix_setup" );
+        }
+        return true;
+
+      }
+#endif
 
 
     private:
