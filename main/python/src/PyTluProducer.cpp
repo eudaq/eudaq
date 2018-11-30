@@ -39,9 +39,12 @@ class PyTluProducer : public eudaq::Producer {
     void SendEventExtraInfo(unsigned event, long timestamp,const std::string & trigger, const std::string & particles, const std::string & Scaler) {
       TLUEvent ev(m_run, event, timestamp);
 
+      m_events=trigger;
+      m_particles=particles;
+      m_status=Scaler;
       ev.SetTag("trigger",trigger);
       ev.SetTag("PARTICLES",particles);
-      ev.SetTag("SCALER",Scaler);
+      ev.SetTag("STATUS",Scaler);
       eudaq::DataSender::SendEvent(ev);
     }
 
@@ -109,6 +112,9 @@ class PyTluProducer : public eudaq::Producer {
       }
     }
     virtual void OnStatus() {
+      m_connectionstate.SetTag("TRIG", m_events);
+      m_connectionstate.SetTag("PARTICLES", m_particles);
+      m_connectionstate.SetTag("STATUS", m_status);
     }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
       std::cout << "[PyTluProducer] Unrecognised: (" << cmd.length() << ") " << cmd;
@@ -162,6 +168,7 @@ private:
   enum PyState {Init, Configuring, Configured, StartingRun, Running, StoppingRun, Stopped, Terminating, Resetting, Error};
   PyState m_internalstate; 
   unsigned m_run, m_evt;
+  std::string m_events,m_particles,m_status;
   eudaq::Configuration * m_config;
 };
 
