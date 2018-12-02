@@ -83,7 +83,7 @@ int run_control (struct HOST* host) {
   //           TCP   connection  loop   
   //-------------------------------------------------------------------
   Buffer = (char *)malloc(Bytes);
-  if (Buffer == 0x0)
+  if (Buffer == nullptr)
     {
       printf("run_control()::could not malloc buffer of byte length %d\n",Bytes);
       exit (102);
@@ -238,4 +238,17 @@ int cmd_send(const std::string & command) {
   printf("to do: at  this point : wait for replay and analize \n");
 
   return 0;
+}
+
+bool try_cmd_send(const std::string & command) {
+  int ret;
+
+  if (cmd_socket<=0) { return false;}
+
+  if ((ret=send(cmd_socket, (void *)command.c_str(),command.length(), 0))!=(int)command.length()) {
+    printf("Error Send INFO ret=%d of (%d)\n",ret,(int)command.length()); perror("send to RC");
+    return false;
+  }
+  printf("cmd_send():: cmd=%s",command.c_str());
+  return true;
 }

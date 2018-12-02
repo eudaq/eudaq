@@ -289,7 +289,7 @@ int tcp_event_get(char *HOST2, unsigned int *DATA, int *lenDATA, int *Nr_Modules
   evtModID=(DATA[0]>>24)&0xf;
   evtSize=DATA[0]&0xfffff;
 
-  printf("OK, TCP recv=%d  nleft=%d Trg=%d(%d) Mod=%d siz=%d\n",nread,nleft,evtTrigID,*TriggerID,evtModID,evtSize);
+  //printf("OK, TCP recv=%d  nleft=%d Trg=%d(%d) Mod=%d siz=%d\n",nread,nleft,evtTrigID,*TriggerID,evtModID,evtSize);
 
   return 0; 
 }

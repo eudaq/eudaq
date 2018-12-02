@@ -92,10 +92,11 @@ namespace eudaq {
       bool isEventValid(const std::vector<unsigned char> & data) const {
         // ceck data consistency
         unsigned int dh_found = 0;
-        for (unsigned int i=4; i < data.size(); i += 4) {   // 8->4 trigger from pybar is 32bits
-          unsigned word = (((unsigned int)data[i]) << 24) | (((unsigned int)data[i +1]) << 16) | (((unsigned int)data[i + 2]) << 8) | (unsigned int)data[i+3];
+        if(data.size()%4!=0) return false;
+        const unsigned int * p=reinterpret_cast<const unsigned int *>(&(data[0]));
+        for (unsigned int i=1; i < data.size()/4; ++i)  {
           //printf("isEventValid word=%08x,masked=%08x, %d\n",word,(PYBAR_DATA_HEADER_MASK & word),int(PYBAR_DATA_HEADER_MACRO(word)));
-          if (PYBAR_DATA_HEADER_MACRO(word))	{
+          if (PYBAR_DATA_HEADER_MACRO(p[i]))	{  //direct casting needed for current versions of pybar  - luetticke
             dh_found++;
           }
         }
@@ -103,6 +104,7 @@ namespace eudaq {
 
         if (dh_found != consecutive_lvl1){
             //exit(0);
+            printf("isEventValid INVALID! sdb_found=%d\n",dh_found);
             return false;
         }
         else{
@@ -120,15 +122,17 @@ namespace eudaq {
         //}
         //printf("\n");
         //unsigned int i = data.size() - 4; // 8->4 hirono //splitted in 2x 32bit words
-        unsigned Trigger_word1 = (((unsigned int)data[0]) << 24) | (((unsigned int)data[1]) << 16) | (((unsigned int)data[2]) << 8) | (unsigned int)data[3];
-        //unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+        const unsigned int * p=reinterpret_cast<const unsigned int *>(&(data[0]));
 
-        unsigned int trigger_number = 0x7FFFFFFF & Trigger_word1;  //hirono 
+        //unsigned Trigger_word1 = (((unsigned int)data[0]) << 24) | (((unsigned int)data[1]) << 16) | (((unsigned int)data[2]) << 8) | (unsigned int)data[3];
+        //unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+        unsigned int trigger_number = 0x7FFFFFFF & p[0];  //lutticke. Hello Hirono :-)
+        //unsigned int trigger_number = 0x7FFFFFFF & Trigger_word1;  //hirono
         //std::cout << "getTrigger(): " << trigger_number << std::endl;
         return trigger_number;
       }
 
-      bool getHitData (unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
+      bool getHitData (const unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
         //printf("getHitData word=%08x col_masked=%08x %d\n",Word,PYBAR_DATA_RECORD_COLUMN_MASK & Word,PYBAR_DATA_RECORD_MACRO(Word));
         if ( !PYBAR_DATA_RECORD_MACRO(Word) ) return false;	// No Data Record
 
@@ -147,6 +151,21 @@ namespace eudaq {
         }
         //printf("getHitData() t_Col=%d,t_Row=%d,t_ToT=%d\n",t_Col,t_Row,t_ToT);
         //exit(0);
+
+
+        if(t_ToT== 15 && !second_hit){
+            ToT=17;
+            std::cout<< "Got FEI4 ToT 15 in first hit! This should never happen. Word" << std::hex<< Word<<std::dec << std::endl;
+            std::cout<< " TOT1: " <<PYBAR_DATA_RECORD_TOT1_MACRO(Word)
+                                << " COL1: " <<PYBAR_DATA_RECORD_COLUMN1_MACRO(Word)
+                                << " ROW1: " <<PYBAR_DATA_RECORD_ROW1_MACRO(Word)
+                                << " TOT2: " <<PYBAR_DATA_RECORD_TOT2_MACRO(Word)
+                                << " COL2: " <<PYBAR_DATA_RECORD_COLUMN2_MACRO(Word)
+                                << " ROW2: " <<PYBAR_DATA_RECORD_ROW2_MACRO(Word)
+                                << std::endl;
+
+            return false;
+        }
 
         // translate FE-I4 ToT code into tot
         if (tot_mode==1) {
@@ -204,8 +223,9 @@ namespace eudaq {
         unsigned int eventnr=0;
 
         // Get Events
-        for (unsigned int i=4; i < data.size(); i += 4) {
-          unsigned int Word = (((unsigned int)data[i]) << 24) | (((unsigned int)data[i+1]) << 16) | (((unsigned int)data[i+2]) << 8) | (unsigned int)data[i+3];
+        const unsigned int * p=reinterpret_cast<const unsigned int *>(&(data[0]));
+        for (unsigned int i=1; i < data.size()/4; ++i) {
+          const unsigned int &Word = p[i];  //direct casting needed for current versions of pybar  - luetticke
           //printf("ConvertPlane() word=%08x masked=%08x %d\n",Word,(PYBAR_DATA_HEADER_MASK & Word),PYBAR_DATA_HEADER_MACRO(Word));
           if (PYBAR_DATA_HEADER_MACRO(Word)) {
             lvl1++;
@@ -402,6 +422,7 @@ namespace eudaq {
 
       }
 #endif
+
 
     private:
 
