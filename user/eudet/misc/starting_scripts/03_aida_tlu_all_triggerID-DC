@@ -9,6 +9,9 @@ sleep 1
 # Start one DataCollector
 # name (-t) in conf file
 xterm -T "Data Collector Trigger" -e 'euCliCollector -n TriggerIDSyncDataCollector -t one_dc -r tcp://192.168.22.1:44000' &
+#xterm -T "Data Collector Event" -e 'euCliCollector -n EventIDSyncDataCollector -t one_dc -r tcp://192.168.22.1:44000' &
+# tested 
+#  Oct 02 2018, no correlation between FEI4 and Mimosas
 sleep 1
 
 # Start TLU Producer
