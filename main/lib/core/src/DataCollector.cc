@@ -79,7 +79,7 @@ namespace eudaq {
       m_fwtype = conf->Get("EUDAQ_FW", "native");
       m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
       m_dct_n = conf->Get("EUDAQ_ID", m_dct_n);
-      m_fraction = conf->Get("EUDAQ_DATACOL_SEND_MONITOR_FRACTION", 1);
+      m_fraction = conf->Get("EUDAQ_DATACOL_SEND_MONITOR_FRACTION", 10);
       DoConfigure();
       CommandReceiver::OnConfigure();
     }catch (const Exception &e) {
@@ -163,6 +163,7 @@ namespace eudaq {
     
   void DataCollector::OnStatus(){
     SetStatusTag("EventN", std::to_string(m_evt_c));
+    SetStatusTag("MonitorEventN", std::to_string(m_evt_c/m_fraction));
     DoStatus();
     // if(m_writer && m_writer->FileBytes()){
     //   SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
