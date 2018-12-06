@@ -17,5 +17,6 @@ bool TluRawEvent2LCEventConverter::Converting(eudaq::EventSPC d1, eudaq::LCEvent
   d2impl->setTimeStamp(d1->GetTimestampBegin());
   d2impl->setEventNumber(d1->GetEventNumber());
   d2impl->setRunNumber(d1->GetRunNumber());
+  d2impl->parameters().setValue("EventType", 2); //( eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE )
   return true;    
 }
