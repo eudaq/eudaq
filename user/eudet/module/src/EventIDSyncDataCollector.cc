@@ -61,7 +61,7 @@ namespace eudaq {
         n++;
     }
     if(n==m_que_event.size()){
-      auto ev_wrap = Event::MakeUnique(GetFullName());
+      auto ev_wrap = Event::MakeUnique("EventIDSyncOnline");
       ev_wrap->SetFlagPacket();
       uint32_t ev_c = m_que_event.begin()->second.front()->GetEventN();
       bool match = true;

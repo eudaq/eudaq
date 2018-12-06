@@ -84,7 +84,7 @@ namespace eudaq {
       }
     }
 
-    auto ev_sync = Event::MakeUnique("Ex0Tg");
+    auto ev_sync = Event::MakeUnique("TriggerIDSyncOnline");
     ev_sync->SetFlagPacket();
     ev_sync->SetTriggerN(trigger_n);
     for(auto &conn_evque: m_conn_evque){
