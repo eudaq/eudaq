@@ -163,7 +163,7 @@ namespace eudaq {
     
   void DataCollector::OnStatus(){
     SetStatusTag("EventN", std::to_string(m_evt_c));
-    SetStatusTag("MonitorEventN", std::to_string(m_evt_c/m_fraction));
+    SetStatusTag("MonitorEventN", std::to_string(float(m_evt_c/m_fraction)));
     DoStatus();
     // if(m_writer && m_writer->FileBytes()){
     //   SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
