@@ -95,7 +95,10 @@ If problems occur during installation, please have a look in the issues, if a si
 
 ### Quick installation for UNIX
 
+Prerequisites for Ubuntu 18.04: 
+```sudo apt install openssh-server git cmake build-essential qt5-default xterm zlib1g-dev```
 
+Get and compile the code
 ```
 git clone -b master https://github.com/eudaq/eudaq.git
 mkdir -p eudaq/build
