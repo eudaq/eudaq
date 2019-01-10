@@ -45,32 +45,36 @@ namespace eudaq{
     TrackerDataImpl *zsFrame;
  
     // prepare the collections for the rawdata and the zs ones
-    LCCollectionVec *rawDataCollection, *zsDataCollection, *zs2DataCollection;
-    bool rawDataCollectionExists = false;
+    LCCollectionVec *zsDataCollection; //, *rawDataCollection, *zs2DataCollection;
+    //bool rawDataCollectionExists = false;
     bool zsDataCollectionExists = false;
-    bool zs2DataCollectionExists = false;
+    //bool zs2DataCollectionExists = false;
     
-    try {
+    /*try {
       rawDataCollection = static_cast<LCCollectionVec *>(result.getCollection("rawdata"));
       rawDataCollectionExists = true;
+      std::cout << "found rawdata" << std::endl;
     } catch (lcio::DataNotAvailableException &e) {
       rawDataCollection = new LCCollectionVec(lcio::LCIO::TRACKERRAWDATA);
-    }
+    }*/
 
-    try {
-      zsDataCollection = static_cast<LCCollectionVec *>(result.getCollection("zsdata"));
-      zsDataCollectionExists = true;
-    } catch (lcio::DataNotAvailableException &e) {
+    // we (jha92, dreyling) suspect there should be anyway no LCCollection with a certain name before executing the Converter
+    //try {
+    //  zsDataCollection = static_cast<LCCollectionVec *>(result.getCollection("zsdata_m26"));
+    //  zsDataCollectionExists = true;
+    //} catch (lcio::DataNotAvailableException &e) {
       zsDataCollection = new LCCollectionVec(lcio::LCIO::TRACKERDATA);
-    }
+    //}
 
-    try {
+    /*try {
       zs2DataCollection =
 	static_cast<LCCollectionVec *>(result.getCollection("zsdata_m26"));
       zs2DataCollectionExists = true;
+      std::cout << "found zsdata_m26" << std::endl;
     } catch (lcio::DataNotAvailableException &e) {
       zs2DataCollection = new LCCollectionVec(lcio::LCIO::TRACKERDATA);
-    }
+      std::cout << "catched zsdata_m26" << std::endl;
+    }*/
 
     //airqui
     //Manually set the variables for encoding:
@@ -78,9 +82,9 @@ namespace eudaq{
     const char *   ZSDATADEFAULTENCODING    = "sensorID:7,sparsePixelType:5";
 
     // set the proper cell encoder
-    CellIDEncoder<TrackerRawDataImpl> rawDataEncoder(MATRIXDEFAULTENCODING, rawDataCollection);
+    //CellIDEncoder<TrackerRawDataImpl> rawDataEncoder(MATRIXDEFAULTENCODING, rawDataCollection);
     CellIDEncoder<TrackerDataImpl> zsDataEncoder(ZSDATADEFAULTENCODING, zsDataCollection);
-    CellIDEncoder<TrackerDataImpl> zs2DataEncoder(ZSDATADEFAULTENCODING, zs2DataCollection);
+    //CellIDEncoder<TrackerDataImpl> zs2DataEncoder(ZSDATADEFAULTENCODING, zs2DataCollection);
 
     // to understand if we have problem with de-syncronisation, let
     // me prepare a Boolean switch and a vector of size_t to contain the
@@ -90,7 +94,7 @@ namespace eudaq{
 
     if (dbg > 0)
       std::cout
-	<< "NIConverterPlugin::GetLCIOSubEvent rawDataEvent with boards="
+	<< "NiRawEvent2LCEventConverter::Converting rawDataEvent with boards="
 	<< m_boards << std::endl;
     const RawDataEvent &rawDataEvent =
       dynamic_cast<const RawEvent &>(source);
@@ -133,27 +137,27 @@ namespace eudaq{
      
     }
     
-    // add the collections to the event only if not empty and not yet there
-    if (!rawDataCollectionExists) {
+    /*if (!rawDataCollectionExists) {
       if (rawDataCollection->size() != 0)
 	result.addCollection(rawDataCollection, "rawdata");
       else
 	delete rawDataCollection; // clean up if not storing the collection here
-    }
+    }*/
 
-    if (!zsDataCollectionExists) {
+    // add the collections to the event only if not empty and not yet there
+    //if (!zsDataCollectionExists) {
       if (zsDataCollection->size() != 0)
-	result.addCollection(zsDataCollection, "zsdata");
+	result.addCollection(zsDataCollection, "zsdata_m26");
       else
 	delete zsDataCollection; // clean up if not storing the collection here
-    }
+    //}
 
-    if (!zs2DataCollectionExists) {
+    /*if (!zs2DataCollectionExists) {
       if (zs2DataCollection->size() != 0)
 	result.addCollection(zs2DataCollection, "zsdata_m26");
       else
 	delete zs2DataCollection; // clean up if not storing the collection here
-    }
+    }*/
     
     return true;
   
