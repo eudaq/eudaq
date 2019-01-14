@@ -2,7 +2,8 @@ option(EUDAQ_BUILD_PYTHON "Compile Python EUDAQ binding library with pybind11?" 
 if(NOT EUDAQ_BUILD_PYTHON)
   return()
 endif()
-find_package(PythonLibsNew REQUIRED)
+#find_package(PythonLibsNew REQUIRED)
+find_package(PythonLibs REQUIRED)
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_DIRS})

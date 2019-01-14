@@ -7,36 +7,36 @@ from collections import deque
 class ExamplePyDataCollector(pyeudaq.DataCollector):
     def __init__(self, name, runctrl):
         pyeudaq.Producer.__init__(self, 'PyDataCollector', name, runctrl)
-        print 'New instance of ExamplePyDataCollector'
+        print ('New instance of ExamplePyDataCollector')
         self.dict_con_ev = {}
 
     def DoInitialise(self):
-        print 'DoInitialise'
-        print 'key_a(init) = ', self.GetInitItem("key_a")
+        print ('DoInitialise')
+        print ('key_a(init) = ', self.GetInitItem("key_a"))
 
     def DoConfigure(self):
-        print 'DoConfigure'
-        print 'key_b(conf) = ', self.GetConfigItem("key_b")
+        print ('DoConfigure')
+        print ('key_b(conf) = ', self.GetConfigItem("key_b"))
 
     def DoStartRun(self):
-        print 'DoStartRun'
+        print ('DoStartRun')
         self.dict_con_ev = {}
         
     def DoReset(self):
-        print 'DoReset'
+        print ('DoReset')
 
     def DoConnect(self, con):
         t = con.GetType()
         n = con.GetName()
         r = con.GetRemote()
-        print "new producer connection: ", t, n, "from ", r
+        print ("new producer connection: ", t, n, "from ", r)
         self.dict_con_ev[con] = deque()
         
     def DoDisconnect(self, con):
         t = con.GetType()
         n = con.GetName()
         r = con.GetRemote()
-        print "delete producer connection: ", t, n, "from ", r
+        print ("delete producer connection: ", t, n, "from ", r)
         del self.dict_con_ev[con]
         
     def DoReceive(self, con, ev):
@@ -55,7 +55,7 @@ class ExamplePyDataCollector(pyeudaq.DataCollector):
         
 if __name__ == "__main__":
     mydc = ExamplePyDataCollector("mydc", "tcp://localhost:44000")
-    print "connecting to runcontrol in localhost:44000", 
+    print ("connecting to runcontrol in localhost:44000", )
     mydc.Connect()
     time.sleep(2)
     while(mydc.IsConnected()):
