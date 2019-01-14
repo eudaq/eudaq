@@ -15,6 +15,7 @@ namespace eudaq {
     :CommandReceiver("DataCollector", name, runcontrol){
     m_dct_n= str2hash(GetFullName());
     m_evt_c = 0;
+    m_fraction = 1;
   }
 
   DataCollector::~DataCollector(){  
