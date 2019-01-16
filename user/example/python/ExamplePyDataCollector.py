@@ -6,7 +6,7 @@ from collections import deque
 
 class ExamplePyDataCollector(pyeudaq.DataCollector):
     def __init__(self, name, runctrl):
-        pyeudaq.Producer.__init__(self, 'PyDataCollector', name, runctrl)
+        pyeudaq.DataCollector.__init__(self, 'PyDataCollector', name, runctrl)
         print ('New instance of ExamplePyDataCollector')
         self.dict_con_ev = {}
 
@@ -40,17 +40,20 @@ class ExamplePyDataCollector(pyeudaq.DataCollector):
         del self.dict_con_ev[con]
         
     def DoReceive(self, con, ev):
+        
         self.dict_con_ev[con].append(ev)
+        
         for con, ev_queue in self.dict_con_ev.items():
+            #print ( con, len(ev_queue) )
             if(len(ev_queue)==0):
                 return
-            
-        sycn_ev = Event('RawEvent', 'mysyncdata')
+
+        sync_ev = pyeudaq.Event('RawEvent', 'mysyncdata')
         for con, ev_queue in self.dict_con_ev.items():
             sub_ev = ev_queue.popleft()
             sync_ev.AddSubEvent(sub_ev)
             
-        self.WriteEvent(ev)
+        self.WriteEvent(sync_ev)
 
         
 if __name__ == "__main__":
