@@ -44,43 +44,17 @@ namespace eudaq{
 
     TrackerDataImpl *zsFrame;
  
-    // prepare the collections for the rawdata and the zs ones
-    LCCollectionVec *rawDataCollection, *zsDataCollection, *zs2DataCollection;
-    bool rawDataCollectionExists = false;
-    bool zsDataCollectionExists = false;
-    bool zs2DataCollectionExists = false;
+    // prepare the sensor collection 
+    LCCollectionVec *zsDataCollection; 
     
-    try {
-      rawDataCollection = static_cast<LCCollectionVec *>(result.getCollection("rawdata"));
-      rawDataCollectionExists = true;
-    } catch (lcio::DataNotAvailableException &e) {
-      rawDataCollection = new LCCollectionVec(lcio::LCIO::TRACKERRAWDATA);
-    }
+    zsDataCollection = new LCCollectionVec(lcio::LCIO::TRACKERDATA);
 
-    try {
-      zsDataCollection = static_cast<LCCollectionVec *>(result.getCollection("zsdata"));
-      zsDataCollectionExists = true;
-    } catch (lcio::DataNotAvailableException &e) {
-      zsDataCollection = new LCCollectionVec(lcio::LCIO::TRACKERDATA);
-    }
-
-    try {
-      zs2DataCollection =
-	static_cast<LCCollectionVec *>(result.getCollection("zsdata_m26"));
-      zs2DataCollectionExists = true;
-    } catch (lcio::DataNotAvailableException &e) {
-      zs2DataCollection = new LCCollectionVec(lcio::LCIO::TRACKERDATA);
-    }
-
-    //airqui
-    //Manually set the variables for encoding:
+    //airqui: Manually set the variables for encoding, without EUTelescope dependency
     const char *   MATRIXDEFAULTENCODING    = "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12";
     const char *   ZSDATADEFAULTENCODING    = "sensorID:7,sparsePixelType:5";
 
     // set the proper cell encoder
-    CellIDEncoder<TrackerRawDataImpl> rawDataEncoder(MATRIXDEFAULTENCODING, rawDataCollection);
     CellIDEncoder<TrackerDataImpl> zsDataEncoder(ZSDATADEFAULTENCODING, zsDataCollection);
-    CellIDEncoder<TrackerDataImpl> zs2DataEncoder(ZSDATADEFAULTENCODING, zs2DataCollection);
 
     // to understand if we have problem with de-syncronisation, let
     // me prepare a Boolean switch and a vector of size_t to contain the
@@ -90,32 +64,28 @@ namespace eudaq{
 
     if (dbg > 0)
       std::cout
-	<< "NIConverterPlugin::GetLCIOSubEvent rawDataEvent with boards="
-	<< m_boards << std::endl;
-    const RawDataEvent &rawDataEvent =
-      dynamic_cast<const RawEvent &>(source);
+        << "NiRawEvent2LCEventConverter::Converting rawDataEvent with boards="
+        << m_boards << std::endl;
 
-    size_t numplanes = m_boards; // NumPlanes(source);
-
+    const RawDataEvent &rawDataEvent = dynamic_cast<const RawEvent &>(source);
+    size_t numplanes = m_boards; 
     StandardEvent tmp_evt;
     GetStandardSubEvent(tmp_evt, rawDataEvent);
 
-    if (numplanes != tmp_evt.NumPlanes()) {
-      numplanes = tmp_evt.NumPlanes();
-    }
+    if (numplanes != tmp_evt.NumPlanes()) { numplanes = tmp_evt.NumPlanes(); }
 
     for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) {
       if (dbg > 2)
         std::cout << "setting plane #  " << iPlane << " out of " << numplanes
                   << " up to " << tmp_evt.NumPlanes() << std::endl;
+
       StandardPlane plane = static_cast<StandardPlane>(tmp_evt.GetPlane(iPlane));
 
-      //if (plane.GetFlags(StandardPlane::FLAG_ZS)) {
       zsDataEncoder["sensorID"] = plane.ID();
-      zsDataEncoder["sparsePixelType"] = 2 ; //airqui hardcoded eutelescope::kEUTelGenericSparsePixel;
+      //airqui: hardcoded eutelescope::kEUTelGenericSparsePixel;
+      zsDataEncoder["sparsePixelType"] = 2 ; 
 
-      // get the total number of pixel. This is written in the
-      // eudrbBoard and to get it in a easy way pass through the eudrbDecoder
+      // get the total number of pixel
       size_t nPixel = plane.HitPixels();
 
       // prepare a new TrackerData for the ZS data
@@ -123,48 +93,25 @@ namespace eudaq{
       zsDataEncoder.setCellID(zsFrame);
 
       for(int i=0; i<  plane.HitPixels() ; i++) {	  
-	zsFrame->chargeValues().push_back(plane.GetX(i));
-	zsFrame->chargeValues().push_back(plane.GetY(i));
-	zsFrame->chargeValues().push_back(1);
-	zsFrame->chargeValues().push_back(0);
+        zsFrame->chargeValues().push_back(plane.GetX(i));
+        zsFrame->chargeValues().push_back(plane.GetY(i));
+        zsFrame->chargeValues().push_back(1);
+        zsFrame->chargeValues().push_back(0);
       }
       zsDataCollection->push_back( zsFrame);
-
-     
     }
     
-    // add the collections to the event only if not empty and not yet there
-    if (!rawDataCollectionExists) {
-      if (rawDataCollection->size() != 0)
-	result.addCollection(rawDataCollection, "rawdata");
-      else
-	delete rawDataCollection; // clean up if not storing the collection here
-    }
-
-    if (!zsDataCollectionExists) {
-      if (zsDataCollection->size() != 0)
-	result.addCollection(zsDataCollection, "zsdata");
-      else
-	delete zsDataCollection; // clean up if not storing the collection here
-    }
-
-    if (!zs2DataCollectionExists) {
-      if (zs2DataCollection->size() != 0)
-	result.addCollection(zs2DataCollection, "zsdata_m26");
-      else
-	delete zs2DataCollection; // clean up if not storing the collection here
-    }
+    if (zsDataCollection->size() != 0)
+      result.addCollection(zsDataCollection, "zsdata_m26");
+    else
+      delete zsDataCollection; // clean up if not storing the collection here
     
     return true;
-  
   }
-
-
 
   bool NiRawEvent2LCEventConverter::GetStandardSubEvent(StandardEvent &result,
 							const Event &source) const {
-    static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5}; //TODO
-
+    static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5}; //TODO: make it a flexible number
     // If we get here it must be a data event
     const RawEvent &rawev = dynamic_cast<const RawEvent &>(source);
     if (rawev.NumBlocks() < 2 || rawev.GetBlock(0).size() < 20 ||
