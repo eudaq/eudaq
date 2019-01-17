@@ -28,6 +28,8 @@ It is only built if cmake finds the external dependencies:
 To start the EUDET TLU producer: 
 ```euCliProducer -n AidaTluProducer```
 
+Please find here the [manual](https://github.com/PaoloGB/firmware_AIDA/raw/master/Documentation/Latex/Main_TLU.pdf).
+
 
 ## Conversion
 
