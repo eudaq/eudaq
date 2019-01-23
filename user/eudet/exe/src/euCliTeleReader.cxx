@@ -5,7 +5,8 @@
 #include <iostream>
 
 int main(int /*argc*/, const char **argv) {
-  eudaq::OptionParser op("EUDAQ Command Line FileReader modified for TLU", "2.1", "EUDAQ FileReader (TLU)");
+  eudaq::OptionParser op("EUDAQ Command Line FileReader", "2.1", 
+          "EUDAQ FileReader modified for Mimosa/TLU");
   eudaq::Option<std::string> file_input(op, "i", "input", "", "string", "input file");
   eudaq::Option<uint32_t> eventl(op, "e", "event", 0, "uint32_t", "event number low");
   eudaq::Option<uint32_t> eventh(op, "E", "eventhigh", 0, "uint32_t", "event number high");

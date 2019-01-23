@@ -9,8 +9,6 @@
 
 ## Running modes
 
-Under testing.
-
 In brackets the exemplary start scripts are quoted which can be found in ```user/eudet/misc/start_scripts```; the EUDAQ ini and conf-files in ```user/eudet/misc/conf```.
 
 ### Standard (EUDET) mode
@@ -19,11 +17,11 @@ The EUDET TLU (```01_eudet_tlu```) or the AIDA TLU (```01_aida_tlu```) in EUDET 
 
 EUDAQ1-like (global busy) data taking synchronising by Event ID:
 - online: using one ```EventIDSyncDataCollector``` connected to all producer (```02_eudet_tlu_telescope``` or ```02_aida_tlu_telescope_eventID-DC```)
-- offline: using multiple ```DirectSaveDataCollector``` each connected to one producer (```02_aida_tlu_telescope```) and merge them offline using ```euCliMergerStandardEventID``` (to be merged to the master) 
+- offline: using multiple ```DirectSaveDataCollector``` each connected to one producer (```02_aida_tlu_telescope```) and merge them offline using ```euCliMergerStandardEvtID```
 
 If the devices are reading out the Trigger ID, the synchronisation can also happen by this:
 - online: using one ```TriggerIDSyncDataCollector``` connected to all producer (```02_aida_tlu_telescope_triggerID```) 
-- offline: using multiple ```DirectSaveDataCollector``` each connected to one producer (```02_aida_tlu_telescope```) and merge them offline using ```euCliMergerStandardTriggerID``` (to be merged to the master) 
+- offline: using multiple ```DirectSaveDataCollector``` each connected to one producer (```02_aida_tlu_telescope```) and merge them offline using ```euCliMergerStandardTrigID```
 
 ### Mixed mode
 
@@ -31,7 +29,7 @@ This can be used with the AIDA TLU and the the ```DUTIgnoreBusy``` option in ord
 
 Mixed mode data taking synchronising by Trigger ID:
 - online: using one ```TriggerIDSyncDataCollector``` connected to all producer (```02_aida_tlu_telescope_triggerID```)
-- offline: using multiple ```DirectSaveDataCollector``` each connected to one producer (```02_aida_tlu_telescope```) and merge them offline using ```euCliMergerMixed``` (to be merged to the master) 
+- offline: using multiple ```DirectSaveDataCollector``` each connected to one producer (```02_aida_tlu_telescope```) and merge them offline using ```euCliMergerMixedCombinedTrigID``` or ```euCliMergerMixedDuplicateMimosaTrigID``` depending on the analysis.
 
 ### AIDA mode
 
