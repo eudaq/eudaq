@@ -72,22 +72,23 @@ Variables set are cached in CMakeCache.txt and will again be taken into account 
 
 cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deactivate programs which will be built, here printed with their default value:  
 - ```EUDAQ_BUILD_EXECUTABLE=ON```
-- ```EUDAQ_BUILD_GUI=ON```
+- ```EUDAQ_BUILD_GUI=OFF```
+- ```EUDAQ_BUILD_DOXYGEN=OFF```
 - ```EUDAQ_BUILD_MANUAL=OFF```
 - ```EUDAQ_BUILD_PYTHON=OFF```
-- ```EUDAQ_BUILD_STDEVENT_MONITOR=ON```
+- ```EUDAQ_BUILD_STDEVENT_MONITOR=OFF```
 - ```EUDAQ_EXTRA_BUILD_NREADER=OFF```
-- ```EUDAQ_LIBRARY_BUILD_LCIO=ON```
+- ```EUDAQ_LIBRARY_BUILD_LCIO=OFF```
 - ```EUDAQ_LIBRARY_BUILD_TTREE=OFF```
 - ```USER_AIDASTRIP=OFF```
 - ```USER_CALICE_BUILD=OFF```
-- ```USER_EUDET_BUILD=ON```
+- ```USER_EUDET_BUILD=OFF```
 - ```USER_EXAMPLE_BUILD=ON```
-- ```USER_EXPERIMENTAL_BUILD=ON```
+- ```USER_EXPERIMENTAL_BUILD=OFF```
 - ```USER_ITKSTRIP_BUILD=OFF```
-- ```USER_STCONTROL_BUILD=ON```
+- ```USER_STCONTROL_BUILD=OFF```
 - ```USER_TBSCDESY=OFF```
-- ```USER_TLU_BUILD=ON```
+- ```USER_TLU_BUILD=OFF```
 - ```USER_TIMEPIX3_BUILD=OFF```
 
 If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder by ```rm -rf *``` before a new try.
