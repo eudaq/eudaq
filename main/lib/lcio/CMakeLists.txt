@@ -6,21 +6,16 @@ endif()
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_LCIO_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq lcio library")
 
-find_package(LCIO CONFIG)
-find_package(Git QUIET)
-if(GIT_FOUND OR LCIO_FOUND)
-  set(GIT_OR_FOUND TRUE)
-endif()
-
-cmake_dependent_option(EUDAQ_LIBRARY_BUILD_LCIO "build eudaq lib/lcio library" ON
-  "GIT_OR_FOUND" OFF)
-
+OPTION(EUDAQ_LIBRARY_BUILD_LCIO "lib/lcio library (requires LCIO)" OFF)
 if(NOT EUDAQ_LIBRARY_BUILD_LCIO)
-    message(STATUS "disable building of eudaq lib/lcio library (EUDAQ_LIBRARY_BUILD_LCIO=OFF)")
+  message(STATUS "lib/lcio library is NOT to be built (EUDAQ_LIBRARY_BUILD_LCIO=OFF)")
   unset(EUDAQ_LCIO_LIBRARY CACHE)
   unset(LCIO_LIBRARIES CACHE)
   return()
 endif()
+message(STATUS "lib/lcio library is to be built (EUDAQ_LIBRARY_BUILD_LCIO=ON)")
+
+find_package(LCIO)
 
 add_definitions("-DEUDAQ_CORE_EXPORTS")
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
@@ -39,7 +34,7 @@ if(LCIO_FOUND)
   unset(LCIO_LCIO_LIBRARY CACHE)
   unset(LCIO_SIO_LIBRARY CACHE)
 else()
-  message(STATUS "Check for LCIOConfig.cmake : -- fail")
+  message(STATUS "Check for existing LCIOConfig.cmake: fail, so use the build-in")
   message(STATUS "Set to compile the build-in LCIO (${CMAKE_CURRENT_LIST_DIR}/extern/LCIO-02-07.zip)")
   include(ExternalProject)
   externalproject_add(

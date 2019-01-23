@@ -4,15 +4,16 @@ if(WIN32)
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-find_package(ROOT)
+find_package(ROOT QUIET)
 
-cmake_dependent_option(EUDAQ_BUILD_STDEVENT_MONITOR "build StdEvent monitor executable" ON
+cmake_dependent_option(EUDAQ_BUILD_STDEVENT_MONITOR "monitor/StdEventMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
 if(NOT EUDAQ_BUILD_STDEVENT_MONITOR)
-  message("StdEvent monitor is not to be built")
+    message(STATUS "monitor/StdEventMonitor is NOT to be built (EUDAQ_BUILD_STDEVENT_MONITOR=OFF)")
   return()
 endif()
+message(STATUS "monitor/StdEventMonitor is to be built (EUDAQ_BUILD_STDEVENT_MONITOR=ON)")
 
 if(WIN32)
   find_package(ROOT REQUIRED COMPONENTS libGui libCore libHist libRIO)

@@ -7,11 +7,11 @@ set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 find_package(ROOT)
 
-cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "build eduaq lib/ttree library" OFF
+cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "lib/ttree library (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
 if(NOT EUDAQ_LIBRARY_BUILD_TTREE)
-  message(STATUS "disable building of eudaq lib/ttree library (EUDAQ_LIBRARY_BUILD_TTREE=OFF)")
+    message(STATUS "lib/ttree is NOT to be built (EUDAQ_LIBRARY_BUILD_TTREE=OFF)")
   unset(EUDAQ_TTREE_LIBRARY CACHE)
   unset(TTREE_LIBRARIES CACHE)
   return()

@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.1.0)
 include(CMakeDependentOption)
-find_package(Qt5Widgets QUIET)
+find_package(Qt5Widgets CONFIG)
 
 cmake_dependent_option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT5)" ON
   "Qt5Widgets_FOUND" OFF)
 
 if(NOT EUDAQ_BUILD_GUI)
-  message(STATUS "EUDAQ GUI Interface is disabled. (requires QT5)")
+    message(STATUS "GUIs of executables (euRun, euLog) are NOT to be built (EUDAQ_BUILD_GUI=OFF)")
   return()
 endif()
+message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=ON)")
 
 find_package(Qt5Widgets REQUIRED)
 message(STATUS "Qt5Widgets: ${Qt5Widgets_DIR}")

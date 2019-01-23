@@ -74,11 +74,11 @@ set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 add_subdirectory(main)
-add_subdirectory(user)
-add_subdirectory(monitors)
 add_subdirectory(extra)
-add_subdirectory(gui)
 add_subdirectory(doc)
+add_subdirectory(gui)
+add_subdirectory(monitors)
+add_subdirectory(user)
 
 # Uninstall Target #
 if(NOT TARGET uninstall)
@@ -111,6 +111,7 @@ include(PrintSystemInformation)
 
 export(PACKAGE eudaq)
 
+
 if(DEFINED EUDAQ_CORE_LIBRARY)
   list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_CORE_LIBRARY})
 endif()
@@ -137,3 +138,5 @@ install(EXPORT eudaqTargets
   NAMESPACE eudaq_
   DESTINATION cmake
   COMPONENT dev)
+
+MESSAGE(STATUS "Check your configuration/flags with: cmake -L")
