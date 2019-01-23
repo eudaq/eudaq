@@ -3,7 +3,7 @@ get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 
-option(USER_TLU_BUILD "build tlu" ON)
+option(USER_TLU_BUILD "build tlu" OFF)
 
 if(NOT USER_TLU_BUILD)
   message(STATUS "user/tlu is NOT to be built (USER_TLU_BUILD=OFF)")

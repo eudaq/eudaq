@@ -4,7 +4,7 @@ get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
 
-option(USER_EUDET_BUILD "build eudet" ON)
+option(USER_EUDET_BUILD "build eudet" OFF)
 
 if(NOT USER_EUDET_BUILD)
   message(STATUS "user/eudet is NOT to be built (USER_EUDET_BUILD=OFF)")

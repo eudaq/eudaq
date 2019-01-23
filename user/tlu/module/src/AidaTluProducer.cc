@@ -45,7 +45,9 @@ namespace{
 
 AidaTluProducer::AidaTluProducer(const std::string name, const std::string &runcontrol)
   :eudaq::Producer(name, runcontrol){
-
+  m_duration = 0;
+  m_starttime = 0;
+  m_lasttime = 0;
 }
 
 void AidaTluProducer::RunLoop(){
@@ -330,7 +332,7 @@ void AidaTluProducer::DoStatus() {
     SetStatusTag("Scaler1", std::to_string(sl1));
     SetStatusTag("Scaler2", std::to_string(sl2));
     SetStatusTag("Scaler3", std::to_string(sl3));
-    SetStatusTag("SCALER4", std::to_string(sl4));
-    SetStatusTag("SCALER5", std::to_string(sl5));
+    SetStatusTag("Scaler4", std::to_string(sl4));
+    SetStatusTag("Scaler5", std::to_string(sl5));
   }
 }
