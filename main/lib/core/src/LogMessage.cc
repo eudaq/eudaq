@@ -75,16 +75,34 @@ namespace eudaq {
   }
 
   void LogMessage::Print(std::ostream &os) const {
-    os << Level2String(GetLevel()) << ": " << GetMessage() << " " << m_time.Formatted();
-    if (m_sendertype != "")
-      os << " " << GetSender();
-    if ((GetLevel() <= LVL_DEBUG || GetLevel() >= LVL_ERROR) && m_file != "") {
-      os << " [in " << m_file << ":" << m_line;
-      if (m_func != "")
-        os << ", " << m_func;
-      os << "]";
-    }
+      // print the time bold
+      os << "\x1B[0m"<<"\x1B[1m" <<"["<< m_time.Formatted()<<"]"<< "\x1B[0m"<<std::flush;
+      // we can add some colors for different levels:
+      //  debug < black, info = green, warning = yellow, error >= red
+      if(GetLevel()<LVL_INFO)
+          os<<"\x1B[31;1m";
+      else if(GetLevel()==LVL_INFO)
+          os<<"\x1B[32;1m";
+      else if(GetLevel()==LVL_WARN)
+          os<<"\x1B[33;1m";
+      else if(GetLevel()>=LVL_ERROR)
+          os<<"\x1B[31;1m";
+      os << "(" <<Level2String(GetLevel())<<")"<< "\x1B[0m";
+      // Define the sender
+      if (m_sendertype != "")
+          os << " [" << GetSender()<<" ]"<<std::flush;
+      else
+          os <<"\x1B[31;1m"<< " [unknown sender]"<< "\x1B[0m"<<std::flush;
+      // the actual message and a new line
+      os << GetMessage()<<std::flush;
+      //    if ((GetLevel() <= LVL_DEBUG || GetLevel() >= LVL_ERROR) && m_file != "") {
+      //      os << " [in " << m_file << ":" << m_line;
+      //      if (m_func != "")
+      //        os << ", " << m_func;
+      //      os << "]";
+      //      //os << Level2String(GetLevel()) << ": " << GetMessage() << " " << m_time.Formatted();
   }
+
 
   void LogMessage::Write(std::ostream &os) const {
     os << Level2String(GetLevel()) << "\t" << escape_string(GetMessage()) << "\t"
