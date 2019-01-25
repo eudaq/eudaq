@@ -95,12 +95,6 @@ namespace eudaq {
           os <<"\x1B[31;1m"<< " [unknown sender]"<< "\x1B[0m"<<std::flush;
       // the actual message and a new line
       os << GetMessage()<<std::flush;
-      //    if ((GetLevel() <= LVL_DEBUG || GetLevel() >= LVL_ERROR) && m_file != "") {
-      //      os << " [in " << m_file << ":" << m_line;
-      //      if (m_func != "")
-      //        os << ", " << m_func;
-      //      os << "]";
-      //      //os << Level2String(GetLevel()) << ": " << GetMessage() << " " << m_time.Formatted();
   }
 
 
