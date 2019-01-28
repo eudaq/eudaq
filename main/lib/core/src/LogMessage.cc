@@ -81,7 +81,7 @@ namespace eudaq {
       if (m_sendertype != "")
           os << " [" << GetSender()<<" ]"<<std::flush;
       else
-          os <<"\x1B[31;1m"<< " [unknown sender]"<< "\x1B[0m"<<std::flush;
+          os <<" [unknown sender]"<<std::flush;
       // the actual message and a new line
       os << GetMessage()<<std::flush;
 
