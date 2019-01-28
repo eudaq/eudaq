@@ -76,6 +76,16 @@ namespace eudaq {
 
   void LogMessage::Print(std::ostream &os) const {
       // print the time bold
+#ifdef _WIN32
+      os <<"["<< m_time.Formatted()<<"]";
+      if (m_sendertype != "")
+          os << " [" << GetSender()<<" ]"<<std::flush;
+      else
+          os <<"\x1B[31;1m"<< " [unknown sender]"<< "\x1B[0m"<<std::flush;
+      // the actual message and a new line
+      os << GetMessage()<<std::flush;
+
+#else
       os << "\x1B[0m"<<"\x1B[1m" <<"["<< m_time.Formatted()<<"]"<< "\x1B[0m"<<std::flush;
       // we can add some colors for different levels:
       //  debug < black, info = green, warning = yellow, error >= red
@@ -95,6 +105,7 @@ namespace eudaq {
           os <<"\x1B[31;1m"<< " [unknown sender]"<< "\x1B[0m"<<std::flush;
       // the actual message and a new line
       os << GetMessage()<<std::flush;
+ #endif
   }
 
 
