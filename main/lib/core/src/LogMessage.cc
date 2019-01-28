@@ -76,7 +76,8 @@ namespace eudaq {
 
   void LogMessage::Print(std::ostream &os) const {
       // print the time bold
-ifdef _WIN32
+
+#ifdef _WIN32
       os <<"["<< m_time.Formatted()<<"] ";
       if (m_sendertype != "")
           os << " [" << GetSender()<<"] "<<std::flush;
