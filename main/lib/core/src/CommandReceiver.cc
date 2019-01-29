@@ -251,12 +251,13 @@ namespace eudaq {
       m_is_connected = false;
       throw;
     }
+    return 0;
   }
 
   bool CommandReceiver::AsyncForwarding(){
     while(m_is_connected){
       std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
-      if(m_qu_cmd.empty()){
+      while(m_qu_cmd.empty()){
 	while(m_cv_not_empty.wait_for(lk, std::chrono::seconds(1))
 	      ==std::cv_status::timeout){
 	  if(!m_is_connected){
