@@ -72,7 +72,7 @@ Variables set are cached in CMakeCache.txt and will again be taken into account 
 
 cmake has several options (```cmake -D OPTION=ON/OFF ..```) to activate or deactivate programs which will be built, here printed with their default value:  
 - ```EUDAQ_BUILD_EXECUTABLE=ON```
-- ```EUDAQ_BUILD_GUI=OFF```
+- ```EUDAQ_BUILD_GUI=ON```
 - ```EUDAQ_BUILD_DOXYGEN=OFF```
 - ```EUDAQ_BUILD_MANUAL=OFF```
 - ```EUDAQ_BUILD_PYTHON=OFF```
@@ -96,7 +96,7 @@ If problems occur during installation, please have a look in the issues, if a si
 
 ### Quick installation for UNIX
 
-Prerequisites for Ubuntu 18.04: 
+Prerequisites for Ubuntu 18.04.01 LTS: 
 ```sudo apt install openssh-server git cmake build-essential qt5-default xterm zlib1g-dev```
 
 Get and compile the code
@@ -112,12 +112,13 @@ make install
 
 #### Visual Studio for compiling (MSVC)
 
-- The recommended windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 2013 and later
-- Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
+The recommended windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 14 2015 and later: 
+Download Visual Studio Express Desktop (e.g. 2015 Version) [here.](http://www.microsoft.com/en-us/download/details.aspx?id=40787)
 
 #### Compiling using cmake syntax
 
 Start the Visual Studio "Developer Command Prompt" from the Start Menu entries for Visual Studio (Tools subfolder) which opens a cmd.exe session with the necessary environment variables already set. 
+
 If your Qt installation path has not been added to the global %PATH% variable, you need to execute the "qtenv2.bat" batch file in the Qt folder, e.g. and replace "5.1.1" with the version string of your Qt installation:
 ```
 C:\Qt\Qt5.1.1\5.1.1\msvc2013\bin\qtenv2.bat
@@ -127,13 +128,11 @@ Go to the EUDAQ folder and configure, as describe above:
 cd c:\[...]\eudaq\build
 cmake ..
 ```
+(Note: Please make sure the right compiler is found. You can select the right generator by ```cmake -G ...``` or by using the cmake-gui.)
+
 This generates the VS project files. Installing into eudaq\bin by:
 ```
 cmake --build . --target install --config Release
-```
-Or in the Visual Studio style:
-```
-MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
 ```
 
 ### Notes for OS X
