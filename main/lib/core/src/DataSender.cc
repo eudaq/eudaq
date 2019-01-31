@@ -102,7 +102,7 @@ namespace eudaq {
   bool DataSender::AsyncSending(){
     while(m_is_connected){//TODO:
       std::unique_lock<std::mutex> lk(m_mx_qu_ev);
-      if(m_qu_ev.empty()){
+      while(m_qu_ev.empty()){
 	while(m_cv_not_empty.wait_for(lk, std::chrono::milliseconds(100))
 	      ==std::cv_status::timeout){
 	  if(!m_is_connected){

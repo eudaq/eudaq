@@ -1,7 +1,7 @@
 #ifndef EUDAQ_INCLUDED_BufferSerializer
 #define EUDAQ_INCLUDED_BufferSerializer
 
-#include <deque>
+
 #include <algorithm>
 #include <iostream>
 #include "eudaq/Serializer.hh"
