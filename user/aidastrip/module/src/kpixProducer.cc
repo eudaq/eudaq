@@ -331,7 +331,7 @@ void kpixProducer::KpixDataReceiver(){
       _kpixQueue.push_front(datKpix);
       rxlock.unlock();
       m_nEvt++;
-      std::cout<< " @_@ COUNTER! Event #"<< std::dec << m_nEvt <<std::endl;
+      if (m_debug=="True") std::cout<< " @_@ COUNTER! Event #"<< std::dec << m_nEvt <<std::endl;
     }
     delete datKpix;
   }
@@ -356,7 +356,7 @@ void kpixProducer::SendKpixEvent(){
       auto size2=_kpixQueue.size();
       txlock.unlock();
       
-      cout << "[tx] kpix queue size, before = "<< size1 <<"; after = "<< size2<<endl;
+      if (m_debug=="True") cout << "[tx] kpix queue size, before = "<< size1 <<"; after = "<< size2<<endl;
       
       auto eudaqEv = eudaq::Event::MakeUnique("KpixRawEvt");
     
