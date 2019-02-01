@@ -1,9 +1,10 @@
 ##-- OPT: Compile AIDA strip?
-option(USER_AIDASTRIP "build AIDA strip")
-if(NOT USER_AIDASTRIP)
-    message(STATUS "disable building of user/aidastrip (USER_AIDASTRIP=OFF)")
+option(USER_AIDASTRIP_BUILD "build AIDA strip" OFF)
+if(NOT USER_AIDASTRIP_BUILD)
+    message(STATUS "user/aidastrip is NOT to be built (USER_AIDASTRIP_BUILD=OFF)")
   return()
 endif()
+message(STATUS "user/aidastrip is to be built (USER_AIDASTRIP_BUILD=ON)")
 
 ##-- Global Preparation:
 #-- EUDAQ_MODULE needed for compilation at lower level CMakeLists
