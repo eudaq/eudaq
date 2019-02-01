@@ -123,7 +123,7 @@ namespace eudaq {
   bool DataReceiver::AsyncForwarding(){
     while(!m_is_async_rcv_return){
       std::unique_lock<std::mutex> lk(m_mx_qu_ev);
-      if(m_qu_ev.empty()){
+      while(m_qu_ev.empty()){
 	while(m_cv_not_empty.wait_for(lk, std::chrono::seconds(1))
 	      ==std::cv_status::timeout){
 	  if(m_is_async_rcv_return){

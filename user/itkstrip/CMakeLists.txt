@@ -12,6 +12,7 @@ endif()
 
 
 add_subdirectory(module)
+add_subdirectory(exe)
 
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
