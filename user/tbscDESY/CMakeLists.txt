@@ -6,6 +6,7 @@ set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 
 option(USER_TBSCDESY_BUILD "build DESY Test Beam Slow Control" OFF)
 
+
 if(NOT USER_TBSCDESY_BUILD)
     message(STATUS "user/tbscDESY is NOT to be built (USER_TBSCDESY_BUILD=OFF)")
   return()
