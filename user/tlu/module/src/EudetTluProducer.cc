@@ -46,8 +46,8 @@ private:
   double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];
 
   std::string m_STATUS;
-  uint32_t m_TIMESTAMP;
-  uint32_t m_LASTTIME;
+  uint64_t m_TIMESTAMP;
+  uint64_t m_TIMESTAMP_START;
   uint32_t m_PARTICLES;
   uint32_t m_SCALE_0;
   uint32_t m_SCALE_1;
@@ -65,7 +65,7 @@ EudetTluProducer::EudetTluProducer(const std::string name, const std::string &ru
   trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
   or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
   enable_dut_veto(0), trig_rollover(0), readout_delay(100),
-  timestamps(true), timestamp_per_run(false), m_ts_last(0){
+  timestamps(true), timestamp_per_run(false), m_ts_last(0), m_TIMESTAMP(0), m_TIMESTAMP_START(0){
   for (int i = 0; i < TLU_PMTS; i++) {
     pmtvcntl[i] = PMT_VCNTL_DEFAULT;
     pmt_id[i] = "<unknown>";
@@ -87,6 +87,7 @@ void EudetTluProducer::RunLoop(){
   m_tlu->Start();
 
   m_ts_last = 0;
+  m_TIMESTAMP_START = m_tlu->GetTimestamp();
   while(true){
     eudaq::mSleep(readout_delay);
     m_tlu->Update(timestamps); // get new events
@@ -96,8 +97,7 @@ void EudetTluProducer::RunLoop(){
       m_tlu->InhibitTriggers(inhibit);
     }
 
-    m_TIMESTAMP = Timestamp2Seconds(m_tlu->GetTimestamp());
-    m_LASTTIME = Timestamp2Seconds(m_ts_last);
+    m_TIMESTAMP = m_tlu->GetTimestamp();
     m_PARTICLES =  m_tlu->GetParticles();
     m_STATUS = m_tlu->GetStatusString();
     m_SCALE_0 = m_tlu->GetScaler(0);
@@ -110,19 +110,17 @@ void EudetTluProducer::RunLoop(){
       auto ev = eudaq::Event::MakeUnique("TluRawDataEvent");
       m_trigger_n = tlu_entry.Eventnum();
       uint64_t ts_raw = tlu_entry.Timestamp();
-      // uint64_t ts_ns = ts_raw; //TODO, convert to ns
       // uint64_t ts_ns = ts_raw / (tlu::TLUFREQUENCY * tlu::TLUFREQUENCYMULTIPLIER);
-      // uint64_t ts_ns = ts_raw*125000/48001; //TODO: 
-      uint64_t ts_ns = ts_raw*125/48;
-      ev->SetTimestamp(ts_ns, ts_ns+8, false);//TODO, duration
+      uint64_t ts_ns = ts_raw*125000/48001; // 125 timestamp sampling in units of 48.001 MHz TLU clock
+      ev->SetTimestamp(ts_ns, ts_ns+8, false);
       ev->SetTriggerN(m_trigger_n);
       if (m_ts_last && (m_trigger_n < 10 || m_trigger_n % 1000 == 0)) {
 	uint64_t delta_ts = ts_ns - m_ts_last;
-	float freq = 1. / Timestamp2Seconds(delta_ts);
-	std::cout << "  " << tlu_entry << ", diff=" << delta_ts
-		  << ", freq=" << freq << std::endl;
+	float freq = 1. / (delta_ts/1e9)/1000;
+	std::cout << "  " << tlu_entry << ", diff=" << delta_ts/1.e6
+		  << " ms, freq=" << freq << " kHz"<<std::endl;
       }
-      ev->SetTag("trigger", tlu_entry.trigger2String()); //TriggerParttern
+      ev->SetTag("trigger", tlu_entry.trigger2String()); //TriggerPattern
       if(isbegin){
 	isbegin = false;
 	ev->SetBORE();
@@ -219,11 +217,11 @@ void EudetTluProducer::DoReset(){
 }
 
 void EudetTluProducer::DoStatus(){
-  SetStatusTag("TRIG", std::to_string(m_trigger_n));
-  SetStatusTag("TIMESTAMP", std::to_string(m_TIMESTAMP));
-  SetStatusTag("LASTTIME", std::to_string(m_LASTTIME));
-  SetStatusTag("PARTICLES", std::to_string(m_PARTICLES));
-  SetStatusTag("STATUS", m_STATUS);
-  SetStatusTag("SCALER", std::to_string(m_SCALE_0)+":"+std::to_string(m_SCALE_1)+":"
+  SetStatusTag("IDTrig", std::to_string(m_trigger_n));
+  SetStatusTag("Freq. (avg.) [kHz]", std::to_string(m_trigger_n/Timestamp2Seconds(m_TIMESTAMP-m_TIMESTAMP_START)/1000.));
+  SetStatusTag("Run duration [s]", std::to_string(Timestamp2Seconds(m_TIMESTAMP-m_TIMESTAMP_START)));
+  SetStatusTag("Particles", std::to_string(m_PARTICLES));
+  SetStatusTag("Scaler", std::to_string(m_SCALE_0)+":"+std::to_string(m_SCALE_1)+":"
 	       +std::to_string(m_SCALE_2)+":"+std::to_string(m_SCALE_3));
+  SetStatusTag("Status", m_STATUS);
 }

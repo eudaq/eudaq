@@ -328,11 +328,6 @@ void AidaTluProducer::DoStatus() {
     SetStatusTag("Freq. (avg.) [kHz]", std::to_string(post/m_duration/1000));
     SetStatusTag("Run duration [s]", std::to_string(m_duration));
     SetStatusTag("Particles", std::to_string(pret));
-    SetStatusTag("Scaler0", std::to_string(sl0));
-    SetStatusTag("Scaler1", std::to_string(sl1));
-    SetStatusTag("Scaler2", std::to_string(sl2));
-    SetStatusTag("Scaler3", std::to_string(sl3));
-    SetStatusTag("Scaler4", std::to_string(sl4));
-    SetStatusTag("Scaler5", std::to_string(sl5));
+    SetStatusTag("Scaler", std::to_string(sl0) + ":" + std::to_string(sl1) + ":" + std::to_string(sl2) + ":" + std::to_string(sl3) + ":" + std::to_string(sl4) + ":" + std::to_string(sl5));
   }
 }

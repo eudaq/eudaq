@@ -42,6 +42,7 @@ namespace tlu {
   static const unsigned TLU_DEBUG_BLOCKREAD = 0x0004;
 
   double Timestamp2Seconds(uint64_t t);
+  double Timestamp2NanoSeconds(uint64_t t);
 
   class TLUException : public std::runtime_error {
   public:

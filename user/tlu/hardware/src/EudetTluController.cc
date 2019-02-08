@@ -120,9 +120,13 @@ namespace tlu {
     return t / (TLUFREQUENCY * TLUFREQUENCYMULTIPLIER);
   }
 
+  double Timestamp2NanoSeconds(uint64_t t) {
+    return t / (TLUFREQUENCY * TLUFREQUENCYMULTIPLIER) * 1.e9;
+  }
+
   void TLUEntry::Print(std::ostream &out) const {
-    out << m_eventnum << ", " << eudaq::hexdec(m_timestamp, 0) << " = "
-        << Timestamp2Seconds(m_timestamp);
+    out << m_eventnum << "\t" << eudaq::hexdec(m_timestamp, 0) << " = "
+        << Timestamp2Seconds(m_timestamp) << " s";
   }
 
   std::string TLUEntry::trigger2String() {
