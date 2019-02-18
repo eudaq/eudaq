@@ -3,6 +3,7 @@
 
 #include "devicemgr.hpp"
 #include "configuration.hpp"
+#include "log.hpp"
 
 #include <iostream>
 #include <ostream>
@@ -39,6 +40,7 @@ private:
 
   caribouDeviceMgr* manager_;
   caribouDevice* device_;
+  std::string name_;
 };
 
 namespace{
@@ -47,8 +49,11 @@ namespace{
 }
 
 CaribouProducer::CaribouProducer(const std::string name, const std::string &runcontrol)
-: eudaq::Producer(name, runcontrol), m_ev(0), m_running(false) {
-  std::cout << "Instantiated CaribouProducer \"" << name << "\"" << std::endl;
+: eudaq::Producer(name, runcontrol), m_ev(0), m_running(false), name_(name) {
+  std::cout << "Instantiated CaribouProducer for device \"" << name << "\"" << std::endl;
+
+  // Add cout as the default logging stream
+  Log::addStream(std::cout);
 
   // Create new Peary device manager
   manager_ = new caribouDeviceMgr();
@@ -60,14 +65,40 @@ CaribouProducer::~CaribouProducer() {
 
 void CaribouProducer::DoReset() {
   std::cout << "Resetting CaribouProducer" << std::endl;
+
+  // Delete all devices:
+  manager_->clearDevices();
 }
 
 void CaribouProducer::DoInitialise() {
   std::cout << "Initialising CaribouProducer" << std::endl;
   auto ini = GetInitConfiguration();
 
-  auto name = ini->Get("DEVICE", "CLICpix2");
-  size_t device_id = manager_->addDevice(name, caribou::Configuration());
+  auto level = ini->Get("log_level", "INFO");
+  try {
+    LogLevel log_level = Log::getLevelFromString(level);
+    Log::setReportingLevel(log_level);
+  } catch(std::invalid_argument& e) {
+    LOG(ERROR) << "Invalid verbosity level \"" << std::string(level) << "\", ignoring.";
+  }
+
+  // Open configuration file and create object:
+  caribou::Configuration config;
+  std::ifstream file(ini->Get("config_file", ""));
+  if(!file.is_open()) {
+    LOG(ERROR) << "No configuration file provided.";
+    EUDAQ_ERROR("No Caribou configuration file provided.");
+  } else {
+    config = caribou::Configuration(file);
+  }
+
+  // Select section from the configuration file relevant for this device:
+  auto sections = config.GetSections();
+  if(std::find(sections.begin(), sections.end(), name_) != sections.end()) {
+    config.SetSection(name_);
+  }
+
+  size_t device_id = manager_->addDevice(name_, config);
   EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id) + ", fetching device...");
   device_ = manager_->getDevice(device_id);
 }
@@ -77,6 +108,17 @@ void CaribouProducer::DoConfigure() {
   auto config = GetConfiguration();
   std::cout << "Configuring CaribouProducer: " << config->Name() << std::endl;
   config->Print(std::cout);
+
+  EUDAQ_INFO("Configuring device " + device_->getName());
+
+  // Switch on the device power:
+  device_->powerOn();
+
+  // Wait for power to stabilize:
+  eudaq::mSleep(10);
+
+  // Configure the device
+  device_->configure();
 
   std::cout << std::endl;
   std::cout << "CaribouProducer configured. Ready to start run. " << std::endl;
