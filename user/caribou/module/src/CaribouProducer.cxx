@@ -29,7 +29,7 @@ public:
   void DoStartRun() override;
   void DoStopRun() override;
   void DoReset() override;
-  void DoTerminate() override;
+  // void DoTerminate() override;
   void RunLoop() override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouProducer");
@@ -84,7 +84,9 @@ void CaribouProducer::DoInitialise() {
 
   // Open configuration file and create object:
   caribou::Configuration config;
-  std::ifstream file(ini->Get("config_file", ""));
+  auto confname = ini->Get("config_file", "");
+  std::ifstream file(confname);
+  EUDAQ_INFO("Attempting to use initial device configuration \"" + confname + "\"");
   if(!file.is_open()) {
     LOG(ERROR) << "No configuration file provided.";
     EUDAQ_ERROR("No Caribou configuration file provided.");
@@ -117,8 +119,12 @@ void CaribouProducer::DoConfigure() {
   // Wait for power to stabilize:
   eudaq::mSleep(10);
 
-  // Configure the device
-  device_->configure();
+  try {
+    // Configure the device
+    device_->configure();
+  } catch(const CommunicationError& e) {
+    EUDAQ_ERROR(e.what());
+  }
 
   std::cout << std::endl;
   std::cout << "CaribouProducer configured. Ready to start run. " << std::endl;
@@ -129,6 +135,9 @@ void CaribouProducer::DoStartRun() {
   m_ev = 0;
 
   std::cout << "Starting run..." << std::endl;
+
+  // Stop the DAQ
+  device_->daqStart();
 
   std::cout << "Started run." << std::endl;
   m_running = true;
@@ -141,17 +150,13 @@ void CaribouProducer::DoStopRun() {
   // Set a flag to signal to the polling loop that the run is over
   m_running = false;
 
+  eudaq::mSleep(10);
+
+  // Stop the DAQ
+  device_->daqStop();
+
   std::cout << "Stopped run." << std::endl;
 }
-
-void CaribouProducer::DoTerminate() {
-  std::cout << "Terminating..." << std::endl;
-
-  // Clean up
-  // delete peary;
-  std::cout << "Terminated." << std::endl;
-}
-
 
 void CaribouProducer::RunLoop() {
 
