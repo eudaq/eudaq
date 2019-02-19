@@ -34,13 +34,14 @@ public:
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouProducer");
 private:
-  bool m_running;
-
   unsigned m_ev;
 
   caribouDeviceMgr* manager_;
   caribouDevice* device_;
   std::string name_;
+
+  LogLevel level_;
+  bool m_exit_of_run;
 };
 
 namespace{
@@ -49,7 +50,7 @@ namespace{
 }
 
 CaribouProducer::CaribouProducer(const std::string name, const std::string &runcontrol)
-: eudaq::Producer(name, runcontrol), m_ev(0), m_running(false), name_(name) {
+: eudaq::Producer(name, runcontrol), m_ev(0), m_exit_of_run(false), name_(name) {
   std::cout << "Instantiated CaribouProducer for device \"" << name << "\"" << std::endl;
 
   // Add cout as the default logging stream
@@ -65,6 +66,7 @@ CaribouProducer::~CaribouProducer() {
 
 void CaribouProducer::DoReset() {
   std::cout << "Resetting CaribouProducer" << std::endl;
+  m_exit_of_run = true;
 
   // Delete all devices:
   manager_->clearDevices();
@@ -78,9 +80,12 @@ void CaribouProducer::DoInitialise() {
   try {
     LogLevel log_level = Log::getLevelFromString(level);
     Log::setReportingLevel(log_level);
+    LOG(INFO) << "Set verbosity level to \"" << std::string(level) << "\"";
   } catch(std::invalid_argument& e) {
     LOG(ERROR) << "Invalid verbosity level \"" << std::string(level) << "\", ignoring.";
   }
+
+  level_ = Log::getReportingLevel();
 
   // Open configuration file and create object:
   caribou::Configuration config;
@@ -140,7 +145,7 @@ void CaribouProducer::DoStartRun() {
   device_->daqStart();
 
   std::cout << "Started run." << std::endl;
-  m_running = true;
+  m_exit_of_run = false;
 }
 
 void CaribouProducer::DoStopRun() {
@@ -148,39 +153,64 @@ void CaribouProducer::DoStopRun() {
   std::cout << "Stopping run..." << std::endl;
 
   // Set a flag to signal to the polling loop that the run is over
-  m_running = false;
-
+  m_exit_of_run = true;
   eudaq::mSleep(10);
 
   // Stop the DAQ
   device_->daqStop();
-
   std::cout << "Stopped run." << std::endl;
 }
 
 void CaribouProducer::RunLoop() {
 
+  Log::setReportingLevel(level_);
+
   std::cout << "Starting run loop..." << std::endl;
 
-  unsigned int m_ev_next_update=0;
-  while(1) {
-    if(!m_running){
+  while(!m_exit_of_run) {
+
+    try {
+      // Create new event
+      auto event = eudaq::Event::MakeUnique("CariouRawDataEvent");
+      // Use trigger N to store frame counter
+      event->SetTriggerN(m_ev);
+
+      // pearydata data;
+      std::vector<uint32_t> data;
+      try {
+        device_->command("triggerPatternGenerator", "1");
+        // Read the data:
+        data = device_->getRawData();
+      } catch(caribou::DataException& e) {
+        // Retrieval failed, retry once more before aborting:
+        EUDAQ_WARN(std::string(e.what()) + ", skipping frame.");
+        device_->timestampsPatternGenerator(); // in case of readout error, clear timestamp fifo before going to next event
+        continue;
+      }
+
+      std::vector<uint64_t> timestamps = device_->timestampsPatternGenerator();
+
+      // Add timestamps to the event
+      event->AddBlock(0, timestamps);
+
+      // Add data to the event
+      event->AddBlock(1, data);
+
+      // Send the event to the Data Collector
+      SendEvent(std::move(event));
+
+      LOG(INFO) << m_ev << " | " << data.size() << " data words, time: " << caribou::listVector(timestamps);
+
+      // Now increment the event number
+      m_ev++;
+    } catch(caribou::DataException& e) {
+      device_->timestampsPatternGenerator(); // in case of readout error, clear timestamp fifo before going to next event
+      continue;
+    } catch(caribou::caribouException& e) {
+      EUDAQ_ERROR(e.what());
       break;
     }
 
-	    // // Current event
-	    // auto evup = eudaq::Event::MakeUnique("Timepix3RawDataEvent");
-	    // evup->SetTriggerN(m_ev);
-      //
-	    // // and add it to the event
-	    // evup->AddBlock( 0, bufferTrg );
-	    // // Add buffer to block
-	    // evup->AddBlock( 1, bufferPix );
-	    // // Send the event to the Data Collector
-	    // SendEvent(std::move(evup));
-
-	    // Now increment the event number
-	    m_ev++;
   }
 
   std::cout << "Exiting run loop." << std::endl;
