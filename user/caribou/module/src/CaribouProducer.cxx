@@ -38,6 +38,8 @@ private:
   std::mutex device_mutex_;
   LogLevel level_;
   bool m_exit_of_run;
+
+  bool drop_empty_frames_{};
 };
 
 namespace{
@@ -114,6 +116,8 @@ void CaribouProducer::DoConfigure() {
   std::cout << "Configuring CaribouProducer: " << config->Name() << std::endl;
   config->Print(std::cout);
 
+  drop_empty_frames_ = config->Get("drop_empty_frames", false);
+
   std::lock_guard<std::mutex> lock{device_mutex_};
   EUDAQ_INFO("Configuring device " + device_->getName());
 
@@ -168,13 +172,10 @@ void CaribouProducer::RunLoop() {
   std::cout << "Starting run loop..." << std::endl;
   std::lock_guard<std::mutex> lock{device_mutex_};
 
+  int empty_frames = 0, total_words = 0;
+
   while(!m_exit_of_run) {
     try {
-      // Create new event
-      auto event = eudaq::Event::MakeUnique("CariouRawDataEvent");
-      // Use trigger N to store frame counter
-      event->SetTriggerN(m_ev);
-
       // pearydata data;
       std::vector<uint32_t> data;
       try {
@@ -190,14 +191,6 @@ void CaribouProducer::RunLoop() {
 
       std::vector<uint64_t> timestamps = device_->timestampsPatternGenerator();
 
-      // Add timestamps to the event
-      event->AddBlock(0, timestamps);
-
-      // Add data to the event
-      event->AddBlock(1, data);
-
-      // Send the event to the Data Collector
-      SendEvent(std::move(event));
 
       std::stringstream times;
       bool shutterOpen = false;
@@ -211,10 +204,30 @@ void CaribouProducer::RunLoop() {
         }
       }
 
-      LOG(INFO) << m_ev << " | " << data.size() << " data words" << times.str();
+      if(data.size() > 12) {
+        LOG(DEBUG) << m_ev << " | " << data.size() << " data words" << times.str();
+        total_words += data.size();
+      } else {
+        empty_frames++;
+      }
+
+      if(!drop_empty_frames_ || data.size() > 12) {
+        // Create new event
+        auto event = eudaq::Event::MakeUnique("CariouRawDataEvent");
+        // Use trigger N to store frame counter
+        event->SetTriggerN(m_ev);
+        // Add timestamps to the event
+        event->AddBlock(0, timestamps);
+        // Add data to the event
+        event->AddBlock(1, data);
+        // Send the event to the Data Collector
+        SendEvent(std::move(event));
+      }
 
       // Now increment the event number
       m_ev++;
+
+      LOG_PROGRESS(INFO, "status") << "Frame " << m_ev << " empty: " << empty_frames << " with pixels: " << (m_ev - empty_frames);
     } catch(caribou::DataException& e) {
       device_->timestampsPatternGenerator(); // in case of readout error, clear timestamp fifo before going to next event
       continue;
