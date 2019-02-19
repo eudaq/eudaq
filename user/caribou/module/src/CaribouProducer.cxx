@@ -11,12 +11,7 @@
 #include <unistd.h>
 #include <iomanip>
 #include <signal.h>
-#ifdef WIN32
-#include <Windows.h>
-#else
-#include <sys/time.h>
-#include <ctime>
-#endif
+#include <thread>
 
 using namespace caribou;
 
@@ -40,6 +35,7 @@ private:
   caribouDevice* device_;
   std::string name_;
 
+  std::mutex device_mutex_;
   LogLevel level_;
   bool m_exit_of_run;
 };
@@ -69,6 +65,7 @@ void CaribouProducer::DoReset() {
   m_exit_of_run = true;
 
   // Delete all devices:
+  std::lock_guard<std::mutex> lock{device_mutex_};
   manager_->clearDevices();
 }
 
@@ -105,6 +102,7 @@ void CaribouProducer::DoInitialise() {
     config.SetSection(name_);
   }
 
+  std::lock_guard<std::mutex> lock{device_mutex_};
   size_t device_id = manager_->addDevice(name_, config);
   EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id) + ", fetching device...");
   device_ = manager_->getDevice(device_id);
@@ -116,6 +114,7 @@ void CaribouProducer::DoConfigure() {
   std::cout << "Configuring CaribouProducer: " << config->Name() << std::endl;
   config->Print(std::cout);
 
+  std::lock_guard<std::mutex> lock{device_mutex_};
   EUDAQ_INFO("Configuring device " + device_->getName());
 
   // Switch on the device power:
@@ -141,7 +140,8 @@ void CaribouProducer::DoStartRun() {
 
   std::cout << "Starting run..." << std::endl;
 
-  // Stop the DAQ
+  // Start the DAQ
+  std::lock_guard<std::mutex> lock{device_mutex_};
   device_->daqStart();
 
   std::cout << "Started run." << std::endl;
@@ -154,9 +154,9 @@ void CaribouProducer::DoStopRun() {
 
   // Set a flag to signal to the polling loop that the run is over
   m_exit_of_run = true;
-  eudaq::mSleep(10);
 
   // Stop the DAQ
+  std::lock_guard<std::mutex> lock{device_mutex_};
   device_->daqStop();
   std::cout << "Stopped run." << std::endl;
 }
@@ -166,9 +166,9 @@ void CaribouProducer::RunLoop() {
   Log::setReportingLevel(level_);
 
   std::cout << "Starting run loop..." << std::endl;
+  std::lock_guard<std::mutex> lock{device_mutex_};
 
   while(!m_exit_of_run) {
-
     try {
       // Create new event
       auto event = eudaq::Event::MakeUnique("CariouRawDataEvent");
@@ -210,7 +210,6 @@ void CaribouProducer::RunLoop() {
       EUDAQ_ERROR(e.what());
       break;
     }
-
   }
 
   std::cout << "Exiting run loop." << std::endl;
