@@ -199,7 +199,19 @@ void CaribouProducer::RunLoop() {
       // Send the event to the Data Collector
       SendEvent(std::move(event));
 
-      LOG(INFO) << m_ev << " | " << data.size() << " data words, time: " << caribou::listVector(timestamps);
+      std::stringstream times;
+      bool shutterOpen = false;
+      for(const auto& timestamp : timestamps) {
+        if((timestamp >> 48) == 3) {
+          times << ", frame: " << (timestamp & 0xffffffffffff);
+          shutterOpen = true;
+        } else if((timestamp >> 48) == 1 && shutterOpen == true) {
+          times << " -- " << (timestamp & 0xffffffffffff);
+          shutterOpen = false;
+        }
+      }
+
+      LOG(INFO) << m_ev << " | " << data.size() << " data words" << times.str();
 
       // Now increment the event number
       m_ev++;
