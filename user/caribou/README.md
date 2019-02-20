@@ -16,7 +16,9 @@ The producer interfaces the Peary device manager to add devices and to control t
     * `log_level`: Set the Peary-internal logging verbosity for output on the terminal of the producer. Please refer to the Peary documentation for more information
     * `config_file`: Configuration file in Peary-format to be passed to the device. It should be noted, that the file access will happen locally by the producer, i.e. the value has to point to a file locally available to the producer on the Caribou system.
 
-* **Configuration**: During configuration, the device is powered using Peary's `powerOn()` command. After this, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the `configure()` command of the Peary device interface is called.
+* **Configuration**: During configuration, the device is powered using Peary's `powerOn()` command. After this, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the `configure()` command of the Peary device interface is called. In addition, the following register names are looked for in the configuration and sent to the device:
+
+    * `threshold`
 
 * **DAQ Start / Stop**: During DAQ start and stop, the corresponding Peary device functions `daqStart()` and `daqStop()` are called.
 

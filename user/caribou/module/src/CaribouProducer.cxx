@@ -126,6 +126,13 @@ void CaribouProducer::DoConfigure() {
   // Configure the device
   device_->configure();
 
+  // Set additional registers from the configuration:
+  if(config->Has("threshold")) {
+    auto threshold = config->Get("threshold", 0);
+    device_->setRegister("threshold", threshold);
+    EUDAQ_USER("Setting threshold " + std::to_string(threshold));
+  }
+
   LOG(STATUS) << "CaribouProducer configured. Ready to start run.";
 }
 
