@@ -143,6 +143,24 @@ void CaribouProducer::DoStartRun() {
 
   // Start the DAQ
   std::lock_guard<std::mutex> lock{device_mutex_};
+
+  // Sending initial Begin-of-run event, just containing tags with detector information:
+  // Create new event
+  auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+  event->SetBORE();
+  event->SetTag("software",  device_->getVersion());
+  event->SetTag("firmware",  device_->getFirmwareVersion());
+  event->SetTag("timestamp", LOGTIME);
+
+  auto registers = device_->getRegisters();
+  for(const auto& reg : registers) {
+    event->SetTag(reg.first, reg.second);
+  }
+
+  // Send the event to the Data Collector
+  SendEvent(std::move(event));
+
+  // Start DAQ:
   device_->daqStart();
 
   std::cout << "Started run." << std::endl;
