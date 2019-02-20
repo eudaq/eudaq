@@ -210,7 +210,7 @@ void CaribouProducer::RunLoop() {
 
       std::stringstream times;
       bool shutterOpen = false;
-      uint64_t shutter_open = 0;
+      uint64_t shutter_open = 0, shutter_close = 0;
       for(const auto& timestamp : timestamps) {
         if((timestamp >> 48) == 3) {
           times << ", frame: " << (timestamp & 0xffffffffffff);
@@ -219,6 +219,7 @@ void CaribouProducer::RunLoop() {
           shutterOpen = true;
         } else if((timestamp >> 48) == 1 && shutterOpen == true) {
           times << " -- " << (timestamp & 0xffffffffffff);
+          shutter_close = (timestamp & 0xffffffffffff);
           shutterOpen = false;
         }
       }
@@ -246,6 +247,8 @@ void CaribouProducer::RunLoop() {
           event->AddBlock(0, timestamps);
           // Add data to the event
           event->AddBlock(1, data);
+          // Set timestamps of the frame:
+          event->SetTimestamp(shutter_open, shutter_close);
           // Send the event to the Data Collector
           SendEvent(std::move(event));
         }
