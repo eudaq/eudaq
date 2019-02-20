@@ -221,7 +221,7 @@ void CaribouProducer::RunLoop() {
       if(!drop_empty_frames_ || data.size() > 12) {
         if(!drop_before_t0_ || t0_seen_) {
           // Create new event
-          auto event = eudaq::Event::MakeUnique("CariouRawDataEvent");
+          auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
           // Use trigger N to store frame counter
           event->SetTriggerN(m_ev);
           // Add timestamps to the event
