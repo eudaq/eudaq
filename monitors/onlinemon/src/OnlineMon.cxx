@@ -387,7 +387,7 @@ string RootMonitor::GetSnapShotDir()const{
   return snapshotdir;
 }
 
-uint64_t OfflineReading(eudaq::Monitor *mon, eudaq::FileReaderSP reader, uint32_t max_evc){
+uint64_t OfflineReading(eudaq::Monitor *mon, eudaq::FileReaderSP reader, uint32_t ev_n_l, uint32_t ev_n_h, uint32_t ev_c_max){
   // DoConfigure(); //TODO setup the configure and init file.
   mon->DoStartRun();
   uint32_t ev_c = 0;
@@ -397,11 +397,14 @@ uint64_t OfflineReading(eudaq::Monitor *mon, eudaq::FileReaderSP reader, uint32_
       std::cout<<"end of data file with "<< ev_c << " events" <<std::endl;
       break;
     }
-    mon->DoReceive(ev);
-    ev_c ++;
-    if(ev_c > max_evc){
-      std::cout<<"reach to event count "<< ev_c<<std::endl;
-      break;
+    uint32_t ev_n = ev->GetEventN();
+    if(ev_n>=ev_n_l & ev_n<=ev_n_h){
+      mon->DoReceive(ev);
+      ev_c ++;
+      if(ev_c > ev_c_max){
+	std::cout<<"reach to event count "<< ev_c<<std::endl;
+	break;
+      }
     }
   }
   mon->DoStopRun();
@@ -423,21 +426,27 @@ int main(int argc, const char ** argv) {
   eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
   eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", false, "Using (EXPERIMENTAL) track correlation(true) or cluster correlation(false)");
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
-  eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
-  eudaq::Option<std::string>     datafile(op, "c", "datafile",  0, "offline mode data file");
+  eudaq::Option<uint32_t>        event_id_low(op, "e", "event_id_low",  0, "running is offlinemode - analyse begin event id <num>");
+  eudaq::Option<uint32_t>        event_id_high(op, "E", "event_id_high", 0xffffffff, "running is offlinemode - analyse until event id <num>");
+  eudaq::Option<uint32_t>        event_amount_max(op, "ea", "event_amount_max", 0xffffffff, "running is offlinemode - analyse until reach events amount");
+  
+  eudaq::Option<std::string>     datafile(op, "d", "datafile",  " ", "offline mode data file");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
-  eudaq::Option<std::string>     monitorname(op, "t", "monitor_name"," ", "StdEventMonitor","Name for onlinemon");	
+  eudaq::Option<std::string>     monitorname(op, "t", "monitor_name","StdEventMonitor", "StdEventMonitor","Name for onlinemon");	
   eudaq::OptionFlag do_rootatend (op, "rf","root","Write out root-file after each run");
   eudaq::OptionFlag do_resetatend (op, "rs","reset","Reset Histograms when run stops");
-
+  
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
   } catch (...) {
+    std::cerr<<"Parse error\n";
     return op.HandleMainException();
   }
 
-  if(offline.Value()){
+  bool offline = datafile.Value()!="" && datafile.Value()!=" "; 
+
+  if(offline){
     rctrl.SetValue("null://");
   }
   if(!rctrl.IsSet())
@@ -456,18 +465,20 @@ int main(int argc, const char ** argv) {
   mon.setUseTrack_corr(track_corr.Value());
   eudaq::Monitor *m = dynamic_cast<eudaq::Monitor*>(&mon);
   std::future<uint64_t> fut_async_rd;
-  if(!offline.Value()){
-    m->Connect();
-  }
-  else{
+
+  if(offline){
     std::string infile_path = datafile.Value(); 
     eudaq::FileReaderSP reader = eudaq::FileReader::Make("native", infile_path);
     if(!reader){
       std::cerr<<"OnlineMon:: ERROR, unable to access data file "<< infile_path<<std::endl;
       throw;
     }
-    fut_async_rd = std::async(std::launch::async, &OfflineReading, &mon, reader, offline.Value());
+    fut_async_rd = std::async(std::launch::async, &OfflineReading, &mon, reader, event_id_low.Value(), event_id_high.Value(), event_amount_max.Value() );
   }
+  else{
+    m->Connect();
+  }
+
   theApp.Run(); //execute
   if(fut_async_rd.valid())
     fut_async_rd.get();
