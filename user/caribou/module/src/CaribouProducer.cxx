@@ -5,12 +5,7 @@
 #include "configuration.hpp"
 #include "log.hpp"
 
-#include <iostream>
-#include <ostream>
 #include <vector>
-#include <unistd.h>
-#include <iomanip>
-#include <signal.h>
 #include <thread>
 
 using namespace caribou;
@@ -50,10 +45,10 @@ namespace{
 
 CaribouProducer::CaribouProducer(const std::string name, const std::string &runcontrol)
 : eudaq::Producer(name, runcontrol), m_ev(0), m_exit_of_run(false), name_(name) {
-  std::cout << "Instantiated CaribouProducer for device \"" << name << "\"" << std::endl;
-
   // Add cout as the default logging stream
   Log::addStream(std::cout);
+
+  LOG(INFO) << "Instantiated CaribouProducer for device \"" << name << "\"";
 
   // Create new Peary device manager
   manager_ = new caribouDeviceMgr();
@@ -64,7 +59,7 @@ CaribouProducer::~CaribouProducer() {
 }
 
 void CaribouProducer::DoReset() {
-  std::cout << "Resetting CaribouProducer" << std::endl;
+  LOG(WARNING) << "Resetting CaribouProducer";
   m_exit_of_run = true;
 
   // Delete all devices:
@@ -73,7 +68,7 @@ void CaribouProducer::DoReset() {
 }
 
 void CaribouProducer::DoInitialise() {
-  std::cout << "Initialising CaribouProducer" << std::endl;
+  LOG(INFO) << "Initialising CaribouProducer";
   auto ini = GetInitConfiguration();
 
   auto level = ini->Get("log_level", "INFO");
@@ -114,7 +109,7 @@ void CaribouProducer::DoInitialise() {
 // This gets called whenever the DAQ is configured
 void CaribouProducer::DoConfigure() {
   auto config = GetConfiguration();
-  std::cout << "Configuring CaribouProducer: " << config->Name() << std::endl;
+  LOG(INFO) << "Configuring CaribouProducer: " << config->Name();
 
   drop_empty_frames_ = config->Get("drop_empty_frames", false);
   drop_before_t0_ = config->Get("drop_before_t0", false);
@@ -131,15 +126,13 @@ void CaribouProducer::DoConfigure() {
   // Configure the device
   device_->configure();
 
-  std::cout << std::endl;
-  std::cout << "CaribouProducer configured. Ready to start run. " << std::endl;
-  std::cout << std::endl;
+  LOG(STATUS) << "CaribouProducer configured. Ready to start run.";
 }
 
 void CaribouProducer::DoStartRun() {
   m_ev = 0;
 
-  std::cout << "Starting run..." << std::endl;
+  LOG(INFO) << "Starting run...";
 
   // Start the DAQ
   std::lock_guard<std::mutex> lock{device_mutex_};
@@ -163,13 +156,13 @@ void CaribouProducer::DoStartRun() {
   // Start DAQ:
   device_->daqStart();
 
-  std::cout << "Started run." << std::endl;
+  LOG(INFO) << "Started run.";
   m_exit_of_run = false;
 }
 
 void CaribouProducer::DoStopRun() {
 
-  std::cout << "Stopping run..." << std::endl;
+  LOG(INFO) << "Stopping run...";
 
   // Set a flag to signal to the polling loop that the run is over
   m_exit_of_run = true;
@@ -177,14 +170,14 @@ void CaribouProducer::DoStopRun() {
   // Stop the DAQ
   std::lock_guard<std::mutex> lock{device_mutex_};
   device_->daqStop();
-  std::cout << "Stopped run." << std::endl;
+  LOG(INFO) << "Stopped run.";
 }
 
 void CaribouProducer::RunLoop() {
 
   Log::setReportingLevel(level_);
 
-  std::cout << "Starting run loop..." << std::endl;
+  LOG(INFO) << "Starting run loop...";
   std::lock_guard<std::mutex> lock{device_mutex_};
 
   int empty_frames = 0, total_words = 0;
@@ -254,7 +247,7 @@ void CaribouProducer::RunLoop() {
       // Now increment the event number
       m_ev++;
 
-      LOG_PROGRESS(INFO, "status") << "Frame " << m_ev << " empty: " << empty_frames << " with pixels: " << (m_ev - empty_frames);
+      LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev << " empty: " << empty_frames << " with pixels: " << (m_ev - empty_frames);
     } catch(caribou::DataException& e) {
       device_->timestampsPatternGenerator(); // in case of readout error, clear timestamp fifo before going to next event
       continue;
@@ -264,5 +257,5 @@ void CaribouProducer::RunLoop() {
     }
   }
 
-  std::cout << "Exiting run loop." << std::endl;
+  LOG(INFO) << "Exiting run loop.";
 }
