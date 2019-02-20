@@ -211,6 +211,10 @@ namespace eudaq {
     throw Exception("Configuration: key not found");
   }
 
+  bool Configuration::Has(const std::string& key) const {
+      return m_cur->find(key) != m_cur->cend();
+  }
+
   void Configuration::SetString(const std::string &key,
                                 const std::string &val) {
     (*m_cur)[key] = val;

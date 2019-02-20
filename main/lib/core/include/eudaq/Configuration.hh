@@ -30,7 +30,15 @@ namespace eudaq {
     Configuration(const Configuration &other, const std::string &section);
 
     static std::unique_ptr<Configuration> MakeUniqueReadFile(const std::string &path);
-    
+
+
+    /**
+     * @brief Check if key is defined
+     * @param key Key to check for existence
+     * @return True if key exists, false otherwise
+     */
+    bool Has(const std::string& key) const;
+
     void Save(std::ostream &file) const;
     void Load(std::istream &file, const std::string &section);
     bool SetSection(const std::string &section) const;
