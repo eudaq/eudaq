@@ -39,7 +39,8 @@ private:
   LogLevel level_;
   bool m_exit_of_run;
 
-  bool drop_empty_frames_{};
+  bool drop_empty_frames_{}, drop_before_t0_{};
+  bool t0_seen_{};
 };
 
 namespace{
@@ -117,6 +118,7 @@ void CaribouProducer::DoConfigure() {
   config->Print(std::cout);
 
   drop_empty_frames_ = config->Get("drop_empty_frames", false);
+  drop_before_t0_ = config->Get("drop_before_t0", false);
 
   std::lock_guard<std::mutex> lock{device_mutex_};
   EUDAQ_INFO("Configuring device " + device_->getName());
@@ -124,15 +126,11 @@ void CaribouProducer::DoConfigure() {
   // Switch on the device power:
   device_->powerOn();
 
-  // Wait for power to stabilize:
-  eudaq::mSleep(10);
+  // Wait for power to stabilize and for the TLU clock to be present
+  eudaq::mSleep(1000);
 
-  try {
-    // Configure the device
-    device_->configure();
-  } catch(const CommunicationError& e) {
-    EUDAQ_ERROR(e.what());
-  }
+  // Configure the device
+  device_->configure();
 
   std::cout << std::endl;
   std::cout << "CaribouProducer configured. Ready to start run. " << std::endl;
@@ -173,6 +171,7 @@ void CaribouProducer::RunLoop() {
   std::lock_guard<std::mutex> lock{device_mutex_};
 
   int empty_frames = 0, total_words = 0;
+  uint64_t last_shutter_open = 0;
 
   while(!m_exit_of_run) {
     try {
@@ -194,14 +193,23 @@ void CaribouProducer::RunLoop() {
 
       std::stringstream times;
       bool shutterOpen = false;
+      uint64_t shutter_open = 0;
       for(const auto& timestamp : timestamps) {
         if((timestamp >> 48) == 3) {
           times << ", frame: " << (timestamp & 0xffffffffffff);
+          last_shutter_open = shutter_open;
+          shutter_open = (timestamp & 0xffffffffffff);
           shutterOpen = true;
         } else if((timestamp >> 48) == 1 && shutterOpen == true) {
           times << " -- " << (timestamp & 0xffffffffffff);
           shutterOpen = false;
         }
+      }
+
+      // Check if there was a T0:
+      if(!t0_seen_) {
+        // Last shtter open had higher timestamp than this one:
+        t0_seen_ = (last_shutter_open > shutter_open);
       }
 
       if(data.size() > 12) {
@@ -212,16 +220,18 @@ void CaribouProducer::RunLoop() {
       }
 
       if(!drop_empty_frames_ || data.size() > 12) {
-        // Create new event
-        auto event = eudaq::Event::MakeUnique("CariouRawDataEvent");
-        // Use trigger N to store frame counter
-        event->SetTriggerN(m_ev);
-        // Add timestamps to the event
-        event->AddBlock(0, timestamps);
-        // Add data to the event
-        event->AddBlock(1, data);
-        // Send the event to the Data Collector
-        SendEvent(std::move(event));
+        if(!drop_before_t0_ || t0_seen_) {
+          // Create new event
+          auto event = eudaq::Event::MakeUnique("CariouRawDataEvent");
+          // Use trigger N to store frame counter
+          event->SetTriggerN(m_ev);
+          // Add timestamps to the event
+          event->AddBlock(0, timestamps);
+          // Add data to the event
+          event->AddBlock(1, data);
+          // Send the event to the Data Collector
+          SendEvent(std::move(event));
+        }
       }
 
       // Now increment the event number
