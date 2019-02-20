@@ -115,7 +115,6 @@ void CaribouProducer::DoInitialise() {
 void CaribouProducer::DoConfigure() {
   auto config = GetConfiguration();
   std::cout << "Configuring CaribouProducer: " << config->Name() << std::endl;
-  config->Print(std::cout);
 
   drop_empty_frames_ = config->Get("drop_empty_frames", false);
   drop_before_t0_ = config->Get("drop_before_t0", false);
