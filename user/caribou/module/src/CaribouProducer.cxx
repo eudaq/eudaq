@@ -36,6 +36,8 @@ private:
 
   bool drop_empty_frames_{}, drop_before_t0_{};
   bool t0_seen_{};
+
+  std::string adc_signal_;
 };
 
 namespace{
@@ -132,6 +134,11 @@ void CaribouProducer::DoConfigure() {
     device_->setRegister("threshold", threshold);
     EUDAQ_USER("Setting threshold " + std::to_string(threshold));
   }
+
+  // Select which ADC signal to regularly fetch:
+  adc_signal_ = config->Get("adc_signal", "");
+  // Try it out directly to catch misconfiugration
+  auto adc_value = device_->getADC(adc_signal_);
 
   LOG(STATUS) << "CaribouProducer configured. Ready to start run.";
 }
@@ -249,6 +256,16 @@ void CaribouProducer::RunLoop() {
           event->AddBlock(1, data);
           // Set timestamps of the frame:
           event->SetTimestamp(shutter_open, shutter_close);
+
+          // Query ADC if wanted:
+          if(m_ev%1000 == 0) {
+            if(!adc_signal_.empty()) {
+              auto adc_value = device_->getADC(adc_signal_);
+              LOG(DEBUG) << "Reading ADC: " << adc_value << "V";
+              event->SetTag(adc_signal_, adc_value);
+            }
+          }
+
           // Send the event to the Data Collector
           SendEvent(std::move(event));
         }
