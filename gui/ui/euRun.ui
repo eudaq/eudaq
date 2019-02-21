@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>350</width>
-    <height>373</height>
+    <width>1033</width>
+    <height>659</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -62,9 +62,7 @@
      </widget>
     </item>
     <item>
-      
-      
-      <widget class="QGroupBox" name="grpControl">
+     <widget class="QGroupBox" name="grpControl">
       <property name="title">
        <string>Control</string>
       </property>
@@ -87,7 +85,6 @@
        <property name="verticalSpacing">
         <number>4</number>
        </property>
-       
        <item row="0" column="0">
         <widget class="QLabel" name="lblInit">
          <property name="text">
@@ -116,7 +113,6 @@
          </property>
         </widget>
        </item>
-
        <item row="1" column="0">
         <widget class="QLabel" name="lblConfig">
          <property name="text">
@@ -160,7 +156,6 @@
          </property>
         </widget>
        </item>
-       
        <item row="2" column="0">
         <widget class="QLabel" name="lblNextRunNumber">
          <property name="text">
@@ -169,10 +164,8 @@
         </widget>
        </item>
        <item row="2" column="2">
-	 <widget class="QLineEdit" name="txtNextRunNumber">
-	 </widget>
+        <widget class="QLineEdit" name="txtNextRunNumber"/>
        </item>
-
        <item row="2" column="3">
         <widget class="QPushButton" name="btnStart">
          <property name="enabled">
@@ -199,7 +192,6 @@
          </property>
         </widget>
        </item>
-
        <item row="3" column="3">
         <widget class="QPushButton" name="btnReset">
          <property name="enabled">
@@ -212,7 +204,7 @@
           <string>Reset</string>
          </property>
         </widget>
-       </item>       
+       </item>
        <item row="3" column="4">
         <widget class="QPushButton" name="btnTerminate">
          <property name="enabled">
@@ -226,7 +218,6 @@
          </property>
         </widget>
        </item>
-
        <item row="4" column="0">
         <widget class="QLabel" name="lblLogmsg">
          <property name="text">
@@ -254,16 +245,11 @@
          </property>
         </widget>
        </item>
-
-       
-     </layout>
+      </layout>
      </widget>
     </item>
     <item>
      <widget class="QGroupBox" name="grpStatus">
-      <!-- <property name="title"> -->
-      <!--  <string>Status</string> -->
-      <!-- </property> -->
       <layout class="QGridLayout">
        <property name="leftMargin">
         <number>0</number>
@@ -283,6 +269,9 @@
        <property name="verticalSpacing">
         <number>4</number>
        </property>
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="grpGrid"/>
+       </item>
       </layout>
      </widget>
     </item>
@@ -330,30 +319,14 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>350</width>
-     <height>25</height>
+     <width>1033</width>
+     <height>29</height>
     </rect>
    </property>
   </widget>
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>txtRunmsg</sender>
-   <signal>returnPressed()</signal>
-   <receiver>btnStart</receiver>
-   <slot>animateClick()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>248</x>
-     <y>133</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>344</x>
-     <y>133</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>txtLogmsg</sender>
    <signal>returnPressed()</signal>

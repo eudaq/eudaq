@@ -11,7 +11,7 @@ RunControlModel::RunControlModel(QObject *parent)
 }
 
 void RunControlModel::newconnection(eudaq::ConnectionSPC id){
-  m_con_status[id].reset();  
+  m_con_status[id].reset();
   beginInsertRows(QModelIndex(), 0, 0);
   endInsertRows();
 }

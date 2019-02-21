@@ -13,6 +13,8 @@
 #include <QSettings>
 #include <QRegExp>
 #include <QString>
+#include <QGridLayout>
+
 
 class RunControlGUI : public QMainWindow,
 		      public Ui::wndRun{
@@ -36,6 +38,7 @@ private slots:
   void on_btnLoadInit_clicked();
   void on_btnLoadConf_clicked();
   void onCustomContextMenu(const QPoint &point);
+
 private:
   bool loadInitFile();
   bool loadConfigFile();
@@ -49,5 +52,6 @@ private:
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_map_conn_status_last;
   uint32_t m_run_n_qsettings;
   bool m_lastexit_success;
+  int m_display_col, m_display_row;
   QMenu* contextMenu;
 };
