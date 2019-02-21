@@ -37,26 +37,32 @@ namespace eudaq {
     template <typename T>
       void SetPixel(uint32_t index, uint32_t x, uint32_t y, T pix,
 		    bool pivot = false, uint32_t frame = 0) {
-      SetPixelHelper(index, x, y, (double)pix, pivot, frame);
+      SetPixelHelper(index, x, y, (double)pix, 0.0, pivot, frame);
     }
+    template <typename T>
+      void SetPixel(uint32_t index, uint32_t x, uint32_t y, T pix, double time,
+		    bool pivot = false, uint32_t frame = 0) {
+      SetPixelHelper(index, x, y, (double)pix, time, pivot, frame);
+    }
+
     template <typename T>
       void SetPixel(uint32_t index, uint32_t x, uint32_t y, T pix,
 		    uint32_t frame) {
-      SetPixelHelper(index, x, y, (double)pix, false, frame);
+      SetPixelHelper(index, x, y, (double)pix, 0.0, false, frame);
     }
     template <typename T>
-      void PushPixel(uint32_t x, uint32_t y, T pix, bool pivot = false,
+      void PushPixel(uint32_t x, uint32_t y, T pix, double time = 0.0, bool pivot = false,
 		     uint32_t frame = 0) {
-      PushPixelHelper(x, y, (double)pix, pivot, frame);
+      PushPixelHelper(x, y, (double)pix, time, pivot, frame);
     }
     template <typename T>
       void PushPixel(uint32_t x, uint32_t y, T pix, uint32_t frame) {
-      PushPixelHelper(x, y, (double)pix, false, frame);
+      PushPixelHelper(x, y, (double)pix, 0.0, false, frame);
     }
 
-    void SetPixelHelper(uint32_t index, uint32_t x, uint32_t y, double pix,
+    void SetPixelHelper(uint32_t index, uint32_t x, uint32_t y, double pix, double time,
                         bool pivot, uint32_t frame);
-    void PushPixelHelper(uint32_t x, uint32_t y, double pix, bool pivot,
+    void PushPixelHelper(uint32_t x, uint32_t y, double pix, double time, bool pivot,
                          uint32_t frame);
     double GetPixel(uint32_t index, uint32_t frame) const;
     double GetPixel(uint32_t index) const;
@@ -64,6 +70,8 @@ namespace eudaq {
     double GetX(uint32_t index) const;
     double GetY(uint32_t index, uint32_t frame) const;
     double GetY(uint32_t index) const;
+    double GetTimestamp(uint32_t index, uint32_t frame) const;
+    double GetTimestamp(uint32_t index) const;
     bool GetPivot(uint32_t index, uint32_t frame = 0) const;
     void SetPivot(uint32_t index, uint32_t frame, bool PivotFlag);
     // defined for short, int, double
@@ -98,6 +106,7 @@ namespace eudaq {
     uint32_t HitPixels() const;
     uint32_t PivotPixel() const;
 
+
     int GetFlags(int f) const;
     bool NeedsCDS() const;
     int  Polarity() const;
@@ -116,16 +125,20 @@ namespace eudaq {
     uint32_t m_ysize;
     uint32_t m_flags;
     uint32_t m_pivotpixel;
+    double m_timestamp{};
     std::vector<std::vector<pixel_t>> m_pix;
     std::vector<std::vector<coord_t>> m_x, m_y;
+    std::vector<std::vector<double>> m_time;
     std::vector<std::vector<bool>> m_pivot;
     std::vector<uint32_t> m_mat;
 
     mutable const std::vector<pixel_t> *m_result_pix;
     mutable const std::vector<coord_t> *m_result_x, *m_result_y;
+    mutable const std::vector<double> *m_result_time;
 
     mutable std::vector<pixel_t> m_temp_pix;
     mutable std::vector<coord_t> m_temp_x, m_temp_y;
+    mutable std::vector<double> m_temp_time;
   };
 
 } // namespace eudaq
