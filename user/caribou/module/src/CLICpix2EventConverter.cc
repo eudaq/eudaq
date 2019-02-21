@@ -42,13 +42,16 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   timestamps.resize(time.size() / sizeof(uint64_t));
   memcpy(&timestamps[0], &time[0],time.size());
 
-  // By default just take the shutter open time stamp:
-  double timestamp = 0;
-  for(const auto& t : timestamps) {
-    if((t >> 48) == 3) {
-      // CLICpix2 runs on 100MHz clock:
-      timestamp = static_cast<double>(t & 0xffffffffffff) * 10.;
-      break;
+  // Calculate time stamps, CLICpix2 runs on 100MHz clock:
+  bool shutterOpen = false;
+  double shutter_open = 0, shutter_close = 0;
+  for(const auto& timestamp : timestamps) {
+    if((timestamp >> 48) == 3) {
+      shutter_open = static_cast<double>(timestamp & 0xffffffffffff) * 10.;
+      shutterOpen = true;
+    } else if((timestamp >> 48) == 1 && shutterOpen == true) {
+      shutter_close = static_cast<double>(timestamp & 0xffffffffffff) * 10.;
+      shutterOpen = false;
     }
   }
 
@@ -83,12 +86,16 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       tot = 1;
     }
 
-    plane.SetPixel(i, col, row, tot, timestamp);
+    plane.SetPixel(i, col, row, tot, shutter_open);
     i++;
   }
 
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
+
+  // Store frame begin and end:
+  d2->SetTimeBegin(shutter_open);
+  d2->SetTimeEnd(shutter_close);
 
   // Indicate that data was successfully converted
   return true;
