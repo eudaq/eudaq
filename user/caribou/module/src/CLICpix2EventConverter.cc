@@ -1,7 +1,7 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
-#include "CLICpix2/clicpix2_frameDecoder.hpp"
-#include "CLICpix2/clicpix2_pixels.hpp"
+#include "framedecoder/clicpix2_frameDecoder.hpp"
+#include "clicpix2_pixels.hpp"
 
 using namespace eudaq;
 
