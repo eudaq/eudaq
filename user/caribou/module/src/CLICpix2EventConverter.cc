@@ -35,7 +35,6 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_WARN("Ignoring bad frame " + std::to_string(ev->GetEventNumber()));
     return false;
   }
-  EUDAQ_WARN("Decoding good frame " + std::to_string(ev->GetEventNumber()));
 
   // Block 0 is timestamps:
   std::vector<unsigned char> time = ev->GetBlock(0);
