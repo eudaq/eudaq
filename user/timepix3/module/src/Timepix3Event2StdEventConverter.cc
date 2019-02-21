@@ -45,7 +45,7 @@ namespace eudaq {
     std::vector<unsigned char> ZSDataX;
     std::vector<unsigned char> ZSDataY;
     std::vector<unsigned short> ZSDataTOT;
-    std::vector<uint64_t> ZSDataTS;
+    std::vector<double> ZSDataTS;
     size_t offset = 0;
     unsigned char aWord = 0;
 
@@ -54,13 +54,14 @@ namespace eudaq {
       ZSDataX   .push_back( unpackXorY( data, offset + sizeof( aWord ) * 0 ) );
       ZSDataY   .push_back( unpackXorY( data, offset + sizeof( aWord ) * 1 ) );
       ZSDataTOT .push_back( unpackTOT(  data, offset + sizeof( aWord ) * 2 ) );
-      ZSDataTS  .push_back( unpackTS(   data, offset + sizeof( aWord ) * 4 ) );
+      // Convert time to nanoseconds:
+      ZSDataTS  .push_back( static_cast<double>(unpackTS(   data, offset + sizeof( aWord ) * 4 )) / (4096. / 25.));
 
       offset += sizeof( aWord ) * PIX_SIZE;
     }
 
     for( size_t i = 0 ; i < ZSDataX.size(); ++i ) {
-      plane.SetPixel( i, ZSDataX[i], ZSDataY[i], ZSDataTOT[i] );
+      plane.SetPixel( i, ZSDataX[i], ZSDataY[i], ZSDataTOT[i], ZSDataTS[i] );
     }
 
     // Add the plane to the StandardEvent
