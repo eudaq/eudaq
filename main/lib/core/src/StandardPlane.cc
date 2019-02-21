@@ -68,6 +68,7 @@ namespace eudaq{
     m_xsize = w;
     m_ysize = h;
     m_pix.resize(frames);
+    m_time.resize(frames);
     m_x.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
     m_y.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
     m_pivot.resize(GetFlags(FLAG_WITHPIVOT)
@@ -75,6 +76,7 @@ namespace eudaq{
 		   : 0);
     for (size_t i = 0; i < frames; ++i) {
       m_pix[i].resize(npix);
+      m_time[i].resize(npix);
     }
     for (size_t i = 0; i < m_x.size(); ++i) {
       m_x[i].resize(npix);
