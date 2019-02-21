@@ -37,7 +37,20 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   }
 
   // Block 0 is timestamps:
-  std::vector<unsigned char> time = ev->GetBlock(0);
+  std::vector<uint64_t> timestamps;
+  auto time = ev->GetBlock(0);
+  timestamps.resize(time.size() / sizeof(uint64_t));
+  memcpy(&timestamps[0], &time[0],time.size());
+
+  // By default just take the shutter open time stamp:
+  double timestamp = 0;
+  for(const auto& t : timestamps) {
+    if((t >> 48) == 3) {
+      // CLICpix2 runs on 100MHz clock:
+      timestamp = static_cast<double>(t & 0xffffffffffff) * 10.;
+      break;
+    }
+  }
 
   // Ouch, this hurts:
   std::vector<unsigned int> rawdata;
@@ -70,7 +83,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       tot = 1;
     }
 
-    plane.SetPixel(i, col, row, tot);
+    plane.SetPixel(i, col, row, tot, timestamp);
     i++;
   }
 
