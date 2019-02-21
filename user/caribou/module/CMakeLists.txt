@@ -1,5 +1,7 @@
 aux_source_directory(src MODULE_SRC)
 
+INCLUDE_DIRECTORIES(include)
+
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${Peary_LIBRARIES})
 MESSAGE(STATUS "INC: ${Peary_INCLUDE_DIRS}")
