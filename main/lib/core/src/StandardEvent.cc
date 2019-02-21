@@ -15,18 +15,22 @@ namespace eudaq {
     auto ev = Factory<Event>::MakeShared(m_id_factory);
     return std::dynamic_pointer_cast<StandardEvent>(ev);
   }
-  
+
   StandardEvent::StandardEvent(){
     SetType(m_id_factory);
   }
-  
+
   StandardEvent::StandardEvent(Deserializer &ds) : Event(ds) {
     ds.read(m_planes);
+    ds.read(time_begin);
+    ds.read(time_end);
   }
 
   void StandardEvent::Serialize(Serializer &ser) const {
     Event::Serialize(ser);
     ser.write(m_planes);
+    ser.write(time_begin);
+    ser.write(time_end);
   }
 
   void StandardEvent::Print(std::ostream & os, size_t offset) const{
@@ -42,7 +46,7 @@ namespace eudaq {
     Event::Print(os,offset+2);
     os << std::string(offset, ' ') << "</StandardEvent>\n";
   }
-  
+
   size_t StandardEvent::NumPlanes() const { return m_planes.size(); }
 
   StandardPlane &StandardEvent::GetPlane(size_t i) { return m_planes[i]; }
