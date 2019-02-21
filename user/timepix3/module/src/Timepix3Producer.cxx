@@ -174,6 +174,10 @@ void Timepix3Producer::DoConfigure() {
     std::cout << "------------------------------\n" << std::endl;
   }
 
+  if (!spidrctrl->setExtRefClk(config->Get("external_clock", true))) {
+    EUDAQ_ERROR("setExtRefClk"+ spidrctrl->errorString());
+  }
+
   // DACs configuration
   if( !spidrctrl->setDacsDflt( device_nr ) ) {
     EUDAQ_ERROR("setDacsDflt: " + spidrctrl->errorString());
