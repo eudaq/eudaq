@@ -32,7 +32,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Set timestamps for StdEvent in nanoseconds:
   // FIXME currently fixed to 40MHz
-  d2->SetTimeBegin(static_cast<doule>(d1->GetTimestampBegin()) * 25.);
-  d2->SetTimeEnd(static_cast<doule>(d1->GetTimestampEnd()) * 25.);
+  d2->SetTimeBegin(static_cast<double>(d1->GetTimestampBegin()) * 25.);
+  d2->SetTimeEnd(static_cast<double>(d1->GetTimestampEnd()) * 25.);
   return true;
 }
