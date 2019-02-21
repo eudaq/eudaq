@@ -1,5 +1,8 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
+#include "CLICpix2/clicpix2_frameDecoder.hpp"
+#include "CLICpix2/clicpix2_pixels.hpp"
+
 using namespace eudaq;
 
 namespace{
@@ -10,7 +13,18 @@ namespace{
 bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
-  conf->Print(std::cout);
+  // Prepare matrix decoder:
+  static auto matrix_config = []() {
+    std::map<std::pair<uint8_t, uint8_t>, caribou::pixelConfig> matrix;
+    for(uint8_t x = 0; x < 128; x++) {
+      for(uint8_t y = 0; y < 128; y++) {
+        matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, true, false, false);
+      }
+    }
+    return matrix;
+  };
+
+  static caribou::clicpix2_frameDecoder decoder(true, true, matrix_config());
   // No event
   if(!ev) {
     return false;
@@ -22,19 +36,43 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
-  // Block 1 is timestamps:
-  std::vector<unsigned char> data = ev->GetBlock( 1 ); // block 1 is pixel data
+  // Block 0 is timestamps:
+  std::vector<unsigned char> time = ev->GetBlock(0);
+
+  // Ouch, this hurts:
+  std::vector<unsigned int> rawdata;
+  auto tmp = ev->GetBlock(1);
+  rawdata.resize(tmp.size() / sizeof(unsigned int));
+  memcpy(&rawdata[0], &tmp[0],tmp.size());
+
+  // Decode the data:
+  decoder.decode(rawdata);
+  auto data = decoder.getZerosuppressedFrame();
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "CLICpix2", "CLICpix2");
 
-  // Size of one pixel data chunk: 12 bytes = 1+1+2+8 bytes for x,y,tot,ts
-  // const unsigned int PIX_SIZE = 12;
-  // plane.SetSizeZS( 128, 128, data.size() / PIX_SIZE );
-  //
-  // for( size_t i = 0 ; i < ZSDataX.size(); ++i ) {
-  //   plane.SetPixel( i, ZSDataX[i], ZSDataY[i], ZSDataTOT[i] );
-  // }
+  int i = 0;
+  plane.SetSizeZS(128, 128, data.size());
+  for(const auto& px : data) {
+    auto cp2_pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
+    int col = px.first.first;
+    int row = px.first.second;
+
+    // Disentangle data types from pixel:
+    int tot = -1;
+
+    // ToT will throw if longcounter is enabled:
+    try {
+      tot = cp2_pixel->GetTOT();
+    } catch(caribou::DataException&) {
+      // Set ToT to one if not defined.
+      tot = 1;
+    }
+
+    plane.SetPixel(i, col, row, tot);
+    i++;
+  }
 
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
