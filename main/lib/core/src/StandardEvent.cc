@@ -55,6 +55,14 @@ namespace eudaq {
     return m_planes[i];
   }
 
+  double StandardEvent::GetTimeBegin() const {
+    return time_begin;
+  }
+
+  double StandardEvent::GetTimeEnd() const {
+    return time_end;
+  }
+
   StandardPlane &StandardEvent::AddPlane(const StandardPlane &plane) {
     m_planes.push_back(plane);
     return m_planes.back();
