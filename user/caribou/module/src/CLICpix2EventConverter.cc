@@ -63,7 +63,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   auto data = decoder.getZerosuppressedFrame();
 
   // Create a StandardPlane representing one sensor plane
-  eudaq::StandardPlane plane(0, "CLICpix2", "CLICpix2");
+  eudaq::StandardPlane plane(0, "Caribou", "CLICpix2");
 
   int i = 0;
   plane.SetSizeZS(128, 128, data.size());

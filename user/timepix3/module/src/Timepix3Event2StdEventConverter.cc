@@ -36,7 +36,7 @@ namespace eudaq {
     std::vector<unsigned char> data = ev->GetBlock( 1 ); // block 1 is pixel data
 
     // Create a StandardPlane representing one sensor plane
-    eudaq::StandardPlane plane(0, "TPX3", "Timepix3");
+    eudaq::StandardPlane plane(0, "SPIDR", "Timepix3");
 
     // Size of one pixel data chunk: 12 bytes = 1+1+2+8 bytes for x,y,tot,ts
     const unsigned int PIX_SIZE = 12;
