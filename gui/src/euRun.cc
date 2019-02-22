@@ -271,6 +271,7 @@ void RunControlGUI::DisplayTimer(){
     }
   }
 
+  updateStatusDisplay(map_conn_status);
 
   m_map_conn_status_last = map_conn_status;
 }
@@ -473,13 +474,15 @@ bool RunControlGUI::updateStatusDisplay(auto map_conn_status)
         // elements might not be existing at startup/beeing asynchronously changed
         if(it->first && it->second)
         {
+            cout << it->first->GetName()<<endl;
             if(m_str_label.count(QString::fromStdString(it->first->GetName()+":"+it->first->GetType())))
             {
                 auto tags = it->second->GetTags();
-                for(auto &tag: tags){
-                    if(!it->first->GetName()=="TLUProducer"  && tag.first=="EventN")
+		for(auto &tag: tags){
+		  
+                    if(!(it->first->GetName()=="eudet_tlu")  && tag.first=="EventN")
                         m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
-                    else if(it->first->GetName()=="TLUProducer"  && tag.first=="Rate")
+                    else if(it->first->GetName()=="eudet_tlu"  && tag.first=="Freq. (avg.) [kHz]")
                         m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
                    }
             }
