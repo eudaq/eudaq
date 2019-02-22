@@ -496,8 +496,10 @@ void Timepix3Producer::RunLoop() {
         uint64_t header = (data & 0xF000000000000000) >> 60;
         header_counter[header]++;
 
-        std::cout << "Headers: " << listVector(header_counter) << "\r";
-
+        if(m_ev%10000 == 0) {
+          std::cout << "Headers: " << listVector(header_counter) << "\r";
+        }
+        
         // Data-driven or sequential readout pixel data header?
         if( header == 0xB || header == 0xA ) {
           auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
