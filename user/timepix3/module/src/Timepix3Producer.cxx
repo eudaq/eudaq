@@ -60,8 +60,12 @@ Timepix3Producer::~Timepix3Producer() {}
 void Timepix3Producer::DoReset() {
   spidrctrl->closeShutter();
 
-  delete spidrctrl;
-  delete spidrdaq;
+  if(spidrctrl) {
+    delete spidrctrl;
+  }
+  if(spidrdaq) {
+    delete spidrdaq;
+  }
 }
 
 void Timepix3Producer::DoInitialise() {
