@@ -15,9 +15,6 @@
 #endif
 #include "Timepix3Config.h"
 
-//#include "gpib/ib.h"
-//#include "Keithley2450.h"
-
 //#define TPX3_VERBOSE
 
 class Timepix3Producer : public eudaq::Producer {
@@ -57,12 +54,7 @@ private:
   Timepix3Config *myTimepix3Config;
   SpidrController *spidrctrl;
   SpidrDaq *spidrdaq;
-  //  Keithley2450 *k2450;
-  int m_use_k2450, m_gpib_num;
-  double m_Vbias, m_Ilim, m_Vstart, m_Vreturn, m_VbiasMax;
-  int m_doBiasScan, m_VstepCount, m_VbiasStep;
   int m_xml_VTHRESH;
-  int m_do_threshold_scan, m_threshold_start, m_threshold_step, m_threshold_max, m_threshold_return, m_threshold_count;
   float m_temp;
   int m_maxPixVec, m_pixToDel;
 };
@@ -166,7 +158,7 @@ void Timepix3Producer::DoConfigure() {
       std::cout << "Firmware version: " << spidrctrl->versionToString( firmwVersion ) << std::endl;
       EUDAQ_USER("SPIDR Firmware: " + spidrctrl->versionToString( firmwVersion ));
     }
-    
+
     if( spidrctrl->getSoftwVersion( &softwVersion ) ) {
       std::cout << "Software version: " << spidrctrl->versionToString( softwVersion ) << std::endl;
     EUDAQ_USER("SPIDR Software: " + spidrctrl->versionToString( softwVersion ));
@@ -202,7 +194,7 @@ void Timepix3Producer::DoConfigure() {
 
 
   // Header filter mask:
-  // ETH:   
+  // ETH:   0000110001100000
   // CPU:   1111001110011111
   int eth_mask = 0x0C60, cpu_mask = 0xF39F;
   if (!spidrctrl->setHeaderFilter(device_nr, eth_mask, cpu_mask)) {
@@ -247,24 +239,7 @@ void Timepix3Producer::DoConfigure() {
       }
 
     } else if( name == "VTHRESH" ) {
-      int coarse = val / 160;
-      int fine = val - coarse*160 + 352;
       m_xml_VTHRESH = val;
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
-        cout << "Error, could not set VTHRESH_COARSE." << endl;
-      } else {
-        int tmpval = -1;
-        spidrctrl->getDac( device_nr, TPX3_VTHRESH_COARSE, &tmpval );
-        cout << "Successfully set DAC: VTHRESH_COARSE to " << tmpval << endl;
-      }
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
-        cout << "Error, could not set VTHRESH_FINE." << endl;
-      } else {
-        int tmpval = -1;
-        spidrctrl->getDac( device_nr, TPX3_VTHRESH_FINE, &tmpval );
-        cout << "Successfully set DAC: VTHRESH_FINE to " << tmpval << endl;
-      }
-
     } else if( name == "GeneralConfig" ) {
       if ( !spidrctrl->setGenConfig( device_nr, val ) ) {
         EUDAQ_ERROR("setGenConfig: " + spidrctrl->errorString());
@@ -295,7 +270,6 @@ void Timepix3Producer::DoConfigure() {
         cout << "Successfully set Output Block Config to " << config << endl;
       }
     }
-
   }
 
   // Reset entire matrix config to zeroes
@@ -366,39 +340,29 @@ void Timepix3Producer::DoConfigure() {
     EUDAQ_ERROR("getPixelConfig: " + spidrctrl->errorString());
   }
 
-  // Keithley stuff
-  m_use_k2450   = config->Get( "USE_Keithley", 0 );
-  m_gpib_num    = config->Get( "Keithley_GPIB", 18 );
-  m_Vbias       = config->Get( "V_Bias", 0 );
-  m_Ilim        = config->Get( "I_Limit", 1e-6 );
-  m_doBiasScan  = config->Get( "Do_Bias_Scan", 0 );
-  m_Vstart      = config->Get( "V_start", 0 );
-  m_VbiasStep   = config->Get( "V_step", 0 );
-  m_VbiasMax    = config->Get( "V_max", 0 );
-  m_Vreturn     = config->Get( "V_return", 0 );
-  // if( m_use_k2450 == 1 ) {
-  //   cout << endl;
-  //   k2450 = new Keithley2450( m_gpib_num );
-  //   k2450->OutputOff();
-  //   sleep(1);
-  //   //k2450->SetMeasureCurrent();
-  //   k2450->SetMeasureVoltage();
-  //   sleep(1);
-  //   k2450->SetSourceVoltage4W();
-  //   sleep(1);
-  //   k2450->SetOutputVoltageCurrentLimit( m_Ilim );
-  //   sleep(1);
-  //   k2450->OutputOn();
-  // }
-  m_VstepCount = 0;
+  // Threshold
+  int threshold = config->Get( "threshold_start", m_xml_VTHRESH );
+  int coarse = threshold / 160;
+  int fine = threshold - coarse*160 + 352;
 
-  // Threshold scan conf params
-  m_do_threshold_scan = config->Get( "do_threshold_scan", 0 );
-  m_threshold_start   = config->Get( "threshold_start", m_xml_VTHRESH );
-  m_threshold_step    = config->Get( "threshold_step", 0 );
-  m_threshold_max     = config->Get( "threshold_max", m_xml_VTHRESH );
-  m_threshold_return  = config->Get( "threshold_return", m_xml_VTHRESH );
-  m_threshold_count   = 0;
+  // Coarse threshold:
+  if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
+    EUDAQ_ERROR("Could not set VTHRESH_COARSE: " + spidrctrl->errorString());
+  } else {
+    int tmpval = -1;
+    spidrctrl->getDac( device_nr, TPX3_VTHRESH_COARSE, &tmpval );
+    EUDAQ_EXTRA("Successfully set DAC: VTHRESH_COARSE to " + std::to_string(tmpval));
+  }
+
+  // Fine threshold:
+  if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
+    EUDAQ_ERROR("Could not set VTHRESH_FINE: " + spidrctrl->errorString());
+  } else {
+    int tmpval = -1;
+    spidrctrl->getDac( device_nr, TPX3_VTHRESH_FINE, &tmpval );
+    EUDAQ_EXTRA("Successfully set DAC: VTHRESH_FINE to " + std::to_string(tmpval));
+  }
+  EUDAQ_USER("Threshold = " + std::to_string(threshold));
 
   // Maximum pixel vector size and how many pixels to clean from it (to handle backlog)
   m_maxPixVec = config->Get( "MaxPixelVecSize", 10000 );
@@ -416,23 +380,22 @@ double Timepix3Producer::getTpx3Temperature() {
   if( !spidrctrl->setSenseDac( device_nr, TPX3_BANDGAP_TEMP ) ) {
     EUDAQ_ERROR("setSenseDac: " + spidrctrl->errorString());
   }
-  
+
   if( !spidrctrl->getAdc( &bg_temp_adc, 64 ) ) {
     EUDAQ_ERROR("getAdc: " + spidrctrl->errorString());
   }
-  
+
   float bg_temp_V = 1.5*( bg_temp_adc/64. )/4096;
   if( !spidrctrl->setSenseDac( device_nr, TPX3_BANDGAP_OUTPUT ) ) {
     EUDAQ_ERROR("setSenseDac: " + spidrctrl->errorString());
   }
-  
+
   if( !spidrctrl->getAdc( &bg_output_adc, 64 ) ) {
     EUDAQ_ERROR("getAdc: " + spidrctrl->errorString());
   }
-  
+
   float bg_output_V = 1.5*( bg_output_adc/64. )/4096;
   m_temp = 88.75 - 607.3 * ( bg_temp_V - bg_output_V);
-  //    cout << "[Timepix3] Temperature is " << m_temp << " C" << endl;
   return m_temp;
 }
 
@@ -440,60 +403,6 @@ void Timepix3Producer::DoStartRun() {
   m_ev = 0;
 
   std::cout << "Starting run..." << std::endl;
-
-  // Bias scan
-  double newBiasVoltage = m_Vstart + m_VstepCount*m_VbiasStep;
-  // if( m_use_k2450 == 1 ) {
-  //   if( m_doBiasScan == 1 ) {
-  // 	if ( newBiasVoltage <= m_VbiasMax ) {
-  // 	  k2450->SetOutputVoltage( newBiasVoltage );
-  // 	  m_VstepCount++;
-  // 	} else {
-  // 	  k2450->SetOutputVoltage( m_Vreturn );
-  // 	  newBiasVoltage = m_Vreturn;
-  // 	}
-  //   } else {
-  // 	k2450->SetOutputVoltage( m_Vbias );
-  // 	newBiasVoltage = m_Vbias;
-  //   }
-  // }
-
-  // Threshold scan
-  int newThreshold = m_threshold_start + m_threshold_count*m_threshold_step;
-  if( m_do_threshold_scan == 1 ) {
-    int coarse = newThreshold / 160;
-    int fine = newThreshold - coarse*160 + 352;
-    if( newThreshold <= m_threshold_max ) {
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
-	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
-      }
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
-	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
-      }
-      m_threshold_count++;
-    } else {
-      int coarse = m_threshold_return / 160;
-      int fine = m_threshold_return - coarse*160 + 352;
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
-	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
-      }
-      if( !spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
-	EUDAQ_ERROR("setDac: " + spidrctrl->errorString());
-      }
-      newThreshold = 	m_threshold_return;
-    }
-  } else {
-    newThreshold = m_xml_VTHRESH;
-  }
-  cout << "[Timepix3] Threshold = " << newThreshold << endl;
-
-  // Put measured bias voltage in BORE
-  // if ( m_use_k2450 == 1 ) {
-  //   sleep(2); // wait for ramp up
-  //   double actualBiasVoltage = k2450->ReadVoltage();
-  //   bore.SetTag( "VBiasActual", actualBiasVoltage );
-  //   bore.SetTag( "VBiasSet", newBiasVoltage );
-  // }
 
   double temp=getTpx3Temperature();
   std::cout << "Started run." << std::endl;
@@ -529,7 +438,7 @@ void Timepix3Producer::DoTerminate() {
 void Timepix3Producer::RunLoop() {
 
   std::cout << "Starting run loop..." << std::endl;
- 
+
   unsigned int m_ev_next_update=0;
   // Create SpidrDaq for later (best place to do it?)
   spidrdaq = new SpidrDaq( spidrctrl );
@@ -570,7 +479,7 @@ void Timepix3Producer::RunLoop() {
   int cnt = 0;
 
   std::map<int, int> header_counter;
- 
+
   while(1) {
     if(!m_running){
       break;
@@ -606,7 +515,7 @@ void Timepix3Producer::RunLoop() {
 
 	uint64_t header = data & 0xF000000000000000;
 	header_counter[(header>> 60)]++;
-	
+
 	//	std::cout << "HEADER: " << (header >> 60) << std::endl;
 	//int counter = 0;
 	//spidrctrl->getTdcTriggerCounter(&counter);
