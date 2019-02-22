@@ -198,8 +198,31 @@ void Timepix3Producer::DoConfigure() {
   if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
     EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
   }
- 
-  //cout << "Device ID: " << device_id << endl;
+  cout << "Device ID: " << device_id << endl;
+
+
+  // Header filter mask:
+  // ETH:   
+  // CPU:   1111001110011111
+  int eth_mask = 0x0C60, cpu_mask = 0xF39F;
+  if (!spidrctrl->setHeaderFilter(device_nr, eth_mask, cpu_mask)) {
+    EUDAQ_ERROR("setHeaderFilter: "+ spidrctrl->errorString());
+  }
+
+  if (!spidrctrl->getHeaderFilter(device_nr, &eth_mask, &cpu_mask)) {
+    EUDAQ_ERROR("getHeaderFilter: "+ spidrctrl->errorString());
+  }
+  std::ostringstream stream;
+  for(int i = 15; i >= 0; i--) {
+    stream << ((eth_mask >> i) & 1);
+  }
+  std::cout << "ETH mask: " << stream.str() << std::endl;
+  std::ostringstream stream2;
+  for(int i = 15; i >= 0; i--) {
+    stream2 << ((cpu_mask >> i) & 1);
+  }
+  std::cout << "CPU mask: " << stream2.str() << std::endl;
+
   m_chipID = myTimepix3Config->getChipID( device_id );
   cout << "[Timepix3] Chip ID: " << m_chipID << endl;
   EUDAQ_USER("Timepix3 Chip ID: " + m_chipID);
@@ -546,6 +569,8 @@ void Timepix3Producer::RunLoop() {
   const uint64_t TIMER_EPOCH = 0x40000000;
   int cnt = 0;
 
+  std::map<int, int> header_counter;
+ 
   while(1) {
     if(!m_running){
       break;
@@ -580,6 +605,12 @@ void Timepix3Producer::RunLoop() {
 	if( !data ) break;
 
 	uint64_t header = data & 0xF000000000000000;
+	header_counter[(header>> 60)]++;
+	
+	//	std::cout << "HEADER: " << (header >> 60) << std::endl;
+	//int counter = 0;
+	//spidrctrl->getTdcTriggerCounter(&counter);
+	//std::cout << "TDC CNT: " << counter << std::endl;
 
 	// Data-driven or sequential readout pixel data header?
 	if( header == 0xB000000000000000 || header == 0xA000000000000000 ) {
@@ -737,8 +768,10 @@ void Timepix3Producer::RunLoop() {
 
 	    uint64_t stop_time=GetTimeus();
 	    uint64_t dt=stop_time-start_time;
+#ifdef TPX3_VERBOSE
 	    printf("[ev:%6u|tlu:%5lu] Pixels:%5lu Buildtime:%6luus Pixels left:%6lu\n",m_ev,curr_tlu_nr,bufferPix.size(),dt,pixel_vec.size());
 	    fflush( stdout );
+#endif
 	    // Now increment the event number
 	    m_ev++;
 	  }
@@ -750,5 +783,9 @@ void Timepix3Producer::RunLoop() {
     }
   }
 
+  std::cout << "HEADERS: " << std::endl;
+  for(auto& i : header_counter) {
+    std::cout << i.first << ":\t" << i.second << std::endl;
+  }
   std::cout << "Exiting run loop." << std::endl;
 }
