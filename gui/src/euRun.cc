@@ -16,10 +16,7 @@ RunControlGUI::RunControlGUI()
   qRegisterMetaType<QModelIndex>("QModelIndex");
   setupUi(this);
 
-//  if (!grpStatus->layout())
-//    grpStatus->setLayout(new QGridLayout(grpStatus));
   lblCurrent->setText(m_map_state_str.at(eudaq::Status::STATE_UNINIT));
-  //QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
   for(auto &label_str: m_map_label_str) {
     QLabel *lblname = new QLabel(grpStatus);
     lblname->setObjectName("lbl_st_" + label_str.first);
@@ -101,9 +98,6 @@ void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
   auto thd_rc = std::thread(&eudaq::RunControl::Exec, m_rc.get());
   thd_rc.detach();
 }
-
-// void RunControlGUI::on_btn
-
 
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
@@ -193,58 +187,15 @@ void RunControlGUI::DisplayTimer(){
   for(auto &conn_status_last: m_map_conn_status_last){
     if(!map_conn_status.count(conn_status_last.first)){
       m_model_conns.disconnected(conn_status_last.first);
-      std::cout << "Disconnected: "<< conn_status_last.first->GetName()<<std::endl;
-      // toDo: Remove stuff from destroyed connections
-      for(auto idx=0; idx<grpGrid->count();idx++)
-      {
-          QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-          if(l->objectName()==QString::fromStdString(conn_status_last.first->GetName()
-                                                     +":"+conn_status_last.first->GetType()))
-          {
-              // Status updates are always pairs
-              m_map_label_str.erase(l->objectName());
-              m_str_label.erase(l->objectName());
-              grpGrid->removeWidget(l);
-              delete l;
-              l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-              grpGrid->removeWidget(l);
-              delete l;
-          }
-      }
+      removeStatusDisplay(conn_status_last);
     }
   }
   for(auto &conn_status: map_conn_status){
     if(!m_map_conn_status_last.count(conn_status.first)){
       m_model_conns.newconnection(conn_status.first);
-
-      // adding monitor displays here
-      //QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
-      QLabel *lblname = new QLabel(grpStatus);
-      QString tmp = QString::fromStdString(conn_status.first->GetName()
-                                           +":"+conn_status.first->GetType());
-      lblname->setObjectName(tmp);
-      lblname->setText(tmp+": ");
-      QLabel *lblvalue = new QLabel(grpStatus);
-      lblvalue->setObjectName("val_"+tmp);
-      lblvalue->setText("val_"+tmp);
-      m_map_label_str.insert(std::pair<QString, QString>(tmp,tmp+": "));
-      m_str_label.insert(std::pair<QString, QLabel *>(tmp, lblvalue));
-
-
-      grpGrid->addWidget(lblname, m_display_row, m_display_col * 2);
-      grpGrid->addWidget(lblvalue, m_display_row, m_display_col * 2 + 1);
-      // grid is continously growing, needs to be changed at some point
-      if (++m_display_col > 1){
-        ++m_display_row;
-        m_display_col = 0;
-      }
-      cout << "Connected: " << conn_status.first->GetName()<<endl;
-
+      addStatusDisplay(conn_status);
     }
   }
-
-
-
   if(map_conn_status.empty()){
     state = eudaq::Status::STATE_UNINIT;
   }
@@ -319,34 +270,7 @@ void RunControlGUI::DisplayTimer(){
       m_str_label.at("RUN")->setText(QString::number(run_n)+" (next run)");
     }
   }
-  if(m_str_label.count("my_dc"))
-  {
-      m_str_label.at("my_dc")->setText(QString::number(run_n));
 
-  }
-
-  auto it = map_conn_status.begin();
-  int itti = 0;
-  while(itti<map_conn_status.size())
-  {
-      if(it->first && it->second)
-      {
-          if(true)//it->first->GetType()=="Producer" ||it->first->GetType()=="DataCollector")
-          {
-              if(m_str_label.count(QString::fromStdString(it->first->GetName()+":"+it->first->GetType())))
-              {
-                  auto tags = it->second->GetTags();
-                  for(auto &tag: tags){
-                      if(tag.first=="EventN")
-                          m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
-                      // cout<<tag.first<<", "<<tag.second<<endl;
-                  }
-              }
-          }
-      }
-    itti++;
-    it++;
-  }
 
   m_map_conn_status_last = map_conn_status;
 }
@@ -468,4 +392,98 @@ bool RunControlGUI::loadConfigFile() {
     m_rc->ReadConfigureFile(settings);
   }
   return true;
+}
+
+bool RunControlGUI::addStatusDisplay(auto connection)
+{
+    // only defaults added for prooducer and data collectotrs
+    QString tmp = QString::fromStdString(connection.first->GetName()
+                                         +":"+connection.first->GetType());
+    QLabel *lblname = new QLabel(grpStatus);
+    lblname->setObjectName(tmp);
+    lblname->setText(tmp+": ");
+    QLabel *lblvalue = new QLabel(grpStatus);
+    lblvalue->setObjectName("val_"+tmp);
+    lblvalue->setText("val_"+tmp);
+    // check if grid is fully filled
+    int colPos = 0, rowPos = 0;
+
+    // toDo: need to implement correct layout magic here
+    cout  << 2*m_str_label.size()  <<"\t"<<grpGrid->rowCount() <<"\t"<<grpGrid->columnCount() <<endl;
+    if( 2* (m_str_label.size()+1) < grpGrid->rowCount() * grpGrid->columnCount() ) {
+        colPos = m_display_col;
+        rowPos = m_display_row;
+        if (++m_display_col > 1){
+            ++m_display_row;
+            m_display_col = 0;
+        }
+//        cout << "found empty positions"<<endl;
+//        for(auto idx=0; idx<grpGrid->count();idx++)
+//        {
+//            QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAtPosition(idx/grpGrid->columnCount(),idx%grpGrid->columnCount())->widget());
+////            QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
+////            cout <<l->objectName().toStdString()<<"\t"<< grpGrid->itemAt(idx)->widget()<<endl;
+//            if(l->objectName() == "")
+//                cout << "found empty slot at  "<< idx<<endl;
+//        }
+    }
+    else {
+        colPos = m_display_col;
+        rowPos = m_display_row;
+        if (++m_display_col > 1){
+            ++m_display_row;
+            m_display_col = 0;
+        }
+    }
+    cout << "adding at: "<< colPos<<", "<<rowPos<<endl;
+    m_map_label_str.insert(std::pair<QString, QString>(tmp,tmp+": "));
+    m_str_label.insert(std::pair<QString, QLabel *>(tmp, lblvalue));
+    grpGrid->addWidget(lblname, rowPos, colPos * 2);
+    grpGrid->addWidget(lblvalue, rowPos, colPos * 2 + 1);
+    return true;
+}
+
+bool RunControlGUI::removeStatusDisplay(auto connection)
+{
+    // remove obsolete information from disconnected values
+    for(auto idx=0; idx<grpGrid->count();idx++)
+    {
+        QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
+        if(l->objectName()==QString::fromStdString(connection.first->GetName()
+                                                   +":"+connection.first->GetType()))
+        {
+            // Status updates are always pairs
+            m_map_label_str.erase(l->objectName());
+            m_str_label.erase(l->objectName());
+            grpGrid->removeWidget(l);
+            delete l;
+            l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
+            grpGrid->removeWidget(l);
+            delete l;
+        }
+    }
+    return true;
+}
+
+bool RunControlGUI::updateStatusDisplay(auto map_conn_status)
+{
+    auto it = map_conn_status.begin();
+    for(auto m = 0 ; m < map_conn_status.size(); m++)
+    {
+        // elements might not be existing at startup/beeing asynchronously changed
+        if(it->first && it->second)
+        {
+            if(m_str_label.count(QString::fromStdString(it->first->GetName()+":"+it->first->GetType())))
+            {
+                auto tags = it->second->GetTags();
+                for(auto &tag: tags){
+                    if(tag.first=="EventN")
+                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
+                    // cout<<tag.first<<", "<<tag.second<<endl;
+                }
+            }
+
+        }
+        it++;
+    }
 }

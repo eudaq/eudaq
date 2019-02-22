@@ -42,6 +42,9 @@ private slots:
 private:
   bool loadInitFile();
   bool loadConfigFile();
+  bool addStatusDisplay(auto connection);
+  bool removeStatusDisplay(auto connection);
+  bool updateStatusDisplay(auto map_conn_status);
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
   eudaq::RunControlUP m_rc;
