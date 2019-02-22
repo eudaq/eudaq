@@ -577,7 +577,7 @@ void Timepix3Producer::RunLoop() {
 #ifdef TPX3_VERBOSE
 	  printf("[PIXDATA] (%3d,%3d) TOT:%5d TOA:%5d FPGA_TS:%6d       TS:%15llu\n", pixel.x , pixel.y , pixel.tot, toa , fpga_ts, pixel.ts );
 #endif
-	} else if( header == 0x5000000000000000 ) { // Or TLU packet header?
+  } else if( header == 0x6000000000000000 ) { // Or TLU packet header?
 	  struct TRIGGER trigger;
 	  uint64_t fpga_ts;
 	  unsigned short int_trg_nr, tlu_trg_nr;
