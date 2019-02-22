@@ -58,6 +58,8 @@ Timepix3Producer::Timepix3Producer(const std::string name, const std::string &ru
 Timepix3Producer::~Timepix3Producer() {}
 
 void Timepix3Producer::DoReset() {
+  spidrctrl->closeShutter();
+
   delete spidrctrl;
   delete spidrdaq;
 }
