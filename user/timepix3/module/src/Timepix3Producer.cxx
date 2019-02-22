@@ -22,6 +22,7 @@ public:
   Timepix3Producer(const std::string name, const std::string &runcontrol);
   ~Timepix3Producer() override;
   void DoConfigure() override;
+  void DoInitialise() override;
   void DoStartRun() override;
   void DoStopRun() override;
   void DoReset() override;
@@ -56,7 +57,31 @@ Timepix3Producer::Timepix3Producer(const std::string name, const std::string &ru
 
 Timepix3Producer::~Timepix3Producer() {}
 
-void Timepix3Producer::DoReset() {}
+void Timepix3Producer::DoReset() {
+  delete spidrctrl;
+  delete spidrdaq;
+}
+
+void Timepix3Producer::DoInitialise() {
+  auto config = GetInitConfiguration();
+
+  // SPIDR-TPX3 IP & PORT
+  m_spidrIP  = config->Get( "SPIDR_IP", "192.168.100.10" );
+  int ip[4];
+  vector<TString> ipstr = tokenise( m_spidrIP, ".");
+  for (int i = 0; i < ipstr.size(); i++ ) ip[i] = ipstr[i].Atoi();
+  m_spidrPort = config->Get( "SPIDR_Port", 50000 );
+
+  cout << "Connecting to SPIDR at " << ip[0] << "." << ip[1] << "." << ip[2] << "." << ip[3] << ":" << m_spidrPort << endl;
+
+  // Open a control connection to SPIDR-TPX3 module
+  // with address 192.168.100.10, default port number 50000
+  spidrctrl = new SpidrController( ip[0], ip[1], ip[2], ip[3], m_spidrPort );
+
+  // Create SpidrDaq for later
+  spidrdaq = new SpidrDaq( spidrctrl );
+}
+
 
 // This gets called whenever the DAQ is configured
 void Timepix3Producer::DoConfigure() {
@@ -71,19 +96,6 @@ void Timepix3Producer::DoConfigure() {
   m_xmlfileName = config->Get( "XMLConfig", "" );
   myTimepix3Config->ReadXMLConfig( m_xmlfileName );
   cout << "Configuration file created on: " << myTimepix3Config->getTime() << endl;
-
-  // SPIDR-TPX3 IP & PORT
-  m_spidrIP  = config->Get( "SPIDR_IP", "192.168.100.10" );
-  int ip[4];
-  vector<TString> ipstr = tokenise( m_spidrIP, ".");
-  for (int i = 0; i < ipstr.size(); i++ ) ip[i] = ipstr[i].Atoi();
-  m_spidrPort = config->Get( "SPIDR_Port", 50000 );
-
-  cout << "Connecting to SPIDR at " << ip[0] << "." << ip[1] << "." << ip[2] << "." << ip[3] << ":" << m_spidrPort << endl;
-
-  // Open a control connection to SPIDR-TPX3 module
-  // with address 192.168.100.10, default port number 50000
-  spidrctrl = new SpidrController( ip[0], ip[1], ip[2], ip[3], m_spidrPort );
 
   // Reset Device
   if( !spidrctrl->reinitDevice( device_nr ) ) {
@@ -377,7 +389,7 @@ void Timepix3Producer::DoTerminate() {
   }
 
   // Clean up
-  delete spidrdaq;
+  DoReset();
   std::cout << "Terminated." << std::endl;
 }
 
@@ -387,8 +399,6 @@ void Timepix3Producer::RunLoop() {
   std::cout << "Starting run loop..." << std::endl;
 
   unsigned int m_ev_next_update=0;
-  // Create SpidrDaq for later (best place to do it?)
-  spidrdaq = new SpidrDaq( spidrctrl );
 
   // Restart timers to sync Timepix3 and TLU timestamps
   if( !spidrctrl->restartTimers() ) {
@@ -445,7 +455,7 @@ void Timepix3Producer::RunLoop() {
         // ...until the sample buffer is empty
         if(!data) break;
 
-        uint64_t header = (data & 0xF000000000000000 >> 60);
+        uint64_t header = (data & 0xF000000000000000) >> 60;
         header_counter[header]++;
 
         // Data-driven or sequential readout pixel data header?
