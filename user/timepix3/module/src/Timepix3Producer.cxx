@@ -41,12 +41,6 @@ private:
     uint64_t ts;
   };
 
-  // Structure to store trigger info
-  struct TRIGGER {
-    unsigned short int_nr, tlu_nr;
-    uint64_t ts;
-  };
-
   unsigned m_ev;
   int m_spidrPort;
   int device_nr = 0;
@@ -57,6 +51,9 @@ private:
   int m_xml_VTHRESH;
   float m_temp;
   int m_maxPixVec, m_pixToDel;
+
+  long long int m_syncTimeTDC;
+  int m_TDCoverflowCounter;
 };
 
 namespace{
@@ -470,8 +467,8 @@ void Timepix3Producer::RunLoop() {
   // Vectors to contain pixel and trigger structures
   vector< PIXEL > pixel_vec;
   pixel_vec.reserve( 10000000 );
-  vector< TRIGGER > trigger_vec;
-  trigger_vec.reserve( 10000000 );
+  vector<long long int> trigger_vec;
+
   int last_trg_timestamp=0;
   uint64_t unfolded_timestamp=0;
   int last_fpga_ts=0x00000; //SAMIR: was 0x10000
@@ -578,39 +575,25 @@ void Timepix3Producer::RunLoop() {
 	  printf("[PIXDATA] (%3d,%3d) TOT:%5d TOA:%5d FPGA_TS:%6d       TS:%15llu\n", pixel.x , pixel.y , pixel.tot, toa , fpga_ts, pixel.ts );
 #endif
   } else if( header == 0x6000000000000000 ) { // Or TLU packet header?
-	  struct TRIGGER trigger;
-	  uint64_t fpga_ts;
-	  unsigned short int_trg_nr, tlu_trg_nr;
-	  long long trg_timestamp;
-	  //internal trigger number
-	  trigger.int_nr = (data >> 45) & 0x7FFF;
-	  //TLU trigger number
-	  trigger.tlu_nr = (data >> 30) & 0x7FFF;
+    unsigned long long int stamp = (data & 0x1E0) >> 5;
+    long long int timestamp_raw = static_cast<long long int>(data & 0xFFFFFFFFE00) >> 9;
+    long long int timestamp = 0;
+    // int triggerNumber = ((data & 0xFFF00000000000) >> 44);
+    int intermediate = (data & 0x1F);
+    if(intermediate != 0)
+    continue;
 
-	  //timestamp
-	  trg_timestamp = data & 0x3FFFFFFF;
-	  fpga_ts = (int) ((trg_timestamp>>14) & 0x000000000000FFFF);
-	  if ( (int)fpga_ts < ((int)last_fpga_ts - HALF_EPOCH) )
-	    {
-	      unfolded_timestamp += TIMER_EPOCH;
-#ifdef TPX3_VERBOSE
-	      cout << "-- unfolding (trg) --\n";
-#endif
-	      last_fpga_ts = fpga_ts;
-	    } else if ( fpga_ts >= last_fpga_ts +HALF_EPOCH  )
-	    trg_timestamp-=TIMER_EPOCH;
-	  else
-	    last_fpga_ts = fpga_ts;
+    // if jump back in time is larger than 1 sec, overflow detected...
+    if((m_syncTimeTDC - timestamp_raw) > 0x1312d000) {
+      m_TDCoverflowCounter++;
+    }
+    m_syncTimeTDC = timestamp_raw;
+    timestamp = timestamp_raw + (static_cast<long long int>(m_TDCoverflowCounter) << 35);
 
-	  trg_timestamp += unfolded_timestamp;
-	  trg_timestamp <<= 4;
-	  trigger.ts = trg_timestamp;
+    long long int triggerTime = (timestamp + static_cast<long long int>(stamp) / 12);
 
-#ifdef TPX3_VERBOSE
-	  printf("[TRGDATA] tlu_id:%5d int_id:%5d                          TS:%15llu\n", trigger.tlu_nr , trigger.int_nr, trigger.ts);
-#endif
 	  // store TRIGGER struct in vector
-	  trigger_vec.push_back( trigger );
+	  trigger_vec.push_back( triggerTime );
 
 	  // Loop over pixel and trigger vectors
 	  while( trigger_vec.size() > 1 ) {
@@ -622,51 +605,30 @@ void Timepix3Producer::RunLoop() {
 	    std::vector<unsigned char> bufferTrg;
 	    std::vector<unsigned char> bufferPix;
 
-	    uint64_t curr_trg_ts = trigger_vec[0].ts;
-	    uint64_t next_trg_ts = trigger_vec[1].ts;
-	    uint64_t max_pixel_ts = ( next_trg_ts + curr_trg_ts ) / 2;
-
-	    uint64_t curr_tlu_nr = trigger_vec[0].tlu_nr;
-	    uint64_t curr_int_nr = trigger_vec[0].int_nr;
-
-	    // pack TLU info in its buffer
-	    pack( bufferTrg, curr_trg_ts);
-	    pack( bufferTrg, curr_tlu_nr);
-	    pack( bufferTrg, curr_int_nr);
-
+	    // pack TLU info in its buffer: use previous trigger:
+      pack( bufferTrg, trigger_vec.front());
 	    // and add it to the event
 	    evup->AddBlock( 0, bufferTrg );
-#ifdef TPX3_VERBOSE
-	    uint64_t fpts=0;
-	    if (pixel_vec.size()>0) fpts=pixel_vec[0].ts;
-	    printf("\n=> processing tr_id %5d  ts: %15lu max_ts: %15lu next_trg_ts: %15lu  (pix vec size: %d, first pix ts: %lu)\n", trigger_vec[0].tlu_nr,curr_trg_ts, max_pixel_ts, next_trg_ts , pixel_vec.size(),fpts);
 
-#endif
+      // Reall all pixels until next trigger:
+      auto next_trg_ts = trigger_vec.at(1);
 
 	    // Loop over pixels
-	    for( int j = 0; j < pixel_vec.size(); ++j ) {
-	      uint64_t curr_pix_ts = pixel_vec[j].ts;
-	      if( curr_pix_ts < max_pixel_ts ) {
+      for( int j = 0; j < pixel_vec.size(); ++j ) {
+        uint64_t curr_pix_ts = pixel_vec[j].ts;
+        // Pack pixel data into event buffer
+        pack( bufferPix, pixel_vec[j].x );
+        pack( bufferPix, pixel_vec[j].y );
+        pack( bufferPix, pixel_vec[j].tot );
+        pack( bufferPix, pixel_vec[j].ts );
 
-#ifdef TPX3_VERBOSE
-		printf("                        +  ts: %15lu diff: %15ld  (pix %3d,%3d)\n", curr_pix_ts, diff, pixel_vec[j].x, pixel_vec[j].y );
-#endif
-		// Pack pixel data into event buffer
-		pack( bufferPix, pixel_vec[j].x );
-		pack( bufferPix, pixel_vec[j].y );
-		pack( bufferPix, pixel_vec[j].tot );
-		pack( bufferPix, pixel_vec[j].ts );
+        pixel_vec.erase( pixel_vec.begin() + j );
+        j--; // after removing one pixel data packet, need to go back one step in the vector to avoid skipping pixels
 
-		pixel_vec.erase( pixel_vec.begin() + j );
-		j--; // after removing one pixel data packet, need to go back one step in the vector to avoid skipping pixels
-	      }
-	      else if( curr_pix_ts > next_trg_ts ) {
-#ifdef TPX3_VERBOSE
-		printf("                        -> break! (%lu > %lu , diff:%ld)\n",curr_pix_ts,next_trg_ts,curr_pix_ts-next_trg_ts  );
-#endif
-		break;
-	      }
-	    }
+        if( curr_pix_ts >  next_trg_ts) {
+          break;
+        }
+      }
 
 	    // Remove trigger from vector
 	    trigger_vec.erase( trigger_vec.begin() );
