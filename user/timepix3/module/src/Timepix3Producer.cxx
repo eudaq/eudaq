@@ -469,14 +469,14 @@ void Timepix3Producer::RunLoop() {
 
     bool next_sample = true;
 
-    // if(spidrdaq->bufferFull() || spidrdaq->bufferFullOccurred()) {
-    //   EUDAQ_ERROR("Buffer overflow");
-    // }
+    if(spidrdaq->bufferFull() || spidrdaq->bufferFullOccurred()) {
+      EUDAQ_ERROR("Buffer overflow");
+    }
 
     // Log some info
     if(m_ev >= m_ev_next_update) {
       EUDAQ_USER("Timepix3 temperature: " + std::to_string(getTpx3Temperature()) + "°C");
-      m_ev_next_update=m_ev+10000;
+      m_ev_next_update=m_ev+50000;
     }
 
     // Get a sample of pixel data packets, with timeout in ms
@@ -484,6 +484,8 @@ void Timepix3Producer::RunLoop() {
     next_sample = spidrdaq->getSample(BUF_SIZE, 1);
 
     if(next_sample) {
+      auto size = spidrdaq->sampleSize();
+
       // look inside sample buffer...
       while(1) {
         uint64_t data = spidrdaq->nextPacket();
@@ -507,6 +509,8 @@ void Timepix3Producer::RunLoop() {
           evup->AddBlock(0, &data, sizeof(data));
           SendEvent(std::move(evup));
         }
+
+        m_ev++;
       } // End loop over sample buffer
     } // Sample available
   } // Readout loop
