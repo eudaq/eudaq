@@ -271,6 +271,30 @@ void Timepix3Producer::DoConfigure() {
     }
   }
 
+  // Threshold
+  int threshold = config->Get( "threshold", m_xml_VTHRESH );
+  int coarse = threshold / 160;
+  int fine = threshold - coarse*160 + 352;
+
+  // Coarse threshold:
+  if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
+    EUDAQ_ERROR("Could not set VTHRESH_COARSE: " + spidrctrl->errorString());
+  } else {
+    int tmpval = -1;
+    spidrctrl->getDac( device_nr, TPX3_VTHRESH_COARSE, &tmpval );
+    EUDAQ_EXTRA("Successfully set DAC: VTHRESH_COARSE to " + std::to_string(tmpval));
+  }
+
+  // Fine threshold:
+  if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
+    EUDAQ_ERROR("Could not set VTHRESH_FINE: " + spidrctrl->errorString());
+  } else {
+    int tmpval = -1;
+    spidrctrl->getDac( device_nr, TPX3_VTHRESH_FINE, &tmpval );
+    EUDAQ_EXTRA("Successfully set DAC: VTHRESH_FINE to " + std::to_string(tmpval));
+  }
+  EUDAQ_USER("Threshold = " + std::to_string(threshold));
+
   // Reset entire matrix config to zeroes
   spidrctrl->resetPixelConfig();
 
@@ -338,30 +362,6 @@ void Timepix3Producer::DoConfigure() {
   } else {
     EUDAQ_ERROR("getPixelConfig: " + spidrctrl->errorString());
   }
-
-  // Threshold
-  int threshold = config->Get( "threshold_start", m_xml_VTHRESH );
-  int coarse = threshold / 160;
-  int fine = threshold - coarse*160 + 352;
-
-  // Coarse threshold:
-  if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
-    EUDAQ_ERROR("Could not set VTHRESH_COARSE: " + spidrctrl->errorString());
-  } else {
-    int tmpval = -1;
-    spidrctrl->getDac( device_nr, TPX3_VTHRESH_COARSE, &tmpval );
-    EUDAQ_EXTRA("Successfully set DAC: VTHRESH_COARSE to " + std::to_string(tmpval));
-  }
-
-  // Fine threshold:
-  if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
-    EUDAQ_ERROR("Could not set VTHRESH_FINE: " + spidrctrl->errorString());
-  } else {
-    int tmpval = -1;
-    spidrctrl->getDac( device_nr, TPX3_VTHRESH_FINE, &tmpval );
-    EUDAQ_EXTRA("Successfully set DAC: VTHRESH_FINE to " + std::to_string(tmpval));
-  }
-  EUDAQ_USER("Threshold = " + std::to_string(threshold));
 
   // Also display something for us
   cout << endl;
