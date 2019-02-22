@@ -193,7 +193,8 @@ void RunControlGUI::DisplayTimer(){
   for(auto &conn_status: map_conn_status){
     if(!m_map_conn_status_last.count(conn_status.first)){
       m_model_conns.newconnection(conn_status.first);
-      addStatusDisplay(conn_status);
+      if(! (conn_status.first->GetType()== "LogCollector"))
+          addStatusDisplay(conn_status);
     }
   }
   if(map_conn_status.empty()){
@@ -410,7 +411,7 @@ bool RunControlGUI::addStatusDisplay(auto connection)
     int colPos = 0, rowPos = 0;
 
     // toDo: need to implement correct layout magic here
-    cout  << 2*m_str_label.size()  <<"\t"<<grpGrid->rowCount() <<"\t"<<grpGrid->columnCount() <<endl;
+  //  cout  << 2*m_str_label.size()  <<"\t"<<grpGrid->rowCount() <<"\t"<<grpGrid->columnCount() <<endl;
     if( 2* (m_str_label.size()+1) < grpGrid->rowCount() * grpGrid->columnCount() ) {
         colPos = m_display_col;
         rowPos = m_display_row;
@@ -436,7 +437,7 @@ bool RunControlGUI::addStatusDisplay(auto connection)
             m_display_col = 0;
         }
     }
-    cout << "adding at: "<< colPos<<", "<<rowPos<<endl;
+//    cout << "adding at: "<< colPos<<", "<<rowPos<<endl;
     m_map_label_str.insert(std::pair<QString, QString>(tmp,tmp+": "));
     m_str_label.insert(std::pair<QString, QLabel *>(tmp, lblvalue));
     grpGrid->addWidget(lblname, rowPos, colPos * 2);
@@ -474,16 +475,16 @@ bool RunControlGUI::updateStatusDisplay(auto map_conn_status)
         // elements might not be existing at startup/beeing asynchronously changed
         if(it->first && it->second)
         {
-            cout << it->first->GetName()<<endl;
+        //    cout << it->first->GetName()<<endl;
             if(m_str_label.count(QString::fromStdString(it->first->GetName()+":"+it->first->GetType())))
             {
                 auto tags = it->second->GetTags();
 		for(auto &tag: tags){
 		  
                     if(!(it->first->GetName()=="eudet_tlu")  && tag.first=="EventN")
-                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
+                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second +" Events"));
                     else if(it->first->GetName()=="eudet_tlu"  && tag.first=="Freq. (avg.) [kHz]")
-                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
+                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second+" kHz"));
                    }
             }
 
