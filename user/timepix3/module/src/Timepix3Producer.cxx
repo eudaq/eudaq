@@ -43,6 +43,36 @@ private:
   SpidrDaq *spidrdaq;
   int m_xml_VTHRESH;
   float m_temp;
+
+  /** Return the binary representation of a char as std::string
+   */
+  template <typename T> std::string to_bit_string(const T data) {
+    std::ostringstream stream;
+    for(int i = std::numeric_limits<T>::digits - 1; i >= 0; i--) {
+      stream << ((data >> i) & 1);
+    }
+    return stream.str();
+  }
+
+  template <typename T> std::string to_hex_string(const T i) {
+    std::ostringstream stream;
+    stream << std::hex << std::showbase << std::setfill('0') << std::setw(std::numeric_limits<T>::digits / 4) << std::hex
+           << static_cast<uint64_t>(i);
+    return stream.str();
+  }
+
+    /** Helper function to return a printed list of an integer vector, used to shield
+   *  debug code from being executed if debug level is not sufficient
+   */
+  template <typename T> std::string listVector(std::map<T, T> vec, std::string separator = ", ") {
+    std::stringstream os;
+    for(auto it : vec) {
+      os << to_hex_string(it.first) << ": ";
+      os << static_cast<uint64_t>(it.second);
+      os << separator;
+    }
+    return os.str();
+  };
 };
 
 namespace{
@@ -463,6 +493,8 @@ void Timepix3Producer::RunLoop() {
 
         uint64_t header = (data & 0xF000000000000000) >> 60;
         header_counter[header]++;
+
+        std::cout << "Headers: " << listVector(header_counter) << "\r";
 
         // Data-driven or sequential readout pixel data header?
         if( header == 0xB || header == 0xA ) {
