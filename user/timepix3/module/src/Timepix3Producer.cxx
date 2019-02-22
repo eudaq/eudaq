@@ -457,7 +457,7 @@ void Timepix3Producer::RunLoop() {
           evup->AddBlock(0, &data, sizeof(data));
           SendEvent(std::move(evup));
 
-        } else if( header == 0x5000000000000000 ) { // Or TLU packet header?
+        } else if( header == 0x6000000000000000 ) { // Or TLU packet header?
           auto evup = eudaq::Event::MakeUnique("Timepix3TrigEvent");
           evup->AddBlock(0, &data, sizeof(data));
           SendEvent(std::move(evup));
