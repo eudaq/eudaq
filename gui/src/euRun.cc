@@ -477,10 +477,11 @@ bool RunControlGUI::updateStatusDisplay(auto map_conn_status)
             {
                 auto tags = it->second->GetTags();
                 for(auto &tag: tags){
-                    if(tag.first=="EventN")
+                    if(!it->first->GetName()=="TLUProducer"  && tag.first=="EventN")
                         m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
-                    // cout<<tag.first<<", "<<tag.second<<endl;
-                }
+                    else if(it->first->GetName()=="TLUProducer"  && tag.first=="Rate")
+                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second));
+                   }
             }
 
         }
