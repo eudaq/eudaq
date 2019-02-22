@@ -423,13 +423,9 @@ void Timepix3Producer::RunLoop() {
 
     bool next_sample = true;
 
-    if(spidrdaq->bufferFull() || spidrdaq->bufferFullOccurred()) {
-      EUDAQ_ERROR("Buffer overflow");
-    }
-
-    // Get a sample of pixel data packets, with timeout in ms
-    const unsigned int BUF_SIZE = 8*1024*1024;
-    next_sample = spidrdaq->getSample( BUF_SIZE, 1 );
+    // if(spidrdaq->bufferFull() || spidrdaq->bufferFullOccurred()) {
+    //   EUDAQ_ERROR("Buffer overflow");
+    // }
 
     // Log some info
     if(m_ev >= m_ev_next_update) {
@@ -437,27 +433,28 @@ void Timepix3Producer::RunLoop() {
       m_ev_next_update=m_ev+10000;
     }
 
+    // Get a sample of pixel data packets, with timeout in ms
+    const unsigned int BUF_SIZE = 8*1024*1024;
+    next_sample = spidrdaq->getSample(BUF_SIZE, 1);
+
     if(next_sample) {
-      int size = spidrdaq->sampleSize();
-
-      const int HALF_EPOCH=0x8000;
-
       // look inside sample buffer...
       while(1) {
         uint64_t data = spidrdaq->nextPacket();
+
         // ...until the sample buffer is empty
         if(!data) break;
 
-        uint64_t header = data & 0xF000000000000000;
-        header_counter[(header>> 60)]++;
+        uint64_t header = (data & 0xF000000000000000 >> 60);
+        header_counter[header]++;
 
         // Data-driven or sequential readout pixel data header?
-        if( header == 0xB000000000000000 || header == 0xA000000000000000 ) {
+        if( header == 0xB || header == 0xA ) {
           auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
           evup->AddBlock(0, &data, sizeof(data));
           SendEvent(std::move(evup));
 
-        } else if( header == 0x6000000000000000 ) { // Or TLU packet header?
+        } else if( header == 0x6 ) { // Or TLU packet header?
           auto evup = eudaq::Event::MakeUnique("Timepix3TrigEvent");
           evup->AddBlock(0, &data, sizeof(data));
           SendEvent(std::move(evup));
