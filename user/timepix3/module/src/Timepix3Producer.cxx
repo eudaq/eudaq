@@ -606,7 +606,8 @@ void Timepix3Producer::RunLoop() {
 	    std::vector<unsigned char> bufferPix;
 
 	    // pack TLU info in its buffer: use previous trigger:
-      pack( bufferTrg, trigger_vec.front());
+      auto this_trigger = trigger_vec.front();
+      pack( bufferTrg, this_trigger);
 	    // and add it to the event
 	    evup->AddBlock( 0, bufferTrg );
 
@@ -634,6 +635,7 @@ void Timepix3Producer::RunLoop() {
 	    trigger_vec.erase( trigger_vec.begin() );
 	    // Add buffer to block
 	    evup->AddBlock( 1, bufferPix );
+      evup->SetTimestamp(this_trigger, next_trg_ts);
 	    // Send the event to the Data Collector
 	    SendEvent(std::move(evup));
 

@@ -67,6 +67,9 @@ namespace eudaq {
     // Add the plane to the StandardEvent
     d2->AddPlane(plane);
 
+    // Using 320 MHz clock
+    d2->SetTimeBegin(static_cast<double>(d1->GetTimestampBegin())  / (8. * 0.04));
+    d2->SetTimeEnd(static_cast<double>(d1->GetTimestampEnd())  / (8. * 0.04));
     // Indicate that data was successfully converted
     return true;
   }
