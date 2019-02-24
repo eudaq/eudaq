@@ -67,9 +67,6 @@ void SimpleStandardEvent::setMonitor_eventcorrelationtime(
 void SimpleStandardEvent::doClustering() {
   for (int plane = 0; plane < getNPlanes(); plane++) {
     _planes.at(plane).doClustering();
-    // std::cout << "Found " << _planes.at(plane).getNClusters() << " on Plane "
-    // << _planes.at(plane).getName() << " " << _planes.at(plane).getID() <<
-    // std::endl;
   }
 }
 

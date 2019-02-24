@@ -11,7 +11,6 @@
 EUDAQMonitorCollection::EUDAQMonitorCollection() : BaseCollection() {
   mymonhistos = NULL;
   histos_init = false;
-  cout << " Initialising EUDAQMonitor Collection" << endl;
   CollectionType = EUDAQMONITOR_COLLECTION_TYPE;
 }
 
@@ -30,7 +29,7 @@ void EUDAQMonitorCollection::Reset() {
 
 void EUDAQMonitorCollection::Write(TFile *file) {
   if (file == NULL) {
-    cout << "EUDAQMonitorCollection::Write File pointer is NULL" << endl;
+    std::cerr << "EUDAQMonitorCollection::Write File pointer is NULL" << endl;
     exit(-1);
   }
   if (gDirectory != NULL) // check if this pointer exists
@@ -45,7 +44,6 @@ void EUDAQMonitorCollection::Write(TFile *file) {
 void EUDAQMonitorCollection::bookHistograms(
     const SimpleStandardEvent & /*simpev*/) {
   if (_mon != NULL) {
-    cout << "EUDAQMonitorCollection:: Monitor running in online-mode" << endl;
     string performance_folder_name = "EUDAQ Monitor";
     _mon->getOnlineMon()->registerTreeItem(
         (performance_folder_name + "/Number of Planes"));
@@ -128,7 +126,7 @@ void EUDAQMonitorCollection::Fill(const SimpleStandardEvent &simpev) {
     mymonhistos = new EUDAQMonitorHistos(simpev);
     // mymonhistos2 = new ParaMonitorHistos();
     if (mymonhistos == NULL) {
-      cout << "EUDAQMonitorCollection:: Can't book histograms " << endl;
+      std::cerr << "EUDAQMonitorCollection:: Can't book histograms " << endl;
       exit(-1);
     }
     bookHistograms(simpev);

@@ -37,7 +37,6 @@ public:
   void bookHistograms(const SimpleStandardEvent &simpev);
   void setRootMonitor(RootMonitor *mon) { _mon = mon; }
   HitmapCollection() : BaseCollection() {
-    std::cout << " Initialising Hitmap Collection" << std::endl;
     isOnePlaneRegistered = false;
     CollectionType = HITMAP_COLLECTION_TYPE;
   }

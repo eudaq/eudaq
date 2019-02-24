@@ -27,7 +27,6 @@
 
 #include "OnlineMonWindow.hh"
 #include "SimpleStandardEvent.hh"
-#include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
 
 // STL includes
@@ -80,7 +79,6 @@ private:
   EUDAQMonitorCollection *eudaqCollection;
   ParaMonitorCollection *paraCollection;
   string snapshotdir;
-  EventSanityChecker myevent; // FIXME
   bool useTrackCorrelator;
   TStopwatch my_event_processing_time;
   TStopwatch my_event_inner_operations_time;

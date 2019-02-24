@@ -19,7 +19,7 @@ MonitorPerformanceHistos::MonitorPerformanceHistos() {
       new TH1I("Correlation Time", "Correlation Time", 400, 0, 0.02);
   if ((_FillTimeHisto == NULL) || (_AnalysisTimeHisto == NULL) ||
       (_ClusteringTimeHisto == NULL) || (_CorrelationTimeHisto == NULL)) {
-    std::cout << "MonitorPerformanceHistos:: Error allocating Histograms"
+    std::cerr << "MonitorPerformanceHistos:: Error allocating Histograms"
               << std::endl;
     exit(-1); // we bail out, if can't allocate memory
   }

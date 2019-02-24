@@ -12,7 +12,6 @@ CorrelationCollection::CorrelationCollection()
     : BaseCollection(), _map(), _planes(), skip_this_plane(),
       correlateAllPlanes(false), selected_planes_to_skip(),
       planesNumberForCorrelation(0), windowWidthForCorrelation(0) {
-  // cout << " Initializing Correlation Collection"<<endl;
   CollectionType = CORRELATION_COLLECTION_TYPE;
 }
 
@@ -125,20 +124,7 @@ void CorrelationCollection::Fill(const SimpleStandardEvent &simpev) {
   } else {
     for (int planeA = 0; planeA < nPlanes; planeA++) {
       const SimpleStandardPlane &simpPlane = simpev.getPlane(planeA);
-#ifdef DEBUG
-      std::cout << "CorrelationCollection : Checking Plane "
-                << simpPlane.getName() << " " << simpPlane.getID() << "..."
-                << std::endl;
-      std::cout << "CorrelationCollection : " << planeA << std::endl;
-#endif
-
       if (!isPlaneRegistered(simpPlane)) {
-#ifdef DEBUG
-        std::cout << "CorrelationCollection: Plane " << simpPlane.getName()
-                  << " " << simpPlane.getID() << " is not registered"
-                  << std::endl;
-#endif
-
         plane_vector_size =
             _planes.size(); // how many planes we did look at beforehand
         if (correlateAllPlanes) {
@@ -327,8 +313,6 @@ CorrelationCollection::FillWithTracks(const SimpleStandardEvent &simpev) {
           if (nextPlaneIndex == lastPlane || noClusterFound) {
             if (singleTrack.size() >= getPlanesNumberForCorrelation())
               reconstructedTracks.push_back(singleTrack);
-            //                        std::cout<< "SIZE: " <<
-            //                        reconstructedTracks.size() <<endl;
           }
         }
       }
@@ -341,12 +325,6 @@ CorrelationCollection::FillWithTracks(const SimpleStandardEvent &simpev) {
 void CorrelationCollection::fillHistograms(
     std::vector<vector<pair<int, SimpleStandardCluster>>> tracks,
     const SimpleStandardEvent &simpEv) {
-  //    std::vector< vector< pair<int, SimpleStandardCluster> > >::iterator
-  //    track;
-  //    std::vector< pair<int, SimpleStandardCluster> >::iterator
-  //    planeClusterPair1;
-  //    std::vector< pair<int, SimpleStandardCluster> >::iterator
-  //    planeClusterPair2;
 
   for (unsigned int trackNr = 0; trackNr < tracks.size(); ++trackNr) {
     vector<pair<int, SimpleStandardCluster>> &currentTrack = tracks.at(trackNr);
@@ -379,11 +357,7 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
 
   std::pair<SimpleStandardPlane, SimpleStandardPlane> plane(p1, p2);
   CorrelationHistos *corrmap = _map[plane];
-  if (corrmap == NULL) {
-    // std::cout << "CorrelationCollection: Histogram not registered ...yet  "
-    // << p1.getName()<< " "<<p1.getID() <<" / "<< p2.getName()<<"
-    // "<<p2.getID()<<std::endl;
-  } else {
+  if (corrmap) {
     const std::vector<SimpleStandardCluster> aClusters = p1.getClusters();
     const std::vector<SimpleStandardCluster> bClusters = p2.getClusters();
 
@@ -417,18 +391,11 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
 void CorrelationCollection::registerPlaneCorrelations(
     const SimpleStandardPlane &p1, const SimpleStandardPlane &p2) {
 
-#ifdef DEBUG
-  std::cout << "CorrelationCollection:: Correlating: " << p1.getName() << " "
-            << p1.getID() << " with " << p2.getName() << " " << p2.getID()
-            << std::endl;
-
-#endif
   CorrelationHistos *tmphisto = new CorrelationHistos(p1, p2);
   pair<SimpleStandardPlane, SimpleStandardPlane> pdouble(p1, p2);
   _map[pdouble] = tmphisto;
 
   if (_mon != NULL) {
-    // cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     std::string dirName;
 
     if (_mon->getUseTrack_corr() == true)
@@ -461,7 +428,6 @@ void CorrelationCollection::registerPlaneCorrelations(
 
 
   if (_mon != NULL) {
-    // cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     std::string dirName;
 
     if (_mon->getUseTrack_corr() == true)
@@ -535,15 +501,8 @@ void CorrelationCollection::Write(TFile *file) {
            CorrelationHistos *>::iterator it;
 
   for (it = _map.begin(); it != _map.end(); ++it) {
-    // char sensorfolder[255]="";
-    // sprintf(sensorfolder,"%s_%d:%s_%d",it->first.getPlane1().getName().c_str(),it->first.getPlane1().getID(),
-    // it->first.getPlane2().getName().c_str(),it->first.getPlane2().getID());
-    // gDirectory->mkdir(sensorfolder);
-    // gDirectory->cd(sensorfolder);
     if(it->second)
       it->second->Write();
-
-    // gDirectory->cd("..");
   }
   gDirectory->cd("..");
 }

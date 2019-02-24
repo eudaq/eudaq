@@ -55,7 +55,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
   onlinemon = new OnlineMonWindow(gClient->GetRoot(),800,600);
 
   if (onlinemon==NULL){
-    cerr<< "Error Allocationg OnlineMonWindow"<<endl;
+    std::cerr<< "Error Allocationg OnlineMonWindow"<<endl;
     exit(-1);
   }
 
@@ -183,38 +183,13 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   }
 
   if(ev_plane_c != m_plane_c){
-    std::cout<< "do nothing for this event at "<< evsp->GetEventN()<< ", ev_plane_c "<<ev_plane_c<<std::endl;
+    std::cout<< "Event #"<< evsp->GetEventN()<< " has "<<ev_plane_c<<" plane(s), while we expect "<< m_plane_c <<" plane(s).  (Event is skipped)" <<std::endl;
     return;
   }
-  
-  while(onlinemon==NULL){
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
-  
+    
   my_event_processing_time.Start(true);
 
-  unsigned int num = (unsigned int) stdev->NumPlanes();
-  // Initialize the geometry with the first event received:
-  if(!_planesInitialized) {
-    myevent.setNPlanes(num);
-    std::cout << "Initialized geometry: " << num << " planes." << std::endl;
-  }
-  else {
-    if (myevent.getNPlanes()!=num) {
-      cout << "Plane Mismatch on " <<stdev->GetEventNumber()<<endl;
-      cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
-      ostringstream eudaq_warn_message;
-      eudaq_warn_message << "Plane Mismatch in Event "<<stdev->GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
-      EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
-      _planesInitialized = false;
-      num = (unsigned int) stdev->NumPlanes();
-      eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
-      myevent.setNPlanes(num);
-    }
-    else {
-      myevent.setNPlanes(num);
-    }
-  }
+  uint32_t num = stdev->NumPlanes();
 
   SimpleStandardEvent simpEv;
   // store the processing time of the previous EVENT, as we can't track this during the  processing
@@ -326,9 +301,6 @@ void RootMonitor::DoStopRun()
 {
   m_plane_c = 0;
   m_ev_rec_n = 0;
-  while(onlinemon==NULL){
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
 
   if (_writeRoot)
   {
@@ -346,9 +318,6 @@ void RootMonitor::DoStartRun() {
   m_plane_c = 0;
   m_ev_rec_n = 0;
   uint32_t runnumber = GetRunNumber();
-  while(onlinemon==NULL){
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
 
   if (onlinemon->getAutoReset())
   {
@@ -417,10 +386,6 @@ int main(int argc, const char ** argv) {
       "The address of the RunControl application");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::Option<int>             x(op, "x", "left",    100, "pos");
-  eudaq::Option<int>             y(op, "y", "top",       0, "pos");
-  eudaq::Option<int>             w(op, "w", "width",  1400, "pos");
-  eudaq::Option<int>             h(op, "g", "height",  700, "pos", "The initial position of the window");
   eudaq::Option<int>             reduce(op, "rd", "reduce",  1, "Reduce the number of events");
   eudaq::Option<unsigned>        corr_width(op, "cw", "corr_width",500, "Width of the track correlation window");
   eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
@@ -440,7 +405,6 @@ int main(int argc, const char ** argv) {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
   } catch (...) {
-    std::cerr<<"Parse error\n";
     return op.HandleMainException();
   }
 
@@ -454,7 +418,7 @@ int main(int argc, const char ** argv) {
     
   TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
   RootMonitor mon(rctrl.Value(),
-                  x.Value(), y.Value(), w.Value(), h.Value(),
+		  100, 0, 1400, 700,
                   configfile.Value(), monitorname.Value());
   mon.setWriteRoot(do_rootatend.IsSet());
   mon.autoReset(do_resetatend.IsSet());
