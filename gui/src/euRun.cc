@@ -4,6 +4,7 @@
 #include "euRun.hh"
 #include "Colours.hh"
 #include "eudaq/Config.hh"
+#include "boost/algorithm/string.hpp"
 
 using std::cout;
 using std::endl;
@@ -127,6 +128,17 @@ void RunControlGUI::on_btnConfig_clicked(){
     m_rc->ReadConfigureFile(settings);
     m_rc->Configure();
   }
+
+  if(m_rc)
+  {
+  eudaq::ConfigurationSPC conf = m_rc->GetConfiguration();
+  conf->SetSection("RunControl");
+  std::string additionalDisplays = conf->Get("ADDITIONAL_DISPLAY_NUMBERS","");
+  if(additionalDisplays!="")
+    addAdditionalStatus(additionalDisplays);
+  else
+      cout << "No additional status displays requested"<<endl;
+  }
 }
 
 void RunControlGUI::on_btnStart_clicked(){
@@ -176,6 +188,9 @@ void RunControlGUI::on_btnLoadConf_clicked() {
   if (!filename.isNull()) {
     txtConfigFileName->setText(filename);
   }
+
+
+
 }
 
 void RunControlGUI::DisplayTimer(){
@@ -401,6 +416,35 @@ bool RunControlGUI::addStatusDisplay(auto connection)
     // only defaults added for prooducer and data collectotrs
     QString tmp = QString::fromStdString(connection.first->GetName()
                                          +":"+connection.first->GetType());
+    addToGrid(tmp);
+    return true;
+}
+
+bool RunControlGUI::removeStatusDisplay(auto connection)
+{
+    // remove obsolete information from disconnected values
+    for(auto idx=0; idx<grpGrid->count();idx++)
+    {
+        QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
+        if(l->objectName()==QString::fromStdString(connection.first->GetName()
+                                                   +":"+connection.first->GetType()))
+        {
+            // Status updates are always pairs
+            m_map_label_str.erase(l->objectName());
+            m_str_label.erase(l->objectName());
+            grpGrid->removeWidget(l);
+            delete l;
+            l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
+            grpGrid->removeWidget(l);
+            delete l;
+        }
+    }
+    return true;
+}
+bool RunControlGUI::addToGrid(QString tmp)
+{
+    if(m_str_label.count(tmp)==1)
+        return false;
     QLabel *lblname = new QLabel(grpStatus);
     lblname->setObjectName(tmp);
     lblname->setText(tmp+": ");
@@ -442,31 +486,7 @@ bool RunControlGUI::addStatusDisplay(auto connection)
     m_str_label.insert(std::pair<QString, QLabel *>(tmp, lblvalue));
     grpGrid->addWidget(lblname, rowPos, colPos * 2);
     grpGrid->addWidget(lblvalue, rowPos, colPos * 2 + 1);
-    return true;
 }
-
-bool RunControlGUI::removeStatusDisplay(auto connection)
-{
-    // remove obsolete information from disconnected values
-    for(auto idx=0; idx<grpGrid->count();idx++)
-    {
-        QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-        if(l->objectName()==QString::fromStdString(connection.first->GetName()
-                                                   +":"+connection.first->GetType()))
-        {
-            // Status updates are always pairs
-            m_map_label_str.erase(l->objectName());
-            m_str_label.erase(l->objectName());
-            grpGrid->removeWidget(l);
-            delete l;
-            l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-            grpGrid->removeWidget(l);
-            delete l;
-        }
-    }
-    return true;
-}
-
 bool RunControlGUI::updateStatusDisplay(auto map_conn_status)
 {
     auto it = map_conn_status.begin();
@@ -491,4 +511,24 @@ bool RunControlGUI::updateStatusDisplay(auto map_conn_status)
         }
         it++;
     }
+}
+
+bool RunControlGUI::addAdditionalStatus(std::string info)
+{
+    std::vector<std::string> results;
+    boost::split(results, info, [](char c){return c == ',';});
+    if(results.size()%2!=0)
+    {
+        QMessageBox::warning(NULL,"ERROR","Additional Inputs are wrong");
+       return false;
+    }
+    else
+    {
+        for(auto c = 0; c < results.size();c+=2)
+        {
+            addToGrid(QString::fromStdString(results.at(c)+results.at(c+1)));
+
+        }
+    }
+    return true;
 }

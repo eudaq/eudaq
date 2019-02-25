@@ -60,8 +60,8 @@ namespace eudaq {
        InitialiseSingleConnection(conn);
 
     m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
-    for(auto &conn: conn_to_init)
-      SendCommand("INIT", to_string(*m_conf_init), conn);
+//    for(auto &conn: conn_to_init)
+//      SendCommand("INIT", to_string(*m_conf_init), conn);
   }
 
   void RunControl::InitialiseSingleConnection(ConnectionSPC id) {  
