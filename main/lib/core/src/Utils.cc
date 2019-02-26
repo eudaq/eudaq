@@ -197,4 +197,19 @@ namespace eudaq {
     return cstr2hash(stdstr.c_str());
   }
 
-}
+
+  // not using boost requires custom character playing :)
+  // stolen from https://www.fluentcpp.com/2017/04/21/how-to-split-a-string-in-c/
+  std::vector<std::string> splitString(std::string str, char delimiter){
+      std::vector<std::string> tokens;
+       std::string token;
+       std::istringstream tokenStream(str);
+       while (std::getline(tokenStream, token, delimiter))
+       {
+          tokens.push_back(token);
+       }
+       return tokens;
+  }
+
+
+ }
