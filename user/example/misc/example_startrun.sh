@@ -4,7 +4,7 @@ $BINPATH/euRun &
 sleep 1
 $BINPATH/euLog &
 sleep 1
-$BINPATH/euCliMonitor -n Ex0Monitor -t my_mon &
+$BINPATH/euCliMonitor -n Ex0Monitor -t my_mon & 
 $BINPATH/euCliCollector -n Ex0TgDataCollector -t my_dc &
 #$BINPATH/euCliCollector -n DirectSaveDataCollector -t my_dc &
 #$BINPATH/euCliCollector -n EventIDSyncDataCollector -t my_dc &

@@ -4,7 +4,6 @@
 #include "euRun.hh"
 #include "Colours.hh"
 #include "eudaq/Config.hh"
-#include "boost/algorithm/string.hpp"
 
 using std::cout;
 using std::endl;
@@ -286,10 +285,8 @@ void RunControlGUI::DisplayTimer(){
       m_str_label.at("RUN")->setText(QString::number(run_n)+" (next run)");
     }
   }
-
-  updateStatusDisplay(map_conn_status);
-
   m_map_conn_status_last = map_conn_status;
+  updateStatusDisplay();
 }
 
 void RunControlGUI::closeEvent(QCloseEvent *event) {
@@ -414,9 +411,11 @@ bool RunControlGUI::loadConfigFile() {
 bool RunControlGUI::addStatusDisplay(auto connection)
 {
     // only defaults added for prooducer and data collectotrs
-    QString tmp = QString::fromStdString(connection.first->GetName()
+    QString name = QString::fromStdString(connection.first->GetName()
                                          +":"+connection.first->GetType());
-    addToGrid(tmp);
+    QString displayName = QString::fromStdString(connection.first->GetName()
+                                         +":EventN");
+    addToGrid(displayName,name);
     return true;
 }
 
@@ -441,21 +440,25 @@ bool RunControlGUI::removeStatusDisplay(auto connection)
     }
     return true;
 }
-bool RunControlGUI::addToGrid(QString tmp)
+bool RunControlGUI::addToGrid(QString objectName, QString displayedName)
 {
-    if(m_str_label.count(tmp)==1)
-        return false;
-    QLabel *lblname = new QLabel(grpStatus);
-    lblname->setObjectName(tmp);
-    lblname->setText(tmp+": ");
-    QLabel *lblvalue = new QLabel(grpStatus);
-    lblvalue->setObjectName("val_"+tmp);
-    lblvalue->setText("val_"+tmp);
-    // check if grid is fully filled
-    int colPos = 0, rowPos = 0;
 
+    if(m_str_label.count(objectName)==1)
+    {
+        QMessageBox::warning(NULL,"ERROR - Status display","Duplicating display entry request: "+objectName);
+        return false;
+    }
+    if(displayedName=="")
+        displayedName = objectName;
+    QLabel *lblname = new QLabel(grpStatus);
+    lblname->setObjectName(objectName);
+    lblname->setText(displayedName+": ");
+    QLabel *lblvalue = new QLabel(grpStatus);
+    lblvalue->setObjectName("val_"+objectName);
+    lblvalue->setText("val_"+objectName);
+
+    int colPos = 0, rowPos = 0;
     // toDo: need to implement correct layout magic here
-  //  cout  << 2*m_str_label.size()  <<"\t"<<grpGrid->rowCount() <<"\t"<<grpGrid->columnCount() <<endl;
     if( 2* (m_str_label.size()+1) < grpGrid->rowCount() * grpGrid->columnCount() ) {
         colPos = m_display_col;
         rowPos = m_display_row;
@@ -481,53 +484,77 @@ bool RunControlGUI::addToGrid(QString tmp)
             m_display_col = 0;
         }
     }
-//    cout << "adding at: "<< colPos<<", "<<rowPos<<endl;
-    m_map_label_str.insert(std::pair<QString, QString>(tmp,tmp+": "));
-    m_str_label.insert(std::pair<QString, QLabel *>(tmp, lblvalue));
+    m_map_label_str.insert(std::pair<QString, QString>(objectName,objectName+": "));
+    m_str_label.insert(std::pair<QString, QLabel *>(objectName, lblvalue));
     grpGrid->addWidget(lblname, rowPos, colPos * 2);
     grpGrid->addWidget(lblvalue, rowPos, colPos * 2 + 1);
 }
-bool RunControlGUI::updateStatusDisplay(auto map_conn_status)
+/**
+ * @brief RunControlGUI::updateStatusDisplay
+ * @return true if success, false otherwise (cannot happen currently)
+ */
+bool RunControlGUI::updateStatusDisplay()
 {
-    auto it = map_conn_status.begin();
-    for(auto m = 0 ; m < map_conn_status.size(); m++)
+    auto it = m_map_conn_status_last.begin();
+    while(it!=m_map_conn_status_last.end())
     {
         // elements might not be existing at startup/beeing asynchronously changed
         if(it->first && it->second)
         {
-        //    cout << it->first->GetName()<<endl;
-            if(m_str_label.count(QString::fromStdString(it->first->GetName()+":"+it->first->GetType())))
+            auto labelit = m_str_label.begin();
+            while(labelit!=m_str_label.end())
             {
-                auto tags = it->second->GetTags();
-		for(auto &tag: tags){
-		  
-                    if(!(it->first->GetName()=="eudet_tlu")  && tag.first=="EventN")
-                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second +" Events"));
-                    else if(it->first->GetName()=="eudet_tlu"  && tag.first=="Freq. (avg.) [kHz]")
-                        m_str_label.at(QString::fromStdString(it->first->GetName()+":"+it->first->GetType()))->setText(QString::fromStdString(tag.second+" kHz"));
-                   }
+                std::string labelname     = (labelit->first.toStdString()).substr(0,labelit->first.toStdString().find(":"));
+                std::string displayedItem = (labelit->first.toStdString()).substr(labelit->first.toStdString().find(":")+1,labelit->first.toStdString().size());
+                if(it->first->GetName()==labelname)
+                {
+                    auto tags = it->second->GetTags();
+                    // obviously not really elegant...
+                    for(auto &tag: tags){
+                        if(tag.first==displayedItem && displayedItem=="EventN")
+                            labelit->second->setText(QString::fromStdString(tag.second+" Events"));
+                        else if(tag.first==displayedItem && displayedItem=="Freq. (avg.) [kHz]")
+                            labelit->second->setText(QString::fromStdString(tag.second+" kHz"));
+                        else if(tag.first==displayedItem)
+                            labelit->second->setText(QString::fromStdString(tag.second));
+                    }
+                }
+                labelit++;
             }
-
         }
         it++;
     }
+    return true;
 }
 
 bool RunControlGUI::addAdditionalStatus(std::string info)
 {
-    std::vector<std::string> results;
-    boost::split(results, info, [](char c){return c == ',';});
+    std::vector<std::string> results = eudaq::splitString(info,',');
     if(results.size()%2!=0)
     {
-        QMessageBox::warning(NULL,"ERROR","Additional Inputs are wrong");
+        QMessageBox::warning(NULL,"ERROR","Additional Status Display inputs are not correctly formatted - please check");
        return false;
     }
     else
     {
         for(auto c = 0; c < results.size();c+=2)
         {
-            addToGrid(QString::fromStdString(results.at(c)+results.at(c+1)));
-
+            // check if the connection exists, otherwise do not display
+            auto it = m_map_conn_status_last.begin();
+            bool found = false;
+            while(it != m_map_conn_status_last.end())
+            {
+                if(it->first && it->first->GetName()==results.at(c))
+                {    addToGrid(QString::fromStdString(results.at(c)+":"+results.at(c+1)));
+                     found = true;
+                }
+                it++;
+            }
+            if(!found)
+            {
+                QMessageBox::warning(NULL,"ERROR",QString::fromStdString("Element \""+results.at(c)+ "\" is not connected"));
+                return false;
+            }
         }
     }
     return true;
