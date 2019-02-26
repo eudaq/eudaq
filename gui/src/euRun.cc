@@ -12,7 +12,7 @@ RunControlGUI::RunControlGUI()
     m_display_col(0),
     m_display_row(0){
     m_map_label_str = {{"RUN", "Run Number"}};
-  
+
   qRegisterMetaType<QModelIndex>("QModelIndex");
   setupUi(this);
 
@@ -31,14 +31,14 @@ RunControlGUI::RunControlGUI()
       m_display_col = 0;
     }
   }
-  
+
   viewConn->setModel(&m_model_conns);
   viewConn->setItemDelegate(&m_delegate);
-  
+
   viewConn->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(viewConn, SIGNAL(customContextMenuRequested(const QPoint &)),
           this, SLOT(onCustomContextMenu(const QPoint &)));
-  
+
   QRect geom(-1,-1, 150, 200);
   QRect geom_from_last_program_run;
   QSettings settings("EUDAQ collaboration", "EUDAQ");
@@ -52,13 +52,13 @@ RunControlGUI::RunControlGUI()
     ->setText(settings.value("lastConfigFile", "config file not set").toString());
   txtInitFileName
     ->setText(settings.value("lastInitFile", "init file not set").toString());
-  
+
   settings.endGroup();
-  
+
   QSize fsize = frameGeometry().size();
   if((geom.x() == -1)||(geom.y() == -1)||(geom.width() == -1)||(geom.height() == -1)) {
     if((geom_from_last_program_run.x() == -1)||(geom_from_last_program_run.y() == -1)||(geom_from_last_program_run.width() == -1)||(geom_from_last_program_run.height() == -1)) {
-      geom.setX(x()); 
+      geom.setX(x());
       geom.setY(y());
       geom.setWidth(fsize.width());
       geom.setHeight(fsize.height());
@@ -83,7 +83,7 @@ RunControlGUI::RunControlGUI()
   btnTerminate->setEnabled(1);
   btnLog->setEnabled(1);
 
-  QSettings settings_output("EUDAQ collaboration", "EUDAQ");  
+  QSettings settings_output("EUDAQ collaboration", "EUDAQ");
   settings_output.beginGroup("euRun2");
   settings_output.setValue("successexit", 0);
   settings_output.endGroup();
@@ -135,8 +135,6 @@ void RunControlGUI::on_btnConfig_clicked(){
   std::string additionalDisplays = conf->Get("ADDITIONAL_DISPLAY_NUMBERS","");
   if(additionalDisplays!="")
     addAdditionalStatus(additionalDisplays);
-  else
-      cout << "No additional status displays requested"<<endl;
   }
 }
 
@@ -172,8 +170,8 @@ void RunControlGUI::on_btnLog_clicked() {
 void RunControlGUI::on_btnLoadInit_clicked() {
   QString usedpath =QFileInfo(txtInitFileName->text()).path();
   QString filename =QFileDialog::getOpenFileName(this, tr("Open File"),
-						 usedpath,
-						 tr("*.ini (*.ini)"));
+                         usedpath,
+                         tr("*.ini (*.ini)"));
   if (!filename.isNull()){
     txtInitFileName->setText(filename);
   }
@@ -182,8 +180,8 @@ void RunControlGUI::on_btnLoadInit_clicked() {
 void RunControlGUI::on_btnLoadConf_clicked() {
   QString usedpath =QFileInfo(txtConfigFileName->text()).path();
   QString filename =QFileDialog::getOpenFileName(this, tr("Open File"),
-						 usedpath,
-						 tr("*.conf (*.conf)"));
+                         usedpath,
+                         tr("*.conf (*.conf)"));
   if (!filename.isNull()) {
     txtConfigFileName->setText(filename);
   }
@@ -197,7 +195,7 @@ void RunControlGUI::DisplayTimer(){
   auto state = eudaq::Status::STATE_RUNNING;
   if(m_rc)
     map_conn_status= m_rc->GetActiveConnectionStatusMap();
-  
+
   for(auto &conn_status_last: m_map_conn_status_last){
     if(!map_conn_status.count(conn_status_last.first)){
       m_model_conns.disconnected(conn_status_last.first);
@@ -218,60 +216,60 @@ void RunControlGUI::DisplayTimer(){
     state = eudaq::Status::STATE_RUNNING;
     for(auto &conn_status: map_conn_status){
       if(!conn_status.second)
-	continue;
+    continue;
       auto state_conn = conn_status.second->GetState();
       switch(state_conn){
       case eudaq::Status::STATE_ERROR:{
-  	state = eudaq::Status::STATE_ERROR;
-  	break;
+    state = eudaq::Status::STATE_ERROR;
+    break;
       }
       case eudaq::Status::STATE_UNINIT:{
-  	if(state != eudaq::Status::STATE_ERROR){
-  	  state = eudaq::Status::STATE_UNINIT;
-  	}
-  	break;
+    if(state != eudaq::Status::STATE_ERROR){
+      state = eudaq::Status::STATE_UNINIT;
+    }
+    break;
       }
       case eudaq::Status::STATE_UNCONF:{
-  	if(state != eudaq::Status::STATE_ERROR &&
-  	   state != eudaq::Status::STATE_UNINIT){
-  	  state = eudaq::Status::STATE_UNCONF;
-  	}
-  	break;
+    if(state != eudaq::Status::STATE_ERROR &&
+       state != eudaq::Status::STATE_UNINIT){
+      state = eudaq::Status::STATE_UNCONF;
+    }
+    break;
       }
       case eudaq::Status::STATE_CONF:{
-  	if(state != eudaq::Status::STATE_ERROR &&
-  	   state != eudaq::Status::STATE_UNINIT &&
-  	   state != eudaq::Status::STATE_UNCONF){
-  	  state = eudaq::Status::STATE_CONF;
-  	}
-  	break;
+    if(state != eudaq::Status::STATE_ERROR &&
+       state != eudaq::Status::STATE_UNINIT &&
+       state != eudaq::Status::STATE_UNCONF){
+      state = eudaq::Status::STATE_CONF;
+    }
+    break;
       }
       }
       m_model_conns.SetStatus(conn_status.first, conn_status.second);
     }
   }
-  
+
   QRegExp rx_init(".+(\\.ini$)");
   QRegExp rx_conf(".+(\\.conf$)");
   bool confLoaded = rx_conf.exactMatch(txtConfigFileName->text());
   bool initLoaded = rx_init.exactMatch(txtInitFileName->text());
-  
+
   btnInit->setEnabled(state == eudaq::Status::STATE_UNINIT && initLoaded);
   btnConfig->setEnabled((state == eudaq::Status::STATE_UNCONF ||
-			 state == eudaq::Status::STATE_CONF )&& confLoaded);
+             state == eudaq::Status::STATE_CONF )&& confLoaded);
   btnLoadInit->setEnabled(state != eudaq::Status::STATE_RUNNING);
   btnLoadConf->setEnabled(state != eudaq::Status::STATE_RUNNING);
   btnStart->setEnabled(state == eudaq::Status::STATE_CONF);
   btnStop->setEnabled(state == eudaq::Status::STATE_RUNNING);
   btnReset->setEnabled(state != eudaq::Status::STATE_RUNNING);
   btnTerminate->setEnabled(state != eudaq::Status::STATE_RUNNING);
-  
+
   lblCurrent->setText(m_map_state_str.at(state));
 
   uint32_t run_n = m_rc->GetRunN();
   if(m_run_n_qsettings != run_n){
     m_run_n_qsettings = run_n;
-    QSettings settings("EUDAQ collaboration", "EUDAQ");  
+    QSettings settings("EUDAQ collaboration", "EUDAQ");
     settings.beginGroup("euRun2");
     settings.setValue("runnumber", m_run_n_qsettings);
     settings.endGroup();
@@ -280,8 +278,7 @@ void RunControlGUI::DisplayTimer(){
   if(m_rc&&m_str_label.count("RUN")){
     if(state == eudaq::Status::STATE_RUNNING){
       m_str_label.at("RUN")->setText(QString::number(run_n));
-    }
-    else{
+    } else {
       m_str_label.at("RUN")->setText(QString::number(run_n)+" (next run)");
     }
   }
@@ -291,12 +288,12 @@ void RunControlGUI::DisplayTimer(){
 
 void RunControlGUI::closeEvent(QCloseEvent *event) {
   if (QMessageBox::question(this, "Quitting",
-			    "Terminate all connections and quit?",
-			    QMessageBox::Ok | QMessageBox::Cancel)
+                "Terminate all connections and quit?",
+                QMessageBox::Ok | QMessageBox::Cancel)
       == QMessageBox::Cancel){
     event->ignore();
   } else {
-    QSettings settings("EUDAQ collaboration", "EUDAQ");  
+    QSettings settings("EUDAQ collaboration", "EUDAQ");
     settings.beginGroup("euRun2");
     if(m_rc)
       settings.setValue("runnumber", m_rc->GetRunN());
@@ -317,9 +314,9 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
 void RunControlGUI::Exec(){
   show();
   if(QApplication::instance())
-    QApplication::instance()->exec(); 
+    QApplication::instance()->exec();
   else
-    std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";   
+    std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";
 }
 
 
@@ -341,45 +338,45 @@ void RunControlGUI::onCustomContextMenu(const QPoint &point)
 {
     QModelIndex index = viewConn->indexAt(point);
     if(index.isValid()) {
-    QMenu *contextMenu = new QMenu(viewConn);	
+    QMenu *contextMenu = new QMenu(viewConn);
 
     if(!m_rc->GetInitConfiguration()){
-	loadInitFile();
+    loadInitFile();
     }
     if(m_rc->GetInitConfiguration()){
-	QAction *initialiseAction = new QAction("Initialise", this);
-	connect(initialiseAction, &QAction::triggered, this, [this,index]() {m_rc->InitialiseSingleConnection(m_model_conns.getConnection(index));});
-	contextMenu->addAction(initialiseAction);		
-    } 
+    QAction *initialiseAction = new QAction("Initialise", this);
+    connect(initialiseAction, &QAction::triggered, this, [this,index]() {m_rc->InitialiseSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(initialiseAction);
+    }
 
     if(!m_rc->GetConfiguration()){
-	loadConfigFile();
-    }    
-    if(m_rc->GetConfiguration()){
-	QAction *configureAction = new QAction("Configure", this);
-	connect(configureAction, &QAction::triggered, this, [this,index]() {m_rc->ConfigureSingleConnection(m_model_conns.getConnection(index));});
-	contextMenu->addAction(configureAction);		
+    loadConfigFile();
     }
-    
+    if(m_rc->GetConfiguration()){
+    QAction *configureAction = new QAction("Configure", this);
+    connect(configureAction, &QAction::triggered, this, [this,index]() {m_rc->ConfigureSingleConnection(m_model_conns.getConnection(index));});
+    contextMenu->addAction(configureAction);
+    }
+
     QAction *startAction = new QAction("Start", this);
     connect(startAction, &QAction::triggered, this, [this,index]() {m_rc->StartSingleConnection(m_model_conns.getConnection(index));});
-    contextMenu->addAction(startAction);	    
-    
+    contextMenu->addAction(startAction);
+
     QAction *stopAction = new QAction("Stop", this);
     connect(stopAction, &QAction::triggered, this, [this,index]() {m_rc->StopSingleConnection(m_model_conns.getConnection(index));});
-    contextMenu->addAction(stopAction);	    
-    
+    contextMenu->addAction(stopAction);
+
     QAction *resetAction = new QAction("Reset", this);
     connect(resetAction, &QAction::triggered, this, [this,index]() {m_rc->ResetSingleConnection(m_model_conns.getConnection(index));});
-    contextMenu->addAction(resetAction);		
-    
+    contextMenu->addAction(resetAction);
+
     QAction *terminateAction = new QAction("Terminate", this);
     connect(terminateAction, &QAction::triggered, this, [this,index]() {m_rc->TerminateSingleConnection(m_model_conns.getConnection(index));});
-    contextMenu->addAction(terminateAction);	
-    
+    contextMenu->addAction(terminateAction);
+
     contextMenu->exec(viewConn->viewport()->mapToGlobal(point));
     }
-    
+
 }
 
 bool RunControlGUI::loadInitFile() {
@@ -392,7 +389,7 @@ bool RunControlGUI::loadInitFile() {
   if(m_rc){
     m_rc->ReadInitilizeFile(settings);
   }
-  return true;  
+  return true;
 }
 
 bool RunControlGUI::loadConfigFile() {
@@ -408,9 +405,7 @@ bool RunControlGUI::loadConfigFile() {
   return true;
 }
 
-bool RunControlGUI::addStatusDisplay(auto connection)
-{
-    // only defaults added for prooducer and data collectotrs
+bool RunControlGUI::addStatusDisplay(auto connection) {
     QString name = QString::fromStdString(connection.first->GetName()
                                          +":"+connection.first->GetType());
     QString displayName = QString::fromStdString(connection.first->GetName()
@@ -419,15 +414,12 @@ bool RunControlGUI::addStatusDisplay(auto connection)
     return true;
 }
 
-bool RunControlGUI::removeStatusDisplay(auto connection)
-{
+bool RunControlGUI::removeStatusDisplay(auto connection) {
     // remove obsolete information from disconnected values
-    for(auto idx=0; idx<grpGrid->count();idx++)
-    {
+    for(auto idx=0; idx<grpGrid->count();idx++) {
         QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
         if(l->objectName()==QString::fromStdString(connection.first->GetName()
-                                                   +":"+connection.first->GetType()))
-        {
+                                                   +":"+connection.first->GetType())) {
             // Status updates are always pairs
             m_map_label_str.erase(l->objectName());
             m_str_label.erase(l->objectName());
@@ -440,11 +432,9 @@ bool RunControlGUI::removeStatusDisplay(auto connection)
     }
     return true;
 }
-bool RunControlGUI::addToGrid(QString objectName, QString displayedName)
-{
+bool RunControlGUI::addToGrid(const QString objectName, QString displayedName) {
 
-    if(m_str_label.count(objectName)==1)
-    {
+    if(m_str_label.count(objectName)==1) {
         QMessageBox::warning(NULL,"ERROR - Status display","Duplicating display entry request: "+objectName);
         return false;
     }
@@ -458,23 +448,13 @@ bool RunControlGUI::addToGrid(QString objectName, QString displayedName)
     lblvalue->setText("val_"+objectName);
 
     int colPos = 0, rowPos = 0;
-    // toDo: need to implement correct layout magic here
     if( 2* (m_str_label.size()+1) < grpGrid->rowCount() * grpGrid->columnCount() ) {
         colPos = m_display_col;
         rowPos = m_display_row;
-        if (++m_display_col > 1){
+        if (++m_display_col > 1) {
             ++m_display_row;
             m_display_col = 0;
         }
-//        cout << "found empty positions"<<endl;
-//        for(auto idx=0; idx<grpGrid->count();idx++)
-//        {
-//            QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAtPosition(idx/grpGrid->columnCount(),idx%grpGrid->columnCount())->widget());
-////            QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-////            cout <<l->objectName().toStdString()<<"\t"<< grpGrid->itemAt(idx)->widget()<<endl;
-//            if(l->objectName() == "")
-//                cout << "found empty slot at  "<< idx<<endl;
-//        }
     }
     else {
         colPos = m_display_col;
@@ -485,7 +465,7 @@ bool RunControlGUI::addToGrid(QString objectName, QString displayedName)
         }
     }
     m_map_label_str.insert(std::pair<QString, QString>(objectName,objectName+": "));
-    m_str_label.insert(std::pair<QString, QLabel *>(objectName, lblvalue));
+    m_str_label.insert(std::pair<QString, QLabel*>(objectName, lblvalue));
     grpGrid->addWidget(lblname, rowPos, colPos * 2);
     grpGrid->addWidget(lblvalue, rowPos, colPos * 2 + 1);
 }
@@ -493,21 +473,16 @@ bool RunControlGUI::addToGrid(QString objectName, QString displayedName)
  * @brief RunControlGUI::updateStatusDisplay
  * @return true if success, false otherwise (cannot happen currently)
  */
-bool RunControlGUI::updateStatusDisplay()
-{
+bool RunControlGUI::updateStatusDisplay() {
     auto it = m_map_conn_status_last.begin();
-    while(it!=m_map_conn_status_last.end())
-    {
+    while(it!=m_map_conn_status_last.end()) {
         // elements might not be existing at startup/beeing asynchronously changed
-        if(it->first && it->second)
-        {
+        if(it->first && it->second) {
             auto labelit = m_str_label.begin();
-            while(labelit!=m_str_label.end())
-            {
+            while(labelit!=m_str_label.end()) {
                 std::string labelname     = (labelit->first.toStdString()).substr(0,labelit->first.toStdString().find(":"));
                 std::string displayedItem = (labelit->first.toStdString()).substr(labelit->first.toStdString().find(":")+1,labelit->first.toStdString().size());
-                if(it->first->GetName()==labelname)
-                {
+                if(it->first->GetName()==labelname) {
                     auto tags = it->second->GetTags();
                     // obviously not really elegant...
                     for(auto &tag: tags){
@@ -527,31 +502,25 @@ bool RunControlGUI::updateStatusDisplay()
     return true;
 }
 
-bool RunControlGUI::addAdditionalStatus(std::string info)
-{
+bool RunControlGUI::addAdditionalStatus(std::string info) {
     std::vector<std::string> results = eudaq::splitString(info,',');
-    if(results.size()%2!=0)
-    {
+    if(results.size()%2!=0) {
         QMessageBox::warning(NULL,"ERROR","Additional Status Display inputs are not correctly formatted - please check");
        return false;
     }
-    else
-    {
-        for(auto c = 0; c < results.size();c+=2)
-        {
+    else {
+        for(auto c = 0; c < results.size();c+=2) {
             // check if the connection exists, otherwise do not display
             auto it = m_map_conn_status_last.begin();
             bool found = false;
-            while(it != m_map_conn_status_last.end())
-            {
-                if(it->first && it->first->GetName()==results.at(c))
-                {    addToGrid(QString::fromStdString(results.at(c)+":"+results.at(c+1)));
-                     found = true;
+            while(it != m_map_conn_status_last.end()) {
+                if(it->first && it->first->GetName()==results.at(c)){
+                    addToGrid(QString::fromStdString(results.at(c)+":"+results.at(c+1)));
+                    found = true;
                 }
                 it++;
             }
-            if(!found)
-            {
+            if(!found) {
                 QMessageBox::warning(NULL,"ERROR",QString::fromStdString("Element \""+results.at(c)+ "\" is not connected"));
                 return false;
             }
