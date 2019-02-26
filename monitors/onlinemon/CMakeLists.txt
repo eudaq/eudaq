@@ -36,7 +36,7 @@ endif()
 set(THISMON StdEventMonitor)
 
 set(THISMON_DICT_CXX ${CMAKE_CURRENT_BINARY_DIR}/${THISMON}_ROOT.cxx)
-root_generate_dictionary(${THISMON}_ROOT include/OnlineMonWindow.hh include/CheckEOF.hh)
+root_generate_dictionary(${THISMON}_ROOT include/OnlineMonWindow.hh)
 
 aux_source_directory(src THISMON_SRC)
 add_executable(${THISMON} ${THISMON_SRC} ${THISMON_DICT_CXX})

@@ -93,8 +93,6 @@ void SimpleStandardPlane::addRawHit(SimpleStandardHit oneHit) {
 void SimpleStandardPlane::reducePixels(const int reduceX, const int reduceY) {
   _binsX = reduceX;
   _binsY = reduceY;
-  // std::cout << "Reducing " << reduce << " -> " << _reduce <<" " << _maxX << "
-  // -> " << _binsX << " " << _maxY << " -> " << _binsY << std::endl;
 }
 
 void SimpleStandardPlane::doClustering() {
@@ -106,8 +104,6 @@ void SimpleStandardPlane::doClustering() {
   const unsigned int npixels_hit = _hits.size();
   bool continue_flag;
   clusterNumber.assign(npixels_hit, NOCLUSTER);
-  // std::cout << "Before big loop" << std::endl;
-  // std::cout << "Name: " << _name << std::endl;
 
   // which planes to cluster, reject planes of Type Fortis
   if (is_FORTIS) {
@@ -123,11 +119,6 @@ void SimpleStandardPlane::doClustering() {
       for (unsigned int bPixel = aPixel + 1; bPixel < npixels_hit; bPixel++) {
         if (continue_flag != true)
           break;
-        // for (std::vector<SimpleStandardHit>::const_iterator hit =
-        // _hits.begin();
-        //   hit != _hits.end();
-        // std::cout << aPixel << " " << bPixel << " " << _hits.size() <<
-        // std::endl;
         const SimpleStandardHit &bPix = _hits.at(bPixel);
         unsigned int xDist = abs(aPix.getX() - bPix.getX());
         unsigned int yDist = abs(aPix.getY() - bPix.getY());
@@ -160,18 +151,6 @@ void SimpleStandardPlane::doClustering() {
         } else { // these pixels are not neighbored
           continue_flag = false;
         }
-        /*
-           if ( clusterNumber.at(aPixel) == NOCLUSTER )
-           {
-           ++nClusters;
-           clusterNumber.at(aPixel) = nClusters;
-           }
-           if ( clusterNumber.at(bPixel) == NOCLUSTER )
-           {
-           ++nClusters;
-           clusterNumber.at(bPixel) = nClusters;
-           }
-           }*/
       } // inner for loop
     } // outer for loop
     for (unsigned int aPixel = 0; aPixel < npixels_hit; aPixel++)
@@ -184,16 +163,8 @@ void SimpleStandardPlane::doClustering() {
       clusterNumber.at(0) = 1;
   }
 
-  // std::cout << "After big loop" << std::endl;
   std::set<int> clusterSet(clusterNumber.begin(), clusterNumber.end());
 
-  /*for (unsigned int i=0; i<npixels_hit;++i) {
-    if ( clusterNumber.at(i) != NOCLUSTER) {
-  //std::cerr << "Cluster with ID -1 in " << i << std::endl;
-  //} else {
-  clusterSet.insert(clusterNumber.at(i));
-  }
-  }*/
   nClusters = clusterSet.size();
 
   std::set<int>::iterator it;
@@ -207,7 +178,6 @@ void SimpleStandardPlane::doClustering() {
       }
     }
     _clusters.push_back(cluster);
-    // std::cout << "Cluster at: " << cluster.getX() << std::endl;
   }
   // if we have a mimosa, we need to fill the section information
 

@@ -40,7 +40,6 @@ OnlineMonWindow::OnlineMonWindow(const TGWindow *p, UInt_t w, UInt_t h)
   // init snapshot counter
   snapshot_sequence = 0;
   _reduce = 1; // set a default value;
-  cout << "Opening Window" << endl;
   Hfrm_windows = new TGHorizontalFrame(this);
   Hfrm_left = new TGVerticalFrame(Hfrm_windows);
   // counter for toolbar
@@ -185,8 +184,6 @@ void OnlineMonWindow::ExecuteEvent(Int_t event, Int_t /*px*/, Int_t /*py*/,
       (strstr(sel->ClassName(), "TH") !=
        NULL)) // only do this, if a histogramme has been clicked
   {
-    cout << ">>Being in ExecuteEvent " << sel->ClassName() << endl;
-
     _activeHistos.clear();
     // ECvs_right->GetCanvas()->BlockAllSignals(1);
     ECvs_right->GetCanvas()->Clear();
@@ -220,7 +217,6 @@ void OnlineMonWindow::Reset() {
 
 void OnlineMonWindow::AutoReset() {
   _autoreset = button_autoreset->IsOn();
-  // cout << "AutoReset " << status << endl;
 }
 
 void OnlineMonWindow::Quit() { gApplication->Terminate(0); }
@@ -251,7 +247,6 @@ void OnlineMonWindow::SnapShot() {
     if (stat(rmon->mon_configdata.getSnapShotDir().c_str(), &dirbuf) == 0) {
       if (S_ISDIR(dirbuf.st_mode)) {
         c1->SaveAs(filename.c_str());
-        cout << "Done" << endl;
       }
     } else {
       cout << "Error accessing snapshot directory "
