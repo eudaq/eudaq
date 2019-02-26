@@ -12,7 +12,7 @@ branches:
 # set here versions / file paths
 env:
    global:
-      - ROOT6_FILENAME_MAC=root_v6.14.06.macosx64-10.13-clang100.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.16.00.macosx64-10.13-clang100.tar.gz
       
       - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.12
       - CMAKE_FILENAME_LINUX=cmake-3.12.2-Linux-x86_64.tar.gz
@@ -91,7 +91,7 @@ matrix:
                 - g++-4.8      
         env:
             - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
-            - ROOT6_FILENAME_LINUX=root_v6.14.06.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+            - ROOT6_FILENAME_LINUX=root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - os: linux
         addons:
           apt:
@@ -101,7 +101,7 @@ matrix:
                 - g++-5      
         env:
             - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-            - ROOT6_FILENAME_LINUX=root_v6.14.06.Linux-ubuntu16-x86_64-gcc5.4.tar.gz
+            - ROOT6_FILENAME_LINUX=root_v6.16.00.Linux-ubuntu16-x86_64-gcc5.4.tar.gz
       - os: linux
         addons:
           apt:
@@ -111,7 +111,7 @@ matrix:
                 - g++-7      
         env:
             - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-            - ROOT6_FILENAME_LINUX=root_v6.14.06.Linux-ubuntu18-x86_64-gcc7.3.tar.gz
+            - ROOT6_FILENAME_LINUX=root_v6.16.00.Linux-ubuntu18-x86_64-gcc7.3.tar.gz
             - BUILD_manual=ON
       - os: osx
         osx_image: xcode9.3
