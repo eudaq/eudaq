@@ -630,16 +630,25 @@ bool RunControlGUI::prepareAndStartStep()
     if(m_scan_active==true) {
         on_btnStop_clicked();
         on_btnReset_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_UNINIT))
+        while(!allConnectionsInState(eudaq::Status::STATE_UNINIT)){
+            std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for reset"<<endl;
+        }
         EUDAQ_USER("Resetted");
+        std::this_thread::sleep_for (std::chrono::seconds(10));
         on_btnInit_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_UNCONF))
+        while(!allConnectionsInState(eudaq::Status::STATE_UNCONF)){
+            std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for init"<<endl;
+        }
+        std::this_thread::sleep_for (std::chrono::seconds(10));
         EUDAQ_USER("Initialized");
         on_btnConfig_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_CONF))
+        while(!allConnectionsInState(eudaq::Status::STATE_CONF)){
+            std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for configuration"<<endl;
+        }
+        std::this_thread::sleep_for (std::chrono::seconds(10));
         EUDAQ_USER("configured");
         on_btnStart_clicked();
         EUDAQ_USER("Running");
@@ -669,9 +678,11 @@ bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
             continue;
         }
         auto state_conn = conn_status.second->GetState();
-        cout <<"Comparing states for "<<conn_status.first->GetName()<<state<<"\t" << state_conn<<endl;
         if((int)state_conn != (int)state)
+        {
             return false;
+            cout <<"Comparing states for "<<conn_status.first->GetName()<<" failed: "<<state<<"\t" << state_conn<<endl;
+        }
     }
     return true;
 }
