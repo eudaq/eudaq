@@ -261,10 +261,17 @@ void RunControlGUI::DisplayTimer(){
   // update scan progress bar:
   if(m_scanningTimer.remainingTime()<0)
       progressBar_scan->setValue(0);
-  else
-      progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
+  else if(m_time_per_step>0)
+          progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
                              ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_n_steps)));
 
+  if(m_time_per_step<0) {
+      if(checkEventsInStep())
+          prepareAndStartStep();
+       progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
+                        (m_events_per_step-getEventsCurrent())/double(m_events_per_step)
+                        *100./std::max(1,m_n_steps));
+  }
 }
 
 void RunControlGUI::closeEvent(QCloseEvent *event) {
@@ -699,6 +706,7 @@ bool RunControlGUI::checkScanParameters(){
     m_time_per_step = m_scan_config->Get("time",0.0);
     if(m_time_per_step<0 && ! m_scan_config->Has("nevents"))
         return false;
+    m_events_per_step = m_scan_config->Get("nevents",-1);
     m_start_value = m_scan_config->Get("start",0.0);
     m_stop_value = m_scan_config->Get("stop",0.0);
     m_step_size = m_scan_config->Get("step",0.0);
@@ -713,7 +721,7 @@ void RunControlGUI::createConfigs(){
     std::string config = txtConfigFileName->text().toStdString();
     eudaq::ConfigurationSP defaultconf = eudaq::Configuration::MakeUniqueReadFile(config);
     defaultconf->SetSection(m_scan_config->Get("name",""));
-    std::string parameter =  m_scan_config->Get("parameter","");
+    m_scan_parameter =  m_scan_config->Get("parameter","");
     config = m_scan_config->Get("configpath",config);
     for(int i =0; i< m_n_steps;++i){
         std::string filename = (config.substr(0,config.size()-5)+"_scan_"+std::to_string(i)+".conf");
@@ -721,7 +729,7 @@ void RunControlGUI::createConfigs(){
             filename = (config+"_scan_"+std::to_string(i)+".conf");
         cout << filename<<endl;
         m_scan_config_files.push_back(filename);
-        defaultconf->SetString(parameter,std::to_string(m_start_value+i*m_step_size));
+        defaultconf->SetString(m_scan_parameter,std::to_string(m_start_value+i*m_step_size));
         std::filebuf fb;
         fb.open (filename,std::ios::out);
         std::ostream os(&fb);
@@ -729,3 +737,34 @@ void RunControlGUI::createConfigs(){
         fb.close();
     }
 }
+/**
+ * @brief RunControlGUI::checkEventsInStep
+ * @abstract check if the reuqested number of events for a certain step is recorded
+ * @return true if reached/surpassed, false elsewise
+ */
+bool RunControlGUI::checkEventsInStep(){
+    int events = getEventsCurrent();
+    return ( (events > 0 ? events : (m_events_per_step+2))<=m_events_per_step);
+}
+
+/**
+ * @brief RunControlGUI::getEventsCurrent
+ * @return Number of events in current step of scans
+ */
+
+int RunControlGUI::getEventsCurrent(){
+    std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
+    if(m_rc)
+        map_conn_status= m_rc->GetActiveConnectionStatusMap();
+    else
+        return -1;
+    for(auto conn : map_conn_status) {
+        if((conn.first->GetType()+"."+conn.first->GetName())==m_scan_parameter){
+            auto tags = conn.second->GetTags();
+            for(auto &tag: tags)
+                if(tag.first=="EventN")
+                    return std::stoi(tag.second);
+        }
+    }
+}
+
