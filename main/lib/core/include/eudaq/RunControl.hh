@@ -69,7 +69,7 @@ namespace eudaq {
     void ReadInitilizeFile(const std::string &path);
     ConfigurationSPC GetConfiguration() const {return m_conf;};
     ConfigurationSPC GetInitConfiguration() const {return m_conf_init;};
-    
+
     static const uint32_t m_id_factory = eudaq::cstr2hash("DefaultRunControl");
   private:
     void SendCommand(const std::string &cmd,
