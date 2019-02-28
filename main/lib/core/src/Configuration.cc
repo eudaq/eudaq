@@ -116,13 +116,13 @@ namespace eudaq {
       SetSection(section);
     }
     else{
-      m_config[""] = config[""];//the un-named section is always copied.
-      for(auto &e: config){
-    if(e.first == section){
-      m_config[section] = e.second;
-      SetSection(section);
-    }
-      }
+        m_config[""] = config[""];//the un-named section is always copied.
+        for(auto &e: config){
+            if(e.first == section){
+                m_config[section] = e.second;
+                SetSection(section);
+            }
+        }
     }
   }
 
