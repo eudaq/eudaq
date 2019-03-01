@@ -114,8 +114,11 @@ int main(int /*argc*/, char **argv) {
       "The filename to save a trace of all usb accesses,\n"
       "prepend - for only errors, or + for all data (including block "
       "transfers)");
+  eudaq::OptionFlag resetAllDUT(op, "R","reset-all-dut",
+			"Issues a reset for all DUTs during 1 clock cycle");
   try {
     op.Parse(argv);
+
     for (size_t i = TLU_LEMO_DUTS; i < ipsel.NumItems(); ++i) {
       if (TLUController::DUTnum(ipsel.Item(i)) != TLUController::IN_RJ45)
         throw eudaq::OptionException("Invalid DUT input selection");
@@ -252,6 +255,11 @@ int main(int /*argc*/, char **argv) {
       std::cout << "Warning: *** Firmware version does not match Library "
                    "version ***\n" << std::endl;
     }
+    
+    if(resetAllDUT.IsSet()) {
+	    TLU.ResetDUTs();
+    };
+    
     if (quit.IsSet())
       return 0;
     eudaq::Timer totaltime, lasttime;

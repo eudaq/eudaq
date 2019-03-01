@@ -31,7 +31,9 @@ public:
         or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
         enable_dut_veto(0), trig_rollover(0), readout_delay(100),
         timestamps(true), done(false), timestamp_per_run(false),
-        TLUStarted(false), TLUJustStopped(false), lasttime(0), m_tlu(0) {
+        TLUStarted(false), TLUJustStopped(false), lasttime(0), m_tlu(0),
+	issue_reset_to_duts_on_start(false), issue_reset_to_duts_on_stop(false), 
+	issue_reset_to_duts_on_reset(false){
     for (int i = 0; i < TLU_PMTS; i++) {
       pmtvcntl[i] = PMT_VCNTL_DEFAULT;
       pmt_id[i] = "<unknown>";
@@ -120,6 +122,9 @@ public:
     try {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
 
+      issue_reset_to_duts_on_start = param.Get("IssueResetToAllDUTsOnStart",false);
+      issue_reset_to_duts_on_stop = param.Get("IssueResetToAllDUTsOnStop",false);
+      issue_reset_to_duts_on_reset = param.Get("IssueResetToAllDUTsOnReset",false);
       trigger_interval = param.Get("TriggerInterval", 0);
       dut_mask = param.Get("DutMask", 1);
       and_mask = param.Get("AndMask", 0);
@@ -224,6 +229,7 @@ public:
         m_tlu->ResetTimestamp();
       m_tlu->ResetScalers();
       m_tlu->Update(timestamps);
+      if(issue_reset_to_duts_on_start) m_tlu->ResetDUTs();
       m_tlu->Start();
       TLUStarted = true;
       SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Started");
@@ -240,6 +246,7 @@ public:
       std::cout << "Stop Run" << std::endl;
       TLUStarted = false;
       TLUJustStopped = true;
+      if(issue_reset_to_duts_on_stop) m_tlu->ResetDUTs();
       while (TLUJustStopped) {
         eudaq::mSleep(100);
       }
@@ -262,6 +269,7 @@ public:
       std::cout << "Reset" << std::endl;
       m_tlu->Stop();        // stop
       m_tlu->Update(false); // empty events
+      if(issue_reset_to_duts_on_reset) m_tlu->ResetDUTs();
       SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Reset");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
@@ -310,6 +318,9 @@ private:
   std::shared_ptr<TLUController> m_tlu;
   std::string pmt_id[TLU_PMTS];
   double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];
+  bool issue_reset_to_duts_on_start;
+  bool issue_reset_to_duts_on_stop;
+  bool issue_reset_to_duts_on_reset;
 };
 
 int main(int /*argc*/, const char **argv) {

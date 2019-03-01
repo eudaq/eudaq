@@ -413,6 +413,10 @@ namespace tlu {
 
   void TLUController::Stop() { InhibitTriggers(true); }
 
+  void TLUController::ResetDUTs() {
+    WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS,
+                  1 );    
+  }
   void TLUController::ResetTriggerCounter() {
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS,
                   1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT);

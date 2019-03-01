@@ -139,6 +139,7 @@ namespace tlu {
     void Update(bool timestamps = true);
     void Start();
     void Stop();
+    void ResetDUTs();
     void ResetTriggerCounter();
     void ResetScalers();
     void ResetTimestamp();
