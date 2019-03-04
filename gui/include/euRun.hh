@@ -85,6 +85,7 @@ private:
   int m_time_per_step;
   std::vector<std::string> m_scan_config_files;
   std::string m_scan_parameter;
+  std::string m_scan_name;
   QTimer m_scanningTimer;
   std::shared_ptr<eudaq::Configuration> m_scan_config;
 };

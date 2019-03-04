@@ -265,7 +265,7 @@ void RunControlGUI::DisplayTimer(){
           progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
                              ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_n_steps)));
 
-  if(m_time_per_step<0) {
+  if(m_time_per_step<1) {
       if(checkEventsInStep())
           prepareAndStartStep();
        progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
@@ -591,9 +591,10 @@ void RunControlGUI::on_btnStartScan_clicked()
        progressBar_scan->setMaximum(100);
        m_scan_active = true;
        btnStartScan->setText("Interrupt scan");
-       if(prepareAndStartStep())
-           m_scanningTimer.start();
-        else
+       if(prepareAndStartStep()){
+           if(m_time_per_step>1)
+               m_scanningTimer.start();
+        }else
            EUDAQ_USER("Starting scan failed");
 
    }
@@ -623,7 +624,8 @@ void RunControlGUI::nextScanStep()
                 ->setText(QString::fromStdString(m_scan_config_files.at(m_current_step)));
         if(!prepareAndStartStep())
             return;
-        m_scanningTimer.start();
+        if(m_time_per_step>1)
+            m_scanningTimer.start();
 
     }
 }
@@ -676,7 +678,7 @@ bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
             continue;
         }
         auto state_conn = conn_status.second->GetState();
-        cout <<"Comparing states for "<<conn_status.first->GetName()<<state<<"\t" << state_conn<<endl;
+        //cout <<"Comparing states for "<<conn_status.first->GetName()<<state<<"\t" << state_conn<<endl;
         if((int)state_conn != (int)state)
             return false;
     }
@@ -699,13 +701,13 @@ bool RunControlGUI::checkScanParameters(){
     if(! m_scan_config->Has("start")
             || ! m_scan_config->Has("stop")
             || ! m_scan_config->Has("step")
-            || ! m_scan_config->Has("time")
+            //|| ! m_scan_config->Has("time")
             || ! m_scan_config->Has("name")
             || ! m_scan_config->Has("parameter"))
         return false;
     m_time_per_step = m_scan_config->Get("time",0.0);
-    if(m_time_per_step<0 && ! m_scan_config->Has("nevents"))
-        return false;
+//    if(m_time_per_step<0 && ! m_scan_config->Has("nevents"))
+//        return false;
     m_events_per_step = m_scan_config->Get("nevents",-1);
     m_start_value = m_scan_config->Get("start",0.0);
     m_stop_value = m_scan_config->Get("stop",0.0);
@@ -721,6 +723,7 @@ void RunControlGUI::createConfigs(){
     std::string config = txtConfigFileName->text().toStdString();
     eudaq::ConfigurationSP defaultconf = eudaq::Configuration::MakeUniqueReadFile(config);
     defaultconf->SetSection(m_scan_config->Get("name",""));
+    m_scan_name = m_scan_config->Get("name","");
     m_scan_parameter =  m_scan_config->Get("parameter","");
     config = m_scan_config->Get("configpath",config);
     for(int i =0; i< m_n_steps;++i){
@@ -744,6 +747,7 @@ void RunControlGUI::createConfigs(){
  */
 bool RunControlGUI::checkEventsInStep(){
     int events = getEventsCurrent();
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<events <<"\t"<<m_scan_name<<endl;
     return ( (events > 0 ? events : (m_events_per_step+2))<=m_events_per_step);
 }
 
@@ -757,14 +761,16 @@ int RunControlGUI::getEventsCurrent(){
     if(m_rc)
         map_conn_status= m_rc->GetActiveConnectionStatusMap();
     else
-        return -1;
+        return -2;
     for(auto conn : map_conn_status) {
-        if((conn.first->GetType()+"."+conn.first->GetName())==m_scan_parameter){
+        if((conn.first->GetType()+"."+conn.first->GetName())==m_scan_name){
+            cout <<"found"<<endl;
             auto tags = conn.second->GetTags();
             for(auto &tag: tags)
                 if(tag.first=="EventN")
                     return std::stoi(tag.second);
         }
     }
+    return -1;
 }
 
