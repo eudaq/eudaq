@@ -215,6 +215,11 @@ namespace eudaq {
       return m_cur->find(key) != m_cur->cend();
   }
 
+  bool Configuration::HasSection(const std::string &section) const
+  {
+    return m_config.find(section) != m_config.end();
+  }
+
   void Configuration::SetString(const std::string &key,
                                 const std::string &val) {
     (*m_cur)[key] = val;

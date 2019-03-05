@@ -39,6 +39,13 @@ namespace eudaq {
      */
     bool Has(const std::string& key) const;
 
+    /**
+     * @brief Check if config file has section
+     * @param section
+     * @return Truie if section exists, false otherwise
+     */
+    bool HasSection(const std::string & section) const;
+
     void Save(std::ostream &file) const;
     void Load(std::istream &file, const std::string &section);
     bool SetSection(const std::string &section) const;
