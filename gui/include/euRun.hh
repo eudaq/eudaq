@@ -89,4 +89,5 @@ private:
   std::string m_scan_name;
   QTimer m_scanningTimer;
   std::shared_ptr<eudaq::Configuration> m_scan_config;
+  void updateProgressBar();
 };
