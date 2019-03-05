@@ -43,6 +43,7 @@ private slots:
   void on_btnStartScan_clicked();
   void nextScanStep();
 private:
+  void updateInfos();
   bool loadInitFile();
   bool loadConfigFile();
   bool addStatusDisplay(auto connection);
