@@ -1,4 +1,4 @@
-version: 1.9.1.{build}
+version: 1.10.0.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -57,6 +57,7 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"
     - build_type: minimum
+      skip_non_tags: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
@@ -91,6 +92,7 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"      
     - build_type: library_only
+      skip_non_tags: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
