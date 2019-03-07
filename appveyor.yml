@@ -130,15 +130,15 @@ environment:
       PYTHON_ARCH: "32"     
       
 for:
--
-  matrix:
-    only:
-      - environment:
-        build_type: library_only
-      - environment:
-        build_type: minimum     
-    
-  skip_non_tags: true
+  -
+    matrix:
+      only:
+        - environment:
+          build_type: library_only
+        - environment:
+          build_type: minimum     
+
+    skip_non_tags: true
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
