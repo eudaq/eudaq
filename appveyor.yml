@@ -135,6 +135,8 @@ for:
     only:
       - environment:
         build_type: library_only
+      - environment:
+        build_type: minimum     
     
   skip_non_tags: true
 
