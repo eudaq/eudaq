@@ -9,12 +9,16 @@ branches:
   - v1.x-dev
   - feature-CI-v1.x-dev
 
-image: Visual Studio 2019 Preview
+# set clone depth
+clone_depth: 1
 
-configuration: Release
+image: 
+  - Visual Studio 2017
+  - Visual Studio 2019 Preview
 
-#  - x64
-platform: x86 
+platform: 
+  - x86 
+  - x64
 
 # comments on options:
 # BIFAHCAL: Requires cactus and does not compile properly on Windows
@@ -57,7 +61,6 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"
     - build_type: minimum
-      skip_non_tags: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
@@ -92,7 +95,6 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"      
     - build_type: library_only
-      skip_non_tags: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
@@ -125,7 +127,16 @@ environment:
       IGNORE_KNOWN_ISSUES: OFF
       PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6.1" 
-      PYTHON_ARCH: "32"        
+      PYTHON_ARCH: "32"     
+      
+for:
+-
+  matrix:
+    only:
+      - environment:
+        build_type: library_only
+    
+  skip_non_tags: true
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
