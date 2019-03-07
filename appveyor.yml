@@ -1,4 +1,4 @@
-version: 1.9.0.{build}
+version: 1.9.1.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -57,6 +57,8 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"
     - build_type: minimum
+      on:
+        APPVEYOR_REPO_TAG: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
@@ -91,6 +93,8 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"      
     - build_type: library_only
+      on:
+        APPVEYOR_REPO_TAG: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
@@ -140,7 +144,7 @@ install:
 #- '"C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /x86'
 #- call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
 - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-- call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat"
+- call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\VC\Auxiliary\Build\vcvars32.bat"
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
 # - cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
