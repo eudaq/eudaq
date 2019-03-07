@@ -57,8 +57,6 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"
     - build_type: minimum
-      on:
-        APPVEYOR_REPO_TAG: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
@@ -93,8 +91,6 @@ environment:
       PYTHON_VERSION: "3.6.1" 
       PYTHON_ARCH: "32"      
     - build_type: library_only
-      on:
-        APPVEYOR_REPO_TAG: true
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
