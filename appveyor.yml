@@ -135,7 +135,7 @@ for:
       except:
         - environment:
           build_type: library_only
-      skip_non_tags: true
+    skip_non_tags: true
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
