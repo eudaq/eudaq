@@ -298,9 +298,37 @@ namespace eudaq {
     }
     lk.unlock();
 
-    for(auto &conn :conn_to_stop){
-      if(conn->GetType() == "Producer"){
+    // check which producer to stop first
+    std::string producer_first_stop="";
+    m_conf->SetSection("RunControl");
+    producer_first_stop = m_conf->Get("EUDAQ_CTRL_PRODUCER_FIRST_STOP", producer_first_stop);
+
+    auto tp_timeout = std::chrono::steady_clock::now()
+      + std::chrono::seconds(60);
+
+    for(auto &conn : conn_to_stop){
+      if (conn->GetType() == "Producer" &&
+	  conn->GetName() == producer_first_stop){
 	SendCommand("STOP", "", conn);
+
+	while(1){
+	  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	  auto st =  GetConnectionStatus(conn)->GetState();
+	  if (st == Status::STATE_RUNNING) {
+	    if(std::chrono::steady_clock::now() > tp_timeout){
+	      EUDAQ_ERROR("Timesout waiting stopping status from "+ conn->GetName());
+	    }
+	    continue;
+	  }else break;
+	}// make sure the first producer has stopped
+      }// find the first stop producer!
+    }// loop to find the key producer.
+
+    
+    for(auto &conn :conn_to_stop){
+      if(conn->GetType() == "Producer" &&
+	 conn->GetName() != producer_first_stop){
+    	SendCommand("STOP", "", conn);
       }
     }
 

@@ -1,0 +1,19 @@
+# IP-environment variables are set by user/eudet/misc/environments/setup_eudaq2_aida-tlu.sh 
+# Define port
+NEWPORT=44444
+
+# Start Run Control
+euRun -a tcp://${NEWPORT} &
+sleep 2
+
+# Start Logger
+euLog -r tcp://${RUNCONTROLIP}:${NEWPORT} &
+sleep 1
+
+# Start TLU Producer
+euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://${TLUIP}:${NEWPORT} & 
+
+# Start one DataCollector
+# name (-t) in conf file
+# or: -n TriggerIDSyncDataCollecor
+#xterm -T "Data Collector TLU" -e 'euCliCollector -n DirectSaveDataCollector -t tlu_dc -r tcp://${RUNCONTROLIP}:${RPCPORT}' &
