@@ -12,10 +12,6 @@ branches:
 # set clone depth
 clone_depth: 1
 
-image: 
-  - Visual Studio 2017
-  - Visual Studio 2019 Preview
-
 platform: 
   - x86 
   - x64
@@ -27,21 +23,25 @@ platform:
 environment:
   matrix:
     - build_type: full
+      compiler_version: VS2013
     - build_type: minimum
+      compiler_version: VS2013
     - build_type: library_only
-  
-  matrix:
-    - architecture: x86
-    - architecture: x64
+      compiler_version: VS2013
       
 for:
   -
     matrix:
       except:
         - build_type: full
-        - architecture
         
     skip_non_tags: true
+  -
+    matrix:
+      except:
+        - compiler_version: VS2019
+        
+    image: Visual Studio 2017
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
