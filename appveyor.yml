@@ -133,7 +133,7 @@ environment:
 for:
   -
     matrix:
-      only:
+      except:
         - environment:
           build_type: test
     skip_non_tags: true
