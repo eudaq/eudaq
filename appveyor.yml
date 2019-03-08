@@ -59,7 +59,7 @@ for:
     matrix:
       except:
         - build_type: full
-        - platform: x86
+          platform: x86
         
     skip_non_tags: true
   -
