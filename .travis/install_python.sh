@@ -17,7 +17,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		PATH="$PYENV_ROOT/bin:$PATH"
 		eval "$(pyenv init -)"
 		
-		pyenv install ${PYTHON_VERSION_MODERN}
+		pyenv install -s ${PYTHON_VERSION_MODERN}
 		pyenv global ${PYTHON_VERSION_MODERN}
 		
 		pyenv rehash
@@ -39,7 +39,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		PATH="$PYENV_ROOT/bin:$PATH"
 		eval "$(pyenv init -)"
 		
-		pyenv install ${PYTHON_VERSION_OLD}
+		pyenv install -s ${PYTHON_VERSION_OLD}
 		pyenv global ${PYTHON_VERSION_OLD}
 		
 		pyenv rehash
@@ -58,7 +58,7 @@ else
 		
 		export PIP_REQUIRE_VIRTUALENV=true
 		
-		pyenv install ${PYTHON_VERSION_MODERN}
+		pyenv install -s ${PYTHON_VERSION_MODERN}
 		pyenv global ${PYTHON_VERSION_MODERN}
 		pyenv versions
 		
@@ -85,7 +85,7 @@ else
 		#pyenv rehash
 	else
 
-		pyenv install ${PYTHON_VERSION_OLD}
+		pyenv install -s ${PYTHON_VERSION_OLD}
 		pyenv global ${PYTHON_VERSION_OLD}
 		pyenv versions
 		
