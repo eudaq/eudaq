@@ -26,6 +26,7 @@ platform:
 # 
 environment:
   matrix:
+    - build_type: test  
     - build_type: full
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
@@ -134,7 +135,7 @@ for:
     matrix:
       except:
         - environment:
-          build_type: library_only
+          build_type: test
     skip_non_tags: true
 
 cache:
