@@ -629,7 +629,6 @@ void RunControlGUI::nextScanStep()
         on_btnStop_clicked();
         QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
     }else if(m_scan_active) {
-        cout << "!!!!!!!!!!!!!!@@@@@@@@@@@@@@@@@@@@@@@!!!!!!!!!!!!!!!!!!!!!!! "<< m_scan.config_files.at(m_scan.current_step)<<endl;
         txtConfigFileName
                 ->setText(QString::fromStdString(m_scan.config_files.at(m_scan.current_step)));
         if(!prepareAndStartStep())
@@ -753,7 +752,6 @@ bool RunControlGUI::checkScanParameters(){
     m_scanningTimer.setInterval(m_scan.time_per_step*1000);
     m_scan.n_steps = 0;
     for(int i =0; i < m_scan.n_scans ; ++i){
-        cout << i <<"\t"<<m_scan.n_scans<<endl;
         if(!m_scan_config->HasSection(std::to_string(i)))
             return false;
         m_scan_config->SetSection(std::to_string(i));
@@ -775,7 +773,7 @@ bool RunControlGUI::checkScanParameters(){
     m_scan.steps_per_scan.push_back(1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
                           double(m_scan_config->Get("step",0.0)));
     }
-    cout << "Will do "<<m_scan.n_steps<<" steps" <<endl;
+
     createConfigs();
     return true;
 }
@@ -811,9 +809,8 @@ void RunControlGUI::createConfigs(){
                     filename = (config+"_scan_"+std::to_string(step)+".conf");
                 m_scan.config_files.push_back(filename);
                 m_scan.events_counting_component.push_back(m_scan_config->Get("eventCounter","no processor found"));
-                cout << filename <<endl;
                 defaultconf->SetString(m_scan.scanned_parameter.at(i),std::to_string(m_scan_config->Get("start",0)
-                                                                                     +i*m_scan_config->Get("step",0)));
+                                                                                     +j*m_scan_config->Get("step",0)));
                 // write it all
                 std::filebuf fb;
                 fb.open (filename,std::ios::out);
