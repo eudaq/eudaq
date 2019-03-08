@@ -132,7 +132,7 @@ environment:
 for:
   -
     matrix:
-      only:
+      except:
         - environment:
           build_type: library_only
         - environment:
