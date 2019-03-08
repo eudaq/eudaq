@@ -18,7 +18,23 @@
 
 class RunControlGUI : public QMainWindow,
 		      public Ui::wndRun{
-  Q_OBJECT
+
+    typedef struct{
+        std::vector<std::string> config_files;
+        bool allow_nested_scan = false;
+        bool scan_is_time_based = true;
+        int time_per_step = 0;
+        int events_per_step = 0;
+        std::vector<int> steps_per_scan;
+        int n_steps = 0;
+        int n_scans = 0;
+        std::vector<std::string> scanned_parameter;
+        std::vector<std::string> scanned_producer;
+        std::vector<std::string> events_counting_component;
+        int current_step = 0;
+    } scanSettings;
+
+   Q_OBJECT
 public:
   RunControlGUI();
   void SetInstance(eudaq::RunControlUP rc);
@@ -78,18 +94,8 @@ private:
   bool m_scan_interrupt_received;
   QTimer m_scanningTimer;
   std::shared_ptr<eudaq::Configuration> m_scan_config;
+  scanSettings m_scan;
 
-  double m_scanning_step_time;
-  double m_start_value;
-  double m_stop_value;
-  double m_step_size;
-  int m_n_steps;
-  int m_events_per_step;
-  int m_current_step;
-  int m_time_per_step;
-  std::vector<std::string> m_scan_config_files;
-  std::string m_scan_parameter;
-  std::string m_scan_name;
 
   void updateProgressBar();
 };

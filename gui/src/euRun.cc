@@ -194,11 +194,9 @@ void RunControlGUI::DisplayTimer(){
   updateInfos();
   updateStatusDisplay();
   updateProgressBar();
-  if(m_time_per_step<1)
+  if(!m_scan.scan_is_time_based && m_scan_active == true)
       if(checkEventsInStep())
           nextScanStep();
-
-
 }
 
 void RunControlGUI::updateInfos(){
@@ -580,7 +578,7 @@ void RunControlGUI::on_btnStartScan_clicked()
        }
    } else {
        // init scan parameters:
-       m_current_step = 0;
+       m_scan.current_step = 0;
        progressBar_scan->setMaximum(100);
        m_scan_active = true;
        btnStartScan->setText("Interrupt scan");
@@ -596,21 +594,25 @@ void RunControlGUI::on_btnStartScan_clicked()
 void RunControlGUI::nextScanStep()
 {
     // stop readout
-    if((m_current_step>=m_n_steps || m_scan_interrupt_received) && m_scan_active) {
+    if((m_scan.current_step > m_scan.n_steps || m_scan_interrupt_received) && m_scan_active) {
         m_scan_active = false;
         m_scanningTimer.stop();
         btnStartScan->setText("Start Scan");
         on_btnStop_clicked();
         QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
     }else if(m_scan_active) {
+        cout << "!!!!!!!!!!!!!!@@@@@@@@@@@@@@@@@@@@@@@!!!!!!!!!!!!!!!!!!!!!!! "<< m_scan.config_files.at(m_scan.current_step)<<endl;
         txtConfigFileName
-                ->setText(QString::fromStdString(m_scan_config_files.at(m_current_step)));
+                ->setText(QString::fromStdString(m_scan.config_files.at(m_scan.current_step)));
         if(!prepareAndStartStep())
+        {
+            m_scan_active = false;
             return;
-        if(m_time_per_step>1)
+        }
+        if(m_scan.scan_is_time_based)
             m_scanningTimer.start();
 
-        m_current_step++;
+        m_scan.current_step++;
     }
 
 }
@@ -686,55 +688,127 @@ bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
 bool RunControlGUI::readScanConfig(){
     m_scan_config = eudaq::Configuration::MakeUniqueReadFile(txtScanFile->text().toStdString());
 
-    if(!m_scan_config->HasSection("sfirst"))
+    if(!m_scan_config->HasSection("general"))
+    {
+        cout << "No general section given in config"<<endl;
         return false;
-    m_scan_config->SetSection("first");
+    }
+    m_scan_config->SetSection("general");
     return checkScanParameters();
 }
-
+/**
+ * @brief RunControlGUI::checkScanParameters
+ * @return true if a correct minimal configuration
+ * is existing, false otherwise
+ * @abstract Check if the configuration file is correctly
+ * formatted.
+ */
 bool RunControlGUI::checkScanParameters(){
-    // check if minimal config exists
+
+    if(!m_scan_config->Has("scans")
+            || !m_scan_config->Has("allowNested")
+            || !m_scan_config->Has("scans")
+            || (! m_scan_config->Has("time") && (! m_scan_config->Has("nevents"))) // either events or time need to be provided
+            || !m_scan_config->Has("timeModeActive")
+           )
+        return false;
+    // reset the configs
+    m_scan.scanned_parameter.clear();
+    m_scan.events_counting_component.clear();
+    m_scan.scanned_producer.clear();
+    m_scan.config_files.clear();
+    m_scan.allow_nested_scan = m_scan_config->Get("allowNested",-1);
+    m_scan.n_scans =m_scan_config->Get("scans",-1);
+    m_scan.time_per_step = m_scan_config->Get("time",0.0);
+    m_scan.events_per_step = m_scan_config->Get("nevents",-1);
+    m_scan.scan_is_time_based = m_scan_config->Get("timeModeActive",1);
+    m_scanningTimer.setInterval(m_scan.time_per_step*1000);
+    m_scan.n_steps = 0;
+    for(int i =0; i < m_scan.n_scans ; ++i){
+        cout << i <<"\t"<<m_scan.n_scans<<endl;
+        if(!m_scan_config->HasSection(std::to_string(i)))
+            return false;
+        m_scan_config->SetSection(std::to_string(i));
+        // check if minimal config exists
     if(! m_scan_config->Has("start")
             || ! m_scan_config->Has("stop")
             || ! m_scan_config->Has("step")
-            || (! m_scan_config->Has("time") && (! m_scan_config->Has("nevents")))
             || ! m_scan_config->Has("name")
+            || ! m_scan_config->Has("default")
+
             || ! m_scan_config->Has("parameter"))
         return false;
-    m_time_per_step = m_scan_config->Get("time",0.0);
-//    if(m_time_per_step<0 && ! m_scan_config->Has("nevents"))
-//        return false;
-    m_events_per_step = m_scan_config->Get("nevents",-1);
-    m_start_value = m_scan_config->Get("start",0.0);
-    m_stop_value = m_scan_config->Get("stop",0.0);
-    m_step_size = m_scan_config->Get("step",0.0);
-    m_scanningTimer.setInterval(m_time_per_step*1000);
-    m_n_steps =  (m_stop_value-m_start_value)/double(m_step_size);
+    if(m_scan.allow_nested_scan==true && m_scan_config->Get("isNested",0))
+    m_scan.n_steps += m_scan.n_steps * (1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
+                      double(m_scan_config->Get("step",0.0)));
+    else
+        m_scan.n_steps += 1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
+                          double(m_scan_config->Get("step",0.0));
+    m_scan.steps_per_scan.push_back(1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
+                          double(m_scan_config->Get("step",0.0)));
+    }
+    cout << "Will do "<<m_scan.n_steps<<" steps" <<endl;
     createConfigs();
     return true;
-
-
 }
+
+/**
+ * @brief RunControlGUI::createConfigs
+ * @abstract create the relevant config files to perform a scan from a scan-config file.
+ * Additionally, the settings for each step - runtime or evetns in a certain producer to
+ * complete a step.
+ *
+*/
 void RunControlGUI::createConfigs(){
+
+    // start with a default config file
     std::string config = txtConfigFileName->text().toStdString();
     eudaq::ConfigurationSP defaultconf = eudaq::Configuration::MakeUniqueReadFile(config);
-    defaultconf->SetSection(m_scan_config->Get("name",""));
-    m_scan_name = m_scan_config->Get("name","");
-    m_scan_parameter =  m_scan_config->Get("parameter","");
+    m_scan_config->SetSection("general");
     config = m_scan_config->Get("configpath",config);
-    for(int i =0; i< m_n_steps;++i){
-        std::string filename = (config.substr(0,config.size()-5)+"_scan_"+std::to_string(i)+".conf");
-        if(config != txtConfigFileName->text().toStdString())
-            filename = (config+"_scan_"+std::to_string(i)+".conf");
-        m_scan_config_files.push_back(filename);
-        defaultconf->SetString(m_scan_parameter,std::to_string(m_start_value+i*m_step_size));
-        std::filebuf fb;
-        fb.open (filename,std::ios::out);
-        std::ostream os(&fb);
-        defaultconf->Save(os);
-        fb.close();
+
+
+    int step = 0;
+    for(int i = 0; i< m_scan.n_scans; i++){
+        m_scan_config->SetSection(std::to_string(i));
+        m_scan.scanned_parameter.push_back(m_scan_config->Get("parameter",""));
+        if(!m_scan.allow_nested_scan)
+        {
+            for(int j = 0; j < m_scan.steps_per_scan.at(i);j++)
+            {
+                defaultconf->SetSection(m_scan_config->Get("name",""));
+
+                std::string filename = (config.substr(0,config.size()-5)+"_scan_"+std::to_string(step)+".conf");
+                if(config != txtConfigFileName->text().toStdString())
+                    filename = (config+"_scan_"+std::to_string(step)+".conf");
+                m_scan.config_files.push_back(filename);
+                m_scan.events_counting_component.push_back(m_scan_config->Get("eventCounter","no processor found"));
+                cout << filename <<endl;
+                defaultconf->SetString(m_scan.scanned_parameter.at(i),std::to_string(m_scan_config->Get("start",0)
+                                                                                     +i*m_scan_config->Get("step",0)));
+                // write it all
+                std::filebuf fb;
+                fb.open (filename,std::ios::out);
+                std::ostream os(&fb);
+                defaultconf->Save(os);
+                fb.close();
+
+                step++;
+            }
+            // set value to defautl again
+            defaultconf->SetString(m_scan.scanned_parameter.at(i),std::to_string(m_scan_config->Get("default",-1)));
+
+        }
+        else {
+            QMessageBox::warning(NULL, "SCAN CONFIGURATION FAILED",
+                                  "A nested scan has been requestet - not yet implemented!");
+        return;
+        }
     }
+    // set number of steps to config files created - might not correspond to the initial guess:
+    m_scan.n_steps = m_scan.config_files.size()-1;
 }
+
 /**
  * @brief RunControlGUI::checkEventsInStep
  * @abstract check if the reuqested number of events for a certain step is recorded
@@ -742,7 +816,7 @@ void RunControlGUI::createConfigs(){
  */
 bool RunControlGUI::checkEventsInStep(){
     int events = getEventsCurrent();
-    return ( (events > 0 ? events : (m_events_per_step-2))>m_events_per_step);
+    return ( (events > 0 ? events : (m_scan.events_per_step-2))>m_scan.events_per_step);
 }
 
 /**
@@ -752,12 +826,14 @@ bool RunControlGUI::checkEventsInStep(){
 
 int RunControlGUI::getEventsCurrent(){
     std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
+    if(m_scan.events_counting_component.size()>m_scan.current_step-1)
+        return m_scan.events_per_step+1;
     if(m_rc)
         map_conn_status= m_rc->GetActiveConnectionStatusMap();
     else
         return -2;
     for(auto conn : map_conn_status) {
-        if((conn.first->GetType()+"."+conn.first->GetName())==m_scan_name){
+        if((conn.first->GetType()+"."+conn.first->GetName())==m_scan.events_counting_component.at(m_scan.current_step)){
             auto tags = conn.second->GetTags();
             for(auto &tag: tags)
                 if(tag.first=="EventN")
@@ -770,11 +846,11 @@ int RunControlGUI::getEventsCurrent(){
 void RunControlGUI::updateProgressBar(){
     double scanProgress = 0;
     if(m_scan_active){
-        scanProgress = (m_current_step-1)/double(std::max(1,m_n_steps))*100;
-    if(m_time_per_step>1)
-        scanProgress+= ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_n_steps));
+        scanProgress = (m_scan.current_step-1)/double(std::max(1,m_scan.n_steps))*100;
+    if(m_scan.scan_is_time_based)
+        scanProgress+= ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_scan.n_steps));
     else
-        scanProgress += getEventsCurrent()/double(m_events_per_step)*100./std::max(1,m_n_steps);
+        scanProgress += getEventsCurrent()/double(m_scan.events_per_step)*100./std::max(1,m_scan.n_steps);
     }
     progressBar_scan->setValue(scanProgress);
 
