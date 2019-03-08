@@ -28,12 +28,38 @@ environment:
       compiler_version: VS2013
     - build_type: library_only
       compiler_version: VS2013
+    - build_type: full
+      compiler_version: VS2015
+    - build_type: minimum
+      compiler_version: VS2015
+    - build_type: library_only
+      compiler_version: VS2015
+    - build_type: full
+      compiler_version: VS2017
+    - build_type: minimum
+      compiler_version: VS2017
+    - build_type: library_only
+      compiler_version: VS2017
+    - build_type: full
+      compiler_version: VS2019
+    - build_type: minimum
+      compiler_version: VS2019
+    - build_type: library_only
+      compiler_version: VS2019      
+
+matrix:
+  exclude:
+    - platform: x64
+      build_type: full
+    - platform: x64
+      build_type: minimum      
       
 for:
   -
     matrix:
       except:
         - build_type: full
+        - platform: x86
         
     skip_non_tags: true
   -
@@ -42,12 +68,6 @@ for:
         - compiler_version: VS2019
         
     image: Visual Studio 2017
-  -
-    matrix:
-      only:
-        - platform: x64
-        
-    buid_type: library_only
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
