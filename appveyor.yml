@@ -42,6 +42,12 @@ for:
         - compiler_version: VS2019
         
     image: Visual Studio 2017
+  -
+    matrix:
+      only:
+        - platform: x64
+        
+    buid_type: library_only
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
