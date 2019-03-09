@@ -207,6 +207,8 @@ before_build:
 - ps: >- 
     
     If (${env:build_with_root} -eq "yes") {
+      $env:ROOTSYS="C:\root"
+      $env:PATH="${env:ROOTSYS}\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;${env:PATH}"
       Switch (${env:compiler_version})
       {
         "VS2013" {
