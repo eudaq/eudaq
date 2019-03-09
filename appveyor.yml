@@ -131,6 +131,11 @@ init:
         $env:PYTHON_ARCH="32"
       }
     }
+    
+    #$env:build_with_root="no"
+    #If () {
+      $env:build_with_root="yes"
+    #}
 
 install:
 #- '"C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /x86'
@@ -199,7 +204,62 @@ install:
 - "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
-- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.16.00.win32.vc15.zip' -storageLocation 'C:\\root_v6.16.00.win32.vc15.zip'; 7z -y x C:\\root_v6.16.00.win32.vc15.zip -oC:\; 
+- ps: >- 
+    
+    If (${env:build_with_root} -eq "yes") {
+      Switch (${env:compiler_version})
+      {
+        "VS2013" {
+          If (${root_flavour} -eq "5") {
+            Write-Host "Downloading root from root.cern.ch"; 
+            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.38.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.38.win32.vc12.zip'; 7z -y x C:\\root_v5.34.38.win32.vc12.zip -oC:\; 
+          };        
+          If (${root_flavour} -eq "6") {
+            # Something is wrong in the configuration settings -- root 6 only supported from VS2017 onwards (and probably only 2019 really working)
+            Write-Host "Unknown compiler version has been requested";
+            $host.SetShouldExit($LastExitCode)
+          };
+        break
+        }
+        "VS2015" {
+          If (${root_flavour} -eq "5") {
+            Write-Host "Downloading root from root.cern.ch"; 
+            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.38.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.38.win32.vc12.zip'; 7z -y x C:\\root_v5.34.38.win32.vc12.zip -oC:\; 
+          };        
+          If (${root_flavour} -eq "6") {
+            # Something is wrong in the configuration settings -- root 6 only supported from VS2017 onwards (and probably only 2019 really working)
+            Write-Host "Unknown compiler version has been requested";
+            $host.SetShouldExit($LastExitCode)
+          };        break
+        }
+        "VS2017" {
+          If (${root_flavour} -eq "5") {
+            Write-Host "Downloading root from root.cern.ch"; 
+            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.38.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.38.win32.vc12.zip'; 7z -y x C:\\root_v5.34.38.win32.vc12.zip -oC:\;
+          };        
+          If (${root_flavour} -eq "6") {
+            Write-Host "Downloading root from root.cern.ch"; 
+            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.16.00.win32.vc15.zip' -storageLocation 'C:\\root_v6.16.00.win32.vc15.zip'; 7z -y x C:\\root_v6.16.00.win32.vc15.zip -oC:\; 
+          };
+        break
+        }
+        "VS2019" {
+          If (${root_flavour} -eq "5") {
+            Write-Host "Downloading root from root.cern.ch"; 
+            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.38.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.38.win32.vc12.zip'; 7z -y x C:\\root_v5.34.38.win32.vc12.zip -oC:\; 
+          };        
+          If (${root_flavour} -eq "6") {
+            Write-Host "Downloading root from root.cern.ch"; 
+            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.16.00.win32.vc15.zip' -storageLocation 'C:\\root_v6.16.00.win32.vc15.zip'; 7z -y x C:\\root_v6.16.00.win32.vc15.zip -oC:\; 
+          };
+          break
+        }
+        default {
+          # ROOT has been requested but I do not know how to install it for this compiler
+          Write-Host "ROOT has been requested but I do not know how to install it for this compiler";
+          $host.SetShouldExit($LastExitCode)
+        }
+    }    
 
 - ps: appveyor\install_afs.ps1;
 
