@@ -69,7 +69,45 @@ cache:
   
 init:
 # The following line enables the remote desktop connection and show the connection information.
-- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: >-
+    iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    
+    Switch (${env:build_type})
+    {
+      "full" {
+        $env:BUILD_AHCAL="OFF"
+        $env:BUILD_BIFAHCAL="OFF"
+        $env:BUILD_TESTING="OFF"
+        $env:BUILD_WITH_QT4="OFF"
+        $env:BUILD_allproducer="OFF"
+        $env:BUILD_altro="OFF"
+        $env:BUILD_altroUSB="OFF"
+        $env:BUILD_cmspixel="OFF"
+        $env:BUILD_depfet="OFF"
+        $env:BUILD_drs4="ON"
+        $env:BUILD_fortis="OFF"
+        $env:BUILD_gui="ON"
+        $env:BUILD_main="OFF"
+        $env:BUILD_manual="OFF"
+        $env:BUILD_mimoroma="OFF"
+        $env:BUILD_miniTLU="OFF"
+        $env:BUILD_ni="ON"
+        $env:BUILD_nreader="OFF"
+        $env:BUILD_offlinemon="OFF"
+        $env:BUILD_onlinemon="ON"
+        $env:BUILD_palpidefs="OFF"
+        $env:BUILD_pixelmanproducer="OFF"
+        $env:BUILD_python="ON"
+        $env:BUILD_root="ON"
+        $env:BUILD_taki="OFF"
+        $env:BUILD_timepixdummy="OFF"
+        $env:BUILD_tlu="ON"
+        $env:IGNORE_KNOWN_ISSUES="ON"
+        $env:PYTHON="C:\\Python36"
+        $env:PYTHON_VERSION="3.6.1" 
+        $env:PYTHON_ARCH="32"
+      }
+    }
 
 install:
 #- '"C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /x86'
@@ -204,43 +242,3 @@ for:
         - compiler_version: VS2019
         
     image: Visual Studio 2019 Preview   
-  # Setting general variables
-  -
-    matrix:
-      only:
-        - build_type: full
-      
-      environment:
-        - ROOTSYS: C:\root
-        - PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
-        - BUILD_AHCAL: OFF
-        - BUILD_BIFAHCAL: OFF
-        - BUILD_TESTING: OFF
-        - BUILD_WITH_QT4: OFF
-        - BUILD_allproducer: OFF
-        - BUILD_altro: OFF
-        - BUILD_altroUSB: OFF
-        - BUILD_cmspixel: OFF
-        - BUILD_depfet: OFF
-        - BUILD_drs4: ON
-        - BUILD_fortis: OFF
-        - BUILD_gui: ON
-        - BUILD_main: OFF
-        - BUILD_manual: OFF
-        - BUILD_mimoroma: OFF
-        - BUILD_miniTLU: OFF
-        - BUILD_ni: ON
-        - BUILD_nreader: OFF
-        - BUILD_offlinemon: OFF
-        - BUILD_onlinemon: ON
-        - BUILD_palpidefs: OFF
-        - BUILD_pixelmanproducer: OFF
-        - BUILD_python: ON
-        - BUILD_root: ON
-        - BUILD_taki: OFF
-        - BUILD_timepixdummy: OFF
-        - BUILD_tlu: ON
-        - IGNORE_KNOWN_ISSUES: ON
-        - PYTHON: "C:\\Python36"
-        - PYTHON_VERSION: "3.6.1" 
-        - PYTHON_ARCH: "32"
