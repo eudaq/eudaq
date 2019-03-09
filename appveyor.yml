@@ -259,6 +259,7 @@ before_build:
           Write-Host "ROOT has been requested but I do not know how to install it for this compiler";
           $host.SetShouldExit($LastExitCode)
         }
+      }
     }    
 
 - ps: appveyor\install_afs.ps1;
