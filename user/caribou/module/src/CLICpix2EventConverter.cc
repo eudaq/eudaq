@@ -18,6 +18,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     std::map<std::pair<uint8_t, uint8_t>, caribou::pixelConfig> matrix;
     for(uint8_t x = 0; x < 128; x++) {
       for(uint8_t y = 0; y < 128; y++) {
+        // FIXME hard-coded matrix configuration for CLICpix2 - needs to be read from a configuration!
         matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, true, false, false);
       }
     }
