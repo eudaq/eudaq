@@ -68,6 +68,8 @@ unsigned long long int Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
+  bool data_found = false;
+
   // Bad event
   if(ev->NumBlocks() != 1) {
     EUDAQ_WARN("Ignoring bad frame " + std::to_string(ev->GetEventNumber()));
@@ -127,6 +129,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
 
     // Header 0xA and 0xB indicate pixel data
     if(header == 0xA || header == 0xB) {
+      data_found = true;
       // Decode the pixel information from the relevant bits
       const uint16_t dcol = static_cast<uint16_t>((pixdata & 0x0FE0000000000000) >> 52);
       const uint16_t spix = static_cast<uint16_t>((pixdata & 0x001F800000000000) >> 45);
@@ -174,5 +177,5 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   d2->SetTimeBegin(event_begin);
   d2->SetTimeEnd(event_end);
 
-  return true;
+  return data_found;
 }
