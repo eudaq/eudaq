@@ -46,8 +46,8 @@ private:
   void updateInfos();
   bool loadInitFile();
   bool loadConfigFile();
-  bool addStatusDisplay(auto connection);
-  bool removeStatusDisplay(auto connection);
+  bool addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection);
+  bool removeStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection);
   bool updateStatusDisplay();
   bool addToGrid(const QString objectName, QString displayedName="");
   bool addAdditionalStatus(std::string info);
