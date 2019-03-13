@@ -391,7 +391,7 @@ bool RunControlGUI::loadConfigFile() {
   return true;
 }
 
-bool RunControlGUI::addStatusDisplay(auto connection) {
+bool RunControlGUI::addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection) {
     QString name = QString::fromStdString(connection.first->GetName()
                                          +":"+connection.first->GetType());
     QString displayName = QString::fromStdString(connection.first->GetName()
@@ -400,7 +400,7 @@ bool RunControlGUI::addStatusDisplay(auto connection) {
     return true;
 }
 
-bool RunControlGUI::removeStatusDisplay(auto connection) {
+bool RunControlGUI::removeStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection) {
     // remove obsolete information from disconnected values
     for(auto idx=0; idx<grpGrid->count();idx++) {
         QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
