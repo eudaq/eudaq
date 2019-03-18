@@ -24,8 +24,7 @@ namespace eudaq{
     uint32_t id = ev->GetExtendWord();
     auto cvt = Factory<StdEventConverter>::MakeUnique(id);
     if(cvt){
-      cvt->Converting(d1, d2, conf);
-      return true;
+      return cvt->Converting(d1, d2, conf);
     }
     else{
       EUDAQ_WARN("WARNING, no StdEventConverter for RawEvent with ExtendWord("
