@@ -499,17 +499,17 @@ void Timepix3Producer::RunLoop() {
         if(m_ev%10000 == 0) {
           std::cout << "Headers: " << listVector(header_counter) << "\r";
         }
-        
+
         // Data-driven or sequential readout pixel data header?
-        if( header == 0xB || header == 0xA ) {
+        if( header == 0x6 ) { // Or TLU packet header?
+          auto evup = eudaq::Event::MakeUnique("Timepix3TrigEvent");
+          evup->AddBlock(0, &data, sizeof(data));
+          SendEvent(std::move(evup));
+        } else {
           auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
           evup->AddBlock(0, &data, sizeof(data));
           SendEvent(std::move(evup));
 
-        } else if( header == 0x6 ) { // Or TLU packet header?
-          auto evup = eudaq::Event::MakeUnique("Timepix3TrigEvent");
-          evup->AddBlock(0, &data, sizeof(data));
-          SendEvent(std::move(evup));
         }
 
         m_ev++;
