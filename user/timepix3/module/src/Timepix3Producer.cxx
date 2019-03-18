@@ -193,9 +193,9 @@ void Timepix3Producer::DoConfigure() {
 
 
   // Header filter mask:
-  // ETH:   0000110001100000
-  // CPU:   1111001110011111
-  int eth_mask = 0x0C60, cpu_mask = 0xF39F;
+  // ETH:   0000 1100 0111 0000
+  // CPU:   1111 0011 1000 1111
+  int eth_mask = 0x0C70, cpu_mask = 0xF38F;
   if (!spidrctrl->setHeaderFilter(device_nr, eth_mask, cpu_mask)) {
     EUDAQ_ERROR("setHeaderFilter: "+ spidrctrl->errorString());
   }
