@@ -95,7 +95,6 @@ public:
           min = temp1;
       }
     }
-    // std::cout << "YWidth: " << max-min << std::endl;
     return max - min;
   }
   int getX() const {
@@ -139,7 +138,6 @@ public:
       if (temp < beck)
         beck = temp;
     }
-    // std::cout << "YWidth: " << max-min << std::endl;
     return beck;
   }
   int getLVL1Width() const {

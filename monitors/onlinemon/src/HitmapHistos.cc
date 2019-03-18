@@ -32,19 +32,15 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     is_USBPIXI4 = true;
   } else if (_sensor.find("USBPIXI4B") != std::string::npos) {
     is_USBPIXI4 = true;
-	  std::cout << "set correctly" << std::endl;
   }
   is_DEPFET = p.is_DEPFET;
 
-  // std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<<
-  // std::endl;
 
   if (_maxX != -1 && _maxY != -1) {
     sprintf(out, "%s %i Raw Hitmap", _sensor.c_str(), _id);
     sprintf(out2, "h_hitmap_%s_%i", _sensor.c_str(), _id);
     _hitmap = new TH2I(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY);
     SetHistoAxisLabels(_hitmap, "X", "Y");
-    // std::cout << "Created Histogram " << out2 << std::endl;
 
     sprintf(out, "%s %i Raw Hitmap X-Projection", _sensor.c_str(), _id);
     sprintf(out2, "h_hitXmap_%s_%i", _sensor.c_str(), _id);
@@ -60,7 +56,6 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     sprintf(out2, "h_clustermap_%s_%i", _sensor.c_str(), _id);
     _clusterMap = new TH2I(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY);
     SetHistoAxisLabels(_clusterMap, "X", "Y");
-    // std::cout << "Created Histogram " << out2 << std::endl;
 
     sprintf(out, "%s %i hot Pixel Map", _sensor.c_str(), _id);
     sprintf(out2, "h_hotpixelmap_%s_%i", _sensor.c_str(), _id);
@@ -161,7 +156,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
       sprintf(out2, "h_hits_section%i_%s_%i", section, _sensor.c_str(), _id);
       _nHits_section[section] = new TH1I(out2, out, 50, 0, 50);
       if (_nHits_section[section] == NULL) {
-        cout << "Error allocating Histogram" << out << endl;
+	std::cerr << "Error allocating Histogram" << out << endl;
         exit(-1);
       } else {
         _nHits_section[section]->GetXaxis()->SetTitle("Hits");
@@ -173,7 +168,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
               _id);
       _nClusters_section[section] = new TH1I(out2, out, 50, 0, 50);
       if (_nClusters_section[section] == NULL) {
-        cout << "Error allocating Histogram" << out << endl;
+	std::cerr << "Error allocating Histogram" << out << endl;
         exit(-1);
       } else {
         _nClusters_section[section]->GetXaxis()->SetTitle("Clusters");
@@ -185,7 +180,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
               _id);
       _nClustersize_section[section] = new TH1I(out2, out, 10, 0, 10);
       if (_nClustersize_section[section] == NULL) {
-        cout << "Error allocating Histogram" << out << endl;
+	std::cerr << "Error allocating Histogram" << out << endl;
         exit(-1);
       } else {
         _nClustersize_section[section]->GetXaxis()->SetTitle("Cluster Size");
@@ -197,7 +192,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
               _id);
       _nHotPixels_section[section] = new TH1I(out2, out, 50, 0, 50);
       if (_nHotPixels_section[section] == NULL) {
-        cout << "Error allocating Histogram" << out << endl;
+	std::cerr << "Error allocating Histogram" << out << endl;
         exit(-1);
       } else {
         _nHotPixels_section[section]->GetXaxis()->SetTitle("Hot Pixels");
@@ -210,7 +205,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
       for (int j = 0; j < _maxX; j++) {
         plane_map_array[j] = new int[_maxY];
         if (plane_map_array[j] == NULL) {
-          cout << "HitmapHistos :Error in memory allocation" << endl;
+	  std::cerr << "HitmapHistos :Error in memory allocation" << endl;
           exit(-1);
         }
       }
@@ -218,7 +213,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     }
 
   } else {
-    std::cout << "No max sensorsize known!" << std::endl;
+    std::cerr << "No max sensorsize known!" << std::endl;
   }
 }
 
@@ -257,23 +252,7 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
                 65); // determine section label
     _hitmapSections->Fill(sectionid,
                           1); // add one hit to the corresponding section bin
-    // tab[pixel_x/_mon->mon_configdata.getMimosa26_section_boundary()]++;
   }
-  /*else
-    {
-    bool MIMOSA, PIXEL, HITMAP;
-    MIMOSA = true;
-    PIXEL = true;
-    HITMAP = true;
-
-    if (!is_MIMOSA26)
-    cout << "MIMOSA IS FALSE" << endl;
-    if (_hitmapSections == NULL)
-    cout << "_hitmapSections IS NULL" << endl;
-    if (pixelIsHot)
-    cout << "pixelIsHot IS TRUE" << endl;
-
-    }*/
 
   if ((pixel_x < _maxX) && (pixel_y < _maxY)) {
     plane_map_array[pixel_x][pixel_y] = plane_map_array[pixel_x][pixel_y] + 1;
@@ -287,7 +266,6 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
 }
 
 void HitmapHistos::Fill(const SimpleStandardPlane &plane) {
-  // std::cout<< "FILL with a plane." << std::endl;
   if (_nHits != NULL)
     _nHits->Fill(plane.getNHits());
   if ((_nbadHits != NULL) && (plane.getNBadHits() > 0)) {
@@ -303,8 +281,6 @@ void HitmapHistos::Fill(const SimpleStandardPlane &plane) {
       if (_nHits_section[section] != NULL) {
         if (plane.getNSectionHits(section) > 0) {
           _nHits_section[section]->Fill(plane.getNSectionHits(section));
-          // std::cout<< "Section " << section << " filling with " <<
-          // plane.getNSectionHits(section) << std::endl;
         }
       }
       if (_nClusters_section[section] != NULL) {
@@ -428,9 +404,6 @@ void HitmapHistos::Calculate(const int currentEventNum) {
            section++) {
         if ((nHotpixels_section[section] > 0)) {
           _nHotPixels_section[section]->Fill(nHotpixels_section[section]);
-          // cout<<"nHotPixels is being filled for plane " << _id << " with " <<
-          // ++counter_nhotpixels_being_filled << " time in section " <<
-          //      section << endl;
         }
       }
     }

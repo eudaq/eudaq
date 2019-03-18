@@ -18,12 +18,6 @@ bool HitmapCollection::isPlaneRegistered(SimpleStandardPlane p) {
 }
 
 void HitmapCollection::fillHistograms(const SimpleStandardPlane &simpPlane) {
-  /*
-     section_counter[0] = 0;
-     section_counter[1] = 0;
-     section_counter[2] = 0;
-     section_counter[3] = 0;
-   */
 
   if (!isPlaneRegistered(simpPlane)) {
 
@@ -38,38 +32,11 @@ void HitmapCollection::fillHistograms(const SimpleStandardPlane &simpPlane) {
   ++counting;
   events += simpPlane.getNHits();
 
-  //    if(counting == 60000)
-  //        std::cout << "Final AVG: " << std::scientific << (double)events /
-  //        (double)10000 << std::endl;
-
   for (int hitpix = 0; hitpix < simpPlane.getNHits(); hitpix++) {
     const SimpleStandardHit &onehit = simpPlane.getHit(hitpix);
 
     hitmap->Fill(onehit);
   }
-
-  /*bool flag = true;
-    std::cout<< "FILL with plane" <<std::endl;
-    for(int i=0; i<4; i++)
-    {
-    std::cout<< "Section " << i << " filling with " <<
-  simpPlane.getNSectionHits(i) << std::endl;
-
-    }
-
-    cout<<"FILL with events." << endl;
-    for(int i=0; i<4; i++)
-    {
-    std::cout<<"Section " << i << " filling with " << section_counter[i] <<
-  std::endl;
-    simpPlane.getNSectionHits(i) != section_counter[i] )
-    flag = false;
-    if (flag == true)
-    ;//cout << "(DEBUG)Flag: True" << endl;
-    else
-    ;
-  //cout << "(DEBUG)Flag: False" << endl;
-  }*/
 
   for (int cluster = 0; cluster < simpPlane.getNClusters(); cluster++) {
     const SimpleStandardCluster &onecluster = simpPlane.getCluster(cluster);
@@ -89,7 +56,7 @@ void HitmapCollection::bookHistograms(const SimpleStandardEvent &simpev) {
 
 void HitmapCollection::Write(TFile *file) {
   if (file == NULL) {
-    // cout << "HitmapCollection::Write File pointer is NULL"<<endl;
+    cout << "HitmapCollection::Write File pointer is NULL"<<endl;
     exit(-1);
   }
   if (gDirectory != NULL) // check if this pointer exists
@@ -103,12 +70,10 @@ void HitmapCollection::Write(TFile *file) {
       char sensorfolder[255] = "";
       sprintf(sensorfolder, "%s_%d", it->first.getName().c_str(),
               it->first.getID());
-      // cout << "Making new subfolder " << sensorfolder << endl;
       gDirectory->mkdir(sensorfolder);
       gDirectory->cd(sensorfolder);
       it->second->Write();
 
-      // gDirectory->ls();
       gDirectory->cd("..");
     }
     gDirectory->cd("..");
@@ -119,7 +84,6 @@ void HitmapCollection::Calculate(const unsigned int currentEventNumber) {
   if ((currentEventNumber > 10 && currentEventNumber % 1000 * _reduce == 0)) {
     std::map<SimpleStandardPlane, HitmapHistos *>::iterator it;
     for (it = _map.begin(); it != _map.end(); ++it) {
-      // std::cout << "Calculating ..." << std::endl;
       it->second->Calculate(currentEventNumber / _reduce);
     }
   }
@@ -147,14 +111,10 @@ HitmapHistos *HitmapCollection::getHitmapHistos(std::string sensor, int id) {
 void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
   HitmapHistos *tmphisto = new HitmapHistos(p, _mon);
   _map[p] = tmphisto;
-  // std::cout << "Registered Plane: " << p.getName() << " " << p.getID() <<
-  // std::endl;
-  // PlaneRegistered(p.getName(),p.getID());
   if (_mon != NULL) {
     if (_mon->getOnlineMon() == NULL) {
       return; // don't register items
     }
-    // cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     char tree[1024], folder[1024];
     sprintf(tree, "%s/Sensor %i/RawHitmap", p.getName().c_str(), p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
@@ -298,7 +258,6 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
         // loop over all histograms
         for (unsigned int nhistos = 0; nhistos < 4; nhistos++) {
           if (myhistos[nhistos] == NULL) {
-            // cout << section << " " << "is null" << endl;
           } else {
             _mon->getOnlineMon()->registerTreeItem(mytree[nhistos]);
             _mon->getOnlineMon()->registerHisto(mytree[nhistos],
