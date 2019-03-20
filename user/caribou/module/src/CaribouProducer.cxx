@@ -34,9 +34,6 @@ private:
   LogLevel level_;
   bool m_exit_of_run;
 
-  bool drop_empty_frames_{}, drop_before_t0_{};
-  bool t0_seen_{};
-
   std::string adc_signal_;
 };
 
@@ -112,9 +109,6 @@ void CaribouProducer::DoInitialise() {
 void CaribouProducer::DoConfigure() {
   auto config = GetConfiguration();
   LOG(INFO) << "Configuring CaribouProducer: " << config->Name();
-
-  drop_empty_frames_ = config->Get("drop_empty_frames", false);
-  drop_before_t0_ = config->Get("drop_before_t0", false);
 
   std::lock_guard<std::mutex> lock{device_mutex_};
   EUDAQ_INFO("Configuring device " + device_->getName());
@@ -194,75 +188,36 @@ void CaribouProducer::RunLoop() {
   LOG(INFO) << "Starting run loop...";
   std::lock_guard<std::mutex> lock{device_mutex_};
 
-  int empty_frames = 0, total_words = 0;
-  uint64_t last_shutter_open = 0;
-
   while(!m_exit_of_run) {
     try {
       // Retrieve data from the device:
       std::vector<uint32_t> data = device_->getRawData();
 
-      std::vector<uint64_t> timestamps = device_->timestampsPatternGenerator();
-      std::stringstream times;
-      bool shutterOpen = false;
-      uint64_t shutter_open = 0, shutter_close = 0;
-      for(const auto& timestamp : timestamps) {
-        if((timestamp >> 48) == 3) {
-          times << ", frame: " << (timestamp & 0xffffffffffff);
-          last_shutter_open = shutter_open;
-          shutter_open = (timestamp & 0xffffffffffff);
-          shutterOpen = true;
-        } else if((timestamp >> 48) == 1 && shutterOpen == true) {
-          times << " -- " << (timestamp & 0xffffffffffff);
-          shutter_close = (timestamp & 0xffffffffffff);
-          shutterOpen = false;
-        }
-      }
+      if(!data.empty()) {
+        // Create new event
+        auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+        // Use trigger N to store frame counter
+        event->SetTriggerN(m_ev);
+        // Add data to the event
+        event->AddBlock(0, data);
 
-      // Check if there was a T0:
-      if(!t0_seen_) {
-        // Last shtter open had higher timestamp than this one:
-        t0_seen_ = (last_shutter_open > shutter_open);
-      }
-
-      if(data.size() > 12) {
-        LOG(DEBUG) << m_ev << " | " << data.size() << " data words" << times.str();
-        total_words += data.size();
-      } else {
-        empty_frames++;
-      }
-
-      if(!drop_empty_frames_ || data.size() > 12) {
-        if(!drop_before_t0_ || t0_seen_) {
-          // Create new event
-          auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
-          // Use trigger N to store frame counter
-          event->SetTriggerN(m_ev);
-          // Add timestamps to the event
-          event->AddBlock(0, timestamps);
-          // Add data to the event
-          event->AddBlock(1, data);
-          // Set timestamps of the frame:
-          event->SetTimestamp(shutter_open, shutter_close);
-
-          // Query ADC if wanted:
-          if(m_ev%1000 == 0) {
-            if(!adc_signal_.empty()) {
-              auto adc_value = device_->getADC(adc_signal_);
-              LOG(DEBUG) << "Reading ADC: " << adc_value << "V";
-              event->SetTag(adc_signal_, adc_value);
-            }
+        // Query ADC if wanted:
+        if(m_ev%1000 == 0) {
+          if(!adc_signal_.empty()) {
+            auto adc_value = device_->getADC(adc_signal_);
+            LOG(DEBUG) << "Reading ADC: " << adc_value << "V";
+            event->SetTag(adc_signal_, adc_value);
           }
-
-          // Send the event to the Data Collector
-          SendEvent(std::move(event));
         }
+
+        // Send the event to the Data Collector
+        SendEvent(std::move(event));
       }
 
       // Now increment the event number
       m_ev++;
 
-      LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev << " empty: " << empty_frames << " with pixels: " << (m_ev - empty_frames);
+      LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev;
     } catch(caribou::DataException& e) {
       // Retrieval failed, retry once more before aborting:
       EUDAQ_WARN(std::string(e.what()) + ", skipping data packet");
