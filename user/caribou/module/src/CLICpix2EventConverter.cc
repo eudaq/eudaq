@@ -10,6 +10,8 @@ namespace{
   Register<CLICpix2Event2StdEventConverter>(CLICpix2Event2StdEventConverter::m_id_factory);
 }
 
+bool CLICpix2Event2StdEventConverter::t0_seen_(false);
+double CLICpix2Event2StdEventConverter::last_shutter_open_(0);
 bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
@@ -37,16 +39,36 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
-  // Block 0 is timestamps:
+  // Block 0 contains all data, split it into timestamps and pixel data, returned as std::vector<uint8_t>
+  auto datablock = ev->GetBlock(0);
+
+  // Number of timestamps: first word of data
+  uint32_t timestamp_words;
+  memcpy(&timestamp_words, &datablock[0], sizeof(uint32_t));
+
+  // Calulate positions and length of data blocks:
+  auto timestamp_pos = sizeof(uint32_t);
+  auto timestamp_length = timestamp_words * sizeof(uint32_t);
+  auto data_pos = timestamp_pos + timestamp_length;
+  auto data_length = datablock.size() - timestamp_length - timestamp_pos;
+
+  // Timestamps:
   std::vector<uint64_t> timestamps;
-  auto time = ev->GetBlock(0);
-  timestamps.resize(time.size() / sizeof(uint64_t));
-  memcpy(&timestamps[0], &time[0],time.size());
+  timestamps.resize(timestamp_length / sizeof(uint64_t));
+  memcpy(&timestamps[0], &datablock[0] + timestamp_pos, timestamp_length);
+
+  // Pixel data:
+  std::vector<uint32_t> rawdata;
+  rawdata.resize(data_length / sizeof(uint32_t));
+  memcpy(&rawdata[0], &datablock[0] + data_pos, data_length);
 
   // Calculate time stamps, CLICpix2 runs on 100MHz clock:
   bool shutterOpen = false;
   double shutter_open = 0, shutter_close = 0;
-  for(const auto& timestamp : timestamps) {
+  for(auto& timestamp : timestamps) {
+    // Remove first bit (end marker):
+    timestamp &= 0x7ffffffffffff;
+
     if((timestamp >> 48) == 3) {
       shutter_open = static_cast<double>(timestamp & 0xffffffffffff) * 10.;
       shutterOpen = true;
@@ -56,11 +78,18 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
   }
 
-  // Ouch, this hurts:
-  std::vector<unsigned int> rawdata;
-  auto tmp = ev->GetBlock(1);
-  rawdata.resize(tmp.size() / sizeof(unsigned int));
-  memcpy(&rawdata[0], &tmp[0],tmp.size());
+  // Check if there was a T0:
+  if(!t0_seen_) {
+    // Last shutter open had higher timestamp than this one:
+    t0_seen_ = (last_shutter_open_ > shutter_open);
+  }
+
+  // FIXME - hardcoded configuration:
+  bool drop_before_t0 = true;
+  // No T0 signal seen yet, dropping frame:
+  if(drop_before_t0 && !t0_seen_) {
+    return false;
+  }
 
   // Decode the data:
   decoder.decode(rawdata);

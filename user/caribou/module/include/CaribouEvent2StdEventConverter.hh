@@ -12,6 +12,9 @@ namespace eudaq {
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouCLICpix2Event");
+  private:
+    static bool t0_seen_;
+    static double last_shutter_open_;
   };
 
 } // namespace eudaq
