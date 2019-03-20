@@ -199,22 +199,10 @@ void CaribouProducer::RunLoop() {
 
   while(!m_exit_of_run) {
     try {
-      // pearydata data;
-      std::vector<uint32_t> data;
-      try {
-        device_->command("triggerPatternGenerator", "1");
-        // Read the data:
-        data = device_->getRawData();
-      } catch(caribou::DataException& e) {
-        // Retrieval failed, retry once more before aborting:
-        EUDAQ_WARN(std::string(e.what()) + ", skipping frame.");
-        device_->timestampsPatternGenerator(); // in case of readout error, clear timestamp fifo before going to next event
-        continue;
-      }
+      // Retrieve data from the device:
+      std::vector<uint32_t> data = device_->getRawData();
 
       std::vector<uint64_t> timestamps = device_->timestampsPatternGenerator();
-
-
       std::stringstream times;
       bool shutterOpen = false;
       uint64_t shutter_open = 0, shutter_close = 0;
@@ -276,7 +264,8 @@ void CaribouProducer::RunLoop() {
 
       LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev << " empty: " << empty_frames << " with pixels: " << (m_ev - empty_frames);
     } catch(caribou::DataException& e) {
-      device_->timestampsPatternGenerator(); // in case of readout error, clear timestamp fifo before going to next event
+      // Retrieval failed, retry once more before aborting:
+      EUDAQ_WARN(std::string(e.what()) + ", skipping data packet");
       continue;
     } catch(caribou::caribouException& e) {
       EUDAQ_ERROR(e.what());
