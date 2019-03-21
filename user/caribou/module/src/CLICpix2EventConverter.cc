@@ -58,8 +58,20 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     auto data_length = datablock.size() - timestamp_length - timestamp_pos;
 
     // Timestamps:
-    timestamps.resize(timestamp_length / sizeof(uint64_t));
-    memcpy(&timestamps[0], &datablock[0] + timestamp_pos, timestamp_length);
+    std::vector<uint32_t> ts_tmp;
+    ts_tmp.resize(timestamp_words);
+    memcpy(&ts_tmp[0], &datablock[0] + timestamp_pos, timestamp_length);
+
+    bool msb = true;
+    uint64_t ts64;
+    for(const auto& ts : ts_tmp) {
+      if(msb) {
+        ts64 = (static_cast<uint64_t>(ts & 0x7ffff) << 32);
+      } else {
+        timestamps.push_back(ts64 | ts);
+      }
+      msb = !msb;
+    }
     LOG(DEBUG) << "        " << timestamps.size() << " timestamps retrieved";
 
     // Pixel data:
@@ -88,9 +100,6 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   bool full_shutter = false;
   double shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
-    // Remove first bit (end marker):
-    timestamp &= 0x7ffffffffffff;
-
     if((timestamp >> 48) == 3) {
       shutter_open = static_cast<double>(timestamp & 0xffffffffffff) * 10.;
       shutterOpen = true;
