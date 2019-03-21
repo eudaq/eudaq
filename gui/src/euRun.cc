@@ -193,12 +193,20 @@ void RunControlGUI::on_btnLoadConf_clicked() {
 void RunControlGUI::DisplayTimer(){
   updateInfos();
   updateStatusDisplay();
-  updateProgressBar();
-  if(m_time_per_step<1)
+  // update scan progress bar:
+  if(m_scanningTimer.remainingTime()<0)
+      progressBar_scan->setValue(0);
+  else if(m_time_per_step>0)
+          progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
+                             ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_n_steps)));
+
+  if(m_time_per_step<1){
       if(checkEventsInStep())
-          nextScanStep();
-
-
+          prepareAndStartStep();
+       progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
+                        (m_events_per_step-getEventsCurrent())/double(m_events_per_step)
+                        *100./std::max(1,m_n_steps));
+  }
 }
 
 void RunControlGUI::updateInfos(){
@@ -586,7 +594,12 @@ void RunControlGUI::on_btnStartScan_clicked()
        progressBar_scan->setMaximum(100);
        m_scan_active = true;
        btnStartScan->setText("Interrupt scan");
-       nextScanStep();
+       if(prepareAndStartStep()){
+           if(m_time_per_step>1)
+               m_scanningTimer.start();
+        }else
+           EUDAQ_USER("Starting scan failed");
+
    }
 }
 
@@ -598,13 +611,16 @@ void RunControlGUI::on_btnStartScan_clicked()
 void RunControlGUI::nextScanStep()
 {
     // stop readout
-    if((m_current_step>=m_n_steps || m_scan_interrupt_received) && m_scan_active) {
+    //on_btnStop_clicked();
+    m_current_step++;
+    if(m_current_step>=m_n_steps || m_scan_interrupt_received) {
         cout << "stopping scan"<<endl;
         m_scan_active = false;
         m_scanningTimer.stop();
         btnStartScan->setText("Start Scan");
+
         on_btnStop_clicked();
-        QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
+        m_current_step = 0;
     }else {
         cout << "Changing Text"<<endl;
         txtConfigFileName
@@ -615,8 +631,6 @@ void RunControlGUI::nextScanStep()
             m_scanningTimer.start();
 
     }
-    m_current_step++;
-
 }
 /**
  * @brief RunControlGUI::prepareAndStartStep
@@ -633,14 +647,14 @@ bool RunControlGUI::prepareAndStartStep()
             cout << "Waiting for reset"<<endl;
         }
         EUDAQ_USER("Resetted");
-        std::this_thread::sleep_for (std::chrono::seconds(3));
+        std::this_thread::sleep_for (std::chrono::seconds(10));
         on_btnInit_clicked();
         while(!allConnectionsInState(eudaq::Status::STATE_UNCONF)){
             std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for init"<<endl;
         }
         updateInfos();
-        std::this_thread::sleep_for (std::chrono::seconds(3));
+        std::this_thread::sleep_for (std::chrono::seconds(10));
         EUDAQ_USER("Initialized");
         on_btnConfig_clicked();
         while(!allConnectionsInState(eudaq::Status::STATE_CONF)){
@@ -648,7 +662,7 @@ bool RunControlGUI::prepareAndStartStep()
             cout << "Waiting for configuration"<<endl;
         }
         updateInfos();
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
         EUDAQ_USER("configured");
         on_btnStart_clicked();
         EUDAQ_USER("Running");
@@ -703,7 +717,7 @@ bool RunControlGUI::checkScanParameters(){
     if(! m_scan_config->Has("start")
             || ! m_scan_config->Has("stop")
             || ! m_scan_config->Has("step")
-            || (! m_scan_config->Has("time") && (! m_scan_config->Has("nevents")))
+            //|| ! m_scan_config->Has("time")
             || ! m_scan_config->Has("name")
             || ! m_scan_config->Has("parameter"))
         return false;
@@ -749,8 +763,8 @@ void RunControlGUI::createConfigs(){
  */
 bool RunControlGUI::checkEventsInStep(){
     int events = getEventsCurrent();
-//    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<events <<" of "<< m_events_per_step<<"\t"<<m_scan_name<<endl;
-    return ( (events > 0 ? events : (m_events_per_step-2))>m_events_per_step);
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<events <<"\t"<<m_scan_name<<endl;
+    return ( (events > 0 ? events : (m_events_per_step+2))<=m_events_per_step);
 }
 
 /**
@@ -766,6 +780,7 @@ int RunControlGUI::getEventsCurrent(){
         return -2;
     for(auto conn : map_conn_status) {
         if((conn.first->GetType()+"."+conn.first->GetName())==m_scan_name){
+            cout <<"found"<<endl;
             auto tags = conn.second->GetTags();
             for(auto &tag: tags)
                 if(tag.first=="EventN")
@@ -775,15 +790,3 @@ int RunControlGUI::getEventsCurrent(){
     return -1;
 }
 
-void RunControlGUI::updateProgressBar(){
-    double scanProgress = 0;
-    if(m_scan_active){
-        scanProgress = (m_current_step-1)/double(std::max(1,m_n_steps))*100;
-    if(m_time_per_step>1)
-        scanProgress+= ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_n_steps));
-    else
-        scanProgress += getEventsCurrent()/double(m_events_per_step)*100./std::max(1,m_n_steps);
-    }
-    progressBar_scan->setValue(scanProgress);
-
-}
