@@ -72,13 +72,10 @@ private:
   uint32_t m_run_n_qsettings;
   int m_display_col, m_display_row;
   QMenu* contextMenu;
-  bool m_lastexit_success;
 
+  bool m_lastexit_success;
   bool m_scan_active;
   bool m_scan_interrupt_received;
-  QTimer m_scanningTimer;
-  std::shared_ptr<eudaq::Configuration> m_scan_config;
-
   double m_scanning_step_time;
   double m_start_value;
   double m_stop_value;
@@ -90,6 +87,7 @@ private:
   std::vector<std::string> m_scan_config_files;
   std::string m_scan_parameter;
   std::string m_scan_name;
-
+  QTimer m_scanningTimer;
+  std::shared_ptr<eudaq::Configuration> m_scan_config;
   void updateProgressBar();
 };

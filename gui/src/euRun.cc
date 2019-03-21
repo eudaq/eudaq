@@ -567,11 +567,13 @@ void RunControlGUI::on_btnStartScan_clicked()
        reply = QMessageBox::question(NULL,"Interrupt Scan","Do you want to stop immediately?\n Hitting no will stop after finishing the current step",
                                      QMessageBox::Yes|QMessageBox::No|QMessageBox::Abort);
        if(reply==QMessageBox::Yes) {
+           cout <<"stopped" <<endl;
            m_scan_active = false;
            m_scanningTimer.stop();
            btnStartScan->setText("Start Scan");
 
        } else if(reply==QMessageBox::Abort) {
+           cout <<"cancelled" <<endl;
            m_scan_active = true;
            btnStartScan->setText("Interrupt scan");
        } else if(reply==QMessageBox::No) {
@@ -597,12 +599,14 @@ void RunControlGUI::nextScanStep()
 {
     // stop readout
     if((m_current_step>=m_n_steps || m_scan_interrupt_received) && m_scan_active) {
+        cout << "stopping scan"<<endl;
         m_scan_active = false;
         m_scanningTimer.stop();
         btnStartScan->setText("Start Scan");
         on_btnStop_clicked();
         QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
     }else if(m_scan_active) {
+        cout << "Changing Text"<<endl;
         txtConfigFileName
                 ->setText(QString::fromStdString(m_scan_config_files.at(m_current_step)));
         if(!prepareAndStartStep())
@@ -660,7 +664,7 @@ bool RunControlGUI::prepareAndStartStep()
 /**
  * @brief RunControlGUI::allConnectionsInState
  * @param state to be cheked
- * @return true if all connections are in state, false otherwise
+ * @return true if all connections are in state, false elsewise
  */
 bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
     std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
@@ -669,11 +673,16 @@ bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
     else
         return false;
     for(auto &conn_status: map_conn_status){
-        if(!conn_status.second)
+        if(!conn_status.second){
+            cout << "Connection lost "<< endl;
             continue;
+        }
         auto state_conn = conn_status.second->GetState();
         if((int)state_conn != (int)state)
+        {
             return false;
+            cout <<"Comparing states for "<<conn_status.first->GetName()<<" failed: "<<state<<"\t" << state_conn<<endl;
+        }
     }
     return true;
 }
@@ -685,9 +694,6 @@ bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
  */
 bool RunControlGUI::readScanConfig(){
     m_scan_config = eudaq::Configuration::MakeUniqueReadFile(txtScanFile->text().toStdString());
-
-    if(!m_scan_config->HasSection("sfirst"))
-        return false;
     m_scan_config->SetSection("first");
     return checkScanParameters();
 }
@@ -726,6 +732,7 @@ void RunControlGUI::createConfigs(){
         std::string filename = (config.substr(0,config.size()-5)+"_scan_"+std::to_string(i)+".conf");
         if(config != txtConfigFileName->text().toStdString())
             filename = (config+"_scan_"+std::to_string(i)+".conf");
+        cout << filename<<endl;
         m_scan_config_files.push_back(filename);
         defaultconf->SetString(m_scan_parameter,std::to_string(m_start_value+i*m_step_size));
         std::filebuf fb;
@@ -738,7 +745,7 @@ void RunControlGUI::createConfigs(){
 /**
  * @brief RunControlGUI::checkEventsInStep
  * @abstract check if the reuqested number of events for a certain step is recorded
- * @return true if reached/surpassed, false otherwise
+ * @return true if reached/surpassed, false elsewise
  */
 bool RunControlGUI::checkEventsInStep(){
     int events = getEventsCurrent();
