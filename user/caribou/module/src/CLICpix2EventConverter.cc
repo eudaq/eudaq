@@ -1,6 +1,7 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
 #include "framedecoder/clicpix2_frameDecoder.hpp"
+#include "log.hpp"
 #include "clicpix2_pixels.hpp"
 
 using namespace eudaq;
@@ -43,10 +44,12 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     // Block 0 contains all data, split it into timestamps and pixel data, returned as std::vector<uint8_t>
     auto datablock = ev->GetBlock(0);
+    LOG(DEBUG) << "CLICpix2 frame with";
 
     // Number of timestamps: first word of data
     uint32_t timestamp_words;
     memcpy(&timestamp_words, &datablock[0], sizeof(uint32_t));
+    LOG(DEBUG) << "        " << timestamp_words / 2 << " timestamps from header";
 
     // Calulate positions and length of data blocks:
     auto timestamp_pos = sizeof(uint32_t);
@@ -57,10 +60,12 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // Timestamps:
     timestamps.resize(timestamp_length / sizeof(uint64_t));
     memcpy(&timestamps[0], &datablock[0] + timestamp_pos, timestamp_length);
+    LOG(DEBUG) << "        " << timestamps.size() << " timestamps retrieved";
 
     // Pixel data:
     rawdata.resize(data_length / sizeof(uint32_t));
     memcpy(&rawdata[0], &datablock[0] + data_pos, data_length);
+    LOG(DEBUG) << "        " << rawdata.size() << " words of frame data";
   } else if(ev->NumBlocks() == 2) {
     // Old data format - timestamps in block 0, pixel data in block 1
 
@@ -80,6 +85,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // Calculate time stamps, CLICpix2 runs on 100MHz clock:
   bool shutterOpen = false;
+  bool full_shutter = false;
   double shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
     // Remove first bit (end marker):
@@ -91,7 +97,14 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     } else if((timestamp >> 48) == 1 && shutterOpen == true) {
       shutter_close = static_cast<double>(timestamp & 0xffffffffffff) * 10.;
       shutterOpen = false;
+      full_shutter = true;
     }
+  }
+
+  // If we never saw a shutter open we have a problem:
+  if(!full_shutter) {
+    EUDAQ_WARN("Frame without shutter timestamps " + std::to_string(ev->GetEventNumber()));
+    return false;
   }
 
   // Check if there was a T0:
