@@ -85,81 +85,6 @@
        <property name="verticalSpacing">
         <number>4</number>
        </property>
-       <item row="3" column="4">
-        <widget class="QPushButton" name="btnTerminate">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Terminate the DAQ session</string>
-         </property>
-         <property name="text">
-          <string>Terminate</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="lblNextRunNumber">
-         <property name="text">
-          <string>Next RunN: </string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="4">
-        <widget class="QPushButton" name="btnInit">
-         <property name="text">
-          <string>Init</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="2">
-        <widget class="QProgressBar" name="progressBar_scan">
-         <property name="value">
-          <number>24</number>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="4">
-        <widget class="QPushButton" name="btnStop">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Stop a run</string>
-         </property>
-         <property name="text">
-          <string>Stop</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="4">
-        <widget class="QPushButton" name="btnStartScan">
-         <property name="text">
-          <string>Start Scan</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="lblConfig">
-         <property name="text">
-          <string>Config file: </string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="2">
-        <widget class="QLineEdit" name="txtScanFile">
-         <property name="text">
-          <string>scan config file not set</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>ScanFile</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0">
         <widget class="QLabel" name="lblInit">
          <property name="text">
@@ -181,10 +106,17 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="3">
-        <widget class="QPushButton" name="btnLoadConf">
+       <item row="0" column="4">
+        <widget class="QPushButton" name="btnInit">
          <property name="text">
-          <string>Load</string>
+          <string>Init</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="lblConfig">
+         <property name="text">
+          <string>Config file: </string>
          </property>
         </widget>
        </item>
@@ -195,6 +127,13 @@
          </property>
          <property name="text">
           <string>configuration file not set</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QPushButton" name="btnLoadConf">
+         <property name="text">
+          <string>Load</string>
          </property>
         </widget>
        </item>
@@ -217,6 +156,16 @@
          </property>
         </widget>
        </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="lblNextRunNumber">
+         <property name="text">
+          <string>Next RunN: </string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QLineEdit" name="txtNextRunNumber"/>
+       </item>
        <item row="2" column="3">
         <widget class="QPushButton" name="btnStart">
          <property name="enabled">
@@ -227,6 +176,19 @@
          </property>
          <property name="text">
           <string>Start</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QPushButton" name="btnStop">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Stop a run</string>
+         </property>
+         <property name="text">
+          <string>Stop</string>
          </property>
         </widget>
        </item>
@@ -243,20 +205,16 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="2">
-        <widget class="QLineEdit" name="txtNextRunNumber"/>
-       </item>
-       <item row="5" column="3">
-        <widget class="QPushButton" name="btn_LoadScanFile">
-         <property name="text">
-          <string>Load</string>
+       <item row="3" column="4">
+        <widget class="QPushButton" name="btnTerminate">
+         <property name="enabled">
+          <bool>false</bool>
          </property>
-        </widget>
-       </item>
-       <item row="4" column="2">
-        <widget class="QLineEdit" name="txtLogmsg">
          <property name="toolTip">
-          <string>Send a message to the LogCollector</string>
+          <string>Terminate the DAQ session</string>
+         </property>
+         <property name="text">
+          <string>Terminate</string>
          </property>
         </widget>
        </item>
@@ -264,6 +222,13 @@
         <widget class="QLabel" name="lblLogmsg">
          <property name="text">
           <string>Log: </string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="2">
+        <widget class="QLineEdit" name="txtLogmsg">
+         <property name="toolTip">
+          <string>Send a message to the LogCollector</string>
          </property>
         </widget>
        </item>

@@ -10,8 +10,6 @@ using std::endl;
 RunControlGUI::RunControlGUI()
   : QMainWindow(0, 0),
     m_display_col(0),
-    m_scan_active(false),
-    m_scan_interrupt_received(false),
     m_display_row(0){
     m_map_label_str = {{"RUN", "Run Number"}};
 
@@ -54,8 +52,6 @@ RunControlGUI::RunControlGUI()
     ->setText(settings.value("lastConfigFile", "config file not set").toString());
   txtInitFileName
     ->setText(settings.value("lastInitFile", "init file not set").toString());
-  txtScanFile
-    ->setText(settings.value("lastScanFile", "scan file not set").toString());
 
   settings.endGroup();
 
@@ -76,7 +72,6 @@ RunControlGUI::RunControlGUI()
 
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
   connect(&m_timer_display, SIGNAL(timeout()), this, SLOT(DisplayTimer()));
-  connect(&m_scanningTimer,SIGNAL(timeout()), this, SLOT(nextScanStep()));
   m_timer_display.start(1000); // internal update time of GUI
   btnInit->setEnabled(1);
   btnConfig->setEnabled(1);
@@ -106,8 +101,11 @@ void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
 
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
-  if(!checkFile(QString::fromStdString(settings),QString::fromStdString("init file")))
-      return;
+  QFileInfo check_file(txtInitFileName->text());
+  if(!check_file.exists() || !check_file.isFile()){
+    QMessageBox::warning(NULL, "ERROR", "Init file does not exist.");
+    return;
+  }
   if(m_rc){
     m_rc->ReadInitilizeFile(settings);
     m_rc->Initialise();
@@ -120,8 +118,11 @@ void RunControlGUI::on_btnTerminate_clicked(){
 
 void RunControlGUI::on_btnConfig_clicked(){
   std::string settings = txtConfigFileName->text().toStdString();
-  if(!checkFile(QString::fromStdString(settings),QString::fromStdString("Config file")))
-      return;
+  QFileInfo check_file(txtConfigFileName->text());
+  if(!check_file.exists() || !check_file.isFile()){
+    QMessageBox::warning(NULL, "ERROR", "Config file does not exist.");
+    return;
+  }
   if(m_rc){
     m_rc->ReadConfigureFile(settings);
     m_rc->Configure();
@@ -159,7 +160,6 @@ void RunControlGUI::on_btnStop_clicked() {
 void RunControlGUI::on_btnReset_clicked() {
   if(m_rc)
     m_rc->Reset();
-  EUDAQ_USER("Reset called");
 }
 
 void RunControlGUI::on_btnLog_clicked() {
@@ -218,7 +218,33 @@ void RunControlGUI::DisplayTimer(){
       if(!conn_status.second)
     continue;
       auto state_conn = conn_status.second->GetState();
-      state_conn < state ? state = (eudaq::Status::State)state_conn : state = state ;
+      switch(state_conn){
+      case eudaq::Status::STATE_ERROR:{
+    state = eudaq::Status::STATE_ERROR;
+    break;
+      }
+      case eudaq::Status::STATE_UNINIT:{
+    if(state != eudaq::Status::STATE_ERROR){
+      state = eudaq::Status::STATE_UNINIT;
+    }
+    break;
+      }
+      case eudaq::Status::STATE_UNCONF:{
+    if(state != eudaq::Status::STATE_ERROR &&
+       state != eudaq::Status::STATE_UNINIT){
+      state = eudaq::Status::STATE_UNCONF;
+    }
+    break;
+      }
+      case eudaq::Status::STATE_CONF:{
+    if(state != eudaq::Status::STATE_ERROR &&
+       state != eudaq::Status::STATE_UNINIT &&
+       state != eudaq::Status::STATE_UNCONF){
+      state = eudaq::Status::STATE_CONF;
+    }
+    break;
+      }
+      }
       m_model_conns.SetStatus(conn_status.first, conn_status.second);
     }
   }
@@ -234,7 +260,7 @@ void RunControlGUI::DisplayTimer(){
   btnLoadInit->setEnabled(state != eudaq::Status::STATE_RUNNING);
   btnLoadConf->setEnabled(state != eudaq::Status::STATE_RUNNING);
   btnStart->setEnabled(state == eudaq::Status::STATE_CONF);
-  btnStop->setEnabled(state == eudaq::Status::STATE_RUNNING && !m_scan_active);
+  btnStop->setEnabled(state == eudaq::Status::STATE_RUNNING);
   btnReset->setEnabled(state != eudaq::Status::STATE_RUNNING);
   btnTerminate->setEnabled(state != eudaq::Status::STATE_RUNNING);
 
@@ -258,13 +284,6 @@ void RunControlGUI::DisplayTimer(){
   }
   m_map_conn_status_last = map_conn_status;
   updateStatusDisplay();
-  // update scan progress bar:
-  if(m_scanningTimer.remainingTime()<0)
-      progressBar_scan->setValue(0);
-  else
-      progressBar_scan->setValue(m_current_step/double(std::max(1,m_n_steps+1))*100+
-                             ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_n_steps)));
-
 }
 
 void RunControlGUI::closeEvent(QCloseEvent *event) {
@@ -284,7 +303,6 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
     settings.setValue("pos", pos());
     settings.setValue("lastConfigFile", txtConfigFileName->text());
     settings.setValue("lastInitFile", txtInitFileName->text());
-    settings.setValue("lastScanFile", txtScanFile->text());
     settings.setValue("successexit", 1);
     settings.endGroup();
     if(m_rc)
@@ -361,7 +379,6 @@ void RunControlGUI::onCustomContextMenu(const QPoint &point)
 
 }
 
-
 bool RunControlGUI::loadInitFile() {
   std::string settings = txtInitFileName->text().toStdString();
   QFileInfo check_file(txtInitFileName->text());
@@ -418,7 +435,7 @@ bool RunControlGUI::removeStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::S
 bool RunControlGUI::addToGrid(const QString objectName, QString displayedName) {
 
     if(m_str_label.count(objectName)==1) {
-        //QMessageBox::warning(NULL,"ERROR - Status display","Duplicating display entry request: "+objectName);
+        QMessageBox::warning(NULL,"ERROR - Status display","Duplicating display entry request: "+objectName);
         return false;
     }
     if(displayedName=="")
@@ -482,7 +499,7 @@ bool RunControlGUI::updateStatusDisplay() {
         }
         it++;
     }
-       return true;
+    return true;
 }
 
 bool RunControlGUI::addAdditionalStatus(std::string info) {
@@ -490,7 +507,8 @@ bool RunControlGUI::addAdditionalStatus(std::string info) {
     if(results.size()%2!=0) {
         QMessageBox::warning(NULL,"ERROR","Additional Status Display inputs are not correctly formatted - please check");
        return false;
-    } else {
+    }
+    else {
         for(auto c = 0; c < results.size();c+=2) {
             // check if the connection exists, otherwise do not display
             auto it = m_map_conn_status_last.begin();
@@ -509,223 +527,4 @@ bool RunControlGUI::addAdditionalStatus(std::string info) {
         }
     }
     return true;
-}
-
-bool RunControlGUI::checkFile(QString file, QString usecase)
-{
-    QFileInfo check_file(file);
-    if(!check_file.exists() || !check_file.isFile()){
-      QMessageBox::warning(NULL, "ERROR",QString(usecase + "Init file does not exist."));
-      return false;
-    }
-    else
-        return true;
-}
-
-/**
-
- SCAN FUNCTIONALITIES
-*/
-
-/**
- * @brief RunControlGUI::on_btn_LoadScanFile_clicked
- * @abstract push Button to open file dialog to select the scan configuration
- * file.
- * @group Scanning utils, RunControlGUI
- */
-
-void RunControlGUI::on_btn_LoadScanFile_clicked()
-{
-    QString usedpath =QFileInfo(txtScanFile->text()).path();
-    QString filename =QFileDialog::getOpenFileName(this, tr("Open File"),
-                           usedpath,
-                           tr("*.scan (*.scan)"));
-    if (!filename.isNull()){
-      txtScanFile->setText(filename);
-    }
-
-}
-/**
- * @brief RunControlGUI::on_btnStartScan_clicked
- * @abstract Button to control the scanning procedure. Does not implement any real
- * functionality, only changes status bools and texts
- *
- */
-void RunControlGUI::on_btnStartScan_clicked()
-{
-   if(!checkFile(txtScanFile->text(),QString::fromStdString("Scan File")))
-       return;
-  if(!readScanConfig()){
-      QMessageBox::warning(NULL,"ERROR","invalid scan config file");
-      return;
-    }
-   if(m_scan_active == true) {
-       QMessageBox::StandardButton reply;
-       reply = QMessageBox::question(NULL,"Interrupt Scan","Do you want to stop immediately?\n Hitting no will stop after finishing the current step",
-                                     QMessageBox::Yes|QMessageBox::No|QMessageBox::Abort);
-       if(reply==QMessageBox::Yes) {
-           cout <<"stopped" <<endl;
-           m_scan_active = false;
-           m_scanningTimer.stop();
-           btnStartScan->setText("Start Scan");
-
-       } else if(reply==QMessageBox::Abort) {
-           cout <<"cancelled" <<endl;
-           m_scan_active = true;
-           btnStartScan->setText("Interrupt scan");
-       } else if(reply==QMessageBox::No) {
-           m_scan_interrupt_received = true;
-           btnStartScan->setText("Scan stops after current step");
-       }
-   } else {
-       // init scan parameters:
-       m_n_steps = 10;
-       m_current_step = 0;
-       progressBar_scan->setMaximum(100);
-       m_scan_active = true;
-       btnStartScan->setText("Interrupt scan");
-       if(prepareAndStartStep())
-           m_scanningTimer.start();
-        else
-           EUDAQ_USER("Starting scan failed");
-
-   }
-}
-
-/**
- * @brief RunControlGUI::nextScanStep
- * @abstract Slot to start the next step - Can be either triggered via a QTimer
- * or an eventnumber of one producer
- */
-void RunControlGUI::nextScanStep()
-{
-    // stop readout
-    //on_btnStop_clicked();
-    m_current_step++;
-    if(m_current_step>m_n_steps || m_scan_interrupt_received) {
-        cout << "stopping scan"<<endl;
-        m_scan_active = false;
-        m_scanningTimer.stop();
-        btnStartScan->setText("Start Scan");
-
-        on_btnStop_clicked();
-        m_current_step = 0;
-    }else {
-        cout << "Changing Text"<<endl;
-        txtConfigFileName
-                ->setText(QString::fromStdString(m_scan_config_files.at(m_current_step)));
-        if(!prepareAndStartStep())
-            return;
-        m_scanningTimer.start();
-
-    }
-}
-/**
- * @brief RunControlGUI::prepareAndStartStep
- * @abstract stop the data taking, update the configuration and start a new run
- * @return Returns true if step has been successfull
- */
-bool RunControlGUI::prepareAndStartStep()
-{
-    if(m_scan_active==true) {
-        on_btnStop_clicked();
-        on_btnReset_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_UNINIT))
-            cout << "Waiting for reset"<<endl;
-        EUDAQ_USER("Resetted");
-        on_btnInit_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_UNCONF))
-            cout << "Waiting for init"<<endl;
-        EUDAQ_USER("Initialized");
-        on_btnConfig_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_CONF))
-            cout << "Waiting for configuration"<<endl;
-        EUDAQ_USER("configured");
-        on_btnStart_clicked();
-        EUDAQ_USER("Running");
-        // stop the scan here
-
-    } else {
-        on_btnStop_clicked();
-        btnStartScan->setText("Start scan");
-
-    }
-    return true;
-}
-/**
- * @brief RunControlGUI::allConnectionsInState
- * @param state to be cheked
- * @return true if all connections are in state, false elsewise
- */
-bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
-    std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
-    if(m_rc)
-      map_conn_status= m_rc->GetActiveConnectionStatusMap();
-    else
-        return false;
-    for(auto &conn_status: map_conn_status){
-        if(!conn_status.second){
-            cout << "Connection lost "<< endl;
-            continue;
-        }
-        auto state_conn = conn_status.second->GetState();
-        cout <<"Comparing states for "<<conn_status.first->GetName()<<state<<"\t" << state_conn<<endl;
-        if((int)state_conn != (int)state)
-            return false;
-    }
-    return true;
-}
-
-/**
- * @brief RunControlGUI::readScanConfig
- * @abstract Read the scan config file and prepare all parameters
- * @return true if sucessfull
- */
-bool RunControlGUI::readScanConfig(){
-    m_scan_config = eudaq::Configuration::MakeUniqueReadFile(txtScanFile->text().toStdString());
-    m_scan_config->SetSection("first");
-    return checkScanParameters();
-}
-
-bool RunControlGUI::checkScanParameters(){
-    // check if minimal config exists
-    if(! m_scan_config->Has("start")
-            || ! m_scan_config->Has("stop")
-            || ! m_scan_config->Has("step")
-            || ! m_scan_config->Has("time")
-            || ! m_scan_config->Has("name")
-            || ! m_scan_config->Has("parameter"))
-        return false;
-    m_time_per_step = m_scan_config->Get("time",0.0);
-    if(m_time_per_step<0 && ! m_scan_config->Has("nevents"))
-        return false;
-    m_start_value = m_scan_config->Get("start",0.0);
-    m_stop_value = m_scan_config->Get("stop",0.0);
-    m_step_size = m_scan_config->Get("step",0.0);
-    m_scanningTimer.setInterval(m_time_per_step*1000);
-    m_n_steps =  (m_stop_value-m_start_value)/double(m_step_size);
-    createConfigs();
-    return true;
-
-
-}
-void RunControlGUI::createConfigs(){
-    std::string config = txtConfigFileName->text().toStdString();
-    eudaq::ConfigurationSP defaultconf = eudaq::Configuration::MakeUniqueReadFile(config);
-    defaultconf->SetSection(m_scan_config->Get("name",""));
-    std::string parameter =  m_scan_config->Get("parameter","");
-    config = m_scan_config->Get("configpath",config);
-    for(int i =0; i< m_n_steps;++i){
-        std::string filename = (config.substr(0,config.size()-5)+"_scan_"+std::to_string(i)+".conf");
-        if(config != txtConfigFileName->text().toStdString())
-            filename = (config+"_scan_"+std::to_string(i)+".conf");
-        cout << filename<<endl;
-        m_scan_config_files.push_back(filename);
-        defaultconf->SetString(parameter,std::to_string(m_start_value+i*m_step_size));
-        std::filebuf fb;
-        fb.open (filename,std::ios::out);
-        std::ostream os(&fb);
-        defaultconf->Save(os);
-        fb.close();
-    }
 }

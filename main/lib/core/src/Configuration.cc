@@ -33,11 +33,11 @@ namespace eudaq {
       m_config[""];
     for(auto &e: other.m_config){
       if(e.first == section){
-    m_config[section] = e.second;
-    SetSection(section);
+	m_config[section] = e.second;
+	SetSection(section);
       }
     }
-
+    
   }
 
   std::unique_ptr<Configuration> Configuration::MakeUniqueReadFile(const std::string &path){
@@ -49,7 +49,7 @@ namespace eudaq {
     }
     return conf;
   }
-
+  
   std::string Configuration::Name() const {
     map_t::const_iterator it = m_config.find("");
     if (it == m_config.end())
@@ -94,7 +94,7 @@ namespace eudaq {
           continue;
         if (line[0] == '[' && line[line.length() - 1] == ']') {
           line = std::string(line, 1, line.length() - 2);
-      cur_sec = &config[line];
+	  cur_sec = &config[line];
         }
       } else {
         std::string key = trim(std::string(line, 0, equals));
@@ -110,7 +110,7 @@ namespace eudaq {
         (*cur_sec)[key] = line;
       }
     }
-
+    
     if(section.empty()){
       m_config = config;
       SetSection(section);
@@ -194,7 +194,7 @@ namespace eudaq {
     for(auto &sect: m_config){
       os << std::string(offset + 2, ' ') << "<Section title=\""<< sect.first<<"\">\n";
       for(auto &key: sect.second){
-    os << std::string(offset + 4, ' ') << "<"<<key.first<< ">"<< key.second<< "</"<<key.first <<">\n";
+	os << std::string(offset + 4, ' ') << "<"<<key.first<< ">"<< key.second<< "</"<<key.first <<">\n";
       }
       os << std::string(offset + 2, ' ') << "</Section>\n";
     }

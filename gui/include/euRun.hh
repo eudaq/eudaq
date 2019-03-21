@@ -39,9 +39,6 @@ private slots:
   void on_btnLoadConf_clicked();
   void onCustomContextMenu(const QPoint &point);
 
-  void on_btn_LoadScanFile_clicked();
-  void on_btnStartScan_clicked();
-  void nextScanStep();
 private:
   bool loadInitFile();
   bool loadConfigFile();
@@ -50,14 +47,6 @@ private:
   bool updateStatusDisplay();
   bool addToGrid(const QString objectName, QString displayedName="");
   bool addAdditionalStatus(std::string info);
-  bool checkFile(QString file, QString usecase);
-
-  bool prepareAndStartStep();
-  bool readScanConfig();
-  bool checkScanParameters();
-  void createConfigs();
-  bool allConnectionsInState(eudaq::Status::State state);
-
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
   eudaq::RunControlUP m_rc;
@@ -67,21 +56,7 @@ private:
   std::map<QString, QLabel*> m_str_label;
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_map_conn_status_last;
   uint32_t m_run_n_qsettings;
+  bool m_lastexit_success;
   int m_display_col, m_display_row;
   QMenu* contextMenu;
-
-  bool m_lastexit_success;
-  bool m_scan_active;
-  bool m_scan_interrupt_received;
-  double m_scanning_step_time;
-  double m_start_value;
-  double m_stop_value;
-  double m_step_size;
-  int m_n_steps;
-  int m_current_step;
-  int m_time_per_step;
-  std::vector<std::string> m_scan_config_files;
-
-  QTimer m_scanningTimer;
-  std::shared_ptr<eudaq::Configuration> m_scan_config;
 };
