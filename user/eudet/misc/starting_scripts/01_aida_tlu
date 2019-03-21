@@ -11,7 +11,7 @@ xterm -T "Log Collector" -e 'euLog -r tcp://${RUNCONTROLIP}' &
 sleep 1
 
 # Start TLU Producer
-xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://${TLUIP}:${RPCPORT}' & 
+xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://${RUNCONTROLIP}:${RPCPORT}' & 
 sleep 1
 
 # Start one DataCollector

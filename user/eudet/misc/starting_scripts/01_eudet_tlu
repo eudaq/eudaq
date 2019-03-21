@@ -11,7 +11,7 @@ xterm -T "Log Collector" -e 'euLog -r tcp://${RUNCONTROLIP}' &
 sleep 1
 
 # Start TLU Producer
-xterm -T "EUDET TLU Producer" -e 'euCliProducer -n EudetTluProducer -t eudet_tlu -r tcp://${TLUIP}:${RPCPORT}' & 
+xterm -T "EUDET TLU Producer" -e 'euCliProducer -n EudetTluProducer -t eudet_tlu -r tcp://${RUNCONTROLIP}:${RPCPORT}' & 
 
 # Start one DataCollector
 # name (-t) in conf file
