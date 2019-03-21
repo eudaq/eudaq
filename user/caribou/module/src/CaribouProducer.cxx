@@ -196,8 +196,8 @@ void CaribouProducer::RunLoop() {
       if(!data.empty()) {
         // Create new event
         auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
-        // Use trigger N to store frame counter
-        event->SetTriggerN(m_ev);
+        // Set event ID
+        event->SetEventN(m_ev);
         // Add data to the event
         event->AddBlock(0, data);
 
