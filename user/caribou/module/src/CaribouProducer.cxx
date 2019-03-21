@@ -131,8 +131,10 @@ void CaribouProducer::DoConfigure() {
 
   // Select which ADC signal to regularly fetch:
   adc_signal_ = config->Get("adc_signal", "");
-  // Try it out directly to catch misconfiugration
-  auto adc_value = device_->getADC(adc_signal_);
+  if(!adc_signal_.empty()) {
+    // Try it out directly to catch misconfiugration
+    auto adc_value = device_->getADC(adc_signal_);
+  }
 
   LOG(STATUS) << "CaribouProducer configured. Ready to start run.";
 }
