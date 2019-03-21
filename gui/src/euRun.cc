@@ -605,7 +605,7 @@ void RunControlGUI::nextScanStep()
         btnStartScan->setText("Start Scan");
         on_btnStop_clicked();
         QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
-    }else if(m_scan_active) {
+    }else {
         cout << "Changing Text"<<endl;
         txtConfigFileName
                 ->setText(QString::fromStdString(m_scan_config_files.at(m_current_step)));
@@ -614,8 +614,8 @@ void RunControlGUI::nextScanStep()
         if(m_time_per_step>1)
             m_scanningTimer.start();
 
-        m_current_step++;
     }
+    m_current_step++;
 
 }
 /**
@@ -749,6 +749,7 @@ void RunControlGUI::createConfigs(){
  */
 bool RunControlGUI::checkEventsInStep(){
     int events = getEventsCurrent();
+//    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<events <<" of "<< m_events_per_step<<"\t"<<m_scan_name<<endl;
     return ( (events > 0 ? events : (m_events_per_step-2))>m_events_per_step);
 }
 
