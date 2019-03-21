@@ -57,8 +57,6 @@ private:
   bool checkScanParameters();
   void createConfigs();
   bool allConnectionsInState(eudaq::Status::State state);
-  bool checkEventsInStep();
-  int getEventsCurrent();
 
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
@@ -80,11 +78,10 @@ private:
   double m_stop_value;
   double m_step_size;
   int m_n_steps;
-  int m_events_per_step;
   int m_current_step;
   int m_time_per_step;
   std::vector<std::string> m_scan_config_files;
-  std::string m_scan_parameter;
+
   QTimer m_scanningTimer;
   std::shared_ptr<eudaq::Configuration> m_scan_config;
 };
