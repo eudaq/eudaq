@@ -33,34 +33,50 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
-  // Bad event
-  if (ev->NumBlocks() != 2) {
+  // Data containers:
+  std::vector<uint64_t> timestamps;
+  std::vector<uint32_t> rawdata;
+
+  // Retrieve data from event
+  if(ev->NumBlocks() == 1) {
+    // New data format - timestamps and pixel data are combined in one data block
+
+    // Block 0 contains all data, split it into timestamps and pixel data, returned as std::vector<uint8_t>
+    auto datablock = ev->GetBlock(0);
+
+    // Number of timestamps: first word of data
+    uint32_t timestamp_words;
+    memcpy(&timestamp_words, &datablock[0], sizeof(uint32_t));
+
+    // Calulate positions and length of data blocks:
+    auto timestamp_pos = sizeof(uint32_t);
+    auto timestamp_length = timestamp_words * sizeof(uint32_t);
+    auto data_pos = timestamp_pos + timestamp_length;
+    auto data_length = datablock.size() - timestamp_length - timestamp_pos;
+
+    // Timestamps:
+    timestamps.resize(timestamp_length / sizeof(uint64_t));
+    memcpy(&timestamps[0], &datablock[0] + timestamp_pos, timestamp_length);
+
+    // Pixel data:
+    rawdata.resize(data_length / sizeof(uint32_t));
+    memcpy(&rawdata[0], &datablock[0] + data_pos, data_length);
+  } else if(ev->NumBlocks() == 2) {
+    // Old data format - timestamps in block 0, pixel data in block 1
+
+    // Block 0 is timestamps:
+    auto time = ev->GetBlock(0);
+    timestamps.resize(time.size() / sizeof(uint64_t));
+    memcpy(&timestamps[0], &time[0],time.size());
+
+    // Block 1 is pixel data:
+    auto tmp = ev->GetBlock(1);
+    rawdata.resize(tmp.size() / sizeof(unsigned int));
+    memcpy(&rawdata[0], &tmp[0],tmp.size());
+  } else {
     EUDAQ_WARN("Ignoring bad frame " + std::to_string(ev->GetEventNumber()));
     return false;
   }
-
-  // Block 0 contains all data, split it into timestamps and pixel data, returned as std::vector<uint8_t>
-  auto datablock = ev->GetBlock(0);
-
-  // Number of timestamps: first word of data
-  uint32_t timestamp_words;
-  memcpy(&timestamp_words, &datablock[0], sizeof(uint32_t));
-
-  // Calulate positions and length of data blocks:
-  auto timestamp_pos = sizeof(uint32_t);
-  auto timestamp_length = timestamp_words * sizeof(uint32_t);
-  auto data_pos = timestamp_pos + timestamp_length;
-  auto data_length = datablock.size() - timestamp_length - timestamp_pos;
-
-  // Timestamps:
-  std::vector<uint64_t> timestamps;
-  timestamps.resize(timestamp_length / sizeof(uint64_t));
-  memcpy(&timestamps[0], &datablock[0] + timestamp_pos, timestamp_length);
-
-  // Pixel data:
-  std::vector<uint32_t> rawdata;
-  rawdata.resize(data_length / sizeof(uint32_t));
-  memcpy(&rawdata[0], &datablock[0] + data_pos, data_length);
 
   // Calculate time stamps, CLICpix2 runs on 100MHz clock:
   bool shutterOpen = false;
