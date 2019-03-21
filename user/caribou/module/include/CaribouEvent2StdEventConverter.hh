@@ -17,4 +17,10 @@ namespace eudaq {
     static double last_shutter_open_;
   };
 
+  class ATLASPixEvent2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouATLASPixEvent");
+  };
+
 } // namespace eudaq
