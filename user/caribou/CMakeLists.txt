@@ -16,6 +16,6 @@ include_directories(${EUDAQ_INCLUDE_DIRS})
 
 
 # Peary and its CLICpix2 component
-FIND_PACKAGE(Peary REQUIRED COMPONENTS CLICpix2)
+FIND_PACKAGE(Peary REQUIRED COMPONENTS CLICpix2 ATLASPix)
 
 add_subdirectory(module)
