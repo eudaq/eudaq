@@ -45,7 +45,7 @@ private:
   bool addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection);
   bool removeStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection);
   bool updateStatusDisplay();
-  bool addToGrid(const QString objectName, QString displayedName="");
+  bool addToGrid(QString objectName, QString displayedName="");
   bool addAdditionalStatus(std::string info);
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
