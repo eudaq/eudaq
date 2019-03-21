@@ -193,22 +193,25 @@ void RunControlGUI::on_btnLoadConf_clicked() {
 }
 
 void RunControlGUI::DisplayTimer(){
-  std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
-  auto state = eudaq::Status::STATE_RUNNING;
-  if(m_rc)
-    map_conn_status= m_rc->GetActiveConnectionStatusMap();
-  
-  for(auto &conn_status_last: m_map_conn_status_last){
-    if(!map_conn_status.count(conn_status_last.first)){
-      m_model_conns.disconnected(conn_status_last.first);
-      removeStatusDisplay(conn_status_last);
-    }
-  }
-  for(auto &conn_status: map_conn_status){
-    if(!m_map_conn_status_last.count(conn_status.first)){
-      m_model_conns.newconnection(conn_status.first);
-      if(! (conn_status.first->GetType()== "LogCollector"))
-          addStatusDisplay(conn_status);
+  updateInfos();
+  updateStatusDisplay();
+  updateProgressBar();
+  if(!m_scan.scan_is_time_based && m_scan_active == true)
+      if(checkEventsInStep())
+          nextScanStep();
+}
+
+void RunControlGUI::updateInfos(){
+    std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
+    auto state = eudaq::Status::STATE_RUNNING;
+    if(m_rc)
+      map_conn_status= m_rc->GetActiveConnectionStatusMap();
+
+    for(auto &conn_status_last: m_map_conn_status_last){
+      if(!map_conn_status.count(conn_status_last.first)){
+        m_model_conns.disconnected(conn_status_last.first);
+        removeStatusDisplay(conn_status_last);
+      }
     }
   }
   if(map_conn_status.empty()){
@@ -555,4 +558,344 @@ bool RunControlGUI::addAdditionalStatus(std::string info)
         }
     }
     return true;
+}
+bool RunControlGUI::checkFile(QString file, QString usecase)
+{
+    QFileInfo check_file(file);
+    if(!check_file.exists() || !check_file.isFile()){
+      QMessageBox::warning(NULL, "ERROR",QString(usecase + "Init file does not exist."));
+      return false;
+    }
+    else
+        return true;
+}
+
+/**
+
+ SCAN FUNCTIONALITIES
+*/
+
+/**
+ * @brief RunControlGUI::on_btn_LoadScanFile_clicked
+ * @abstract push Button to open file dialog to select the scan configuration
+ * file.
+ * @group Scanning utils, RunControlGUI
+ */
+
+void RunControlGUI::on_btn_LoadScanFile_clicked()
+{
+    QString usedpath =QFileInfo(txtScanFile->text()).path();
+    QString filename =QFileDialog::getOpenFileName(this, tr("Open File"),
+                           usedpath,
+                           tr("*.scan (*.scan)"));
+    if (!filename.isNull()){
+      txtScanFile->setText(filename);
+    }
+
+}
+/**
+ * @brief RunControlGUI::on_btnStartScan_clicked
+ * @abstract Button to control the scanning procedure. Does not implement any real
+ * functionality, only changes status bools and texts
+ *
+ */
+void RunControlGUI::on_btnStartScan_clicked()
+{
+   if(!checkFile(txtScanFile->text(),QString::fromStdString("Scan File")))
+       return;
+  if(!readScanConfig()){
+      QMessageBox::warning(NULL,"ERROR","invalid scan config file");
+      return;
+    }
+   if(m_scan_active == true) {
+       QMessageBox::StandardButton reply;
+       reply = QMessageBox::question(NULL,"Interrupt Scan","Do you want to stop immediately?\n Hitting no will stop after finishing the current step",
+                                     QMessageBox::Yes|QMessageBox::No|QMessageBox::Abort);
+       if(reply==QMessageBox::Yes) {
+           m_scan_active = false;
+           m_scanningTimer.stop();
+           btnStartScan->setText("Start Scan");
+
+       } else if(reply==QMessageBox::Abort) {
+           m_scan_active = true;
+           btnStartScan->setText("Interrupt scan");
+       } else if(reply==QMessageBox::No) {
+           m_scan_interrupt_received = true;
+           btnStartScan->setText("Scan stops after current step");
+       }
+   } else {
+       // init scan parameters:
+       m_scan.current_step = 0;
+       progressBar_scan->setMaximum(100);
+       m_scan_active = true;
+       btnStartScan->setText("Interrupt scan");
+       nextScanStep();
+   }
+}
+
+/**
+ * @brief RunControlGUI::nextScanStep
+ * @abstract Slot to start the next step - Can be either triggered via a QTimer
+ * or an eventnumber of one producer
+ */
+void RunControlGUI::nextScanStep()
+{
+    // stop readout
+    if((m_scan.current_step > m_scan.n_steps || m_scan_interrupt_received) && m_scan_active) {
+        m_scan_active = false;
+        m_scanningTimer.stop();
+        btnStartScan->setText("Start Scan");
+        on_btnStop_clicked();
+        QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
+    }else if(m_scan_active) {
+        txtConfigFileName
+                ->setText(QString::fromStdString(m_scan.config_files.at(m_scan.current_step)));
+        if(!prepareAndStartStep())
+        {
+            m_scan_active = false;
+            return;
+        }
+        if(m_scan.scan_is_time_based)
+            m_scanningTimer.start();
+
+        m_scan.current_step++;
+    }
+
+}
+/**
+ * @brief RunControlGUI::prepareAndStartStep
+ * @abstract stop the data taking, update the configuration and start a new run
+ * @return Returns true if step has been successfull
+ */
+bool RunControlGUI::prepareAndStartStep()
+{
+    if(m_scan_active==true) {
+        on_btnStop_clicked();
+        on_btnReset_clicked();
+        while(!allConnectionsInState(eudaq::Status::STATE_UNINIT)){
+            std::this_thread::sleep_for (std::chrono::seconds(1));
+            cout << "Waiting for reset"<<endl;
+        }
+        EUDAQ_USER("Resetted");
+        std::this_thread::sleep_for (std::chrono::seconds(3));
+        on_btnInit_clicked();
+        while(!allConnectionsInState(eudaq::Status::STATE_UNCONF)){
+            std::this_thread::sleep_for (std::chrono::seconds(1));
+            cout << "Waiting for init"<<endl;
+        }
+        updateInfos();
+        std::this_thread::sleep_for (std::chrono::seconds(3));
+        EUDAQ_USER("Initialized");
+        on_btnConfig_clicked();
+        while(!allConnectionsInState(eudaq::Status::STATE_CONF)){
+            std::this_thread::sleep_for (std::chrono::seconds(1));
+            cout << "Waiting for configuration"<<endl;
+        }
+        updateInfos();
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        EUDAQ_USER("configured");
+        on_btnStart_clicked();
+        EUDAQ_USER("Running");
+        // stop the scan here
+
+    } else {
+        on_btnStop_clicked();
+        btnStartScan->setText("Start scan");
+
+    }
+    return true;
+}
+/**
+ * @brief RunControlGUI::allConnectionsInState
+ * @param state to be cheked
+ * @return true if all connections are in state, false otherwise
+ */
+bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
+    std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
+    if(m_rc)
+      map_conn_status= m_rc->GetActiveConnectionStatusMap();
+    else
+        return false;
+    for(auto &conn_status: map_conn_status){
+        if(!conn_status.second)
+            continue;
+        auto state_conn = conn_status.second->GetState();
+        if((int)state_conn != (int)state)
+            return false;
+    }
+    return true;
+}
+
+/**
+ * @brief RunControlGUI::readScanConfig
+ * @abstract Read the scan config file and prepare all parameters
+ * @return true if sucessfull
+ */
+bool RunControlGUI::readScanConfig(){
+    m_scan_config = eudaq::Configuration::MakeUniqueReadFile(txtScanFile->text().toStdString());
+
+    if(!m_scan_config->HasSection("general"))
+    {
+        cout << "No general section given in config"<<endl;
+        return false;
+    }
+    m_scan_config->SetSection("general");
+    return checkScanParameters();
+}
+/**
+ * @brief RunControlGUI::checkScanParameters
+ * @return true if a correct minimal configuration
+ * is existing, false otherwise
+ * @abstract Check if the configuration file is correctly
+ * formatted.
+ */
+bool RunControlGUI::checkScanParameters(){
+
+    if(!m_scan_config->Has("scans")
+            || !m_scan_config->Has("allowNested")
+            || !m_scan_config->Has("scans")
+            || (! m_scan_config->Has("time") && (! m_scan_config->Has("nevents"))) // either events or time need to be provided
+            || !m_scan_config->Has("timeModeActive")
+           )
+        return false;
+    // reset the configs
+    m_scan.scanned_parameter.clear();
+    m_scan.events_counting_component.clear();
+    m_scan.scanned_producer.clear();
+    m_scan.config_files.clear();
+    m_scan.allow_nested_scan = m_scan_config->Get("allowNested",-1);
+    m_scan.n_scans =m_scan_config->Get("scans",-1);
+    m_scan.time_per_step = m_scan_config->Get("time",0.0);
+    m_scan.events_per_step = m_scan_config->Get("nevents",-1);
+    m_scan.scan_is_time_based = m_scan_config->Get("timeModeActive",1);
+    m_scanningTimer.setInterval(m_scan.time_per_step*1000);
+    m_scan.n_steps = 0;
+    for(int i =0; i < m_scan.n_scans ; ++i){
+        if(!m_scan_config->HasSection(std::to_string(i)))
+            return false;
+        m_scan_config->SetSection(std::to_string(i));
+        // check if minimal config exists
+    if(! m_scan_config->Has("start")
+            || ! m_scan_config->Has("stop")
+            || ! m_scan_config->Has("step")
+            || ! m_scan_config->Has("name")
+            || ! m_scan_config->Has("default")
+
+            || ! m_scan_config->Has("parameter"))
+        return false;
+    if(m_scan.allow_nested_scan==true && m_scan_config->Get("isNested",0))
+    m_scan.n_steps += m_scan.n_steps * (1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
+                      double(m_scan_config->Get("step",0.0)));
+    else
+        m_scan.n_steps += 1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
+                          double(m_scan_config->Get("step",0.0));
+    m_scan.steps_per_scan.push_back(1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
+                          double(m_scan_config->Get("step",0.0)));
+    }
+
+    createConfigs();
+    return true;
+}
+
+/**
+ * @brief RunControlGUI::createConfigs
+ * @abstract create the relevant config files to perform a scan from a scan-config file.
+ * Additionally, the settings for each step - runtime or evetns in a certain producer to
+ * complete a step.
+ *
+*/
+void RunControlGUI::createConfigs(){
+
+    // start with a default config file
+    std::string config = txtConfigFileName->text().toStdString();
+    eudaq::ConfigurationSP defaultconf = eudaq::Configuration::MakeUniqueReadFile(config);
+    m_scan_config->SetSection("general");
+    config = m_scan_config->Get("configpath",config);
+
+
+    int step = 0;
+    for(int i = 0; i< m_scan.n_scans; i++){
+        m_scan_config->SetSection(std::to_string(i));
+        m_scan.scanned_parameter.push_back(m_scan_config->Get("parameter",""));
+        if(!m_scan.allow_nested_scan)
+        {
+            for(int j = 0; j < m_scan.steps_per_scan.at(i);j++)
+            {
+                defaultconf->SetSection(m_scan_config->Get("name",""));
+
+                std::string filename = (config.substr(0,config.size()-5)+"_scan_"+std::to_string(step)+".conf");
+                if(config != txtConfigFileName->text().toStdString())
+                    filename = (config+"_scan_"+std::to_string(step)+".conf");
+                m_scan.config_files.push_back(filename);
+                m_scan.events_counting_component.push_back(m_scan_config->Get("eventCounter","no processor found"));
+                defaultconf->SetString(m_scan.scanned_parameter.at(i),std::to_string(m_scan_config->Get("start",0)
+                                                                                     +j*m_scan_config->Get("step",0)));
+                // write it all
+                std::filebuf fb;
+                fb.open (filename,std::ios::out);
+                std::ostream os(&fb);
+                defaultconf->Save(os);
+                fb.close();
+
+                step++;
+            }
+            // set value to defautl again
+            defaultconf->SetString(m_scan.scanned_parameter.at(i),std::to_string(m_scan_config->Get("default",-1)));
+
+        }
+        else {
+            QMessageBox::warning(NULL, "SCAN CONFIGURATION FAILED",
+                                  "A nested scan has been requestet - not yet implemented!");
+        return;
+        }
+    }
+    // set number of steps to config files created - might not correspond to the initial guess:
+    m_scan.n_steps = m_scan.config_files.size()-1;
+}
+
+/**
+ * @brief RunControlGUI::checkEventsInStep
+ * @abstract check if the reuqested number of events for a certain step is recorded
+ * @return true if reached/surpassed, false otherwise
+ */
+bool RunControlGUI::checkEventsInStep(){
+    int events = getEventsCurrent();
+    return ( (events > 0 ? events : (m_scan.events_per_step-2))>m_scan.events_per_step);
+}
+
+/**
+ * @brief RunControlGUI::getEventsCurrent
+ * @return Number of events in current step of scans
+ */
+
+int RunControlGUI::getEventsCurrent(){
+    std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
+    if(m_scan.events_counting_component.size()>m_scan.current_step-1)
+        return m_scan.events_per_step+1;
+    if(m_rc)
+        map_conn_status= m_rc->GetActiveConnectionStatusMap();
+    else
+        return -2;
+    for(auto conn : map_conn_status) {
+        if((conn.first->GetType()+"."+conn.first->GetName())==m_scan.events_counting_component.at(m_scan.current_step)){
+            auto tags = conn.second->GetTags();
+            for(auto &tag: tags)
+                if(tag.first=="EventN")
+                    return std::stoi(tag.second);
+        }
+    }
+    return -1;
+}
+
+void RunControlGUI::updateProgressBar(){
+    double scanProgress = 0;
+    if(m_scan_active){
+        scanProgress = (m_scan.current_step-1)/double(std::max(1,m_scan.n_steps))*100;
+    if(m_scan.scan_is_time_based)
+        scanProgress+= ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_scan.n_steps));
+    else
+        scanProgress += getEventsCurrent()/double(m_scan.events_per_step)*100./std::max(1,m_scan.n_steps);
+    }
+    progressBar_scan->setValue(scanProgress);
+
 }
