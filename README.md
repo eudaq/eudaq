@@ -58,6 +58,7 @@ ROOT 6 is required for the Online Monitor GUI.
 - [timepix3](user/timepix3/README.md): Timepix3 read out, required: Spidr
 - [tlu](user/tlu/README.md): folder for Trigger Logic Units: EUDET and AIDA TLU
 - [torch](user/torch/README.md): test beam user
+- [PI Stages](user/piStage/README.md): Producer to control the rotation and translation stages from PI
 - [experimental](user/experimental/README.md): developed, not tested (with hardware)
 
 
