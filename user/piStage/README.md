@@ -33,7 +33,7 @@ The producer has to be correctly inititialized with the following parameters.
 - ```initRot```Init position for rot-axis. Default `0`.
 
 The configuration file needs the following up to three elements
-- ```positionX```Desired nwe position for x-axis. If not defined, no movement can be done.
-- ```positionY```Desired nwe position for y-axis. If not defined, no movement can be done.
-- ```positionRot```Desired nwe position for rot-axis. If not defined, no movement can be done.
+- ```positionX```Desired new position for x-axis. If not defined, no movement can be done.
+- ```positionY```Desired new position for y-axis. If not defined, no movement can be done.
+- ```positionRot```Desired new position for rot-axis. If not defined, no movement can be done.
 
