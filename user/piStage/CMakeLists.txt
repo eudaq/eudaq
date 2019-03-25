@@ -15,7 +15,7 @@ if(NOT USER_PISTAGE_BUILD)
     message(STATUS "user/piStage is NOT to be built (USER_PISTAGE_BUILD=OFF)")
   return()
 endif()
-message(STATUS "user/example is to be built (USER_PISTAGE_BUILD=ON)")
+message(STATUS "user/piStage is to be built (USER_PISTAGE_BUILD=ON)")
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
