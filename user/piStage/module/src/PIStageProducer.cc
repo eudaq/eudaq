@@ -80,9 +80,9 @@ void PIStageProducer::DoInitialise(){
   double initY      = ini->Get("initY",0.0);
   double initRot    = ini->Get("initRot",0.0);
 
-  std::string linStageX  = ini->Get("linearStageTypeX","no_type");
-  std::string linStageY  = ini->Get("linearStageTypeY","no_type");
-  std::string rotStage  = ini->Get("rotationalStageType","no_type");
+  std::string linStageX  = ini->Get("linStageTypeX","no_type");
+  std::string linStageY  = ini->Get("linStageTypeY","no_type");
+  std::string rotStage  = ini->Get("rotStageType","no_type");
 
   bool forceInit        = ini->Get("forceInit",true);
   // Supports only x,y and rot movements
