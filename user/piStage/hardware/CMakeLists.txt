@@ -5,6 +5,13 @@ if(USER_PISTAGE_BUILD)
   list(APPEND USER_HARDWARE_SRC src/RotaController.cc)
 endif()
 
+find_library(PI_FOUND NAMES pi_pi_gcs2 HINTS "/usr/local/PI")
+if(NOT PI_FOUND)
+  message(FATAL_ERROR "PI  library not found")
+else()
+    message("Found stage controllers")
+endif()
+
 if(USER_PISTAGE_BUILD)
   add_library(${USER_HARDWARE_LIBRARY} STATIC ${USER_HARDWARE_SRC})
   target_link_libraries(${USER_HARDWARE_LIBRARY}
