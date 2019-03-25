@@ -21,6 +21,19 @@ namespace eudaq {
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouATLASPixEvent");
+
+private:
+    uint32_t gray_decode(uint32_t gray) const;
+
+    static uint64_t readout_ts_;
+    static double clockcycle_;
+    static uint32_t clkdivend2M_;
+    static uint64_t fpga_ts_;
+    static uint64_t fpga_ts1_;
+    static uint64_t fpga_ts2_;
+    static uint64_t fpga_ts3_;
+    static bool new_ts1_;
+    static bool new_ts2_;
   };
 
 } // namespace eudaq
