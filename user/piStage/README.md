@@ -19,4 +19,21 @@ To run the librar a funcitonla installation of the ```pi_pi_gcs2``` library prov
 - ```MISC``` contains test scripts and exemplary configs.
 
 ## Usage
-This section needs to be written as soon as everything is debugged and finialized.
+Exemplary [init](usr/piStage/misc/Rota.ini) and [config](usr/piStage/misc/Rota.conf) snippets are provided. 
+The configuration is not able to handle units. Rotations are given in `degree` and axis positions in `mm`.
+
+The producer has to be correctly inititialized with the following parameters. 
+- ```ControllerIP``` IP of stage contoller default: `192.168.24.4`
+- ```Port``` Port to be used, for all DESY Stages and default: `50000`
+- ```axisX``` DC-motor connected to x-axis. No default value. Assumed to be not connected if not set. Typically set to 1 for DESY testbeam.
+- ```axisy``` DC-motor connected to y-axis. No default value. Assumed to be not connected if not set. Typically set to 2 for DESY testbeam.
+- ```axisRot``` DC-motor connected to rot-axis. No default value. Assumed to be not connected if not set. Typically set to 3 for DESY testbeam.
+- ```initX```Init position for x-axis. Default `0`.
+- ```initY```Init position for y-axis. Default `0`.
+- ```initRot```Init position for rot-axis. Default `0`.
+
+The configuration file needs the following up to three elements
+- ```positionX```Desired nwe position for x-axis. If not defined, no movement can be done.
+- ```positionY```Desired nwe position for y-axis. If not defined, no movement can be done.
+- ```positionRot```Desired nwe position for rot-axis. If not defined, no movement can be done.
+
