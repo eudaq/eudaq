@@ -28,6 +28,11 @@ double ATLASPixEvent2StdEventConverter::clockcycle_(8);
 bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
+  // No event
+  if(!ev || ev->NumBlocks() < 1) {
+    return false;
+  }
+
   // Read file and load data
   auto datablock = ev->GetBlock(0);
   uint32_t datain;
@@ -178,6 +183,5 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
   }
 
-  // Indicate that data was successfully converted
-  return true;
+  return false;
 }
