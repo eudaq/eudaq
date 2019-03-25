@@ -454,7 +454,10 @@ bool RunControlGUI::addToGrid(const QString objectName, QString displayedName) {
     m_str_label.insert(std::pair<QString, QLabel*>(objectName, lblvalue));
     grpGrid->addWidget(lblname, rowPos, colPos * 2);
     grpGrid->addWidget(lblvalue, rowPos, colPos * 2 + 1);
+
+    return true;
 }
+
 /**
  * @brief RunControlGUI::updateStatusDisplay
  * @return true if success, false otherwise (cannot happen currently)
