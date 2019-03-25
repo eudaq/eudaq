@@ -1,10 +1,15 @@
+if(WIN32)
+  message(STATUS "PIStage producer is not supported on Windows, rethink the choice of your OS")
+  return()
+endif()
+
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_LIST_DIR}/cmake)
 get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
 
-option(USER_PISTAGE_BUILD "build user/piStage" ON)
+option(USER_PISTAGE_BUILD "build user/piStage" OFF)
 
 if(NOT USER_PISTAGE_BUILD)
     message(STATUS "user/piStage is NOT to be built (USER_PISTAGE_BUILD=OFF)")
