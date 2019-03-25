@@ -56,7 +56,7 @@ void PIStageProducer::DoInitialise(){
 
 
   // We can skip everything if it is already connected:
-  if(m_is_connected)
+  if(m_connected)
       return;
 
   auto ini = GetInitConfiguration();
