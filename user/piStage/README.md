@@ -31,7 +31,9 @@ The producer has to be correctly inititialized with the following parameters.
 - ```initX```Init position for x-axis. Default `0`.
 - ```initY```Init position for y-axis. Default `0`.
 - ```initRot```Init position for rot-axis. Default `0`.
-
+- ```linStageTypeX``` Used stage for x-axis (M-521.DD1 or M-511.DD1).
+- ```linStageTypeY``` Used stage for y-axis (M-521.DD1 or M-511.DD1).
+- ```rotStageType```  Used stage for rotation (M-060.DG).
 The configuration file needs the following up to three elements
 - ```positionX```Desired new position for x-axis. If not defined, no movement can be done.
 - ```positionY```Desired new position for y-axis. If not defined, no movement can be done.
