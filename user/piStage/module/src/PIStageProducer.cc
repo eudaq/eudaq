@@ -31,7 +31,7 @@ private:
   uint32_t m_plane_id;
   FILE* m_file_lock;
   std::chrono::milliseconds m_ms_busy;
-  bool m_allow_changes;
+  bool m_allow_changes, m_connected;
   RotaController *m_controller;
 };
 
@@ -41,7 +41,7 @@ namespace{
 }
 
 PIStageProducer::PIStageProducer(const std::string & name, const std::string & runcontrol)
-  : eudaq::Producer(name, runcontrol), m_file_lock(0), m_allow_changes(false)
+  : eudaq::Producer(name, runcontrol), m_file_lock(0), m_allow_changes(false), m_connected(false)
     , m_connected_X(false), m_connected_Y(false), m_connected_Rot(false){
     m_controller = new RotaController();
 }
@@ -49,17 +49,27 @@ PIStageProducer::PIStageProducer(const std::string & name, const std::string & r
 
 
 void PIStageProducer::DoInitialise(){
-    m_allow_changes = true;
-   auto ini = GetInitConfiguration();
-  std::string controllerIP = ini->Get("ControllerIP", "192.168.24.123");
-  int port = ini->Get("port", 50000);
 
+
+
+  m_allow_changes = true;
+
+
+  // We can skip everything if it is already connected:
+  if(m_is_connected)
+      return;
+
+  auto ini = GetInitConfiguration();
+  std::string controllerIP = ini->Get("ControllerIP", "192.168.22.123");
+  int port = ini->Get("port", 50000);
   if(!m_controller->connectTCPIP(controllerIP, port))
       EUDAQ_THROW("Cannot connect to PI-Stage-Controller");
-
   // to be used with the C-863 controller
   //if(!m_controller->connect("/dev/ttyUSB0",38400))
   //    EUDAQ_THROW("Cannot connect to PI-Stage-Controller");
+  else
+      m_connected = true;
+
   m_axis_X           = ini->Get("axisX","Disconnected");
   m_axis_Y           = ini->Get("axisY","Disconnected");
   m_axis_Rot         = ini->Get("axisRot","Disconnected");
@@ -70,7 +80,8 @@ void PIStageProducer::DoInitialise(){
   double initY      = ini->Get("initY",0.0);
   double initRot    = ini->Get("initRot",0.0);
 
-  std::string linStage  = ini->Get("linearStageType","M-521.DD1");
+  std::string linStageX  = ini->Get("linearStageTypeX","M-521.DD1");
+  std::string linStageY  = ini->Get("linearStageTypeY","M-521.DD1");
   std::string rotStage  = ini->Get("rotationalStageType","M-060.DG");
 
   bool forceInit        = ini->Get("forceInit",true);
@@ -84,7 +95,7 @@ void PIStageProducer::DoInitialise(){
   // setup stages - movements are limited to avoid damage of hardware
   if(m_connected_X)  setupStage(m_axis_X,initX,-100,100,5);
   if(m_connected_Y)  setupStage(m_axis_Y,initY,-100,100,5);
-  if(m_connected_Rot)setupStage(m_axis_Rot,initRot,-100,100,5);
+  if(m_connected_Rot)setupStage(m_axis_Rot,initRot,-100,100,2);
 
   // init stages
   if (m_connected_X && !m_controller->reference(m_axis_X.c_str(), &forceInit))
