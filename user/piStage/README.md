@@ -1,5 +1,5 @@
 # EUDAQ2 Producer for the PI Stages
-Activate this producer by ```BUILD_USER_PISTAGE=on``` in the ```cmake``` configuration
+Activate this producer by ```USER_PISTAGE_BUILD=on``` in the ```cmake``` configuration
 ## Acknowledgement
 The producer is based on a control library developed by S. Mersi and  P. Wimberger. The original library code can be found here: ```https://gitlab.cern.ch/mersi/RotaController/```
 It is distributed under the MIT license:
