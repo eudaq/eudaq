@@ -89,7 +89,7 @@ BOOL isConnecting = TRUE;
 
 bool RotaController::connectTCPIP(std::string IP, int port)
 {
-
+    std::cout << "Connecting to "<< IP <<", "<< port << std::endl;
     ID = PI_ConnectTCPIP(IP.c_str(),port);
     if (ID < 0)
     {
@@ -106,7 +106,8 @@ bool RotaController::connectTCPIP(std::string IP, int port)
     {
         LogInfo(std::string("Device not connected on ID ") + std::to_string(ID));
         isReady = false;
-    }    int error_code = PI_GetError(ID);
+    }
+    int error_code = PI_GetError(ID);
     if (error_code != 0)
     {
         LogInfo(std::string("Device reported error code ") + std::to_string(error_code));
