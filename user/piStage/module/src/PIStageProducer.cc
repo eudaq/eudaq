@@ -80,17 +80,17 @@ void PIStageProducer::DoInitialise(){
   double initY      = ini->Get("initY",0.0);
   double initRot    = ini->Get("initRot",0.0);
 
-  std::string linStageX  = ini->Get("linearStageTypeX","M-521.DD1");
-  std::string linStageY  = ini->Get("linearStageTypeY","M-521.DD1");
-  std::string rotStage  = ini->Get("rotationalStageType","M-060.DG");
+  std::string linStageX  = ini->Get("linearStageTypeX","no_type");
+  std::string linStageY  = ini->Get("linearStageTypeY","no_type");
+  std::string rotStage  = ini->Get("rotationalStageType","no_type");
 
   bool forceInit        = ini->Get("forceInit",true);
   // Supports only x,y and rot movements
-  if ( m_connected_X && !m_controller->initializeStage(m_axis_X.c_str(), linStage.c_str()))
+  if ( m_connected_X && !(linStageX=="no_type")&& !m_controller->initializeStage(m_axis_X.c_str(), linStageX.c_str()))
       EUDAQ_THROW("Failed to initialize linear stage M-521.DD1 along x-axis");
-  if (m_connected_Y && !m_controller->initializeStage(m_axis_Y.c_str(), linStage.c_str()))
+  if (m_connected_Y && !(linStageY=="no_type") && !m_controller->initializeStage(m_axis_Y.c_str(), linStageY.c_str()))
       EUDAQ_THROW("Failed to initialize linear stage M-521.DD1 along y-axis");
-  if ( m_connected_Rot && !m_controller->initializeStage(m_axis_Rot.c_str(), rotStage.c_str()))
+  if ( m_connected_Rot && !(rotStage=="no_type") && !m_controller->initializeStage(m_axis_Rot.c_str(), rotStage.c_str()))
       EUDAQ_THROW("Failed to initialize rotational stage M-060.DG");
   // setup stages - movements are limited to avoid damage of hardware
   if(m_connected_X)  setupStage(m_axis_X,initX,-100,100,5);
