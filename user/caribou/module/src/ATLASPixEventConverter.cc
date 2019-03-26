@@ -1,4 +1,5 @@
 #include "CaribouEvent2StdEventConverter.hh"
+#include "log.hpp"
 
 using namespace eudaq;
 
@@ -77,9 +78,9 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // convert ToT to nanoseconds
     // double tot_ns = tot * m_clockCycle;
 
-    std::cout << "HIT: TS1: " << ts1 << "\t0x" << std::hex << ts1 << "\tTS2: " << ts2 << "\t0x" << std::hex << ts2
+    LOG(DEBUG) << "HIT: TS1: " << ts1 << "\t0x" << std::hex << ts1 << "\tTS2: " << ts2 << "\t0x" << std::hex << ts2
     << "\tTS_FULL: " << hit_ts << "\t" << timestamp << "ns"
-    << "\tTOT: " << tot << std::endl;
+    << "\tTOT: " << tot;
 
     // Create a StandardPlane representing one sensor plane
     eudaq::StandardPlane plane(0, "Caribou", "ATLASPix");
@@ -99,7 +100,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     // Decode the message content according to 8 MSBits
     unsigned int message_type = (datain >> 24);
-    std::cout << "Message type " << std::hex << message_type << std::dec << std::endl;
+    LOG(DEBUG) << "Message type " << std::hex << message_type << std::dec;
     if(message_type == 0b01000000) {
       uint64_t atp_ts = (datain >> 7) & 0x1FFFE;
       long long ts_diff = static_cast<long long>(atp_ts) - static_cast<long long>(fpga_ts_ & 0x1FFFF);
@@ -114,7 +115,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         }
       }
       readout_ts_ = static_cast<unsigned long long>(static_cast<long long>(fpga_ts_) + ts_diff);
-      std::cout << "RO_ts " << std::hex << readout_ts_ << " atp_ts " << atp_ts << std::dec << std::endl;
+      LOG(DEBUG) << "RO_ts " << std::hex << readout_ts_ << " atp_ts " << atp_ts << std::dec;
     } else if(message_type == 0b00010000) {
       // Trigger counter from FPGA [23:0] (1/4)
     } else if(message_type == 0b00110000) {
@@ -127,7 +128,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       uint64_t fpga_tsx = ((static_cast<unsigned long long>(datain) << 24) & 0x0000FFFFFF000000);
       if((!new_ts1_) && (fpga_tsx < fpga_ts2_)) {
         fpga_ts1_ += 0x0001000000000000;
-        std::cout << "Missing TS_FPGA_1, adding one" << std::endl;
+        LOG(DEBUG) << "Missing TS_FPGA_1, adding one";
       }
       new_ts1_ = false;
       new_ts2_ = true;
@@ -138,7 +139,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       uint64_t fpga_tsx = ((datain)&0xFFFFFF);
       if((!new_ts2_) && (fpga_tsx < fpga_ts3_)) {
         fpga_ts2_ += 0x0000000001000000;
-        std::cout <<"Missing TS_FPGA_2, adding one" << std::endl;
+        LOG(DEBUG) <<"Missing TS_FPGA_2, adding one";
       }
       new_ts2_ = false;
       fpga_ts3_ = fpga_tsx;
@@ -147,38 +148,38 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // BUSY was asserted due to FIFO_FULL + 24 LSBs of FPGA timestamp when it happened
     } else if(message_type == 0b01110000) {
       // T0 received
-      std::cout << "Another T0 event was found in the data" << std::endl;
+      LOG(DEBUG) << "Another T0 event was found in the data";
     } else if(message_type == 0b00000000) {
 
       // Empty data - should not happen
-      std::cout << "EMPTY_DATA" << std::endl;
+      LOG(DEBUG) << "EMPTY_DATA";
     } else {
 
       // Other options...
       // LOG(DEBUG) << "...Other";
       // Unknown message identifier
       if(message_type & 0b11110010) {
-        std::cout << "UNKNOWN_MESSAGE" << std::endl;
+        LOG(DEBUG) << "UNKNOWN_MESSAGE";
       } else {
         // Buffer for chip data overflow (data that came after this word were lost)
         if((message_type & 0b11110011) == 0b00000001) {
-          std::cout << "BUFFER_OVERFLOW" << std::endl;
+          LOG(DEBUG) << "BUFFER_OVERFLOW";
         }
         // SERDES lock established (after reset or after lock lost)
         if((message_type & 0b11111110) == 0b00001000) {
-          std::cout << "SERDES_LOCK_ESTABLISHED" << std::endl;
+          LOG(DEBUG) << "SERDES_LOCK_ESTABLISHED";
         }
         // SERDES lock lost (data might be nonsense, including up to 2 previous messages)
         else if((message_type & 0b11111110) == 0b00001100) {
-          std::cout << "SERDES_LOCK_LOST" << std::endl;
+          LOG(DEBUG) << "SERDES_LOCK_LOST";
         }
         // Unexpected data came from the chip or there was a checksum error.
         else if((message_type & 0b11111110) == 0b00000100) {
-          std::cout << "WEIRD_DATA" << std::endl;
+          LOG(DEBUG) << "WEIRD_DATA";
         }
         // Unknown message identifier
         else {
-          std::cout << "UNKNOWN_MESSAGE" << std::endl;
+          LOG(DEBUG) << "UNKNOWN_MESSAGE";
         }
       }
     }
