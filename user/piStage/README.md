@@ -10,7 +10,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Requirements
-To run the library a funcitonal installation of the ```pi_pi_gcs2``` library provided together with the Stages. The software will be provided on the DESY RC-PCs. If the library is missing cmake should complain
+To run the library a functional installation of the ```pi_pi_gcs2``` library provided together with the stages is required. The library will be provided on the DESY RC-PCs. If the library is missing `cmake` will fail
 
 ## Components
 
@@ -22,12 +22,12 @@ To run the library a funcitonal installation of the ```pi_pi_gcs2``` library pro
 Exemplary [init](usr/piStage/misc/Rota.ini) and [config](usr/piStage/misc/Rota.conf) snippets are provided. 
 The configuration is not able to handle units. Rotations are given in `degree` and axis positions in `mm`.
 
-The producer has to be correctly inititialized with the following parameters. 
-- ```ControllerIP``` IP of stage contoller default: `192.168.24.4`
+The producer has to be correctly initialized with the following parameters. 
+- ```ControllerIP``` IP of stage controller default: `192.168.24.4`
 - ```Port``` Port to be used, for all DESY Stages and default: `50000`
-- ```axisX``` DC-motor connected to x-axis. No default value. Assumed to be not connected if not set. Typically set to 1 for DESY testbeam.
-- ```axisy``` DC-motor connected to y-axis. No default value. Assumed to be not connected if not set. Typically set to 2 for DESY testbeam.
-- ```axisRot``` DC-motor connected to rot-axis. No default value. Assumed to be not connected if not set. Typically set to 3 for DESY testbeam.
+- ```axisX``` DC-motor connected to x-axis. No default value. Assumed to be not connected if not set. Typically set to 1 for DESY test beam.
+- ```axisy``` DC-motor connected to y-axis. No default value. Assumed to be not connected if not set. Typically set to 2 for DESY test beam.
+- ```axisRot``` DC-motor connected to rot-axis. No default value. Assumed to be not connected if not set. Typically set to 3 for DESY test beam.
 - ```initX```Init position for x-axis. Default `0`.
 - ```initY```Init position for y-axis. Default `0`.
 - ```initRot```Init position for rot-axis. Default `0`.
@@ -38,4 +38,5 @@ The configuration file needs the following up to three elements
 - ```positionX```Desired new position for x-axis. If not defined, no movement can be done.
 - ```positionY```Desired new position for y-axis. If not defined, no movement can be done.
 - ```positionRot```Desired new position for rot-axis. If not defined, no movement can be done.
+
 
