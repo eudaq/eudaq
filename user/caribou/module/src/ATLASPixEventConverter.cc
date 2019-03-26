@@ -28,6 +28,7 @@ double ATLASPixEvent2StdEventConverter::clockcycle_(8);
 bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
+  caribou::Log::setReportingLevel(caribou::LogLevel::DEBUG);
   // No event
   if(!ev || ev->NumBlocks() < 1) {
     return false;
