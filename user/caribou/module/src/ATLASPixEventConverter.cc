@@ -1,5 +1,4 @@
 #include "CaribouEvent2StdEventConverter.hh"
-#include "log.hpp"
 
 using namespace eudaq;
 
@@ -28,7 +27,6 @@ double ATLASPixEvent2StdEventConverter::clockcycle_(8);
 bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
-  caribou::Log::setReportingLevel(caribou::LogLevel::DEBUG);
   // No event
   if(!ev || ev->NumBlocks() < 1) {
     return false;
@@ -79,9 +77,9 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // convert ToT to nanoseconds
     // double tot_ns = tot * m_clockCycle;
 
-    LOG(TRACE) << "HIT: TS1: " << ts1 << "\t0x" << std::hex << ts1 << "\tTS2: " << ts2 << "\t0x" << std::hex << ts2
+    std::cout << "HIT: TS1: " << ts1 << "\t0x" << std::hex << ts1 << "\tTS2: " << ts2 << "\t0x" << std::hex << ts2
     << "\tTS_FULL: " << hit_ts << "\t" << timestamp << "ns"
-    << "\tTOT: " << tot;
+    << "\tTOT: " << tot << std::endl;
 
     // Create a StandardPlane representing one sensor plane
     eudaq::StandardPlane plane(0, "Caribou", "ATLASPix");
@@ -127,7 +125,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       uint64_t fpga_tsx = ((static_cast<unsigned long long>(datain) << 24) & 0x0000FFFFFF000000);
       if((!new_ts1_) && (fpga_tsx < fpga_ts2_)) {
         fpga_ts1_ += 0x0001000000000000;
-        LOG(WARNING) << "Missing TS_FPGA_1, adding one";
+        std::cout << "Missing TS_FPGA_1, adding one" << std::endl;
       }
       new_ts1_ = false;
       new_ts2_ = true;
@@ -138,7 +136,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       uint64_t fpga_tsx = ((datain)&0xFFFFFF);
       if((!new_ts2_) && (fpga_tsx < fpga_ts3_)) {
         fpga_ts2_ += 0x0000000001000000;
-        LOG(WARNING) << "Missing TS_FPGA_2, adding one";
+        std::cout <<"Missing TS_FPGA_2, adding one" << std::endl;
       }
       new_ts2_ = false;
       fpga_ts3_ = fpga_tsx;
@@ -147,38 +145,38 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // BUSY was asserted due to FIFO_FULL + 24 LSBs of FPGA timestamp when it happened
     } else if(message_type == 0b01110000) {
       // T0 received
-      LOG(WARNING) << "Another T0 event was found in the data";
+      std::cout << "Another T0 event was found in the data" << std::endl;
     } else if(message_type == 0b00000000) {
 
       // Empty data - should not happen
-      LOG(DEBUG) << "EMPTY_DATA";
+      std::cout << "EMPTY_DATA" << std::endl;
     } else {
 
       // Other options...
       // LOG(DEBUG) << "...Other";
       // Unknown message identifier
       if(message_type & 0b11110010) {
-        LOG(DEBUG) << "UNKNOWN_MESSAGE";
+        std::cout << "UNKNOWN_MESSAGE" << std::endl;
       } else {
         // Buffer for chip data overflow (data that came after this word were lost)
         if((message_type & 0b11110011) == 0b00000001) {
-          LOG(DEBUG) << "BUFFER_OVERFLOW";
+          std::cout << "BUFFER_OVERFLOW" << std::endl;
         }
         // SERDES lock established (after reset or after lock lost)
         if((message_type & 0b11111110) == 0b00001000) {
-          LOG(DEBUG) << "SERDES_LOCK_ESTABLISHED";
+          std::cout << "SERDES_LOCK_ESTABLISHED" << std::endl;
         }
         // SERDES lock lost (data might be nonsense, including up to 2 previous messages)
         else if((message_type & 0b11111110) == 0b00001100) {
-          LOG(DEBUG) << "SERDES_LOCK_LOST";
+          std::cout << "SERDES_LOCK_LOST" << std::endl;
         }
         // Unexpected data came from the chip or there was a checksum error.
         else if((message_type & 0b11111110) == 0b00000100) {
-          LOG(DEBUG) << "WEIRD_DATA";
+          std::cout << "WEIRD_DATA" << std::endl;
         }
         // Unknown message identifier
         else {
-          LOG(WARNING) << "UNKNOWN_MESSAGE";
+          std::cout << "UNKNOWN_MESSAGE" << std::endl;
         }
       }
     }
