@@ -70,9 +70,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
 
   bool data_found = false;
 
-  // Bad event
-  if(ev->NumBlocks() != 1) {
-    EUDAQ_WARN("Ignoring bad frame " + std::to_string(ev->GetEventNumber()));
+  // No event
+  if(!ev || ev->NumBlocks() < 1) {
     return false;
   }
 
@@ -80,7 +79,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   std::vector<uint64_t> vpixdata;
   auto data = ev->GetBlock(0);
   vpixdata.resize(data.size() / sizeof(uint64_t));
-  memcpy(&vpixdata[0], &data[0],data.size());
+  memcpy(&vpixdata[0], &data[0], data.size());
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "SPIDR", "Timepix3");

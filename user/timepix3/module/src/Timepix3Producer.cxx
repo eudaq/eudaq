@@ -487,6 +487,7 @@ void Timepix3Producer::RunLoop() {
       auto size = spidrdaq->sampleSize();
 
       // look inside sample buffer...
+      std::vector<uint64_t> data_buffer;
       while(1) {
         uint64_t data = spidrdaq->nextPacket();
 
@@ -501,19 +502,34 @@ void Timepix3Producer::RunLoop() {
         }
 
         // Data-driven or sequential readout pixel data header?
-        if( header == 0x6 ) { // Or TLU packet header?
-          auto evup = eudaq::Event::MakeUnique("Timepix3TrigEvent");
-          evup->AddBlock(0, &data, sizeof(data));
-          SendEvent(std::move(evup));
-        } else {
-          auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
-          evup->AddBlock(0, &data, sizeof(data));
-          SendEvent(std::move(evup));
+        if(header == 0x6) { // Or TLU packet header?
 
+          // Send out pixel data accumulated so far:
+          auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
+          evup->AddBlock(0, data_buffer);
+          SendEvent(std::move(evup));
+          data_buffer.clear();
+          m_ev++;
+
+          // Create and send new trigger event
+          auto evtrg = eudaq::Event::MakeUnique("Timepix3TrigEvent");
+          evtrg->AddBlock(0, &data, sizeof(data));
+          SendEvent(std::move(evtrg));
+          m_ev++;
+        } else {
+          data_buffer.push_back(data);
         }
 
-        m_ev++;
       } // End loop over sample buffer
+
+      // Send remaining pixel data:
+      if(!data_buffer.empty()) {
+        auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
+        evup->AddBlock(0, data_buffer);
+        SendEvent(std::move(evup));
+        data_buffer.clear();
+        m_ev++;
+      }
     } // Sample available
   } // Readout loop
 
