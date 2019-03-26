@@ -10,7 +10,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Requirements
-To run the librar a funcitonla installation of the ```pi_pi_gcs2``` library provided together with the Stages. The software will be provided on the DESY RC-PCs. If the library is missing cmake should complain
+To run the library a funcitonal installation of the ```pi_pi_gcs2``` library provided together with the Stages. The software will be provided on the DESY RC-PCs. If the library is missing cmake should complain
 
 ## Components
 
