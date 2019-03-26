@@ -220,6 +220,8 @@ void CaribouProducer::RunLoop() {
       m_ev++;
 
       LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev;
+    } catch(caribou::NoDataAvailable&) {
+        continue;
     } catch(caribou::DataException& e) {
       // Retrieval failed, retry once more before aborting:
       EUDAQ_WARN(std::string(e.what()) + ", skipping data packet");
