@@ -99,6 +99,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     // Decode the message content according to 8 MSBits
     unsigned int message_type = (datain >> 24);
+    std::cout << "Message type " << std::hex << message_type << std::dec << std::endl;
     if(message_type == 0b01000000) {
       uint64_t atp_ts = (datain >> 7) & 0x1FFFE;
       long long ts_diff = static_cast<long long>(atp_ts) - static_cast<long long>(fpga_ts_ & 0x1FFFF);
@@ -113,6 +114,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         }
       }
       readout_ts_ = static_cast<unsigned long long>(static_cast<long long>(fpga_ts_) + ts_diff);
+      std::cout << "RO_ts " << std::hex << readout_ts_ << " atp_ts " << atp_ts << std::dec << std::endl;
     } else if(message_type == 0b00010000) {
       // Trigger counter from FPGA [23:0] (1/4)
     } else if(message_type == 0b00110000) {
