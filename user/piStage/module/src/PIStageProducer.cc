@@ -56,7 +56,7 @@ void PIStageProducer::DoInitialise(){
 
 
   // We can skip everything if it is already connected:
-  if(m_connected)
+  if(m_connected && m_controller->checkIDN()>=0)
       return;
 
   auto ini = GetInitConfiguration();
@@ -67,8 +67,6 @@ void PIStageProducer::DoInitialise(){
   // to be used with the C-863 controller
   //if(!m_controller->connect("/dev/ttyUSB0",38400))
   //    EUDAQ_THROW("Cannot connect to PI-Stage-Controller");
-  else
-      m_connected = true;
 
   m_axis_X           = ini->Get("axisX","Disconnected");
   m_axis_Y           = ini->Get("axisY","Disconnected");
@@ -87,9 +85,9 @@ void PIStageProducer::DoInitialise(){
   bool forceInit        = ini->Get("forceInit",true);
   // Supports only x,y and rot movements
   if ( m_connected_X && !(linStageX=="no_type")&& !m_controller->initializeStage(m_axis_X.c_str(), linStageX.c_str()))
-      EUDAQ_THROW("Failed to initialize linear stage M-521.DD1 along x-axis");
+      EUDAQ_THROW("Failed to initialize linear stage along x-axis check stage model and limit switches");
   if (m_connected_Y && !(linStageY=="no_type") && !m_controller->initializeStage(m_axis_Y.c_str(), linStageY.c_str()))
-      EUDAQ_THROW("Failed to initialize linear stage M-521.DD1 along y-axis");
+      EUDAQ_THROW("Failed to initialize linear stage along y-axis check stage model and limit switches");
   if ( m_connected_Rot && !(rotStage=="no_type") && !m_controller->initializeStage(m_axis_Rot.c_str(), rotStage.c_str()))
       EUDAQ_THROW("Failed to initialize rotational stage M-060.DG");
   // setup stages - movements are limited to avoid damage of hardware
@@ -105,6 +103,7 @@ void PIStageProducer::DoInitialise(){
   if (m_connected_Rot && !m_controller->reference(m_axis_Rot.c_str(), &forceInit))
       EUDAQ_THROW("Failed to reference rotational stage M-060.DG");
 
+  m_connected = true;
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
