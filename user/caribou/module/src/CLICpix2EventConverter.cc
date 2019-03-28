@@ -121,6 +121,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // Last shutter open had higher timestamp than this one:
     t0_seen_ = (last_shutter_open_ > shutter_open);
   }
+  last_shutter_open_ = shutter_open;
 
   // FIXME - hardcoded configuration:
   bool drop_before_t0 = true;
