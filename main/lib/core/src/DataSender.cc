@@ -21,7 +21,7 @@ namespace eudaq {
     }
     std::cout<< "dataSender cleared"<<std::endl;
   }
-  
+
   void DataSender::Connect(const std::string & server) {
     m_is_connected = false;
     try{
@@ -106,7 +106,7 @@ namespace eudaq {
 	while(m_cv_not_empty.wait_for(lk, std::chrono::milliseconds(100))
 	      ==std::cv_status::timeout){
 	  if(!m_is_connected){
-	    return 0;
+	    return false;
 	  }
 	}
       }
@@ -119,7 +119,8 @@ namespace eudaq {
       //TODO: catch exception below
       m_dataclient->SendPacket(ser);
     }
-    
+
+    return true;
   }
-  
+
 }
