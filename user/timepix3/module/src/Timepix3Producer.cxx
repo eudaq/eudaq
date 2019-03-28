@@ -487,7 +487,7 @@ void Timepix3Producer::RunLoop() {
       auto size = spidrdaq->sampleSize();
 
       // look inside sample buffer...
-      std::vector<uint64_t> data_buffer;
+      std::vector<eudaq::EventSPC> data_buffer;
       while(1) {
         uint64_t data = spidrdaq->nextPacket();
 
@@ -506,7 +506,9 @@ void Timepix3Producer::RunLoop() {
 
           // Send out pixel data accumulated so far:
           auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
-          evup->AddBlock(0, data_buffer);
+          for(auto& subevt : data_buffer) {
+            evup->AddSubEvent(subevt);
+          }
           SendEvent(std::move(evup));
           data_buffer.clear();
           m_ev++;
@@ -517,7 +519,9 @@ void Timepix3Producer::RunLoop() {
           SendEvent(std::move(evtrg));
           m_ev++;
         } else {
-          data_buffer.push_back(data);
+          auto evup = eudaq::Event::MakeShared("Timepix3RawEvent");
+          evup->AddBlock(0, &data, sizeof(data));
+          data_buffer.push_back(evup);
         }
 
       } // End loop over sample buffer
@@ -525,7 +529,9 @@ void Timepix3Producer::RunLoop() {
       // Send remaining pixel data:
       if(!data_buffer.empty()) {
         auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
-        evup->AddBlock(0, data_buffer);
+        for(auto& subevt : data_buffer) {
+          evup->AddSubEvent(subevt);
+        }
         SendEvent(std::move(evup));
         data_buffer.clear();
         m_ev++;
