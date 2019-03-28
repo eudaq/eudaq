@@ -57,32 +57,11 @@ namespace eudaq {
     lk.unlock();
 
     for(auto &conn: conn_to_init){
-      std::string conn_type = conn->GetType();
-      std::string conn_name = conn->GetName();
-      std::string conn_addr = conn->GetRemote();
-      if(conn_type == "LogCollector"){
-	lk.lock();
-	std::string server_addr = m_conn_status[conn]->GetTag("_SERVER");
-	lk.unlock();
-	if(server_addr.find("tcp://") == 0 && conn_addr.find("tcp://") == 0){
-	  server_addr = conn_addr.substr(0, conn_addr.find_last_not_of("0123456789"))
-	    + ":"
-	    + server_addr.substr(server_addr.find_last_not_of("0123456789")+1);
-	}
-	std::string server_name = conn_type+"."+conn_name;
-	if(server_name=="LogCollector.log" && !server_addr.empty()){
-	  m_conf_init->SetSection("");
-	  m_conf_init->SetString("EUDAQ_LOG_ADDR", server_addr);
-	  SendCommand("LOG", server_addr);
-	}
-      }
+    InitialiseSingleConnection(conn);
     }
-    m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
-    for(auto &conn: conn_to_init)
-      SendCommand("INIT", to_string(*m_conf_init), conn);
-  }
 
-  void RunControl::InitialiseSingleConnection(ConnectionSPC id) {  
+}
+    void RunControl::InitialiseSingleConnection(ConnectionSPC id) {
     EUDAQ_INFO("Processing Initialise command");
     std::unique_lock<std::mutex> lk(m_mtx_conn);
 	  

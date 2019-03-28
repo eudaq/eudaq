@@ -42,7 +42,6 @@ RunControlGUI::RunControlGUI()
   viewConn->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(viewConn, SIGNAL(customContextMenuRequested(const QPoint &)),
           this, SLOT(onCustomContextMenu(const QPoint &)));
-
   QRect geom(-1,-1, 150, 200);
   QRect geom_from_last_program_run;
   QSettings settings("EUDAQ collaboration", "EUDAQ");
@@ -149,7 +148,6 @@ void RunControlGUI::on_btnConfig_clicked(){
     m_rc->ReadConfigureFile(settings);
     m_rc->Configure();
   }
-
   if(m_rc)
   {
   eudaq::ConfigurationSPC conf = m_rc->GetConfiguration();
@@ -276,8 +274,7 @@ eudaq::Status::State RunControlGUI::updateInfos(){
       settings.beginGroup("euRun2");
       settings.setValue("runnumber", m_run_n_qsettings);
       settings.endGroup();
-    }
-
+  }
     if(m_rc&&m_str_label.count("RUN")){
       if(state == eudaq::Status::STATE_RUNNING){
         m_str_label.at("RUN")->setText(QString::number(run_n));
@@ -411,7 +408,7 @@ bool RunControlGUI::loadConfigFile() {
 
 }
 
-bool RunControlGUI::addStatusDisplay(auto connection) {
+bool RunControlGUI::addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection) {
     QString name = QString::fromStdString(connection.first->GetName()
                                          +":"+connection.first->GetType());
     QString displayName = QString::fromStdString(connection.first->GetName()
