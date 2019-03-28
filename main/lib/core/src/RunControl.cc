@@ -59,6 +59,7 @@ namespace eudaq {
       for(auto &conn: conn_to_init)
           InitialiseSingleConnection(conn);
 
+      m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
   }
 
   void RunControl::InitialiseSingleConnection(ConnectionSPC id) {
@@ -92,7 +93,6 @@ namespace eudaq {
               SendCommand("LOG", server_addr);
           }
       }
-      m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
       SendCommand("INIT", to_string(*m_conf_init), id);
   }
   
@@ -114,9 +114,10 @@ namespace eudaq {
       lk.unlock();
       m_listening = false;
 
-
+      m_conf->SetSection("");
       for(auto &conn: conn_to_conf)
           ConfigureSingleConnection(conn);
+      m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
 
   }
   
@@ -147,7 +148,6 @@ namespace eudaq {
           std::string server_name = conn_type+"."+conn_name;
           m_conf->SetString(server_name, server_addr);
       }
-      m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
       SendCommand("CONFIG", to_string(*m_conf), id);
   }
 
