@@ -5,30 +5,31 @@
 #include "Colours.hh"
 #include "eudaq/Config.hh"
 
-using std::cout;
-using std::endl;
+
 RunControlGUI::RunControlGUI()
-  : QMainWindow(0, 0),
-    m_display_col(0),
-    m_display_row(0){
-    m_map_label_str = {{"RUN", "Run Number"}};
+  : QMainWindow(0, 0){
+  m_map_label_str = {{"RUN", "Run Number"}};
   
   qRegisterMetaType<QModelIndex>("QModelIndex");
   setupUi(this);
 
+  if (!grpStatus->layout())
+    grpStatus->setLayout(new QGridLayout(grpStatus));
   lblCurrent->setText(m_map_state_str.at(eudaq::Status::STATE_UNINIT));
+  QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
+  int row = 0, col = 0;
   for(auto &label_str: m_map_label_str) {
     QLabel *lblname = new QLabel(grpStatus);
     lblname->setObjectName("lbl_st_" + label_str.first);
     lblname->setText(label_str.second + ": ");
     QLabel *lblvalue = new QLabel(grpStatus);
     lblvalue->setObjectName("txt_st_" + label_str.first);
-    grpGrid->addWidget(lblname, m_display_row, m_display_col * 2);
-    grpGrid->addWidget(lblvalue, m_display_row, m_display_col * 2 + 1);
+    layout->addWidget(lblname, row, col * 2);
+    layout->addWidget(lblvalue, row, col * 2 + 1);
     m_str_label[label_str.first] = lblvalue;
-    if (++m_display_col > 1){
-      ++m_display_row;
-      m_display_col = 0;
+    if (++col > 1){
+      ++row;
+      col = 0;
     }
   }
   
@@ -36,8 +37,7 @@ RunControlGUI::RunControlGUI()
   viewConn->setItemDelegate(&m_delegate);
   
   viewConn->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(viewConn, SIGNAL(customContextMenuRequested(const QPoint &)),
-          this, SLOT(onCustomContextMenu(const QPoint &)));
+  connect(viewConn, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onCustomContextMenu(const QPoint &)));
   
   QRect geom(-1,-1, 150, 200);
   QRect geom_from_last_program_run;
@@ -99,6 +99,9 @@ void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
   thd_rc.detach();
 }
 
+// void RunControlGUI::on_btn
+
+
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
   QFileInfo check_file(txtInitFileName->text());
@@ -126,17 +129,6 @@ void RunControlGUI::on_btnConfig_clicked(){
   if(m_rc){
     m_rc->ReadConfigureFile(settings);
     m_rc->Configure();
-  }
-
-  if(m_rc)
-  {
-  eudaq::ConfigurationSPC conf = m_rc->GetConfiguration();
-  conf->SetSection("RunControl");
-  std::string additionalDisplays = conf->Get("ADDITIONAL_DISPLAY_NUMBERS","");
-  if(additionalDisplays!="")
-    addAdditionalStatus(additionalDisplays);
-  else
-      cout << "No additional status displays requested"<<endl;
   }
 }
 
@@ -187,9 +179,6 @@ void RunControlGUI::on_btnLoadConf_clicked() {
   if (!filename.isNull()) {
     txtConfigFileName->setText(filename);
   }
-
-
-
 }
 
 void RunControlGUI::DisplayTimer(){
@@ -201,16 +190,14 @@ void RunControlGUI::DisplayTimer(){
   for(auto &conn_status_last: m_map_conn_status_last){
     if(!map_conn_status.count(conn_status_last.first)){
       m_model_conns.disconnected(conn_status_last.first);
-      removeStatusDisplay(conn_status_last);
     }
   }
   for(auto &conn_status: map_conn_status){
     if(!m_map_conn_status_last.count(conn_status.first)){
       m_model_conns.newconnection(conn_status.first);
-      if(! (conn_status.first->GetType()== "LogCollector"))
-          addStatusDisplay(conn_status);
     }
   }
+
   if(map_conn_status.empty()){
     state = eudaq::Status::STATE_UNINIT;
   }
@@ -276,7 +263,7 @@ void RunControlGUI::DisplayTimer(){
     settings.setValue("runnumber", m_run_n_qsettings);
     settings.endGroup();
   }
-
+  
   if(m_rc&&m_str_label.count("RUN")){
     if(state == eudaq::Status::STATE_RUNNING){
       m_str_label.at("RUN")->setText(QString::number(run_n));
@@ -285,8 +272,8 @@ void RunControlGUI::DisplayTimer(){
       m_str_label.at("RUN")->setText(QString::number(run_n)+" (next run)");
     }
   }
+  
   m_map_conn_status_last = map_conn_status;
-  updateStatusDisplay();
 }
 
 void RunControlGUI::closeEvent(QCloseEvent *event) {
@@ -406,153 +393,4 @@ bool RunControlGUI::loadConfigFile() {
     m_rc->ReadConfigureFile(settings);
   }
   return true;
-}
-
-bool RunControlGUI::addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection) {
-    QString name = QString::fromStdString(connection.first->GetName()
-                                         +":"+connection.first->GetType());
-    QString displayName = QString::fromStdString(connection.first->GetName()
-                                         +":EventN");
-    addToGrid(displayName,name);
-    return true;
-}
-
-bool RunControlGUI::removeStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection) {
-    // remove obsolete information from disconnected values
-    for(auto idx=0; idx<grpGrid->count();idx++)
-    {
-        QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-        if(l->objectName()==QString::fromStdString(connection.first->GetName()
-                                                   +":"+connection.first->GetType()))
-        {
-            // Status updates are always pairs
-            m_map_label_str.erase(l->objectName());
-            m_str_label.erase(l->objectName());
-            grpGrid->removeWidget(l);
-            delete l;
-            l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-            grpGrid->removeWidget(l);
-            delete l;
-        }
-    }
-    return true;
-}
-bool RunControlGUI::addToGrid(QString objectName, QString displayedName)
-{
-
-    if(m_str_label.count(objectName)==1)
-    {
-        QMessageBox::warning(NULL,"ERROR - Status display","Duplicating display entry request: "+objectName);
-        return false;
-    }
-    if(displayedName=="")
-        displayedName = objectName;
-    QLabel *lblname = new QLabel(grpStatus);
-    lblname->setObjectName(objectName);
-    lblname->setText(displayedName+": ");
-    QLabel *lblvalue = new QLabel(grpStatus);
-    lblvalue->setObjectName("val_"+objectName);
-    lblvalue->setText("val_"+objectName);
-
-    int colPos = 0, rowPos = 0;
-    // toDo: need to implement correct layout magic here
-    if( 2* (m_str_label.size()+1) < grpGrid->rowCount() * grpGrid->columnCount() ) {
-        colPos = m_display_col;
-        rowPos = m_display_row;
-        if (++m_display_col > 1){
-            ++m_display_row;
-            m_display_col = 0;
-        }
-//        cout << "found empty positions"<<endl;
-//        for(auto idx=0; idx<grpGrid->count();idx++)
-//        {
-//            QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAtPosition(idx/grpGrid->columnCount(),idx%grpGrid->columnCount())->widget());
-////            QLabel * l = dynamic_cast<QLabel *> (grpGrid->itemAt(idx)->widget());
-////            cout <<l->objectName().toStdString()<<"\t"<< grpGrid->itemAt(idx)->widget()<<endl;
-//            if(l->objectName() == "")
-//                cout << "found empty slot at  "<< idx<<endl;
-//        }
-    }
-    else {
-        colPos = m_display_col;
-        rowPos = m_display_row;
-        if (++m_display_col > 1){
-            ++m_display_row;
-            m_display_col = 0;
-        }
-    }
-    m_map_label_str.insert(std::pair<QString, QString>(objectName,objectName+": "));
-    m_str_label.insert(std::pair<QString, QLabel *>(objectName, lblvalue));
-    grpGrid->addWidget(lblname, rowPos, colPos * 2);
-    grpGrid->addWidget(lblvalue, rowPos, colPos * 2 + 1);
-}
-/**
- * @brief RunControlGUI::updateStatusDisplay
- * @return true if success, false otherwise (cannot happen currently)
- */
-bool RunControlGUI::updateStatusDisplay()
-{
-    auto it = m_map_conn_status_last.begin();
-    while(it!=m_map_conn_status_last.end())
-    {
-        // elements might not be existing at startup/beeing asynchronously changed
-        if(it->first && it->second)
-        {
-            auto labelit = m_str_label.begin();
-            while(labelit!=m_str_label.end())
-            {
-                std::string labelname     = (labelit->first.toStdString()).substr(0,labelit->first.toStdString().find(":"));
-                std::string displayedItem = (labelit->first.toStdString()).substr(labelit->first.toStdString().find(":")+1,labelit->first.toStdString().size());
-                if(it->first->GetName()==labelname)
-                {
-                    auto tags = it->second->GetTags();
-                    // obviously not really elegant...
-                    for(auto &tag: tags){
-                        if(tag.first==displayedItem && displayedItem=="EventN")
-                            labelit->second->setText(QString::fromStdString(tag.second+" Events"));
-                        else if(tag.first==displayedItem && displayedItem=="Freq. (avg.) [kHz]")
-                            labelit->second->setText(QString::fromStdString(tag.second+" kHz"));
-                        else if(tag.first==displayedItem)
-                            labelit->second->setText(QString::fromStdString(tag.second));
-                    }
-                }
-                labelit++;
-            }
-        }
-        it++;
-    }
-    return true;
-}
-
-bool RunControlGUI::addAdditionalStatus(std::string info)
-{
-    std::vector<std::string> results = eudaq::splitString(info,',');
-    if(results.size()%2!=0)
-    {
-        QMessageBox::warning(NULL,"ERROR","Additional Status Display inputs are not correctly formatted - please check");
-       return false;
-    }
-    else
-    {
-        for(auto c = 0; c < results.size();c+=2)
-        {
-            // check if the connection exists, otherwise do not display
-            auto it = m_map_conn_status_last.begin();
-            bool found = false;
-            while(it != m_map_conn_status_last.end())
-            {
-                if(it->first && it->first->GetName()==results.at(c))
-                {    addToGrid(QString::fromStdString(results.at(c)+":"+results.at(c+1)));
-                     found = true;
-                }
-                it++;
-            }
-            if(!found)
-            {
-                QMessageBox::warning(NULL,"ERROR",QString::fromStdString("Element \""+results.at(c)+ "\" is not connected"));
-                return false;
-            }
-        }
-    }
-    return true;
 }
