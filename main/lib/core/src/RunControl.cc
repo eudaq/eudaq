@@ -93,7 +93,6 @@ namespace eudaq {
 	return;
     }
     lk.unlock();
-
     std::string conn_type = id->GetType();
     std::string conn_name = id->GetName();
     std::string conn_addr = id->GetRemote();
