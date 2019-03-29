@@ -114,7 +114,7 @@ namespace eudaq {
       lk.unlock();
       m_listening = false;
 
-      m_conf->SetSection("");
+//m_conf->SetSection("RunControl");
       for(auto &conn: conn_to_conf)
           ConfigureSingleConnection(conn);
       m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
