@@ -678,6 +678,21 @@ bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
         if(!conn_status.second)
             continue;
         auto state_conn = conn_status.second->GetState();
+
+        if(state_conn == eudaq::Status::STATE_ERROR)
+        {
+            EUDAQ_ERROR("Automatical config failed - retry...");
+            // private reset here....
+            m_rc->ResetSingleConnection(conn_status);
+            if( state <= eudaq::Status::STATE_UNCONF && conn_status.second->GetState() == eudaq::Status::STATE_UNINIT)
+                m_rc->InitialiseSingleConnection(conn_status);
+            if(state <= eudaq::Status::STATE_UNCONF && (conn_status.second->GetState() == eudaq::Status::STATE_UNCONF))
+                m_rc->InitialiseSingleConnection(conn_status);
+            if(state <= eudaq::Status::STATE_UNCONF && conn_status.second->GetState() == eudaq::Status::STATE_CONF)
+                m_rc->InitialiseSingleConnection(conn_status);
+            return false;
+
+        }
         if((int)state_conn != (int)state)
             return false;
     }
