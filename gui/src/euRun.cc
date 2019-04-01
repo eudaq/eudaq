@@ -183,7 +183,9 @@ void RunControlGUI::on_btnReset_clicked() {
 }
 
 void RunControlGUI::on_btnLog_clicked() {
+  eudaq::GetLogger().Connect("LogCollector","log","tcp://39187");
   std::string msg = txtLogmsg->displayText().toStdString();
+  eudaq::GetLogger().SendLogMessage(eudaq::LogMessage("test message", eudaq::LogMessage::LVL_INFO));
   EUDAQ_USER(msg);
 }
 
@@ -576,7 +578,8 @@ void RunControlGUI::on_btn_LoadScanFile_clicked()
  */
 void RunControlGUI::on_btnStartScan_clicked()
 {
-   if(!checkFile(txtScanFile->text(),QString::fromStdString("Scan File")))
+
+    if(!checkFile(txtScanFile->text(),QString::fromStdString("Scan File")))
        return;
   if(!readScanConfig()){
       QMessageBox::warning(NULL,"ERROR","invalid scan config file");
@@ -589,6 +592,7 @@ void RunControlGUI::on_btnStartScan_clicked()
        if(reply==QMessageBox::Yes) {
            m_scan_active = false;
            m_scanningTimer.stop();
+           //on_btnStop_clicked();
            btnStartScan->setText("Start Scan");
 
        } else if(reply==QMessageBox::Abort) {
@@ -600,12 +604,14 @@ void RunControlGUI::on_btnStartScan_clicked()
        }
    } else {
        // init scan parameters:
+       m_lastexit_success = true; // do not count run number up by one at scan start
        m_scan.current_step = 0;
        progressBar_scan->setMaximum(100);
        m_scan_active = true;
        btnStartScan->setText("Interrupt scan");
-       nextScanStep();
    }
+   nextScanStep();
+   return;
 }
 
 /**
@@ -622,7 +628,8 @@ void RunControlGUI::nextScanStep()
         btnStartScan->setText("Start Scan");
         on_btnStop_clicked();
         QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
-    }else if(m_scan_active) {
+        return;
+    } else if(m_scan_active) {
         txtConfigFileName
                 ->setText(QString::fromStdString(m_scan.config_files.at(m_scan.current_step)));
         if(!prepareAndStartStep())
@@ -635,6 +642,7 @@ void RunControlGUI::nextScanStep()
 
         m_scan.current_step++;
     }
+    return;
 
 }
 /**
@@ -700,13 +708,11 @@ bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){
         {
             EUDAQ_ERROR("Automatical config failed - retry...");
             // private reset here....
-            m_rc->ResetSingleConnection(conn_status);
+            m_rc->ResetSingleConnection(conn_status.first);
             if( state <= eudaq::Status::STATE_UNCONF && conn_status.second->GetState() == eudaq::Status::STATE_UNINIT)
-                m_rc->InitialiseSingleConnection(conn_status);
-            if(state <= eudaq::Status::STATE_UNCONF && (conn_status.second->GetState() == eudaq::Status::STATE_UNCONF))
-                m_rc->InitialiseSingleConnection(conn_status);
-            if(state <= eudaq::Status::STATE_UNCONF && conn_status.second->GetState() == eudaq::Status::STATE_CONF)
-                m_rc->InitialiseSingleConnection(conn_status);
+                m_rc->InitialiseSingleConnection(conn_status.first);
+            if(state <= eudaq::Status::STATE_CONF && (conn_status.second->GetState() == eudaq::Status::STATE_UNCONF))
+                m_rc->ConfigureSingleConnection(conn_status.first);
             return false;
 
         }
@@ -822,6 +828,7 @@ void RunControlGUI::createConfigs(){
                                                                                      +j*m_scan_config->Get("step",0)));
                 // write it all
                 std::filebuf fb;
+                std::cout <<"---------------------------------------------" <<filename <<std::endl;
                 fb.open (filename,std::ios::out);
                 std::ostream os(&fb);
                 defaultconf->Save(os);

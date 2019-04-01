@@ -1,7 +1,7 @@
 [general]
 scans = 2
 allowNested = 0 # overrides local nested arguments
-configpath = "/home/lhuth/test/eudaqScan"
+configpath = "/home/lhuth/test/scanned"
 timeModeActive = 1 # 1 = true :)
 time = 100 #in seconds for now
 nevents = 200
