@@ -73,6 +73,7 @@ namespace eudaq {
 
   void LogSender::SendLogMessage(const LogMessage &msg, std::ostream &out,
                                  std::ostream &error_out) {
+    std::cout <<"Log message sent: " <<msg.GetMessage()<<std::endl;
     std::lock_guard<std::recursive_mutex> lk(m_mutex);
     if (msg.GetLevel() >= m_level) {
       if (msg.GetLevel() >= m_errlevel) {
@@ -87,6 +88,8 @@ namespace eudaq {
     }
 
     if (!m_logclient) {
+        std::cout << "no log client found:" <<std::endl;
+
       if (m_shownotconnected)
         error_out << "### Log message triggered but Logger not connected ###\n";
     } else {
@@ -107,6 +110,7 @@ namespace eudaq {
         delete m_logclient;
         m_logclient = 0;
       }
+      std::cout << "serialized:" <<std::endl;
     }
   }
 
