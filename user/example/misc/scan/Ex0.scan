@@ -1,6 +1,5 @@
-[general]
+[global]
 repeatScans = 1
-scans = 1
 allowNested = 0 # overrides local nested arguments
 configPrefix = "/home/lhuth/test/scanned"
 timeModeActive = 1 # 1 = true :)
@@ -16,4 +15,21 @@ name = Producer.my_pd0
 eventCounter = Producer.my_pd0
 parameter = EX0_PLANE_ID
 
+[4]
+default = 0
+start = 1
+stop = 6
+step = 1
+name = Producer.my_pd1
+eventCounter = Producer.my_pd1
+parameter = EX0_PLANE_ID
 
+
+[6]
+default = 0
+start = 1
+stop = 6
+step = 1
+name = Producer.my_pd1
+eventCounter = Producer.my_pd1
+parameter = EX0_PLANE_ID
