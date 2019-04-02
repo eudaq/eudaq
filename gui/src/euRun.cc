@@ -117,6 +117,21 @@ void RunControlGUI::on_btnInit_clicked(){
     m_rc->ReadInitilizeFile(settings);
     m_rc->Initialise();
   }
+  // connect to the log collector - based on RunControl.cc implemtation
+  std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
+  if(m_rc)
+    map_conn_status= m_rc->GetActiveConnectionStatusMap();
+  for(auto &conn_status: map_conn_status) {
+   if((conn_status.first->GetType()== "LogCollector" && conn_status.first->GetName() == "log")) {
+       std::string server_addr = conn_status.second->GetTag("_SERVER");
+       std::string conn_addr = conn_status.first->GetRemote();
+       std::string log_server = conn_addr.substr(0, conn_addr.find_last_not_of("0123456789"))
+               + ":"
+               + server_addr.substr(server_addr.find_last_not_of("0123456789")+1);
+       EUDAQ_LOG_CONNECT("RunControl","RC-GUI", log_server);
+    }
+  }
+
 }
 
 void RunControlGUI::on_btnTerminate_clicked(){
