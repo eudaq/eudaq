@@ -1,29 +1,19 @@
 [general]
-scans = 2
+repeatScans = 1
+scans = 1
 allowNested = 0 # overrides local nested arguments
-configpath = "/home/lhuth/test/scanned"
+configPrefix = "/home/lhuth/test/scanned"
 timeModeActive = 1 # 1 = true :)
-time = 100 #in seconds for now
+time = 20 #in seconds for now
 nevents = 200
 
 [0]
 default = 0
 start = 1
-stop = 3
+stop = 2
 step = 1
 name = Producer.my_pd0
 eventCounter = Producer.my_pd0
-parameter = EX0_PLANE_ID
-
-
-[1]
-#isNested = 1
-default = 1
-start = 1
-stop = 3
-step = 1
-name = Producer.my_pd1
-eventCounter = Producer.my_pd1
 parameter = EX0_PLANE_ID
 
 

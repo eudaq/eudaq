@@ -624,8 +624,10 @@ void RunControlGUI::nextScanStep()
         m_scan_active = false;
         m_scanningTimer.stop();
         btnStartScan->setText("Start Scan");
-        QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
+        if(!m_scan.repeatScans) QMessageBox::information(NULL,"Scan finished","Scan successfully completed/manually interrupted");
         prepareAndStartStep();
+        if(m_scan.repeatScans)
+            on_btnStartScan_clicked();
         return;
     } else {
         txtConfigFileName
@@ -753,10 +755,12 @@ bool RunControlGUI::checkScanParameters(){
            )
         return false;
     // reset the configs
+
     m_scan.scanned_parameter.clear();
     m_scan.events_counting_component.clear();
     m_scan.scanned_producer.clear();
     m_scan.config_files.clear();
+    m_scan.repeatScans = m_scan_config->Get("repeatScans", false);
     m_scan.allow_nested_scan = m_scan_config->Get("allowNested",-1);
     m_scan.n_scans =m_scan_config->Get("scans",-1);
     m_scan.time_per_step = m_scan_config->Get("time",0.0);
@@ -804,9 +808,7 @@ void RunControlGUI::createConfigs(){
     std::string config = txtConfigFileName->text().toStdString();
     eudaq::ConfigurationSP defaultconf = eudaq::Configuration::MakeUniqueReadFile(config);
     m_scan_config->SetSection("general");
-    config = m_scan_config->Get("configpath",config);
-
-
+    config = m_scan_config->Get("configPrefix","scan");
     int step = 0;
     for(int i = 0; i< m_scan.n_scans; i++){
         m_scan_config->SetSection(std::to_string(i));
@@ -817,9 +819,8 @@ void RunControlGUI::createConfigs(){
             {
                 defaultconf->SetSection(m_scan_config->Get("name",""));
 
-                std::string filename = (config.substr(0,config.size()-5)+"_scan_"+std::to_string(step)+".conf");
-                if(config != txtConfigFileName->text().toStdString())
-                    filename = (config+"_scan_"+std::to_string(step)+".conf");
+
+                std::string filename = (config+"_"+std::to_string(step)+".conf");
                 m_scan.config_files.push_back(filename);
                 m_scan.events_counting_component.push_back(m_scan_config->Get("eventCounter","no processor found"));
                 defaultconf->SetString(m_scan.scanned_parameter.at(i),std::to_string(m_scan_config->Get("start",0)
