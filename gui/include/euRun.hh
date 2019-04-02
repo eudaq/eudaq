@@ -61,7 +61,7 @@ private slots:
   void on_btnStartScan_clicked();
   void nextScanStep();
 private:
-  void updateInfos();
+  eudaq::Status::State updateInfos();
   bool loadInitFile();
   bool loadConfigFile();
   bool addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection);
@@ -91,7 +91,7 @@ private:
   int m_display_col, m_display_row;
   QMenu* contextMenu;
   bool m_lastexit_success;
-
+  eudaq::LogSender m_log;
   bool m_scan_active;
   bool m_scan_interrupt_received;
   QTimer m_scanningTimer;

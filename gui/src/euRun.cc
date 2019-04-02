@@ -117,21 +117,8 @@ void RunControlGUI::on_btnInit_clicked(){
     m_rc->ReadInitilizeFile(settings);
     m_rc->Initialise();
   }
-  // connect to the log collector - based on RunControl.cc implemtation
-  std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
-  if(m_rc)
-    map_conn_status= m_rc->GetActiveConnectionStatusMap();
-  for(auto &conn_status: map_conn_status) {
-   if((conn_status.first->GetType()== "LogCollector" && conn_status.first->GetName() == "log")) {
-       std::string server_addr = conn_status.second->GetTag("_SERVER");
-       std::string conn_addr = conn_status.first->GetRemote();
-       std::string log_server = conn_addr.substr(0, conn_addr.find_last_not_of("0123456789"))
-               + ":"
-               + server_addr.substr(server_addr.find_last_not_of("0123456789")+1);
-       EUDAQ_LOG_CONNECT("RunControl","RC-GUI", log_server);
-    }
-  }
-
+  // connect to the log collector
+  m_log.Connect("RunControl","RC-GUI","tcp://127.0.0.1:"+txtLogmsg->text().toStdString());
 }
 
 void RunControlGUI::on_btnTerminate_clicked(){
@@ -184,7 +171,10 @@ void RunControlGUI::on_btnReset_clicked() {
 
 void RunControlGUI::on_btnLog_clicked() {
     std::string msg = txtLogmsg->text().toStdString();
-    EUDAQ_USER(msg);
+    eudaq::LogSender log;
+    //log.Connect("RunControl", "RC",msg);
+    m_log.SendLogMessage(eudaq::LogMessage(msg,eudaq::Status::Level::LVL_INFO));
+//    EUDAQ_USER(msg);
 }
 
 void RunControlGUI::on_btnLoadInit_clicked() {
@@ -208,11 +198,9 @@ void RunControlGUI::on_btnLoadConf_clicked() {
 }
 
 void RunControlGUI::DisplayTimer(){
-  updateInfos();
+  auto state = updateInfos();
   updateStatusDisplay();
-  if(m_scan_active == false)
-      btnStartScan->setText("Start Scan");
-  else
+  if(state == eudaq::Status::STATE_RUNNING)
       updateProgressBar();
 
   if(!m_scan.scan_is_time_based && m_scan_active == true)
@@ -220,7 +208,7 @@ void RunControlGUI::DisplayTimer(){
           nextScanStep();
 }
 
-void RunControlGUI::updateInfos(){
+eudaq::Status::State RunControlGUI::updateInfos(){
     std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
     auto state = eudaq::Status::STATE_RUNNING;
     if(m_rc)
@@ -286,6 +274,7 @@ void RunControlGUI::updateInfos(){
       }
     }
     m_map_conn_status_last = map_conn_status;
+    return state;
 }
 
 void RunControlGUI::closeEvent(QCloseEvent *event) {
@@ -657,6 +646,8 @@ bool RunControlGUI::prepareAndStartStep()
     if(m_scan_active==true) {
         on_btnReset_clicked();
         while(!allConnectionsInState(eudaq::Status::STATE_UNINIT)){
+            updateInfos();
+            QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for reset"<<endl;
         }
@@ -664,6 +655,8 @@ bool RunControlGUI::prepareAndStartStep()
         std::this_thread::sleep_for (std::chrono::seconds(3));
         on_btnInit_clicked();
         while(!allConnectionsInState(eudaq::Status::STATE_UNCONF)){
+            updateInfos();
+            QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for init"<<endl;
         }
@@ -672,6 +665,8 @@ bool RunControlGUI::prepareAndStartStep()
         EUDAQ_USER("Initialized");
         on_btnConfig_clicked();
         while(!allConnectionsInState(eudaq::Status::STATE_CONF)){
+            updateInfos();
+            QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for configuration"<<endl;
         }
@@ -846,7 +841,7 @@ void RunControlGUI::createConfigs(){
         }
     }
     // set number of steps to config files created - might not correspond to the initial guess:
-    m_scan.n_steps = m_scan.config_files.size()-1;
+    m_scan.n_steps = m_scan.config_files.size();
 }
 
 /**

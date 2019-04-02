@@ -12,6 +12,7 @@ namespace eudaq {
 
   void LogSender::Connect(const std::string &type, const std::string &name,
                           const std::string &server) {
+      std::cout<<"-+-+-+-+-+-+-+-+-+-+-+-+-+-+-" << type <<", "<< name <<", "<< server <<std::endl;
     std::lock_guard<std::recursive_mutex> lk(m_mutex);
     if (isConnected) {
       return;
