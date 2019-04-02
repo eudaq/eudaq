@@ -183,10 +183,8 @@ void RunControlGUI::on_btnReset_clicked() {
 }
 
 void RunControlGUI::on_btnLog_clicked() {
-  eudaq::GetLogger().Connect("LogCollector","log","tcp://39187");
-  std::string msg = txtLogmsg->displayText().toStdString();
-  eudaq::GetLogger().SendLogMessage(eudaq::LogMessage("test message", eudaq::LogMessage::LVL_INFO));
-  EUDAQ_USER(msg);
+    std::string msg = txtLogmsg->text().toStdString();
+    EUDAQ_USER(msg);
 }
 
 void RunControlGUI::on_btnLoadInit_clicked() {
@@ -579,12 +577,7 @@ void RunControlGUI::on_btn_LoadScanFile_clicked()
 void RunControlGUI::on_btnStartScan_clicked()
 {
 
-    if(!checkFile(txtScanFile->text(),QString::fromStdString("Scan File")))
-       return;
-  if(!readScanConfig()){
-      QMessageBox::warning(NULL,"ERROR","invalid scan config file");
-      return;
-    }
+
    if(m_scan_active == true) {
        QMessageBox::StandardButton reply;
        reply = QMessageBox::question(NULL,"Interrupt Scan","Do you want to stop immediately?\n Hitting no will stop after finishing the current step",
@@ -592,9 +585,8 @@ void RunControlGUI::on_btnStartScan_clicked()
        if(reply==QMessageBox::Yes) {
            m_scan_active = false;
            m_scanningTimer.stop();
-           //on_btnStop_clicked();
-           btnStartScan->setText("Start Scan");
-
+           prepareAndStartStep();
+           return;
        } else if(reply==QMessageBox::Abort) {
            m_scan_active = true;
            btnStartScan->setText("Interrupt scan");
@@ -603,6 +595,12 @@ void RunControlGUI::on_btnStartScan_clicked()
            btnStartScan->setText("Scan stops after current step");
        }
    } else {
+       if(!checkFile(txtScanFile->text(),QString::fromStdString("Scan File")))
+           return;
+       if(!readScanConfig()){
+           QMessageBox::warning(NULL,"ERROR","invalid scan config file");
+           return;
+       }
        // init scan parameters:
        m_lastexit_success = true; // do not count run number up by one at scan start
        m_scan.current_step = 0;
@@ -617,19 +615,19 @@ void RunControlGUI::on_btnStartScan_clicked()
 /**
  * @brief RunControlGUI::nextScanStep
  * @abstract Slot to start the next step - Can be either triggered via a QTimer
- * or an eventnumber of one producer
+ * , an eventnumber of one producer or by clicking on interrupt scan.
  */
 void RunControlGUI::nextScanStep()
 {
     // stop readout
-    if((m_scan.current_step > m_scan.n_steps || m_scan_interrupt_received) && m_scan_active) {
+    if((m_scan.current_step > m_scan.n_steps || m_scan_interrupt_received)) {
         m_scan_active = false;
         m_scanningTimer.stop();
         btnStartScan->setText("Start Scan");
-        on_btnStop_clicked();
         QMessageBox::information(NULL,"Scan finished","Scan successfully completed");
+        prepareAndStartStep();
         return;
-    } else if(m_scan_active) {
+    } else {
         txtConfigFileName
                 ->setText(QString::fromStdString(m_scan.config_files.at(m_scan.current_step)));
         if(!prepareAndStartStep())
@@ -652,8 +650,9 @@ void RunControlGUI::nextScanStep()
  */
 bool RunControlGUI::prepareAndStartStep()
 {
-    if(m_scan_active==true) {
+    if(m_scan.current_step!=0)
         on_btnStop_clicked();
+    if(m_scan_active==true) {
         on_btnReset_clicked();
         while(!allConnectionsInState(eudaq::Status::STATE_UNINIT)){
             std::this_thread::sleep_for (std::chrono::seconds(1));
@@ -682,7 +681,6 @@ bool RunControlGUI::prepareAndStartStep()
         // stop the scan here
 
     } else {
-        on_btnStop_clicked();
         btnStartScan->setText("Start scan");
 
     }
@@ -786,7 +784,7 @@ bool RunControlGUI::checkScanParameters(){
         m_scan.n_steps += 1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
                           double(m_scan_config->Get("step",0.0));
     m_scan.steps_per_scan.push_back(1+(m_scan_config->Get("stop",0.0)-m_scan_config->Get("start",0.0))/
-                          double(m_scan_config->Get("step",0.0)));
+                          double(m_scan_config->Get("step",1.0)));
     }
 
     createConfigs();
