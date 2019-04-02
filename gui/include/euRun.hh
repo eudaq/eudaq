@@ -24,6 +24,7 @@ class RunControlGUI : public QMainWindow,
         std::vector<std::string> config_files;
         bool allow_nested_scan = false;
         bool scan_is_time_based = true;
+        bool repeatScans = false;
         int time_per_step = 0;
         int events_per_step = 0;
         std::vector<int> steps_per_scan;
