@@ -1,12 +1,10 @@
 #include "scanHelper.hh"
 
-inline bool file_exists(string name)
-{
+inline bool file_exists(string name) {
     ifstream f(name.c_str());
-       return f.good();
+    return f.good();
 }
-bool Scan::setupScan(string globalConfFile, string scanConfFile)
-{
+bool Scan::setupScan(string globalConfFile, string scanConfFile) {
     //check if the files exist;
     if(!file_exists(globalConfFile))
         return ERROR("Default config file not existing:  "+globalConfFile);
@@ -17,17 +15,15 @@ bool Scan::setupScan(string globalConfFile, string scanConfFile)
     // read the scan config
     eudaq::ConfigurationSP scanConf = eudaq::Configuration::MakeUniqueReadFile(scanConfFile);
     if(!scanConf->HasSection("global"))
-    return ERROR("No global settings given in "+scanConfFile);
+        return ERROR("No global settings given in "+scanConfFile);
 
     if(!readGlobal(scanConf))
         return false;
     int i = 0 ;
     vector<ScanSection> sec;
     // having more than a thousand scans at once is pointless
-    while(i<1000)
-    {
-        if(scanConf->HasSection(to_string(i)))
-        {
+    while(i<1000) {
+        if(scanConf->HasSection(to_string(i))) {
             scanConf->SetSection(to_string(i));
             bool nested     = scanConf->Get("nested",false) && m_allow_nested_scan;
             double start    = scanConf->Get("start",-123456789);
@@ -39,8 +35,8 @@ bool Scan::setupScan(string globalConfFile, string scanConfFile)
             string Counter  = scanConf->Get("eventCounter","wrongPara");
             // check if any parameter is wrong
             if(Counter == "wrongPara" || name == "wrongPara" || param == "wrongPara"
-               || start == -123456789 || stop == -123456789 || step == -123456789)
-            return ERROR("Scan section "+to_string(i)+" is incomplete -> Please check");
+                    || start == -123456789 || stop == -123456789 || step == -123456789)
+                return ERROR("Scan section "+to_string(i)+" is incomplete -> Please check");
             defaultConf->SetSection("");
 
             // check if the component is existing in the default config and the scanned parameter existing
@@ -68,34 +64,30 @@ bool Scan::setupScan(string globalConfFile, string scanConfFile)
         EUDAQ_INFO("LOOPING Scan with "+to_string(m_config_files.size())+" steps initialized");
     m_n_steps = m_config_files.size();
     return true;
-
 }
-void Scan::createConfigs(int condition, eudaq::ConfigurationSP conf,vector<ScanSection> sec)
-{
+
+void Scan::createConfigs(int condition, eudaq::ConfigurationSP conf,vector<ScanSection> sec) {
     if(condition == sec.size())
         return;
     int confsBefore = m_config_files.size();
     auto it = sec.at(condition).start;
-    while(it<=sec.at(condition).stop)
-    {
+    while(it<=sec.at(condition).stop) {
         // if the scan is nested, all other data points from before need to be
-        // redone with each new point
-        if(sec.at(condition).nested)
-        {
-            for(int i =0; i < confsBefore;++i)
-            {
-            eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
-            tmpConf->SetSection(sec.at(condition).name);
-            tmpConf->Set(sec.at(condition).parameter, it);
-            storeConfigFile(tmpConf);
-            add(sec.at(condition));
+        // redone with each point of current scan
+        if(sec.at(condition).nested) {
+            for(int i =0; i < confsBefore;++i) {
+                eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
+                tmpConf->SetSection(sec.at(condition).name);
+                tmpConf->Set(sec.at(condition).parameter, it);
+                storeConfigFile(tmpConf);
+                addSection(sec.at(condition));
             }
         } else {
             conf->SetSection(sec.at(condition).name);
             conf->Set(sec.at(condition).parameter, it);
             storeConfigFile(conf);
             EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+to_string(it));
-            add(sec.at(condition));
+            addSection(sec.at(condition));
         }
         it+= sec.at(condition).step;
     }
@@ -104,8 +96,8 @@ void Scan::createConfigs(int condition, eudaq::ConfigurationSP conf,vector<ScanS
     EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+to_string(it));
     createConfigs(condition+1,conf,sec);
 }
-bool Scan::storeConfigFile(eudaq::ConfigurationSP conf)
-{
+
+bool Scan::storeConfigFile(eudaq::ConfigurationSP conf) {
     string filename = m_config_file_prefix+"_"+to_string(m_config_files.size())+".conf";
     EUDAQ_INFO(filename);
     std::filebuf fb;
@@ -114,16 +106,16 @@ bool Scan::storeConfigFile(eudaq::ConfigurationSP conf)
     conf->Save(os);
     fb.close();
     m_config_files.push_back(filename);
-
+    return file_exists(filename);
 }
-void Scan::add(ScanSection s)
-{
+
+void Scan::addSection(ScanSection s) {
     m_scanned_parameter.push_back(s.parameter);
     m_scanned_producer.push_back(s.name);
     m_events_counting_component.push_back(s.eventCounter);
 }
-void Scan::reset()
-{
+
+void Scan::reset() {
     m_config_file_prefix = "";
     m_config_files.clear();
     m_allow_nested_scan = false;
@@ -137,19 +129,20 @@ void Scan::reset()
     m_scanned_producer.clear();
     m_events_counting_component.clear();
     m_current_step = 0;
-
 }
 
-string Scan::nextConfig()
-{
+string Scan::nextConfig() {
     m_current_step++;
     if(m_current_step>m_config_files.size() && !m_repeatScans)
         return "finished";
     else return m_config_files.at((m_current_step-1)%(m_config_files.size()));
 }
 
-bool Scan::readGlobal(eudaq::ConfigurationSP conf)
-{
+string Scan::currentCountingComponent() const {
+    return m_events_counting_component.at((currentStep()-1)%m_events_counting_component.size());
+}
+
+bool Scan::readGlobal(eudaq::ConfigurationSP conf) {
     conf->SetSection("global");
     m_allow_nested_scan   = conf->Get("allowNested", false);
     m_repeatScans         = conf->Get("repeatScans", false);
@@ -158,8 +151,7 @@ bool Scan::readGlobal(eudaq::ConfigurationSP conf)
     m_time_per_step       = conf->Get("timePerStep",-1);
     m_events_per_step     = conf->Get("nEventsPerStep",-1);
     if((!m_scan_is_time_based && m_events_per_step == -1) || (m_scan_is_time_based && m_time_per_step == -1))
-    return ERROR("Global scan configuration wrong: per default time based scans -> "
-                    "timePerStep needs to be defined/if not time based number of events must be given!");
+        return ERROR("Global scan configuration wrong: per default time based scans -> "
+                     "timePerStep needs to be defined/if not time based number of events must be given!");
     return true;
-
 }
