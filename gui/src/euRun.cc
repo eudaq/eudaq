@@ -177,7 +177,6 @@ void RunControlGUI::on_btnStop_clicked() {
 void RunControlGUI::on_btnReset_clicked() {
   if(m_rc)
     m_rc->Reset();
-  EUDAQ_USER("Reset button clicked");
 }
 
 void RunControlGUI::on_btnLog_clicked() {
@@ -619,7 +618,7 @@ void RunControlGUI::nextStep()
     if(m_scan.currentStep()!=0)
         on_btnStop_clicked();
     std::string conf = m_scan.nextConfig();
-    EUDAQ_USER("Next file: "+conf );
+    EUDAQ_USER("Next file ("+to_string(m_scan.currentStep())+"): "+conf );
     if(m_scan_interrupt_received ==false && m_scan_active==true && conf !="finished") {
         txtConfigFileName->setText(QString(conf.c_str()));
         QCoreApplication::processEvents();
@@ -741,13 +740,11 @@ void RunControlGUI::updateProgressBar(){
     double scanProgress = 0;
     if(m_scan_active){
         scanProgress = ((m_scan.currentStep()-1)%m_scan.nSteps())/double(std::max(1,m_scan.nSteps()))*100;
-    EUDAQ_USER(to_string(scanProgress));
     if(m_scan.scanIsTimeBased())
         scanProgress+= ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_scan.nSteps()));
     else
         scanProgress += getEventsCurrent()/double(m_scan.eventsPerStep())*100./std::max(1,m_scan.nSteps());
     }
-    EUDAQ_USER(to_string(scanProgress));
     progressBar_scan->setValue(scanProgress);
 
 }
