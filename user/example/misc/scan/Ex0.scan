@@ -2,7 +2,7 @@
 repeatScans = 1
 allowNested = 0 # overrides local nested arguments
 configPrefix = "/home/lhuth/test/scanConf/scanned"
-timeBasedScan = 1 # 1 = true :)
+timeBasedScan = 0 # 1 = true :)
 timePerStep = 10 #in seconds for now
 nEventsPerStep   = 200
 
