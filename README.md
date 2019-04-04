@@ -42,7 +42,7 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 ## Prerequisites
 
 ### For the core Library, Executables and GUI
-EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build GUIs. 
+EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build [GUIs](gui/README.md).
 We recommend a gcc version 4.9 or later.
 ROOT 6 is required for the Online Monitor GUI.
 
