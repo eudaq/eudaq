@@ -217,7 +217,15 @@ namespace eudaq {
 
   bool Configuration::HasSection(const std::string &section) const
   {
-    return m_config.find(section) != m_config.end();
+      return m_config.find(section) != m_config.end();
+  }
+
+  std::vector<std::string> Configuration::Keylist() const
+  {
+   std::vector<std::string> keys;
+   for(auto const & m : *m_cur)
+       keys.push_back(m.first);
+   return keys;
   }
 
   void Configuration::SetString(const std::string &key,
