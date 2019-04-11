@@ -6,7 +6,7 @@
 class MuPix8RawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("MuPix8Raw");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("MuPix8");
 };
 
 namespace{
@@ -23,20 +23,14 @@ bool MuPix8RawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
     TelescopeFrame * tf = new TelescopeFrame();
     if(!tf->from_uint8_t(ev->GetBlock(block_n)))
         EUDAQ_ERROR("Cannot read TelescopeFrame");
-    std::cout << tf->num_hits() << std::endl;
-    if(block.size() < 2)
-      EUDAQ_THROW("Unknown data");
-    uint8_t x_pixel = block[0];
-    uint8_t y_pixel = block[1];
-    std::vector<uint8_t> hit(block.begin()+2, block.end());
-    if(hit.size() != x_pixel*y_pixel)
-      EUDAQ_THROW("Unknown data");
-    eudaq::StandardPlane plane(block_n, "my_MuPix8_plane", "my_MuPix8_plane");
-    plane.SetSizeZS(hit.size(), 1, 0);
-    for(size_t i = 0; i < y_pixel; ++i) {
-      for(size_t n = 0; n < x_pixel; ++n){
-	plane.PushPixel(n, i , hit[n+i*x_pixel]);
-      }
+
+
+    eudaq::StandardPlane plane(block_n, "MuPixLike_DUT", "MuPixLike_DUT");
+    plane.SetSizeZS(128,200,tf->num_hits());
+    for(uint i =0; i < tf->num_hits();++i)
+    {
+        RawHit h = tf->get_hit(i,8);
+        plane.SetPixel(i,h.column(),h.row(),h.timestamp_raw());
     }
     d2->AddPlane(plane);
   }
