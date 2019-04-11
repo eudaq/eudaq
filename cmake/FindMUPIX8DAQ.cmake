@@ -1,0 +1,28 @@
+# - Try to find the MuPix telescope DAQ
+# Once done this will define
+#  MUPIX8DAQ_FOUND - System has MuPix8
+#  MUPIX8DAQ_INCLUDE_DIR - The MuPix8 library main include directories
+#  MUPIX8DAQ_LIBRARY - The libraries needed to use MuPix8
+
+MESSAGE(STATUS "Looking for MuPix Telescope Readout...")
+
+FIND_PATH(MUPIX8DAQ_INCLUDE_DIR NAMES "library/telescope_frame.hpp" "library/blockfile.hpp" PATHS "$ENV{MUPIX8DAQ}")
+MESSAGE(STATUS "telescope_frame.hpp => ${MUPIX8DAQ_INCLUDE_DIR}")
+IF(MUPIX8DAQ_INCLUDE_DIR)
+   SET(MUPIX8DAQ_INC_FOUND TRUE)
+   MESSAGE(STATUS "Found MUPIX8DAQ headers: ${MUPIX8DAQ_INCLUDE_DIR}")
+ENDIF()
+
+FIND_LIBRARY(MUPIX8DAQ_LIBRARY NAMES "libtelescope" HINTS "$ENV{MUPIX8DAQ}/build/library")
+MESSAGE(STATUS "libMuPix8 => ${MUPIX8DAQ_LIBRARY}")
+IF(MUPIX8DAQ_LIBRARY)
+   SET(MUPIX8DAQ_LIB_FOUND TRUE)
+   MESSAGE(STATUS "Found MuPix8DAQ library: ${MUPIX8DAQ_LIBRARY}")
+ENDIF()
+
+IF(MUPIX8DAQ_LIB_FOUND AND MUPIX8DAQ_INC_FOUND)
+   SET(MUPIX8DAQ_FOUND TRUE)
+   MESSAGE(STATUS "MUPIX8DAQ Found true")
+ENDIF()
+
+mark_as_advanced(MUPIX8DAQ_LIBRARY MUPIX8DAQ_INCLUDE_DIR)
