@@ -1,7 +1,5 @@
 # Trigger Logic Units (TLU) supported in EUDAQ2
 
-Find the application (starting scripts and conf-file) for EUDET telescope in [user/eudet/misc](../../user/eudet/misc)
-
 ## Building
 
 By default the cmake-flag is activated ```USER_TLU_BUILD=ON```.
@@ -21,7 +19,6 @@ On Unix: Copy the [udev-rule](misc/eudet_tlu/54-tlu.rules) in the proper folder 
 
 Please find here the hardware [manual](https://telescopes.desy.de/File:EUDET-MEMO-2009-04.pdf).
 
-
 ### Usage
 
 With the command line tool ```EudetTluControl``` all functionalities can be tested.
@@ -40,8 +37,7 @@ Please find here the hardware [manual](https://www.ohwr.org/project/fmc-mtlu/blo
 ### Usage
 
 To start the EUDET TLU producer ```euCliProducer -n AidaTluProducer```.
-The usage with EUDAQ2 and EUDET-type telescopes is described [here](https://telescopes.desy.de/User_manual#Running_with_EUDAQ_2).
-
+The usage with EUDAQ2 and EUDET-type telescopes is described [here](https://telescopes.desy.de/User_manual#Running_with_EUDAQ_2). Find the application (starting scripts and conf-file) for EUDET-type telescope in [user/eudet/misc](../../user/eudet/misc)
 
 ## Conversion
 
