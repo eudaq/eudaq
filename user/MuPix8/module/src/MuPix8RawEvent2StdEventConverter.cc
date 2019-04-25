@@ -2,7 +2,7 @@
 #include "eudaq/RawEvent.hh"
 
 #include "library/telescope_frame.hpp"
-
+#include "library/monitor_histograms.hpp"
 class MuPixTypeEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
@@ -21,10 +21,10 @@ namespace{
 
 bool MuPixTypeEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-
+  mudaq::SensorHistograms test(1,true);
   int m_cols, m_rows, m_ID;
   // defines the params here:
-  uint32_t type = ev->GetType();
+  uint32_t type = ev->GetExtendWord();
   if(type == eudaq::cstr2hash("MuPix8"))
   { m_ID = 8; m_cols = 128; m_rows = 200;}
   if(type == eudaq::cstr2hash("ATLASPix"))
