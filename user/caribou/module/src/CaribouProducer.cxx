@@ -1,7 +1,7 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Configuration.hh"
 
-#include "devicemgr.hpp"
+#include "DeviceManager.hpp"
 #include "configuration.hpp"
 #include "log.hpp"
 
@@ -26,8 +26,8 @@ public:
 private:
   unsigned m_ev;
 
-  caribouDeviceMgr* manager_;
-  caribouDevice* device_;
+  DeviceManager* manager_;
+  Device* device_;
   std::string name_;
 
   std::mutex device_mutex_;
@@ -50,7 +50,7 @@ CaribouProducer::CaribouProducer(const std::string name, const std::string &runc
   LOG(INFO) << "Instantiated CaribouProducer for device \"" << name << "\"";
 
   // Create new Peary device manager
-  manager_ = new caribouDeviceMgr();
+  manager_ = new DeviceManager();
 }
 
 CaribouProducer::~CaribouProducer() {
