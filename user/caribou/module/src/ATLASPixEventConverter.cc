@@ -1,5 +1,5 @@
 #include "CaribouEvent2StdEventConverter.hh"
-#include "log.hpp"
+#include "utils/log.hpp"
 
 using namespace eudaq;
 
