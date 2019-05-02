@@ -5,7 +5,7 @@
 #  Peary_LIBRARIES - The libraries for Peary and the required components
 
 MESSAGE(STATUS "Looking for Peary...")
-FIND_PATH(Peary_INCLUDE_DIR NAMES "peary/device/device.hpp" PATHS "/usr/lib" "${PEARYINCLUDE}" "$ENV{PEARYPATH}")
+FIND_PATH(Peary_INCLUDE_DIR NAMES "peary/device/Device.hpp" PATHS "/usr/lib" "${PEARYINCLUDE}" "$ENV{PEARYPATH}")
 FIND_LIBRARY(Peary_LIBRARIES NAMES "peary" HINTS "${PEARYLIBS}" "$ENV{PEARYPATH}/lib")
 
 LIST(APPEND Peary_INCLUDE_DIRS "${Peary_INCLUDE_DIR}/peary")
