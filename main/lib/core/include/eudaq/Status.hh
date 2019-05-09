@@ -36,6 +36,7 @@ namespace eudaq{
       STATE_UNINIT,
       STATE_UNCONF,
       STATE_CONF,
+      STATE_STOPPED,
       STATE_RUNNING
     };
     

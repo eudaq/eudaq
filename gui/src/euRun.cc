@@ -172,6 +172,7 @@ void RunControlGUI::on_btnStart_clicked(){
 void RunControlGUI::on_btnStop_clicked() {
   if(m_rc)
     m_rc->StopRun();
+    //update_infos();
 }
 
 void RunControlGUI::on_btnReset_clicked() {
@@ -258,10 +259,11 @@ eudaq::Status::State RunControlGUI::updateInfos(){
 
     btnInit->setEnabled(state == eudaq::Status::STATE_UNINIT && initLoaded);
     btnConfig->setEnabled((state == eudaq::Status::STATE_UNCONF ||
-               state == eudaq::Status::STATE_CONF )&& confLoaded);
-    btnLoadInit->setEnabled(state != eudaq::Status::STATE_RUNNING);
-    btnLoadConf->setEnabled(state != eudaq::Status::STATE_RUNNING);
-    btnStart->setEnabled(state == eudaq::Status::STATE_CONF);
+               state == eudaq::Status::STATE_CONF ||
+               state == eudaq::Status::STATE_STOPPED)&& confLoaded);
+    btnLoadInit->setEnabled(state != eudaq::Status::STATE_RUNNING || state != eudaq::Status::STATE_STOPPED);
+    btnLoadConf->setEnabled(state != eudaq::Status::STATE_RUNNING || state != eudaq::Status::STATE_STOPPED);
+    btnStart->setEnabled(state == eudaq::Status::STATE_CONF || state == eudaq::Status::STATE_STOPPED);
     btnStop->setEnabled(state == eudaq::Status::STATE_RUNNING && !m_scan_active);
     btnReset->setEnabled(state != eudaq::Status::STATE_RUNNING);
     btnTerminate->setEnabled(state != eudaq::Status::STATE_RUNNING);
@@ -330,6 +332,8 @@ std::map<int, QString> RunControlGUI::m_map_state_str ={
      "<font size=12 color='red'><b>Current State: Unconfigured </b></font>"},
     {eudaq::Status::STATE_CONF,
      "<font size=12 color='orange'><b>Current State: Configured </b></font>"},
+    {eudaq::Status::STATE_STOPPED,
+     "<font size=12 color='blue'><b>Current State: Stopped </b></font>"},
     {eudaq::Status::STATE_RUNNING,
      "<font size=12 color='green'><b>Current State: Running </b></font>"},
     {eudaq::Status::STATE_ERROR,
@@ -622,21 +626,21 @@ void RunControlGUI::nextStep()
     if(m_scan_interrupt_received ==false && m_scan_active==true && conf !="finished") {
         txtConfigFileName->setText(QString(conf.c_str()));
         QCoreApplication::processEvents();
-        on_btnReset_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_UNINIT)){
+//        on_btnReset_clicked();
+        while(!allConnectionsInState(eudaq::Status::STATE_STOPPED) && m_scan.currentStep()!=0){
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
             cout << "Waiting for reset"<<endl;
         }
-        std::this_thread::sleep_for (std::chrono::seconds(3));
-        on_btnInit_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_UNCONF)){
-            updateInfos();
-            QCoreApplication::processEvents();
-            std::this_thread::sleep_for (std::chrono::seconds(1));
-            cout << "Waiting for init"<<endl;
-        }
+//        std::this_thread::sleep_for (std::chrono::seconds(3));
+//        on_btnInit_clicked();
+//        while(!allConnectionsInState(eudaq::Status::STATE_UNCONF)){
+//            updateInfos();
+//            QCoreApplication::processEvents();
+//            std::this_thread::sleep_for (std::chrono::seconds(1));
+//            cout << "Waiting for init"<<endl;
+//        }
         updateInfos();
         std::this_thread::sleep_for (std::chrono::seconds(3));
         on_btnConfig_clicked();
