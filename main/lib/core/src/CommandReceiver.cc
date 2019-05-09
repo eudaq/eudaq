@@ -128,7 +128,7 @@ namespace eudaq {
       }
       m_fut_runloop.get();
     }
-    SetStatus(Status::STATE_CONF, "Stopped");
+    SetStatus(Status::STATE_STOPPED, "Stopped");
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
   }
   
