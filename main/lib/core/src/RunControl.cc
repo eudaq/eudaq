@@ -102,8 +102,8 @@ namespace eudaq {
     for(auto &conn_st: m_conn_status){
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
-      if(st != Status::STATE_UNCONF && st != Status::STATE_CONF){
-	EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF, skipped");
+      if(st != Status::STATE_UNCONF && st != Status::STATE_CONF&& st != Status::STATE_STOPPED){
+    EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF OR Status::STATE_STOPPED, skipped");
 	//TODO:: EUDAQ_THROW
       }
       else{
@@ -140,8 +140,8 @@ namespace eudaq {
     EUDAQ_INFO("Processing Configure command for connection ");
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     auto st = m_conn_status[id]->GetState();
-    if(st != Status::STATE_UNCONF && st != Status::STATE_CONF){
-	EUDAQ_ERROR(id->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF, skipped");
+    if(st != Status::STATE_UNCONF && st != Status::STATE_CONF&& st != Status::STATE_STOPPED){
+  EUDAQ_ERROR(id->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF OR Status::STATE_STOPPED, skipped");
 	//TODO:: EUDAQ_THROW
 	return;
     }
@@ -197,7 +197,7 @@ namespace eudaq {
     for(auto &conn_st: m_conn_status){
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
-      if(st != Status::STATE_CONF){
+      if(st != Status::STATE_CONF && st!=Status::STATE_STOPPED){
 	EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_CONF, skipped");
 	//TODO:: EUDAQ_THROW
       }
