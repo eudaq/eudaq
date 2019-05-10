@@ -37,7 +37,9 @@ private:
   unsigned m_ev;
   int m_spidrPort;
   int device_nr = 0;
-  string m_spidrIP, m_xmlfileName, m_time, m_chipID;
+  int supported_devices = 0;
+  int m_active_devices;
+  string m_spidrIP, m_daqIP, m_xmlfileName, m_time, m_chipID;
   Timepix3Config *myTimepix3Config;
   SpidrController *spidrctrl;
   SpidrDaq *spidrdaq;
@@ -113,11 +115,28 @@ void Timepix3Producer::DoInitialise() {
   for (int i = 0; i < ipstr.size(); i++ ) ip[i] = ipstr[i].Atoi();
   m_spidrPort = config->Get( "SPIDR_Port", 50000 );
 
-  cout << "Connecting to SPIDR at " << ip[0] << "." << ip[1] << "." << ip[2] << "." << ip[3] << ":" << m_spidrPort << endl;
+  //EUDAQ_USER("SPIDR address: " + std::to_string(ip[0]) + "." + std::to_string(ip[1]) + "." + std::to_string(ip[2]) + "." + std::to_string(ip[3]) + ":" + std::to_string(m_spidrPort));
 
   // Open a control connection to SPIDR-TPX3 module
   // with address 192.168.100.10, default port number 50000
   spidrctrl = new SpidrController( ip[0], ip[1], ip[2], ip[3], m_spidrPort );
+
+  // Are we connected to the SPIDR?
+  if (!spidrctrl->isConnected()) {
+    EUDAQ_ERROR("Connection to SPIDR failed at: " + spidrctrl->ipAddressString() + "; status: " + spidrctrl->connectionStateString() + ", " + spidrctrl->connectionErrString());
+  } else {
+    EUDAQ_USER("SPIDR is connected at " + spidrctrl->ipAddressString() + "; status: " + spidrctrl->connectionStateString());
+    EUDAQ_USER("SPIDR Class:    " + spidrctrl->versionToString( spidrctrl->classVersion() ));
+
+    int firmwVersion, softwVersion = 0;
+    if( spidrctrl->getFirmwVersion( &firmwVersion ) ) {
+      EUDAQ_USER("SPIDR Firmware: " + spidrctrl->versionToString( firmwVersion ));
+    }
+
+    if( spidrctrl->getSoftwVersion( &softwVersion ) ) {
+      EUDAQ_USER("SPIDR Software: " + spidrctrl->versionToString( softwVersion ));
+    }
+  }
 
   // Create SpidrDaq for later
   spidrdaq = new SpidrDaq( spidrctrl );
@@ -139,64 +158,89 @@ void Timepix3Producer::DoConfigure() {
   myTimepix3Config->ReadXMLConfig( m_xmlfileName );
   cout << "Configuration file created on: " << myTimepix3Config->getTime() << endl;
 
+  // set whether external clock (TLU) is used or device runs standalone
+  bool cfg_extRefClk = config->Get("external_clock", true);
+  if (!spidrctrl->setExtRefClk(cfg_extRefClk)) {
+    EUDAQ_ERROR("setExtRefClk: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("setExtRefClk = " + (cfg_extRefClk ? std::string("true") : std::string("false")));
+  }
+
+  // reset
+  int errstat;
+  std::stringstream hexnum;
+  if( !spidrctrl->reset( &errstat ) ) {
+    hexnum << std::hex << errstat;
+    EUDAQ_ERROR("reset: ERROR (" + hexnum.str() + ")");
+  } else {
+    hexnum << std::hex << errstat;
+    EUDAQ_USER("reset: OK (" + hexnum.str() + ")");
+  }
+
+  // determine number of devices, does not check if devices are active
+  if ( !spidrctrl->getDeviceCount( &supported_devices ) ) {
+    EUDAQ_ERROR( "getDeviceCount" + spidrctrl->errorString());
+  }
+  EUDAQ_USER("Number of devices supported by firmware: " + std::to_string(supported_devices));
+
+  // set number of active devices
+  m_active_devices = config->Get("active_devices", 1);
+  EUDAQ_USER("Number of active devices set in configuration: " + std::to_string(m_active_devices));
+  if (supported_devices<m_active_devices) {
+    EUDAQ_ERROR("You defined more active devices than what the system supports.");
+  }
+  if (m_active_devices<1) {
+    EUDAQ_ERROR("You defined less than one active device.");
+  }
+  if (m_active_devices>1) {
+    EUDAQ_ERROR("Only one active device is supported in this EUDAQ producer version.");
+  }
+
+  device_nr = 0;
+
   // Reset Device
   if( !spidrctrl->reinitDevice( device_nr ) ) {
     EUDAQ_ERROR("reinitDevice: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("reinitDevice: OK" );
+  }
+
+  // set destination (DAQ PC) IP address
+  std::string default_daqIP = m_spidrIP;
+  while ( default_daqIP.back()!='.' && !default_daqIP.empty() ) {
+    default_daqIP.pop_back();
+  }
+  default_daqIP.push_back('1');
+  m_daqIP  = config->Get( "DAQ_IP", default_daqIP );
+  int ip[4];
+  vector<TString> ipstr = tokenise( m_daqIP, ".");
+  for (int i = 0; i < ipstr.size(); i++ ) ip[i] = ipstr[i].Atoi();
+  int newDestIP  = ((ip[3] & 0xFF) | ((ip[2] & 0xFF) << 8) | ((ip[1] & 0xFF) << 16) | ((ip[0] & 0xFF) << 24) );
+  EUDAQ_USER("Setting destination (DAQ) address to " + std::to_string(ip[0]) + "." + std::to_string(ip[1]) + "." + std::to_string(ip[2]) + "." + std::to_string(ip[3]));
+  if( !spidrctrl->setIpAddrDest( device_nr, newDestIP ) ) {
+    EUDAQ_ERROR("setIpAddrDest: " + spidrctrl->errorString());
+  } else {
+    int addr;
+    if ( !spidrctrl->getIpAddrDest( device_nr, &addr ) ) {
+      EUDAQ_ERROR( "getIpAddrDest: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_USER("getIpAddrDest: " + std::to_string((addr >> 24) & 0xFF) + "."  + std::to_string((addr >> 16) & 0xFF) + "."  + std::to_string((addr >> 8) & 0xFF) + "."  + std::to_string(addr  & 0xFF) );
+    }
   }
 
   //Due to timing issue, set readout speed at 320 Mbps
   if( !spidrctrl->setReadoutSpeed( device_nr, 320) ) {
     EUDAQ_ERROR("setReadoutSpeed: " + spidrctrl->errorString());
-  }
-
-  // Are we connected to the SPIDR-TPX3 module?
-  if( !spidrctrl->isConnected() ) {
-    std::cout << spidrctrl->ipAddressString() << ": " << spidrctrl->connectionStateString() << ", " << spidrctrl->connectionErrString() << std::endl;
   } else {
-    std::cout << "\n------------------------------" << std::endl;
-    std::cout << "SpidrController is connected!" << std::endl;
-    std::cout << "Class version: " << spidrctrl->versionToString( spidrctrl->classVersion() ) << std::endl;
-    EUDAQ_USER("SPIDR Class:    " + spidrctrl->versionToString( spidrctrl->classVersion() ));
-
-    int firmwVersion, softwVersion = 0;
-    if( spidrctrl->getFirmwVersion( &firmwVersion ) ) {
-      std::cout << "Firmware version: " << spidrctrl->versionToString( firmwVersion ) << std::endl;
-      EUDAQ_USER("SPIDR Firmware: " + spidrctrl->versionToString( firmwVersion ));
-    }
-
-    if( spidrctrl->getSoftwVersion( &softwVersion ) ) {
-      std::cout << "Software version: " << spidrctrl->versionToString( softwVersion ) << std::endl;
-    EUDAQ_USER("SPIDR Software: " + spidrctrl->versionToString( softwVersion ));
-    }
-    std::cout << "------------------------------\n" << std::endl;
+    EUDAQ_USER("setReadoutSpeed = 320");
   }
 
-  if (!spidrctrl->setExtRefClk(config->Get("external_clock", true))) {
-    EUDAQ_ERROR("setExtRefClk"+ spidrctrl->errorString());
+  // set output mask
+  if( !spidrctrl->setOutputMask(device_nr, 0xFF) ) {
+    EUDAQ_ERROR("setOutputMask: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("setOutputMask = 0xFF");
   }
-
-  // DACs configuration
-  if( !spidrctrl->setDacsDflt( device_nr ) ) {
-    EUDAQ_ERROR("setDacsDflt: " + spidrctrl->errorString());
-  }
-
-  // Enable decoder
-  if( !spidrctrl->setDecodersEna( 1 ) ) {
-    EUDAQ_ERROR("setDecodersEna: " + spidrctrl->errorString());
-  }
-
-  // Pixel configuration
-  if( !spidrctrl->resetPixels( device_nr ) ) {
-    EUDAQ_ERROR("resetPixels: " + spidrctrl->errorString());
-  }
-
-  // Device ID
-  int device_id = -1;
-  if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
-    EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
-  }
-  cout << "Device ID: " << device_id << endl;
-
 
   // Header filter mask:
   // ETH:   0000 1100 0111 0000
@@ -209,20 +253,51 @@ void Timepix3Producer::DoConfigure() {
   if (!spidrctrl->getHeaderFilter(device_nr, &eth_mask, &cpu_mask)) {
     EUDAQ_ERROR("getHeaderFilter: "+ spidrctrl->errorString());
   }
-  std::ostringstream stream;
+  std::stringstream maskstream;
   for(int i = 15; i >= 0; i--) {
-    stream << ((eth_mask >> i) & 1);
+    maskstream << ((eth_mask >> i) & 1);
   }
-  std::cout << "ETH mask: " << stream.str() << std::endl;
-  std::ostringstream stream2;
+  EUDAQ_USER("ETH mask = " + maskstream.str());
+  // clear stringstream:
+  maskstream.str(std::string());
   for(int i = 15; i >= 0; i--) {
-    stream2 << ((cpu_mask >> i) & 1);
+    maskstream << ((cpu_mask >> i) & 1);
   }
-  std::cout << "CPU mask: " << stream2.str() << std::endl;
+  EUDAQ_USER("CPU mask = " + maskstream.str());
+
+
+  // DACs configuration
+  if( !spidrctrl->setDacsDflt( device_nr ) ) {
+    EUDAQ_ERROR("setDacsDflt: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("setDacsDflt: OK");
+  }
+
+  // Enable decoder
+  if( !spidrctrl->setDecodersEna( 1 ) ) {
+    EUDAQ_ERROR("setDecodersEna: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("setDecodersEna = 1");
+  }
+
+  // Pixel configuration
+  if( !spidrctrl->resetPixels( device_nr ) ) {
+    EUDAQ_ERROR("resetPixels: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("resetPixels: OK");
+  }
+
+  // Device ID
+  int device_id = -1;
+  if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
+    EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("getDeviceId: " + std::to_string(device_id));
+  }
+
 
   m_chipID = myTimepix3Config->getChipID( device_id );
-  cout << "[Timepix3] Chip ID: " << m_chipID << endl;
-  EUDAQ_USER("Timepix3 Chip ID: " + m_chipID);
+  EUDAQ_USER("Timepix3 Chip ID (read from XML config file): " + m_chipID);
 
   // Get DACs from XML config
   map< string, int > xml_dacs = myTimepix3Config->getDeviceDACs();
@@ -406,6 +481,7 @@ void Timepix3Producer::DoStartRun() {
   std::cout << "Starting run..." << std::endl;
 
   double temp=getTpx3Temperature();
+  EUDAQ_USER("getTpx3Temperature: " + std::to_string(temp));
   std::cout << "Started run." << std::endl;
   m_running = true;
 }
