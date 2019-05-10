@@ -305,7 +305,8 @@ namespace eudaq {
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
       if(st != Status::STATE_RUNNING){
-	EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_RUNNING, skipped");
+          m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
+          EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_RUNNING, skipped");
 	//TODO:: EUDAQ_THROW
       }
       else{

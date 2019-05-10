@@ -5,7 +5,8 @@
 #include "Colours.hh"
 #include "eudaq/Config.hh"
 
-
+using std::cout;
+using std::endl;
 RunControlGUI::RunControlGUI()
   : QMainWindow(0, 0),
     m_display_col(0),
@@ -16,23 +17,20 @@ RunControlGUI::RunControlGUI()
     qRegisterMetaType<QModelIndex>("QModelIndex");
     setupUi(this);
 
-  if (!grpStatus->layout())
-    grpStatus->setLayout(new QGridLayout(grpStatus));
+
   lblCurrent->setText(m_map_state_str.at(eudaq::Status::STATE_UNINIT));
-  QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
-  int row = 0, col = 0;
   for(auto &label_str: m_map_label_str) {
     QLabel *lblname = new QLabel(grpStatus);
     lblname->setObjectName("lbl_st_" + label_str.first);
     lblname->setText(label_str.second + ": ");
     QLabel *lblvalue = new QLabel(grpStatus);
     lblvalue->setObjectName("txt_st_" + label_str.first);
-    layout->addWidget(lblname, row, col * 2);
-    layout->addWidget(lblvalue, row, col * 2 + 1);
+    grpGrid->addWidget(lblname, m_display_row, m_display_col * 2);
+    grpGrid->addWidget(lblvalue, m_display_row, m_display_col * 2 + 1);
     m_str_label[label_str.first] = lblvalue;
-    if (++col > 1){
-      ++row;
-      col = 0;
+    if (++m_display_col > 1){
+      ++m_display_row;
+      m_display_col = 0;
     }
   }
 
@@ -42,6 +40,7 @@ RunControlGUI::RunControlGUI()
   viewConn->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(viewConn, SIGNAL(customContextMenuRequested(const QPoint &)),
           this, SLOT(onCustomContextMenu(const QPoint &)));
+
   QRect geom(-1,-1, 150, 200);
   QRect geom_from_last_program_run;
   QSettings settings("EUDAQ collaboration", "EUDAQ");
@@ -104,9 +103,6 @@ void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
   auto thd_rc = std::thread(&eudaq::RunControl::Exec, m_rc.get());
   thd_rc.detach();
 }
-
-// void RunControlGUI::on_btn
-
 
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
@@ -206,6 +202,9 @@ void RunControlGUI::on_btnLoadConf_clicked() {
   if (!filename.isNull()) {
     txtConfigFileName->setText(filename);
   }
+
+
+
 }
 
 void RunControlGUI::DisplayTimer(){
@@ -251,6 +250,7 @@ eudaq::Status::State RunControlGUI::updateInfos(){
         m_model_conns.SetStatus(conn_status.first, conn_status.second);
       }
     }
+
     QRegExp rx_init(".+(\\.ini$)");
     QRegExp rx_conf(".+(\\.conf$)");
     bool confLoaded = rx_conf.exactMatch(txtConfigFileName->text());
@@ -276,7 +276,7 @@ eudaq::Status::State RunControlGUI::updateInfos(){
       settings.beginGroup("euRun2");
       settings.setValue("runnumber", m_run_n_qsettings);
       settings.endGroup();
-  }
+    }
     if(m_rc&&m_str_label.count("RUN")){
       if(state == eudaq::Status::STATE_RUNNING){
         m_str_label.at("RUN")->setText(QString::number(run_n));
@@ -409,7 +409,6 @@ bool RunControlGUI::loadConfigFile() {
     m_rc->ReadConfigureFile(settings);
   }
   return true;
-
 }
 
 bool RunControlGUI::addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection) {
@@ -420,7 +419,6 @@ bool RunControlGUI::addStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::Stat
     addToGrid(displayName,name);
     return true;
 }
-
 
 bool RunControlGUI::removeStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::StatusSPC> connection) {
     // remove obsolete information from disconnected Connections
