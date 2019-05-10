@@ -41,6 +41,7 @@ private:
   Timepix3Config *myTimepix3Config;
   SpidrController *spidrctrl;
   SpidrDaq *spidrdaq;
+  bool init_done = false;
   int m_xml_VTHRESH;
   float m_temp;
 
@@ -88,18 +89,22 @@ Timepix3Producer::Timepix3Producer(const std::string name, const std::string &ru
 Timepix3Producer::~Timepix3Producer() {}
 
 void Timepix3Producer::DoReset() {
-  spidrctrl->closeShutter();
-
-  if(spidrctrl) {
+  if(init_done) {
+    spidrctrl->closeShutter();
+    std::cout << "Deleting spidrctrl instance... ";
     delete spidrctrl;
-  }
-  if(spidrdaq) {
+    std::cout << " ...DONE" << std::endl;
+    std::cout << "Deleting spidrdaq instance... ";
     delete spidrdaq;
+    std::cout << " ...DONE" << std::endl;
+    init_done = false;
   }
 }
 
 void Timepix3Producer::DoInitialise() {
   auto config = GetInitConfiguration();
+
+  std::cout << "Initializing: " << config->Name() << std::endl;
 
   // SPIDR-TPX3 IP & PORT
   m_spidrIP  = config->Get( "SPIDR_IP", "192.168.100.10" );
@@ -116,6 +121,7 @@ void Timepix3Producer::DoInitialise() {
 
   // Create SpidrDaq for later
   spidrdaq = new SpidrDaq( spidrctrl );
+  init_done = true;
 }
 
 
@@ -416,12 +422,14 @@ void Timepix3Producer::DoStopRun() {
 void Timepix3Producer::DoTerminate() {
   std::cout << "Terminating..." << std::endl;
 
-  // Guess what this does?
-  spidrctrl->closeShutter();
-
-  // Disble TLU
-  if( !spidrctrl->setTluEnable( device_nr, 0 ) ) {
-    EUDAQ_ERROR("setTluEnable: " + spidrctrl->errorString());
+  // do not touch spidrctrl and spidrdaq if they are not initialized
+  if (init_done) {
+    // Disble TLU
+    if( !spidrctrl->setTluEnable( device_nr, 0 ) ) {
+      EUDAQ_ERROR("setTluEnable: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_USER("setTluEnable = 0");
+    }
   }
 
   // Clean up
