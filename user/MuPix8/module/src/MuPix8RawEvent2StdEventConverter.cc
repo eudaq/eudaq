@@ -2,34 +2,21 @@
 #include "eudaq/RawEvent.hh"
 
 #include "library/telescope_frame.hpp"
-#include "library/monitor_histograms.hpp"
-class MuPixTypeEvent2StdEventConverter: public eudaq::StdEventConverter{
+
+class MuPix8RawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
+  static const uint32_t m_id_factory = eudaq::cstr2hash("MuPix8");
 };
-
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
-    Register<MuPixTypeEvent2StdEventConverter>(eudaq::cstr2hash("MuPix8"));
-
-  auto dummy1 = eudaq::Factory<eudaq::StdEventConverter>::
-    Register<MuPixTypeEvent2StdEventConverter>(eudaq::cstr2hash("ATLASpix"));
-  // add further sensors here
+    Register<MuPix8RawEvent2StdEventConverter>(MuPix8RawEvent2StdEventConverter::m_id_factory);
 }
 
-
-bool MuPixTypeEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
+bool MuPix8RawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  mudaq::SensorHistograms test(1,true);
-  int m_cols, m_rows, m_ID;
-  // defines the params here:
-  uint32_t type = ev->GetExtendWord();
-  if(type == eudaq::cstr2hash("MuPix8"))
-  { m_ID = 8; m_cols = 128; m_rows = 200;}
-  if(type == eudaq::cstr2hash("ATLASPix"))
-  { m_ID = 66; m_cols = 128; m_rows = 400;}
-
+>>>>>>> 923bb01a9d716f668710f4718ea208e0f47886ab
   size_t nblocks= ev->NumBlocks();
   auto block_n_list = ev->GetBlockNumList();
   for(auto &block_n: block_n_list){
@@ -40,10 +27,10 @@ bool MuPixTypeEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 
 
     eudaq::StandardPlane plane(block_n, "MuPixLike_DUT", "MuPixLike_DUT");
-    plane.SetSizeZS(m_cols,m_rows,tf->num_hits());
+    plane.SetSizeZS(128,200,tf->num_hits());
     for(uint i =0; i < tf->num_hits();++i)
     {
-        RawHit h = tf->get_hit(i,m_ID);
+        RawHit h = tf->get_hit(i,8);
         plane.SetPixel(i,h.column(),h.row(),h.timestamp_raw());
     }
     d2->AddPlane(plane);
