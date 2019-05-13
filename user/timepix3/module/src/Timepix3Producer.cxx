@@ -44,6 +44,7 @@ private:
   SpidrController *spidrctrl;
   SpidrDaq *spidrdaq;
   bool init_done = false;
+  bool conf_done = false;
   int m_xml_VTHRESH;
   float m_temp;
   std::stringstream convstream;
@@ -97,10 +98,13 @@ void Timepix3Producer::DoReset() {
     std::cout << "Deleting spidrctrl instance... ";
     delete spidrctrl;
     std::cout << " ...DONE" << std::endl;
+    init_done = false;
+  }
+  if(conf_done) {
     std::cout << "Deleting spidrdaq instance... ";
     delete spidrdaq;
     std::cout << " ...DONE" << std::endl;
-    init_done = false;
+    conf_done = false;
   }
 }
 
@@ -138,9 +142,6 @@ void Timepix3Producer::DoInitialise() {
       EUDAQ_USER("SPIDR Software: " + spidrctrl->versionToString( softwVersion ));
     }
   }
-
-  // Create SpidrDaq for later
-  spidrdaq = new SpidrDaq( spidrctrl );
   init_done = true;
 }
 
@@ -478,6 +479,9 @@ void Timepix3Producer::DoConfigure() {
     EUDAQ_ERROR("getPixelConfig: " + spidrctrl->errorString());
   }
 
+  // Create SpidrDaq
+  spidrdaq = new SpidrDaq( spidrctrl );
+  conf_done = true;
   // Also display something for us
   cout << endl;
   cout << "Timepix3 Producer configured. Ready to start run. " << endl;
