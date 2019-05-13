@@ -46,6 +46,7 @@ private:
   bool init_done = false;
   int m_xml_VTHRESH;
   float m_temp;
+  std::stringstream convstream;
 
   /** Return the binary representation of a char as std::string
    */
@@ -168,13 +169,13 @@ void Timepix3Producer::DoConfigure() {
 
   // reset
   int errstat;
-  std::stringstream hexnum;
+  convstream.str(std::string());
   if( !spidrctrl->reset( &errstat ) ) {
-    hexnum << std::hex << errstat;
-    EUDAQ_ERROR("reset: ERROR (" + hexnum.str() + ")");
+    convstream << std::hex << errstat;
+    EUDAQ_ERROR("reset: ERROR (" + convstream.str() + ")");
   } else {
-    hexnum << std::hex << errstat;
-    EUDAQ_USER("reset: OK (" + hexnum.str() + ")");
+    convstream << std::hex << errstat << std::dec;
+    EUDAQ_USER("reset: OK (" + convstream.str() + ")");
   }
 
   // determine number of devices, does not check if devices are active
@@ -242,29 +243,74 @@ void Timepix3Producer::DoConfigure() {
     EUDAQ_USER("setOutputMask = 0xFF");
   }
 
+
+
+  // check link status
+  int linkstatus;
+  if( !spidrctrl->getLinkStatus( device_nr, &linkstatus ) ) {
+    EUDAQ_ERROR( "getLinkStatus: " + spidrctrl->errorString());
+  } else {
+    // Link status: bits 0-7: 0=link enabled; bits 16-23: 1=link locked
+    int links_enabled = (~linkstatus) & 0xFF;
+    int links_locked  = (linkstatus & 0xFF0000) >> 16;
+
+    convstream.str(std::string());
+    for(int i = 7; i >= 0; i--) {
+      convstream << ((links_enabled >> i) & 1);
+    }
+    EUDAQ_USER("Links enabled: 0b" + convstream.str());
+    convstream.str(std::string());
+    for(int i = 7; i >= 0; i--) {
+      convstream << ((links_locked >> i) & 1);
+    }
+    EUDAQ_USER("Links locked : 0b" + convstream.str());
+  }
+
+  // Device ID
+  int device_id = -1;
+  if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
+    EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
+  } else {
+    convstream.str(std::string());
+    convstream << std::hex << device_id << std::dec;
+    EUDAQ_USER("getDeviceId: 0x" + std::to_string(device_id));
+  }
+
+  int waferno = (device_id >> 8) & 0xFFF;
+  int id_y = (device_id >> 4) & 0xF;
+  int id_x = (device_id >> 0) & 0xF;
+  convstream.str(std::string());
+  convstream << "W"  << std::dec << waferno << "_" << (char)((id_x-1) + 'A') << id_y;
+  EUDAQ_USER("Timepix3 Chip ID (read from on-board EEPROM): " + convstream.str());
+
+
+  m_chipID = myTimepix3Config->getChipID( device_id );
+  EUDAQ_USER("Timepix3 Chip ID (read from XML config file): " + m_chipID);
+
   // Header filter mask:
   // ETH:   0000 1100 0111 0000
   // CPU:   1111 0011 1000 1111
-  int eth_mask = 0x0C70, cpu_mask = 0xF38F;
+  int eth_mask, cpu_mask;
+  eth_mask = config->Get("eth_mask", 0xFFFF);
+  cpu_mask = config->Get("cpu_mask", 0xF39F);
   if (!spidrctrl->setHeaderFilter(device_nr, eth_mask, cpu_mask)) {
     EUDAQ_ERROR("setHeaderFilter: "+ spidrctrl->errorString());
   }
-
   if (!spidrctrl->getHeaderFilter(device_nr, &eth_mask, &cpu_mask)) {
     EUDAQ_ERROR("getHeaderFilter: "+ spidrctrl->errorString());
   }
-  std::stringstream maskstream;
-  for(int i = 15; i >= 0; i--) {
-    maskstream << ((eth_mask >> i) & 1);
-  }
-  EUDAQ_USER("ETH mask = " + maskstream.str());
   // clear stringstream:
-  maskstream.str(std::string());
+  convstream.str(std::string());
   for(int i = 15; i >= 0; i--) {
-    maskstream << ((cpu_mask >> i) & 1);
+    convstream << ((eth_mask >> i) & 1);
   }
-  EUDAQ_USER("CPU mask = " + maskstream.str());
-
+  EUDAQ_USER("ETH mask = 0b" + convstream.str());
+  // clear stringstream:
+  convstream.str(std::string());
+  for(int i = 15; i >= 0; i--) {
+    convstream << ((cpu_mask >> i) & 1);
+  }
+  EUDAQ_USER("CPU mask = 0b" + convstream.str());
 
   // DACs configuration
   if( !spidrctrl->setDacsDflt( device_nr ) ) {
@@ -286,18 +332,6 @@ void Timepix3Producer::DoConfigure() {
   } else {
     EUDAQ_USER("resetPixels: OK");
   }
-
-  // Device ID
-  int device_id = -1;
-  if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
-    EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_USER("getDeviceId: " + std::to_string(device_id));
-  }
-
-
-  m_chipID = myTimepix3Config->getChipID( device_id );
-  EUDAQ_USER("Timepix3 Chip ID (read from XML config file): " + m_chipID);
 
   // Get DACs from XML config
   map< string, int > xml_dacs = myTimepix3Config->getDeviceDACs();
@@ -523,11 +557,15 @@ void Timepix3Producer::RunLoop() {
   // Restart timers to sync Timepix3 and TLU timestamps
   if( !spidrctrl->restartTimers() ) {
     EUDAQ_ERROR("restartTimers: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("restartTimers: OK");
   }
 
   // Set Timepix3 acquisition mode
   if( !spidrctrl->datadrivenReadout() ) {
     EUDAQ_ERROR("datadrivenReadout: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("datadrivenReadout: OK");
   }
 
   // Sample pixel data
@@ -537,13 +575,18 @@ void Timepix3Producer::RunLoop() {
   // Open shutter
   if( !spidrctrl->openShutter() ) {
     EUDAQ_ERROR("openShutter: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("openShutter: OK");
   }
 
+/*
   // Enable TLU
   if( !spidrctrl->setTluEnable( device_nr, 1 ) ) {
     EUDAQ_ERROR("setTluEnable: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_USER("setTluEnable: OK");
   }
-
+*/
   std::map<int, int> header_counter;
 
   while(1) {
