@@ -57,32 +57,11 @@ namespace eudaq {
     lk.unlock();
 
     for(auto &conn: conn_to_init){
-      std::string conn_type = conn->GetType();
-      std::string conn_name = conn->GetName();
-      std::string conn_addr = conn->GetRemote();
-      if(conn_type == "LogCollector"){
-	lk.lock();
-	std::string server_addr = m_conn_status[conn]->GetTag("_SERVER");
-	lk.unlock();
-	if(server_addr.find("tcp://") == 0 && conn_addr.find("tcp://") == 0){
-	  server_addr = conn_addr.substr(0, conn_addr.find_last_not_of("0123456789"))
-	    + ":"
-	    + server_addr.substr(server_addr.find_last_not_of("0123456789")+1);
-	}
-	std::string server_name = conn_type+"."+conn_name;
-	if(server_name=="LogCollector.log" && !server_addr.empty()){
-	  m_conf_init->SetSection("");
-	  m_conf_init->SetString("EUDAQ_LOG_ADDR", server_addr);
-	  SendCommand("LOG", server_addr);
-	}
-      }
+    InitialiseSingleConnection(conn);
     }
-    m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
-    for(auto &conn: conn_to_init)
-      SendCommand("INIT", to_string(*m_conf_init), conn);
-  }
 
-  void RunControl::InitialiseSingleConnection(ConnectionSPC id) {  
+}
+    void RunControl::InitialiseSingleConnection(ConnectionSPC id) {
     EUDAQ_INFO("Processing Initialise command");
     std::unique_lock<std::mutex> lk(m_mtx_conn);
 	  
@@ -93,7 +72,6 @@ namespace eudaq {
 	return;
     }
     lk.unlock();
-
     std::string conn_type = id->GetType();
     std::string conn_name = id->GetName();
     std::string conn_addr = id->GetRemote();
@@ -124,8 +102,8 @@ namespace eudaq {
     for(auto &conn_st: m_conn_status){
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
-      if(st != Status::STATE_UNCONF && st != Status::STATE_CONF){
-	EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF, skipped");
+      if(st != Status::STATE_UNCONF && st != Status::STATE_CONF&& st != Status::STATE_STOPPED){
+    EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF OR Status::STATE_STOPPED, skipped");
 	//TODO:: EUDAQ_THROW
       }
       else{
@@ -162,8 +140,8 @@ namespace eudaq {
     EUDAQ_INFO("Processing Configure command for connection ");
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     auto st = m_conn_status[id]->GetState();
-    if(st != Status::STATE_UNCONF && st != Status::STATE_CONF){
-	EUDAQ_ERROR(id->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF, skipped");
+    if(st != Status::STATE_UNCONF && st != Status::STATE_CONF&& st != Status::STATE_STOPPED){
+  EUDAQ_ERROR(id->GetName()+" is not Status::STATE_UNCONF OR Status::STATE_CONF OR Status::STATE_STOPPED, skipped");
 	//TODO:: EUDAQ_THROW
 	return;
     }
@@ -219,7 +197,7 @@ namespace eudaq {
     for(auto &conn_st: m_conn_status){
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
-      if(st != Status::STATE_CONF){
+      if(st != Status::STATE_CONF && st!=Status::STATE_STOPPED){
 	EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_CONF, skipped");
 	//TODO:: EUDAQ_THROW
       }
@@ -327,7 +305,8 @@ namespace eudaq {
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
       if(st != Status::STATE_RUNNING){
-	EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_RUNNING, skipped");
+          m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
+          EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_RUNNING, skipped");
 	//TODO:: EUDAQ_THROW
       }
       else{
