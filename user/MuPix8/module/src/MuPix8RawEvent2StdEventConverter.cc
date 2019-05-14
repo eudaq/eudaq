@@ -16,6 +16,7 @@ namespace{
 
 bool MuPix8RawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+>>>>>>> 923bb01a9d716f668710f4718ea208e0f47886ab
   size_t nblocks= ev->NumBlocks();
   auto block_n_list = ev->GetBlockNumList();
   for(auto &block_n: block_n_list){
