@@ -1,6 +1,9 @@
 /**
  * @brief script to convert eudaq data into a root tree for further analysis
  * @return true if success, false otherwise
+ * @Origin author: Lennart
+ * @Modified by: Mengqing
+ * @Date: 2019-05-15
  */
 
 #include "eudaq/FileReader.hh"
