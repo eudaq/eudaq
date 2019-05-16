@@ -61,6 +61,8 @@ namespace eudaq {
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
       std::map<std::string, std::shared_ptr<DataSender>> senders;
       std::string dc_str = GetConfiguration()->Get("EUDAQ_DC", "");
+      if(dc_str == "")
+	EUDAQ_WARN("No connection to a data collector set in the configuration");
       std::vector<std::string> col_dc_name = split(dc_str, ";,", true);
       std::string cur_backup = GetConfiguration()->GetCurrentSectionName();
       GetConfiguration()->SetSection("");
