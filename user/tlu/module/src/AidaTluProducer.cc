@@ -128,19 +128,19 @@ void AidaTluProducer::DoInitialise(){
      Define the main hardware parameters.
   */
   auto ini = GetInitConfiguration();
-  //std::cout << "  INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
   EUDAQ_INFO("TLU INITIALIZE ID: " + std::to_string(ini->Get("initid", 0)));
-  //std::string uhal_conn = "file://./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_connection.xml";
-  //std::string uhal_node = "fmctlu.udp";
-  std::string uhal_conn;
-  std::string uhal_node;
+  std::string uhal_conn = "";
+  std::string uhal_node = "";
   uhal_conn = ini->Get("ConnectionFile", uhal_conn);
+  EUDAQ_INFO(uhal_conn);
   uhal_node = ini->Get("DeviceName",uhal_node);
+  if(uhal_conn == "" || uhal_node == "")
+    EUDAQ_ERROR("No connection file or/and device name given.");
   m_tlu = std::unique_ptr<tlu::AidaTluController>(new tlu::AidaTluController(uhal_conn, uhal_node));
 
-  if( ini->Get("skipini", false) ){
+  if( ini->Get("skipini", false) )
     EUDAQ_INFO("TLU SKIPPING INITIALIZATION (skipini = 1)");
-  }
+  
   else{
 
     m_verbose = abs(ini->Get("verbose", 0));
@@ -154,7 +154,7 @@ void AidaTluProducer::DoInitialise(){
     m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
     m_tlu->SetI2C_clockChip_addr(ini->Get("I2C_CLK_Addr", 0x68));
     m_tlu->SetI2C_DAC1_addr(ini->Get("I2C_DAC1_Addr",0x13) );
-    m_tlu->SetI2C_DAC2_addr(ini->Get("I2C_DAC2_Addr",0x1f) );
+    m_tlu->SetI2C_DAC2_addr(ini->Get("I2C_DAC2_Addr",0x1F) );
     m_tlu->SetI2C_EEPROM_addr(ini->Get("I2C_ID_Addr", 0x50) );
     m_tlu->SetI2C_expander1_addr(ini->Get("I2C_EXP1_Addr",0x74));
     m_tlu->SetI2C_expander2_addr(ini->Get("I2C_EXP2_Addr",0x75) );
@@ -174,7 +174,7 @@ void AidaTluProducer::DoInitialise(){
     // Initialize the Si5345 clock chip using pre-generated file
     if (ini->Get("CONFCLOCK", true)){
       std::string  clkConfFile;
-      std::string defaultCfgFile= "./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_clock_config.txt";
+      std::string defaultCfgFile= "./../../misc/aida_tlu/aida_tlu_clk_config.txt";
       clkConfFile= ini->Get("CLOCK_CFG_FILE", defaultCfgFile);
       if (clkConfFile== defaultCfgFile){
         EUDAQ_WARN("TLU: Could not find the parameter for clock configuration in the INI file. Using the default.");
@@ -215,10 +215,10 @@ void AidaTluProducer::DoConfigure() {
   else{
     // Enable HDMI connectors
     if(m_verbose > 0) EUDAQ_INFO(" -DUT CONFIGURATION");
-    m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), m_verbose);
-    m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), m_verbose);
-    m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), m_verbose);
-    m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), m_verbose);
+    m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0111), m_verbose);
+    m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0111), m_verbose);
+    m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0111), m_verbose);
+    m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0111), m_verbose);
 
     // Select clock to HDMI
     m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), m_verbose);
@@ -268,11 +268,11 @@ void AidaTluProducer::DoConfigure() {
     m_tlu->pwrled_setVoltages(conf->Get("PMT1_V", 0.0), conf->Get("PMT2_V", 0.0), conf->Get("PMT3_V", 0.0), conf->Get("PMT4_V", 0.0), m_verbose);
 
     if(m_verbose > 0) EUDAQ_INFO(" -DUT OPERATION MODE");
-    m_tlu->SetDUTMask( (int32_t)(conf->Get("DUTMask",1)), m_verbose); // Which DUTs are on
-    m_tlu->SetDUTMaskMode( (int32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); // AIDA (x1) or EUDET (x0)
-    m_tlu->SetDUTMaskModeModifier( (int32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose); // Only for EUDET
-    m_tlu->SetDUTIgnoreBusy( (int32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose); // Ignore busy in AIDA mode
-    m_tlu->SetDUTIgnoreShutterVeto( (int32_t)(conf->Get("DUTIgnoreShutterVeto",1)), m_verbose); //
+    m_tlu->SetDUTMask( (int32_t)(conf->Get("DUTMask",1)), m_verbose); 
+    m_tlu->SetDUTMaskMode( (int32_t)(conf->Get("DUTMaskMode",0xff)), m_verbose); 
+    m_tlu->SetDUTMaskModeModifier( (int32_t)(conf->Get("DUTMaskModeModifier",0xff)), m_verbose);
+    m_tlu->SetDUTIgnoreBusy( (int32_t)(conf->Get("DUTIgnoreBusy",0xF)), m_verbose);
+    m_tlu->SetDUTIgnoreShutterVeto( (int32_t)(conf->Get("DUTIgnoreShutterVeto",1)), m_verbose);
 
     if(m_verbose > 0) EUDAQ_INFO(" -SHUTTER OPERATION MODE");
     m_tlu->SetShutterParameters( (bool)conf->Get("EnableShutterMode",0),
