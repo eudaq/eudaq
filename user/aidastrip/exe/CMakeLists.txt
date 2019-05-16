@@ -7,12 +7,25 @@ set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 
 set(EXE_CLI_LYCORIS_DATACON lycorisCliConverter)
+set(EXE_CLI_SYNC_DATATOOL lycorisSyncTool)
 
+## -- Boost for mu3e converter
+FIND_PACKAGE( Boost 1.58 COMPONENTS program_options REQUIRED )
+INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+if(Boost_FOUND)
+  message(STATUS "Boost 1.58 found! Compile ${EXE_CLI_SYNC_DATATOOL}.")
+endif()
 
+## -- lycoris converter
 add_executable(${EXE_CLI_LYCORIS_DATACON} src/lycorisCliConverter.cxx)
-target_link_libraries(${EXE_CLI_LYCORIS_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES}
-  -L/usr/local/lib/kpix/ -lkpix )
+target_link_libraries(${EXE_CLI_LYCORIS_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES}  -L/usr/local/lib/kpix/ -lkpix )
 list(APPEND INSTALL_TARGETS ${EXE_CLI_LYCORIS_DATACON})
+
+## -- mu3e root converter, direct save mimosa with trigger id out to root file
+add_executable(${EXE_CLI_SYNC_DATATOOL} src/eudaqtoRoot.cpp)
+target_link_libraries(${EXE_CLI_SYNC_DATATOOL} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_SYNC_DATATOOL})
+
 
 include_directories(. include)
 include_directories(${ROOT_INCLUDE_DIR})
