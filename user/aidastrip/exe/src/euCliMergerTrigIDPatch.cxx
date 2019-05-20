@@ -12,8 +12,9 @@
  *      - rematch strategy: Mimosa Event_ID with TLU Trigger_ID.
  */
 
-uint32_t GetSubTriggerN(std::shared_ptr<const eudaq::Event> event, std::string desc);
+//uint32_t GetSubTriggerN(std::shared_ptr<const eudaq::Event> event, std::string desc);
 std::shared_ptr<const eudaq::Event> GetDescSubEvent(std::shared_ptr<const eudaq::Event> event, std::string desc);
+
 
 int main(int /*argc*/, const char **argv) {
 
@@ -56,7 +57,6 @@ int main(int /*argc*/, const char **argv) {
   if(type_out=="raw")
       type_out = "native";
 
-
   eudaq::FileReaderUP reader_ni;
   eudaq::FileReaderUP reader_tlu;
   eudaq::FileWriterUP writer;
@@ -72,85 +72,137 @@ int main(int /*argc*/, const char **argv) {
 
   uint32_t sync_count = 0;
   uint32_t sync_event_number = 0;
-  //  uint32_t sync_trigger_number = 0;
-  //  const uint32_t run_number = ev_tlu->GetRunN();
 
+  // Init: your Ni event
   auto ev_ni = reader_ni->GetNextEvent();
-  auto ev_tlu = reader_tlu->GetNextEvent();
-
-  // Global event info
+  // Global event info from Ni event:
   const uint32_t run_number = ev_ni->GetRunN();
-  eudaq::Event *ev_tlu_sub=nullptr;
 
-  //  bool trig_missing = false; --> ToDo
+  // Init: you Tlu event
+  auto ev_tlu = reader_tlu->GetNextEvent();
+  while(1){ // read algorithm to make sure your ev_tlu has tlu sub evt in it.
+	  if (ev_tlu->GetNumSubEvent() == 2) {
+		  tlu_count++;
+		  break;
+	  }
+	  ev_tlu = reader_tlu->GetNextEvent();
+  }
   
+
+  
+  bool endoftlu = false;
   while(1){
-	 
+
+	  // 1) Get an Ni event to match
 	  auto ev_ni_sub = GetDescSubEvent(ev_ni, "NiRawDataEvent");
+	  
 	  sync_event_number = ev_ni_sub->GetEventN();
+	  //std::cout<< "[debug] event number = " << sync_event_number << std::endl;
 	  
 	  if (!ev_ni_sub){
-		  std::cerr<< "Ni: Empty Sub events!" << std::endl;
-		  continue;
+		  std::cerr<< "Ni: Empty Sub events! Event Number = "<< sync_event_number << std::endl;
+		  break;
+	  }else {
+		  ni_count++;
 	  }
-		  
-	  while (sync_event_number > GetSubTriggerN(ev_tlu, "TluRawDataEvent")){
-		  ev_tlu = reader_tlu->GetNextEvent();
-		  if (!ev_tlu){
-			  std::cout<< "No more Tlu events..." << std::endl;
-			  break;
+	  
+	  // 2) Get an tlu event to match, until its Trigger ID > Ni Event ID
+
+	  auto ev_tlu_sub = GetDescSubEvent(ev_tlu, "TluRawDataEvent");
+	  
+	  while ( sync_event_number > ev_tlu_sub -> GetTriggerN() ){
+		  while(1){// to get the next tlu
+			  ev_tlu = reader_tlu->GetNextEvent(); // tlu event increament for while loop here
+			  if (!ev_tlu) {
+				  endoftlu = true;
+				  std::cout<< "No more tlu event.. " << std::endl;
+				  break;
+			  }
+			  
+			  if (ev_tlu->GetNumSubEvent() ==2 ) {
+				  tlu_count++;
+				  break; // found
+			  }
+
 		  }
+		  
+		  if (endoftlu) break;
+		  // found the next
+		  ev_tlu_sub =  GetDescSubEvent(ev_tlu, "TluRawDataEvent"); // update sub event
 	  }
 	  
-	  if (!ev_tlu)
-		  std::cout<< "No more Tlu events..." << std::endl;
-	  
-	  // debug
-	  if (ev_ni_sub->GetEventN() != sync_event_number)
-		  std::cerr<< "bug-event N" << std::endl;
-	  if (ev_tlu_sub->GetTriggerN() != sync_event_number)
-		  std::cerr<< "bug-trigger N" << std::endl;
-	  
-	  // initialise new event
-	  auto ev_sync =  eudaq::Event::MakeUnique("MimosaTlu");
-	  ev_sync->SetFlagPacket(); // copy from Ex0Tg
-	  ev_sync->SetTriggerN(ev_tlu_sub->GetTriggerN());
-	  ev_sync->SetEventN(sync_event_number);
-	  ev_sync->SetRunN(run_number);
-	  std::cout << "Sync Event created..." << std::endl;
-	  
-	  
-	  
-	  
-	  ev_ni = reader_ni->GetNextEvent(); 
+	  // 2-1) if you hit the bottom of tlu file, finish loop:
+	  if (endoftlu) break;
+
+	  // 3) check if match, otherwise you do not have a TLU event for this Ni event.
+	  if  (sync_event_number == ev_tlu_sub->GetTriggerN() ){// found!
+		  sync_count++;
+		  
+		  // initialise new event
+		  auto ev_sync =  eudaq::Event::MakeUnique("MimosaTlu");
+		  ev_sync->SetFlagPacket(); // copy from Ex0Tg
+		  ev_sync->SetTriggerN(ev_tlu_sub->GetTriggerN());
+		  ev_sync->SetEventN(sync_event_number);
+		  ev_sync->SetRunN(run_number);
+		  //std::cout << "Sync Event created..." << std::endl;
+
+		  // Add Sub Events:
+		  ev_sync -> AddSubEvent(ev_ni_sub);
+		  ev_sync -> AddSubEvent(ev_tlu_sub);
+
+		  if(writer){
+			  writer->WriteEvent(std::move(ev_sync));
+			  //sync_event_number++;
+		  }
+		  
+		  
+	  }else{
+		  std::cout << "No pared Tlu event for trigger ID / Event ID = " << sync_event_number << std::endl;
+	  }
+
+	  // 4) continue with a new Ni Event:
+	  ev_ni = reader_ni->GetNextEvent();  // ni event increament for while loop here
 	  if(!ev_ni){
 		  std::cout << "No more Ni events..." << std::endl;
 		  break;
 	  }
 	  
-  }// end of while loop
+  }// end of while-loop based on end of tlu file
 
+  while(1){ 
+	  ev_ni = reader_ni->GetNextEvent();  // ni event increament for while loop here
+	  if(!ev_ni){
+		  std::cout << "No more Ni events..." << std::endl;
+		  break;
+	  }
+	  else ni_count++;
+  }// end of while-loop based on end of ni file
+
+  
   std::cout << "[info] How many Mimosa events : "<< ni_count << std::endl;
   std::cout << "[info] How many TLU events    : "<< tlu_count << std::endl;
-            
+  std::cout << "[info] How many sync events   : "<< sync_count << std::endl;
+
   return 0;
 }
 
 
-uint32_t GetSubTriggerN(std::shared_ptr<const eudaq::Event> event, std::string desc){
-	/*
-	 * Only applicable for non duplicated sub event structure!
-	 */
-	uint32_t triggern;
+//--------- Functions --------
+
+// uint32_t GetSubTriggerN(std::shared_ptr<const eudaq::Event> event, std::string desc){
+// 	/*
+// 	 * Only applicable for non duplicated sub event structure!
+// 	 */
+// 	uint32_t triggern=0;
 	
-	for ( auto&sub : event->GetSubEvents() ){
-		if ( sub->GetDescription() == desc ){
-			triggern = sub->GetTriggerN();
-		}
-	}
+// 	for ( auto&sub : event->GetSubEvents() ){
+// 		if ( sub->GetDescription() == desc ){
+// 			triggern = sub->GetTriggerN();
+// 		}
+// 	}
 	
-	return triggern;
-}
+// 	return triggern;
+// }
 std::shared_ptr<const eudaq::Event> GetDescSubEvent(std::shared_ptr<const eudaq::Event> event, std::string desc){
 	/*
 	 * Only applicable for non duplicated sub event structure!
