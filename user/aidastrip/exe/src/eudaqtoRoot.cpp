@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
     if(!reader){
         std::cerr<<"Unable to read data file "<< in<<std::endl;
         throw;
+    }else{
+	    std::cout<<"[debug] Reader succeed!"<<std::endl;
     }
 
     // do the conversion
@@ -58,9 +60,9 @@ int main(int argc, char *argv[])
 
     // std::vector<int> _t81, _x0, _x1, _x2,_x3, _x4, _x5, _x81;
     // std::vector<int> _tot, _y0, _y1, _y2,_y3, _y4, _y5, _y81;
+    // int m0, m1, m2, m3, m4, m5 ,m81;
     std::vector<int> _x0, _x1, _x2,_x3, _x4, _x5;
     std::vector<int> _y0, _y1, _y2,_y3, _y4, _y5;
-    //    int m0, m1, m2, m3, m4, m5 ,m81;
     int m0, m1, m2, m3, m4, m5;
     int _invalid, ntrigger;
     double _event = 0, _tluID;
@@ -87,9 +89,15 @@ int main(int argc, char *argv[])
 
     while(1){
         auto ev = std::const_pointer_cast<eudaq::Event>(reader->GetNextEvent());
+        if(!ev){
+	        std::cout << "[debug] no Event to extract?!" << std::endl;
+	        break;
+        }
         uint32_t ev_n = ev->GetEventN();
-        if(!ev_n)
+        if(!ev_n){
+	        std::cout << "[debug] empty EventNum?!" << std::endl;
             break;
+        }
         _event = ev_n;
         if(ev_n<=triggers){//ev_n_h){
             sicher++;
