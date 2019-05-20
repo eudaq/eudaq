@@ -35,7 +35,7 @@ include_directories(/usr/local/include/kpix)
 set_target_properties(${INSTALL_TARGETS} PROPERTIES INSTALL_RPATH
   ${EUDAQ_INSTALL_RPATH}:/usr/local/lib/kpix/)
 
-# Get all other source files to be compiled as executables: 
+# Get all other source files to be compiled as executables:
 FILE(GLOB TARGET_FILES "src/eu*.cxx")
 
 FOREACH(TFILE ${TARGET_FILES})
