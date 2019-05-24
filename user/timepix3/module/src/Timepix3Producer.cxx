@@ -43,7 +43,6 @@ private:
   SpidrDaq *spidrdaq = nullptr;
   std::mutex device_mutex_;
 
-  unsigned m_ev;
   int m_supported_devices = 0;
   int m_active_devices;
   int m_spidrPort;
@@ -118,7 +117,7 @@ namespace{
 }
 
 Timepix3Producer::Timepix3Producer(const std::string name, const std::string &runcontrol)
-: eudaq::Producer(name, runcontrol), m_ev(0), m_running(false) {
+: eudaq::Producer(name, runcontrol), m_running(false) {
   myTimepix3Config = new Timepix3Config();
 }
 
@@ -718,7 +717,6 @@ void Timepix3Producer::DoStartRun() {
   }
   spidrdaq = new SpidrDaq( spidrctrl );
 
-  m_ev = 0;
 
   EUDAQ_USER("Starting run...");
 
@@ -843,13 +841,9 @@ void Timepix3Producer::RunLoop() {
         header_counter[header]++;
 
         std::cout << "Found header id: 0x" << std::hex << header << " data is: 0x" << data << std::dec << std::endl;
-        if(m_ev%10000 == 0) {
-          std::cout << "Headers: " << listVector(header_counter) << "\r";
-        }
 
-        // Data-driven or sequential readout pixel data header?
-        if(header == 0x6) { // Or TLU packet header?
-
+        // it's TDC counter
+        if(header == 0x6) {
           // Send out pixel data accumulated so far:
           auto evup = eudaq::Event::MakeUnique("Timepix3RawEvent");
           for(auto& subevt : data_buffer) {
@@ -857,19 +851,19 @@ void Timepix3Producer::RunLoop() {
           }
           SendEvent(std::move(evup));
           data_buffer.clear();
-          m_ev++;
 
           // Create and send new trigger event
           auto evtrg = eudaq::Event::MakeUnique("Timepix3TrigEvent");
           evtrg->AddBlock(0, &data, sizeof(data));
           SendEvent(std::move(evtrg));
-          m_ev++;
+
         } else {
+          // pixel data OR timestamp (OR something else)
+          // add it to the data_buffer
           auto evup = eudaq::Event::MakeShared("Timepix3RawEvent");
           evup->AddBlock(0, &data, sizeof(data));
           data_buffer.push_back(evup);
         }
-
       } // End loop over sample buffer
 
       // Send remaining pixel data:
@@ -880,22 +874,18 @@ void Timepix3Producer::RunLoop() {
         }
         SendEvent(std::move(evup));
         data_buffer.clear();
-        m_ev++;
       }
     } // Sample available
   } // Readout loop
 
-/*
-  std::cout << "HEADERS: " << std::endl;
-  for(auto& i : header_counter) {
-    std::cout << i.first << ":\t" << i.second << std::endl;
-  }
-  */
+  // Stop sampling
+  spidrdaq->setSampling( false );
   // kill timestamp thread
   m_running = false; // just in case there was another way how to get from the run loop above...
   ts_thread.join();
   ts_thread.~thread();
-
+  // show header statitstics
+  std::cout << "Headers: " << listVector(header_counter) << endl;
   EUDAQ_USER("Exiting run loop.");
 } // RunLoop()
 
