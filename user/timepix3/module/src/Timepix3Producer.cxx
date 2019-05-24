@@ -791,34 +791,11 @@ void Timepix3Producer::RunLoop() {
   // Start triggers
   if( !spidrctrl->startAutoTrigger() )
     EUDAQ_ERROR( "###startAutoTrigger" );
-
-  int cnt = 0, size, x, y, pixdata, timestamp;
-  bool next_sample = true;
-  while( m_running ) {
-  // Get a sample of (at most) 1000 pixel data packets, waiting up to 3 s for it
-    next_sample = spidrdaq->getSample( 1000*8, 3000 );
-    if( next_sample ) {
-      ++cnt;
-      size = spidrdaq->sampleSize();
-      cout << "Sample " << cnt << " size=" << size << endl;
-      uint64_t data;
-      while( data = spidrdaq->nextPacket() )
-        cout << hex << data << dec << endl;
-      /*
-      while( spidrdaq->nextPixel( &x, &y, &pixdata, &timestamp ) )
-        cout << x << "," << y << ": " << hex << pixdata << dec << endl;
-        */
-    } else {
-      cout << "### Timeout" << endl;
-    }
-  }
-
- // ----------------------------------------------------------
-
+  // ----------------------------------------------------------
   while(m_running) {
 
     bool next_sample = true;
-    if(spidrdaq->bufferFull() || spidrdaq->bufferFullOccurred()) {
+    if(spidrdaq->bufferFullOccurred()) {
       EUDAQ_WARN("Buffer overflow");
     }
 
