@@ -483,7 +483,7 @@ void Timepix3Producer::DoConfigure() {
 
     // set header filter mask
     int eth_mask, cpu_mask;
-    eth_mask = config->Get("eth_mask", 0xFFFF);
+    eth_mask = config->Get("eth_mask", 0x0C70);
     cpu_mask = config->Get("cpu_mask", 0xF39F);
     if (!spidrctrl->setHeaderFilter(device_nr, eth_mask, cpu_mask)) {
       EUDAQ_ERROR("setHeaderFilter: "+ spidrctrl->errorString());
