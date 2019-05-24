@@ -778,12 +778,12 @@ void Timepix3Producer::RunLoop() {
   ts_thread = std::thread(&Timepix3Producer::timestamp_thread, this);
 
   //int device_nr = 0;
-  unsigned int m_ev_next_update=0;
   std::map<int, int> header_counter;
 
+  // set sampling parameters
+  spidrdaq->setSampleAll( true );
   // Sample pixel data
   spidrdaq->setSampling( true );
-  spidrdaq->setSampleAll( true );
   //spidrdaq->startRecording( "test.dat", 123, "This is test data" );
 
   // ----------------------------------------------------------
