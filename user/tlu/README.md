@@ -1,4 +1,4 @@
-# Trigger Logic Units (TLU) supported in EUDAQ2
+# Trigger Logic Units (TLUs)
 
 ## Building
 
@@ -167,12 +167,15 @@ The ```[Producer.eudet_tlu]```-section has the following parameters:
 - `DebugLevel`: ; default `0`
 - `BitFile`: ; default `""`
 - `Version`: ; default `0`
-- `DUTInputX`: ; default 
+- `DUTInputX`: ; default
+
+## Executable
+
+- `EudetTluControl`: Stand alone command line program for the EUDET TLU; options and help with `-h`
+- `euCliTriggerReader`: basic reader of trigger events; options and help with `-h`
+- `euCliTluReader`: detailed reader of trigger events including individual scalers information; options and help with `-h`
 
 
 ## Conversion
 
 The conversion of raw data containing **TluRawDataEvent** is the same for both types of TLU. For example and if LCIO is built, you can convert by: ```euCliConverter -i data.raw -o data.slcio```
-
-
-
