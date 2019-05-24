@@ -1,6 +1,12 @@
 #!/bin/bash
 FILE=$1
 
+if [ ! $FILE ]; then
+    echo "Please specify your file of producer code for getting ini/conf-parameters and defaults"
+    return
+fi
+
+
 echo '\nInit'
 fgrep 'ini->Get(' $FILE | sed 's/.*ini->Get*("//' | sed 's/).*//' | sed 's/", / = /' | sed 's/",/ = /'
 
