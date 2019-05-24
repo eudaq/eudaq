@@ -266,7 +266,7 @@ void Timepix3Producer::DoReset() {
 //  INIT
 //----------------------------------------------------------
 void Timepix3Producer::DoInitialise() {
-  bool throw = false;
+  bool serious_error = false;
   if (m_init || m_config || m_running) {
     EUDAQ_WARN("Timepix3Producer: Initializing while it is already in initialized state. Performing reset first...");
     DoReset();
@@ -293,7 +293,7 @@ void Timepix3Producer::DoInitialise() {
   int errstat;
   if( !spidrctrl->reset( &errstat ) ) {
     EUDAQ_ERROR("reset ERROR: " + spidrctrl->errorString());
-    throw = true;
+    serious_error = true;
   } else if (errstat) {
     EUDAQ_ERROR("reset not complete, error code: 0x" + to_hex_string(errstat));
   } else {
@@ -322,10 +322,10 @@ void Timepix3Producer::DoInitialise() {
   // determine number of devices, does not check if devices are active
   if ( !spidrctrl->getDeviceCount( &m_supported_devices ) ) {
     EUDAQ_ERROR( "getDeviceCount" + spidrctrl->errorString());
-    throw = true;
+    serious_error = true;
   }
   if (m_supported_devices == 0) {
-    EUDAQ_ERROR("SPIDR returned zero as a numer of supported devices. This is weird.")
+    EUDAQ_ERROR("SPIDR returned zero as a numer of supported devices. This is weird.");
   } else {
     EUDAQ_EXTRA("Number of devices supported by firmware: " + std::to_string(m_supported_devices));
   }
@@ -335,7 +335,7 @@ void Timepix3Producer::DoInitialise() {
   EUDAQ_INFO("Number of active devices set in configuration: " + std::to_string(m_active_devices));
   if (m_supported_devices<m_active_devices) {
     m_active_devices = m_supported_devices;
-    EUDAQ_WARN("You defined more active devices than what the system supports. Changing it to " std::to_string(m_active_devices));
+    EUDAQ_WARN("You defined more active devices than what the system supports. Changing it to " + std::to_string(m_active_devices));
   }
   if (m_active_devices<1) {
     EUDAQ_WARN("You defined less than one active device.");
@@ -346,8 +346,8 @@ void Timepix3Producer::DoInitialise() {
     m_active_devices = 1;
   }
 
-  if (throw) {
-    EUDAQ_THROW("Timepix3Producer: There were major errors during initialization. See the log.")
+  if (serious_error) {
+    EUDAQ_THROW("Timepix3Producer: There were major errors during initialization. See the log.");
     return;
   }
   m_init = true;
@@ -358,7 +358,7 @@ void Timepix3Producer::DoInitialise() {
 //  CONFIGURE
 //----------------------------------------------------------
 void Timepix3Producer::DoConfigure() {
-  bool throw = false;
+  bool serious_error = false;
   if (!m_init) {
     EUDAQ_THROW("DoConfigure: Trying to configure an uninitialized module. This will not work.");
     return;
@@ -382,7 +382,7 @@ void Timepix3Producer::DoConfigure() {
   m_extRefClk = config->Get("external_clock", false);
   if (!spidrctrl->setExtRefClk(m_extRefClk)) {
     EUDAQ_ERROR("setExtRefClk: " + spidrctrl->errorString());
-    throw = true;
+    serious_error = true;
   } else {
     EUDAQ_INFO("setExtRefClk = " + (m_extRefClk ? std::string("true") : std::string("false")));
   }
@@ -394,7 +394,7 @@ void Timepix3Producer::DoConfigure() {
   // Resets All connected Timepix3 Devices
   if( !spidrctrl->reinitDevices() ) {
     EUDAQ_ERROR("reinitDevices: " + spidrctrl->errorString());
-    throw = true;
+    serious_error = true;
   } else {
     EUDAQ_DEBUG("reinitDevices: OK" );
   }
@@ -405,7 +405,7 @@ void Timepix3Producer::DoConfigure() {
     //Due to timing issue, set readout speed at 320 Mbps
     if( !spidrctrl->setReadoutSpeed( device_nr, 320) ) {
       EUDAQ_ERROR("setReadoutSpeed: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("setReadoutSpeed = 320");
     }
@@ -413,7 +413,7 @@ void Timepix3Producer::DoConfigure() {
     // set output mask
     if( !spidrctrl->setOutputMask(device_nr, 0xFF) ) {
       EUDAQ_ERROR("setOutputMask: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("setOutputMask = 0xFF");
     }
@@ -422,7 +422,7 @@ void Timepix3Producer::DoConfigure() {
     // check outblock register configuration
     if( !spidrctrl->getOutBlockConfig(device_nr, &dataread) ) {
       EUDAQ_ERROR("getOutBlockConfig: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("getOutBlockConfig: 0x" + to_hex_string(dataread, 4));
     }
@@ -430,7 +430,7 @@ void Timepix3Producer::DoConfigure() {
     // check pll register configuration
     if( !spidrctrl->getPllConfig(device_nr, &dataread) ) {
       EUDAQ_ERROR("getPllConfig: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("getPllConfig: 0x" + to_hex_string(dataread, 4));
     }
@@ -438,7 +438,7 @@ void Timepix3Producer::DoConfigure() {
     // check general configuration register
     if (!spidrctrl->getGenConfig( device_nr, &dataread )) {
       EUDAQ_ERROR("getGenConfig: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("getGenConfig: 0x" + to_hex_string(dataread, 4));
     }
@@ -468,12 +468,12 @@ void Timepix3Producer::DoConfigure() {
      + std::to_string(ip[2]) + "." + std::to_string(ip[3]));
     if( !spidrctrl->setIpAddrDest( device_nr, newDestIP ) ) {
       EUDAQ_ERROR("setIpAddrDest: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       int addr;
       if ( !spidrctrl->getIpAddrDest( device_nr, &addr ) ) {
         EUDAQ_ERROR( "getIpAddrDest: " + spidrctrl->errorString());
-        throw = true;
+        serious_error = true;
       } else {
         EUDAQ_DEBUG("getIpAddrDest: " + std::to_string((addr >> 24) & 0xFF) + "."  + std::to_string((addr >> 16) & 0xFF) +
         "."  + std::to_string((addr >> 8) & 0xFF) + "."  + std::to_string(addr  & 0xFF) );
@@ -484,7 +484,7 @@ void Timepix3Producer::DoConfigure() {
     int linkstatus;
     if( !spidrctrl->getLinkStatus( device_nr, &linkstatus ) ) {
       EUDAQ_ERROR( "getLinkStatus: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       // Link status: bits 0-7: 0=link enabled; bits 16-23: 1=link locked
       int links_enabled = (~linkstatus) & 0xFF;
@@ -492,8 +492,8 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_DEBUG("Links enabled: 0b" + to_bit_string(links_enabled, 8));
       EUDAQ_DEBUG("Links locked : 0b" + to_bit_string(links_locked, 8));
       if (links_locked != links_enabled) {
-        EUDAQ_ERROR("Timepix3Producer DoInitialise: Locked links do not correspond to enabled links.")
-        throw = true;
+        EUDAQ_ERROR("Timepix3Producer DoInitialise: Locked links do not correspond to enabled links.");
+        serious_error = true;
       }
     }
 
@@ -501,7 +501,7 @@ void Timepix3Producer::DoConfigure() {
     int device_id = -1;
     if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
       EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("getDeviceId: 0x" + to_hex_string(device_id));
     }
@@ -517,11 +517,11 @@ void Timepix3Producer::DoConfigure() {
     cpu_mask = config->Get("cpu_mask", 0xF39F);
     if (!spidrctrl->setHeaderFilter(device_nr, eth_mask, cpu_mask)) {
       EUDAQ_ERROR("setHeaderFilter: "+ spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     }
     if (!spidrctrl->getHeaderFilter(device_nr, &eth_mask, &cpu_mask)) {
       EUDAQ_ERROR("getHeaderFilter: "+ spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     }
     EUDAQ_EXTRA("ETH mask = 0b" + to_bit_string(eth_mask, 16));
     EUDAQ_EXTRA("CPU mask = 0b" + to_bit_string(cpu_mask, 16));
@@ -530,7 +530,7 @@ void Timepix3Producer::DoConfigure() {
     // DACs configuration default (might be skipped, already done in reinitDevices())
     if( !spidrctrl->setDacsDflt( device_nr ) ) {
       EUDAQ_ERROR("setDacsDflt: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("setDacsDflt: OK");
     }
@@ -540,7 +540,7 @@ void Timepix3Producer::DoConfigure() {
     //  manually by setting all bits explicitely to zero.
     if( !spidrctrl->resetPixels( device_nr ) ) {
       EUDAQ_ERROR("resetPixels: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("resetPixels: OK");
     }
@@ -554,12 +554,12 @@ void Timepix3Producer::DoConfigure() {
     // Upload the pixel configuration to the device
     if( !spidrctrl->setPixelConfig( device_nr ) ) {
       EUDAQ_ERROR("setPixelConfig: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       // read pixel configuration from device
       if( !spidrctrl->getPixelConfig( device_nr ) ) {
         EUDAQ_ERROR("getPixelConfig: " + spidrctrl->errorString());
-        throw = true;
+        serious_error = true;
       } else {
         int cnt_mask;
         int cnt_test;
@@ -568,7 +568,7 @@ void Timepix3Producer::DoConfigure() {
           EUDAQ_ERROR("Pixel configuration should be all zeros, but is not. Pixels with mask set: "
                       + std::to_string(cnt_mask) + ", testbit set: " + std::to_string(cnt_test)
                       + " threshold set: " + std::to_string(cnt_thrs));
-          throw = true;
+          serious_error = true;
         } else {
           EUDAQ_DEBUG("Pixel configuration sucessfully set to zero and read back.");
         }
@@ -591,7 +591,7 @@ void Timepix3Producer::DoConfigure() {
     // Actually set the pixel thresholds and mask
     if( !spidrctrl->setPixelConfig( device_nr ) ) {
       EUDAQ_ERROR("setPixelConfig: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("SetPixelConfig: OK");
     }
@@ -601,12 +601,12 @@ void Timepix3Producer::DoConfigure() {
     // read pixel configuration from device
     if( !spidrctrl->getPixelConfig( device_nr ) ) {
       EUDAQ_ERROR("getPixelConfig: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_DEBUG("getPixelConfig: OK");
       if (0 != spidrctrl->comparePixelConfig(0,1)) {
         EUDAQ_ERROR("Pixel configuration that was read back from the chip does not correspond to what was written in it.");
-        throw = true;
+        serious_error = true;
       } else {
         EUDAQ_DEBUG("Successfully set and read back new pixel configuration.");
       }
@@ -630,13 +630,13 @@ void Timepix3Producer::DoConfigure() {
                                   TPX3_SELECTTP_DIGITAL
                                    ) ) {
       EUDAQ_ERROR( "setGenConfig: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       int config = -1;
       // check general configuration register
       if (!spidrctrl->getGenConfig( device_nr, &config )) {
         EUDAQ_ERROR("getGenConfig: " + spidrctrl->errorString());
-        throw = true;
+        serious_error = true;
       } else {
         EUDAQ_DEBUG("getGenConfig: 0x" + to_hex_string(config, 4));
         // Unpack general config for human readable output
@@ -651,7 +651,7 @@ void Timepix3Producer::DoConfigure() {
     // read CTPR from device
     if (!spidrctrl->getCtpr(device_nr, &ctpr)) {
       EUDAQ_ERROR( "getCtpr: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       std::cout << "device CTPR = 0x ";
       for (int i=0; i<(256/8); i++){
@@ -682,17 +682,17 @@ void Timepix3Producer::DoConfigure() {
     // Upload test-pulse register to the device
     if( !spidrctrl->setCtpr( device_nr ) ) {
       EUDAQ_ERROR( "setCtpr: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     }
 
     // Timepix3 test pulse configuration
     if( !spidrctrl->setTpPeriodPhase( device_nr, 100, 0 ) ) {
       EUDAQ_ERROR( "setTpPeriodPhase: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     }
     if( !spidrctrl->setTpNumber( device_nr, 1 ) ) {
       EUDAQ_ERROR( "setTpNumber: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     }
 
 /*  // not needed for digital testpulse injection
@@ -720,14 +720,14 @@ void Timepix3Producer::DoConfigure() {
     if( !spidrctrl->getTpPeriodPhase( device_nr, &tp_period, &tp_phase ) ||
         !spidrctrl->getTpNumber( device_nr, &tp_num ) ) {
       EUDAQ_ERROR( "getTpPeriodPhase, getTpNumber: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       EUDAQ_INFO("tp_phase = " + std::to_string(tp_phase) + ", tp_period = " + std::to_string(tp_period) + ", tp_num = " + std::to_string(tp_num));
     }
     // read CTPR from device
     if (!spidrctrl->getCtpr(device_nr, &ctpr)) {
       EUDAQ_ERROR( "getCtpr: " + spidrctrl->errorString());
-      throw = true;
+      serious_error = true;
     } else {
       std::cout << "device CTPR = 0x ";
       for (int i=0; i<(256/8); i++){
@@ -737,8 +737,8 @@ void Timepix3Producer::DoConfigure() {
     }
 
   }
-  if (throw) {
-    EUDAQ_THROW("Timepix3Producer: There were major errors during configuration. See the log.")
+  if (serious_error) {
+    EUDAQ_THROW("Timepix3Producer: There were major errors during configuration. See the log.");
     return;
   }
   m_config = true;
