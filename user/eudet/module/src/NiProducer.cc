@@ -95,11 +95,11 @@ void NiProducer::RunLoop(){
 }
 
 void NiProducer::DoInitialise(){
-  auto conf = GetInitConfiguration();  
+  auto ini = GetInitConfiguration();  
   ni_control = std::make_shared<NiController>();
-  std::string addr = conf->Get("NiIPaddr", "localhost");
-  uint16_t port_conf = conf->Get("NiConfigSocketPort", 49248);
-  uint16_t port_data = conf->Get("NiDataTransportSocketPort", 49250);
+  std::string addr = ini->Get("NiIPaddr", "localhost");
+  uint16_t port_conf = ini->Get("NiConfigSocketPort", 49248);
+  uint16_t port_data = ini->Get("NiDataTransportSocketPort", 49250);
   ni_control->ConfigClientSocket_Open(addr, port_conf);
   ni_control->DatatransportClientSocket_Open(addr, port_data);
 }
@@ -114,7 +114,7 @@ void NiProducer::DoConfigure(){
   std::vector<uint32_t> MimosaID(6);
   std::vector<uint32_t> MimosaEn(6,0);
   for (size_t i = 0; i < NumBoards; i++){    
-    MimosaID[i] = conf->Get("MimosaID_"+ std::to_string(i + 1), i+1);
+    MimosaID[i] = conf->Get("MimosaID_"+ std::to_string(i + 1), i);
     MimosaEn[i] = conf->Get("MimosaEn_" + std::to_string(i + 1), 1);
   }
   
