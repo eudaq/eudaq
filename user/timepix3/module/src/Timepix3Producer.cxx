@@ -242,7 +242,7 @@ bool Timepix3Producer::checkPixelBits(int *cnt_mask, int *cnt_test, int *cnt_thr
 //  RESET
 //----------------------------------------------------------
 void Timepix3Producer::DoReset() {
-  EUDAQ_USER("Timepix3 producer is going to be reset.");
+  EUDAQ_USER("Timepix3Producer is going to be reset.");
   // stop the run, if it is still running
   m_running = false;
   // wait for other functions to finish
@@ -259,7 +259,7 @@ void Timepix3Producer::DoReset() {
     delete spidrdaq;
     spidrdaq = nullptr;
   }
-  EUDAQ_USER("Timepix3 producer was reset.");
+  EUDAQ_USER("Timepix3Producer was reset.");
 } // DoReset()
 
 //----------------------------------------------------------
@@ -267,14 +267,14 @@ void Timepix3Producer::DoReset() {
 //----------------------------------------------------------
 void Timepix3Producer::DoInitialise() {
   if (m_init || m_config || m_running) {
-    EUDAQ_WARN("Initializing Timepix3 producer while it is already in initialized state. Performing reset first...");
+    EUDAQ_WARN("Timepix3Producer: Initializing while it is already in initialized state. Performing reset first...");
     DoReset();
   }
   std::lock_guard<std::mutex> lock{device_mutex_};
 
   auto config = GetInitConfiguration();
 
-  EUDAQ_USER("Initializing: " + config->Name());
+  EUDAQ_USER("Timepix3Producer initializing with: " + config->Name());
 
 
   // SPIDR IP & PORT
@@ -304,16 +304,16 @@ void Timepix3Producer::DoInitialise() {
      + spidrctrl->connectionStateString() + ", " + spidrctrl->connectionErrString());
      //FIXME: return fail
   } else {
-    EUDAQ_USER("SPIDR is connected at " + spidrctrl->ipAddressString() + "; status: " + spidrctrl->connectionStateString());
-    EUDAQ_USER("SPIDR Class:    " + spidrctrl->versionToString( spidrctrl->classVersion() ));
+    EUDAQ_INFO("SPIDR is connected at " + spidrctrl->ipAddressString() + "; status: " + spidrctrl->connectionStateString());
+    EUDAQ_INFO("SPIDR Class:    " + spidrctrl->versionToString( spidrctrl->classVersion() ));
 
     int firmwVersion, softwVersion = 0;
     if( spidrctrl->getFirmwVersion( &firmwVersion ) ) {
-      EUDAQ_USER("SPIDR Firmware: " + spidrctrl->versionToString( firmwVersion ));
+      EUDAQ_INFO("SPIDR Firmware: " + spidrctrl->versionToString( firmwVersion ));
     }
 
     if( spidrctrl->getSoftwVersion( &softwVersion ) ) {
-      EUDAQ_USER("SPIDR Software: " + spidrctrl->versionToString( softwVersion ));
+      EUDAQ_INFO("SPIDR Software: " + spidrctrl->versionToString( softwVersion ));
     }
   }
 
@@ -321,11 +321,11 @@ void Timepix3Producer::DoInitialise() {
   if ( !spidrctrl->getDeviceCount( &m_supported_devices ) ) {
     EUDAQ_ERROR( "getDeviceCount" + spidrctrl->errorString());
   }
-  EUDAQ_USER("Number of devices supported by firmware: " + std::to_string(m_supported_devices));
+  EUDAQ_EXTRA("Number of devices supported by firmware: " + std::to_string(m_supported_devices));
 
   // set number of active devices
   m_active_devices = config->Get("active_devices", 1);
-  EUDAQ_USER("Number of active devices set in configuration: " + std::to_string(m_active_devices));
+  EUDAQ_INFO("Number of active devices set in configuration: " + std::to_string(m_active_devices));
   if (m_supported_devices<m_active_devices) {
     EUDAQ_ERROR("You defined more active devices than what the system supports.");
   }
@@ -337,7 +337,7 @@ void Timepix3Producer::DoInitialise() {
   }
 
   m_init = true;
-  EUDAQ_USER("Init done");
+  EUDAQ_USER("Timepix3Producer Init done");
 } // DoInitialise()
 
 //----------------------------------------------------------
@@ -360,7 +360,7 @@ void Timepix3Producer::DoConfigure() {
   }
 
   auto config = GetConfiguration();
-  EUDAQ_USER("Configuring: " + config->Name());
+  EUDAQ_USER("Timepix3Producer configuring: " + config->Name());
   // Configuration file values are accessible as config->Get(name, default)
 
   // set whether external clock (TLU) is used or device runs standalone
@@ -368,35 +368,35 @@ void Timepix3Producer::DoConfigure() {
   if (!spidrctrl->setExtRefClk(m_extRefClk)) {
     EUDAQ_ERROR("setExtRefClk: " + spidrctrl->errorString());
   } else {
-    EUDAQ_EXTRA("setExtRefClk = " + (m_extRefClk ? std::string("true") : std::string("false")));
+    EUDAQ_INFO("setExtRefClk = " + (m_extRefClk ? std::string("true") : std::string("false")));
   }
   // assume that if we set an external clock we also provide external t0,
   // but leave the option to configure it
   m_extT0 = config->Get("external_t0", m_extRefClk);
-  EUDAQ_EXTRA("external_T0 = " + (m_extT0 ? std::string("true") : std::string("false")));
+  EUDAQ_INFO("external_T0 = " + (m_extT0 ? std::string("true") : std::string("false")));
 
   // Resets All connected Timepix3 Devices
   if( !spidrctrl->reinitDevices() ) {
     EUDAQ_ERROR("reinitDevices: " + spidrctrl->errorString());
   } else {
-    EUDAQ_EXTRA("reinitDevices: OK" );
+    EUDAQ_DEBUG("reinitDevices: OK" );
   }
 
   for (int device_nr=0; device_nr<m_active_devices; device_nr++){
-    EUDAQ_USER("Configuring device " + std::to_string(device_nr));
+    EUDAQ_INFO("Configuring device " + std::to_string(device_nr));
 
     //Due to timing issue, set readout speed at 320 Mbps
     if( !spidrctrl->setReadoutSpeed( device_nr, 320) ) {
       EUDAQ_ERROR("setReadoutSpeed: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("setReadoutSpeed = 320");
+      EUDAQ_DEBUG("setReadoutSpeed = 320");
     }
 
     // set output mask
     if( !spidrctrl->setOutputMask(device_nr, 0xFF) ) {
       EUDAQ_ERROR("setOutputMask: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("setOutputMask = 0xFF");
+      EUDAQ_DEBUG("setOutputMask = 0xFF");
     }
 
     int dataread;
@@ -404,21 +404,21 @@ void Timepix3Producer::DoConfigure() {
     if( !spidrctrl->getOutBlockConfig(device_nr, &dataread) ) {
       EUDAQ_ERROR("getOutBlockConfig: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("getOutBlockConfig: 0x" + to_hex_string(dataread, 4));
+      EUDAQ_DEBUG("getOutBlockConfig: 0x" + to_hex_string(dataread, 4));
     }
 
     // check pll register configuration
     if( !spidrctrl->getPllConfig(device_nr, &dataread) ) {
       EUDAQ_ERROR("getPllConfig: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("getPllConfig: 0x" + to_hex_string(dataread, 4));
+      EUDAQ_DEBUG("getPllConfig: 0x" + to_hex_string(dataread, 4));
     }
 
     // check general configuration register
     if (!spidrctrl->getGenConfig( device_nr, &dataread )) {
       EUDAQ_ERROR("getGenConfig: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("getGenConfig: 0x" + to_hex_string(dataread, 4));
+      EUDAQ_DEBUG("getGenConfig: 0x" + to_hex_string(dataread, 4));
     }
 
     // Load Timepix3 XML config file
@@ -451,7 +451,7 @@ void Timepix3Producer::DoConfigure() {
       if ( !spidrctrl->getIpAddrDest( device_nr, &addr ) ) {
         EUDAQ_ERROR( "getIpAddrDest: " + spidrctrl->errorString());
       } else {
-        EUDAQ_EXTRA("getIpAddrDest: " + std::to_string((addr >> 24) & 0xFF) + "."  + std::to_string((addr >> 16) & 0xFF) +
+        EUDAQ_DEBUG("getIpAddrDest: " + std::to_string((addr >> 24) & 0xFF) + "."  + std::to_string((addr >> 16) & 0xFF) +
         "."  + std::to_string((addr >> 8) & 0xFF) + "."  + std::to_string(addr  & 0xFF) );
       }
     }
@@ -464,8 +464,8 @@ void Timepix3Producer::DoConfigure() {
       // Link status: bits 0-7: 0=link enabled; bits 16-23: 1=link locked
       int links_enabled = (~linkstatus) & 0xFF;
       int links_locked  = (linkstatus & 0xFF0000) >> 16;
-      EUDAQ_INFO("Links enabled: 0b" + to_bit_string(links_enabled, 8));
-      EUDAQ_INFO("Links locked : 0b" + to_bit_string(links_locked, 8));
+      EUDAQ_DEBUG("Links enabled: 0b" + to_bit_string(links_enabled, 8));
+      EUDAQ_DEBUG("Links locked : 0b" + to_bit_string(links_locked, 8));
     }
 
     // get Device ID
@@ -473,13 +473,13 @@ void Timepix3Producer::DoConfigure() {
     if( !spidrctrl->getDeviceId( device_nr, &device_id ) ) {
       EUDAQ_ERROR("getDeviceId: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("getDeviceId: 0x" + to_hex_string(device_id));
+      EUDAQ_DEBUG("getDeviceId: 0x" + to_hex_string(device_id));
     }
     int waferno = (device_id >> 8) & 0xFFF;
     int id_y = (device_id >> 4) & 0xF;
     int id_x = (device_id >> 0) & 0xF;
     m_chipID = std::to_string(waferno) + "_" + (char)((id_x-1) + 'A') + std::to_string(id_y);
-    EUDAQ_USER("Timepix3 Chip ID (read from Timepix3 chip): W" + m_chipID);
+    EUDAQ_INFO("Timepix3 Chip ID (read from Timepix3 chip): W" + m_chipID);
 
     // set header filter mask
     int eth_mask, cpu_mask;
@@ -491,15 +491,15 @@ void Timepix3Producer::DoConfigure() {
     if (!spidrctrl->getHeaderFilter(device_nr, &eth_mask, &cpu_mask)) {
       EUDAQ_ERROR("getHeaderFilter: "+ spidrctrl->errorString());
     }
-    EUDAQ_USER("ETH mask = 0b" + to_bit_string(eth_mask, 16));
-    EUDAQ_USER("CPU mask = 0b" + to_bit_string(cpu_mask, 16));
+    EUDAQ_EXTRA("ETH mask = 0b" + to_bit_string(eth_mask, 16));
+    EUDAQ_EXTRA("CPU mask = 0b" + to_bit_string(cpu_mask, 16));
 
 
     // DACs configuration default (might be skipped, already done in reinitDevices())
     if( !spidrctrl->setDacsDflt( device_nr ) ) {
       EUDAQ_ERROR("setDacsDflt: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("setDacsDflt: OK");
+      EUDAQ_DEBUG("setDacsDflt: OK");
     }
 
     // Pixel configuration (might be skipped, already done in reinitDevices())
@@ -508,7 +508,7 @@ void Timepix3Producer::DoConfigure() {
     if( !spidrctrl->resetPixels( device_nr ) ) {
       EUDAQ_ERROR("resetPixels: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("resetPixels: OK");
+      EUDAQ_DEBUG("resetPixels: OK");
     }
 
     // select default set of local pixel configuration
@@ -533,7 +533,7 @@ void Timepix3Producer::DoConfigure() {
                       + std::to_string(cnt_mask) + ", testbit set: " + std::to_string(cnt_test)
                       + " threshold set: " + std::to_string(cnt_thrs));
         } else {
-          EUDAQ_EXTRA("Pixel configuration sucessfully set to zero and read back.");
+          EUDAQ_DEBUG("Pixel configuration sucessfully set to zero and read back.");
         }
       }
     }
@@ -548,14 +548,14 @@ void Timepix3Producer::DoConfigure() {
     spidrctrl->setPixelMask( 11, 11 );
     spidrctrl->setPixelMask( 12, 12 );
     //spidrctrl->setPixelMask( 10, 10, 0 );
-    EUDAQ_USER("Setting testbit for all pixels");
+    EUDAQ_DEBUG("Setting testbit for all pixels");
 
     // Upload the pixel configuration to the device
     // Actually set the pixel thresholds and mask
     if( !spidrctrl->setPixelConfig( device_nr ) ) {
       EUDAQ_ERROR("setPixelConfig: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("SetPixelConfig: OK");
+      EUDAQ_DEBUG("SetPixelConfig: OK");
     }
 
     // select second local pixel configuration set for reading the data from chip
@@ -564,11 +564,11 @@ void Timepix3Producer::DoConfigure() {
     if( !spidrctrl->getPixelConfig( device_nr ) ) {
       EUDAQ_ERROR("getPixelConfig: " + spidrctrl->errorString());
     } else {
-      EUDAQ_EXTRA("getPixelConfig: OK");
+      EUDAQ_DEBUG("getPixelConfig: OK");
       if (0 != spidrctrl->comparePixelConfig(0,1)) {
         EUDAQ_ERROR("Pixel configuration that was read back from the chip does not correspond to what was written in it.");
       } else {
-        EUDAQ_INFO("Successfully set and read back new pixel configuration.");
+        EUDAQ_DEBUG("Successfully set and read back new pixel configuration.");
       }
       int cnt_mask;
       int cnt_test;
@@ -596,7 +596,7 @@ void Timepix3Producer::DoConfigure() {
       if (!spidrctrl->getGenConfig( device_nr, &config )) {
         EUDAQ_ERROR("getGenConfig: " + spidrctrl->errorString());
       } else {
-        EUDAQ_EXTRA("getGenConfig: 0x" + to_hex_string(config, 4));
+        EUDAQ_DEBUG("getGenConfig: 0x" + to_hex_string(config, 4));
         // Unpack general config for human readable output
         myTimepix3Config->unpackGeneralConfig( config );
       }
@@ -691,7 +691,7 @@ void Timepix3Producer::DoConfigure() {
   }
   m_config = true;
   // Also display something for us
-  EUDAQ_USER("Timepix3 Producer configured. Ready to start run. ");
+  EUDAQ_USER("Timepix3Producer configured. Ready to start run. ");
 } // DoConfigure()
 
 //----------------------------------------------------------
@@ -718,13 +718,13 @@ void Timepix3Producer::DoStartRun() {
   spidrdaq = new SpidrDaq( spidrctrl );
 
 
-  EUDAQ_USER("Starting run...");
+  EUDAQ_USER("Timepix3Producer starting run...");
 
   // Set Timepix3 into acquisition mode
   if( !spidrctrl->datadrivenReadout() ) {
     EUDAQ_ERROR( "datadrivenReadout: " + spidrctrl->errorString());
   } else {
-    EUDAQ_INFO( "datadrivenReadout: OK");
+    EUDAQ_DEBUG( "datadrivenReadout: OK");
   }
 
   // ----------------------------------------------------------
@@ -754,7 +754,7 @@ void Timepix3Producer::DoStartRun() {
 
   m_running = true;
 
-  EUDAQ_USER("Started run.");
+  EUDAQ_USER("Timepix3Producer started run.");
 } // DoStartRun()
 
 //----------------------------------------------------------
@@ -772,7 +772,7 @@ void Timepix3Producer::RunLoop() {
   }
 
   std::lock_guard<std::mutex> lock{device_mutex_};
-  EUDAQ_USER("Starting run loop...");
+  EUDAQ_USER("Timepix3Producer starting run loop...");
 
   // create a thread to periodically ask for full timestamps, temperatures and others
   ts_thread = std::thread(&Timepix3Producer::timestamp_thread, this);
@@ -863,14 +863,14 @@ void Timepix3Producer::RunLoop() {
   ts_thread.~thread();
   // show header statitstics
   std::cout << "Headers: " << listVector(header_counter) << endl;
-  EUDAQ_USER("Exiting run loop.");
+  EUDAQ_USER("Timepix3Producer exiting run loop.");
 } // RunLoop()
 
 //----------------------------------------------------------
 //  STOP RUN
 //----------------------------------------------------------
 void Timepix3Producer::DoStopRun() {
-  EUDAQ_USER("Stopping run...");
+  EUDAQ_USER("Timepix3Producer stopping run...");
   // Set a flag to signal to the polling loop that the run is over
   m_running = false;
   std::lock_guard<std::mutex> lock{device_mutex_};
@@ -880,5 +880,5 @@ void Timepix3Producer::DoStopRun() {
   } else {
     EUDAQ_WARN("DoStopRun: There was no spidrdaq instance. This is weird. Was there really a run to stop?");
   }
-  EUDAQ_USER("Stopped run.");
+  EUDAQ_USER("Timepix3Producer stopped run.");
 } // DoStopRun()
