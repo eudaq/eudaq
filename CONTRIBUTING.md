@@ -1,18 +1,25 @@
 If you would like to get involved in the EUDAQ development - all
 contributions are highly welcome! :)
 
+# General guidelines
+
+## Coding
+* follow the style (indentation, naming schemes for variables, ...) of the existing code, where possible
+* make atomic commits (aka commit often)
+* use descriptive commit messages -- for an example, see below
+
+## Repository
+Inspired by ["A successful branching model"](https://nvie.com/posts/a-successful-git-branching-model/)
+* the ```master``` branch is the latest release (2.x tag) or a hotfix (2.x.x tag)
+* for developing work on the ```v2-dev``` branch by creating a feature
+  branch (see below for instructions) and commit only changes that
+  affect this particular feature
+* create a pull requests (PR). If reviewed successfully it will be merged into ```v2-dev```, and into ```master``` with the next release.
+* (for EUDAQ v1 developments and releases, there is only one branch ```v1.x-dev```)
+
 # Getting Started
 * make sure you have a user account on [GitHub](https://github.com/signup/free) and are logged in
 * 'fork' the (main) project on GitHub [using the button on the page of the main repo](https://github.com/eudaq/eudaq/fork)
-
-# General guidelines
-* make atomic commits (aka commit often)
-* for anything but trivial changes (e.g. affecting documentation only)
-  please do not work on the ```master``` branch, but create a feature
-  branch (see below for instructions) and commit only changes that
-  affect this particular feature
-* use descriptive commit messages -- for an example, see below
-* follow the style (indentation, naming schemes for variables, ...) of the existing code, where possible
 
 # Making Changes
 Have you fixed a bug already or would like to contribute your own
@@ -25,17 +32,17 @@ git remote rename origin upstream
 git remote add origin https://github.com/[YOUR GITHUB USER HERE]/eudaq
 git remote -v show
 ```
-* create and checkout a new branch for the feature you are developing based on the ```master``` branch:
+* create and checkout a new branch for the feature you are developing based on the ```v2-dev``` branch:
 ```
-git branch my_feature_branch master
+git branch my_feature_branch v2-dev
 git checkout my_feature_branch
 ```
 
 * now edit away on your local clone! But keep in sync with the development in the upstream repository by running
 ```
-git pull upstream master
+git pull upstream v2-dev
 ```
-on a regular basis. Replace ```master``` by the appropriate branch if you work on a separate one *within the main repository*.
+on a regular basis.
 
 * Commit often using a descriptive commit message in the form of
 ```
@@ -70,4 +77,3 @@ git push origin my_feature_branch
 [Some GitHub mark-down specialties](https://help.github.com/articles/github-flavored-markdown)
 
 [General help on GitHub](https://help.github.com/)
-
