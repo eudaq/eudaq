@@ -3,8 +3,7 @@ if(NOT USER_AIDASTRIP_EXE)
   return()
 endif()
 
-set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-set(ROOT_DIR $ENV{ROOTSYS}/cmake)
+#set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 
 set(EXE_CLI_LYCORIS_DATACON lycorisCliConverter)
 set(EXE_CLI_SYNC_DATATOOL lycorisSyncTool)
@@ -22,13 +21,16 @@ target_link_libraries(${EXE_CLI_LYCORIS_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_T
 list(APPEND INSTALL_TARGETS ${EXE_CLI_LYCORIS_DATACON})
 
 ## -- mu3e root converter, direct save mimosa with trigger id out to root file
-add_executable(${EXE_CLI_SYNC_DATATOOL} src/eudaqtoRoot.cpp)
-target_link_libraries(${EXE_CLI_SYNC_DATATOOL} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
-list(APPEND INSTALL_TARGETS ${EXE_CLI_SYNC_DATATOOL})
+# add_executable(${EXE_CLI_SYNC_DATATOOL} src/eudaqtoRoot.cpp)
+# target_link_libraries(${EXE_CLI_SYNC_DATATOOL} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${Boost_LIBRARIES})
+# list(APPEND INSTALL_TARGETS ${EXE_CLI_SYNC_DATATOOL})
 
 
 include_directories(. include)
 include_directories(${ROOT_INCLUDE_DIR})
+if(ROOT_USE_FILE)
+  include(${ROOT_USE_FILE})
+endif()
 include_directories(/usr/local/include/kpix)
 
 ##--- set run path of the dynamic kpix lib
@@ -43,7 +45,7 @@ FOREACH(TFILE ${TARGET_FILES})
   MESSAGE(STATUS "Building device ${TNAME}")
   MESSAGE(STATUS "Building file ${TFILE}")
   ADD_EXECUTABLE(${TNAME} ${TFILE})
-  TARGET_LINK_LIBRARIES(${TNAME} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+  TARGET_LINK_LIBRARIES(${TNAME} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES})
   LIST(APPEND INSTALL_TARGETS ${TNAME})
 ENDFOREACH()
 
