@@ -16,8 +16,10 @@ set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 add_subdirectory(module)
 
 ##-- ROOT analyzer/converter needs ROOT:
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT)
-cmake_dependent_option(USER_AIDASTRIP_EXE "build aux. AIDASTRIP executables." ON
+
+cmake_dependent_option(USER_AIDASTRIP_EXE "build aux. AIDASTRIP executables (requires ROOT)." ON
   "ROOT_FOUND" OFF)
 
 if(USER_AIDASTRIP_EXE)
