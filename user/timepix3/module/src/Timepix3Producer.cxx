@@ -801,15 +801,21 @@ void Timepix3Producer::DoStartRun() {
 
   int device_nr = 0;
   // Start timer internally, if configured to do so
+  if( !spidrctrl->restartTimers() ) {
+    EUDAQ_THROW( "Could not send restartTimers command: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "restartTimers: OK");
+  }
+
   if (!m_extT0) {
     // Restart timers to sync Timepix3 and TLU timestamps. Resets both SPIDR and Timepix3 timers.
-    if( !spidrctrl->restartTimers() ) {
-      EUDAQ_THROW( "Could not send restartTimers command: " + spidrctrl->errorString());
+    if( !spidrctrl->t0Sync(device_nr) ) {
+      EUDAQ_THROW( "Could not send T0: " + spidrctrl->errorString());
     } else {
-      EUDAQ_INFO( "restartTimers: Internal T0 generated.");
+      EUDAQ_INFO( "Internal T0 generated.");
     }
   } else {
-    EUDAQ_INFO( "External T0 signal is expected, NOT restarting timers.");
+    EUDAQ_INFO( "External T0 signal is expected, NOT generating it internally.");
   }
 
   m_running = true;
