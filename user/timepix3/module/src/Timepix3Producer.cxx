@@ -48,7 +48,7 @@ private:
   int m_spidrPort;
   string m_spidrIP, m_daqIP, m_xmlfileName, m_chipID;
   bool m_extRefClk, m_extT0;
-  int m_xml_VTHRESH;
+  int m_xml_VTHRESH = 0;
   float m_temp;
 
   /** Return the binary representation of a char as std::string
@@ -418,40 +418,6 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_DEBUG("setOutputMask = 0xFF");
     }
 
-    int dataread;
-    // check outblock register configuration
-    if( !spidrctrl->getOutBlockConfig(device_nr, &dataread) ) {
-      EUDAQ_ERROR("getOutBlockConfig: " + spidrctrl->errorString());
-      serious_error = true;
-    } else {
-      EUDAQ_DEBUG("getOutBlockConfig: 0x" + to_hex_string(dataread, 4));
-    }
-
-    // check pll register configuration
-    if( !spidrctrl->getPllConfig(device_nr, &dataread) ) {
-      EUDAQ_ERROR("getPllConfig: " + spidrctrl->errorString());
-      serious_error = true;
-    } else {
-      EUDAQ_DEBUG("getPllConfig: 0x" + to_hex_string(dataread, 4));
-    }
-
-    // check general configuration register
-    if (!spidrctrl->getGenConfig( device_nr, &dataread )) {
-      EUDAQ_ERROR("getGenConfig: " + spidrctrl->errorString());
-      serious_error = true;
-    } else {
-      EUDAQ_DEBUG("getGenConfig: 0x" + to_hex_string(dataread, 4));
-    }
-
-    // Load Timepix3 XML config file
-    m_xmlfileName = config->Get( "XMLConfig_dev" + std::to_string(device_nr), "" );
-    if (m_xmlfileName.empty()) {
-      EUDAQ_DEBUG("Did not find configuration entry for \"XMLConfig_dev" + std::to_string(device_nr) + "\". Trying to use \"XMLConfig\".");
-      m_xmlfileName = config->Get( "XMLConfig", "" );
-    }
-    myTimepix3Config->ReadXMLConfig( m_xmlfileName );
-    cout << "Configuration file created on: " << myTimepix3Config->getTime() << endl;
-
     // set destination (DAQ PC) IP address
     std::string default_daqIP = m_spidrIP;
     while ( default_daqIP.back()!='.' && !default_daqIP.empty() ) {
@@ -526,7 +492,6 @@ void Timepix3Producer::DoConfigure() {
     EUDAQ_EXTRA("ETH mask = 0b" + to_bit_string(eth_mask, 16));
     EUDAQ_EXTRA("CPU mask = 0b" + to_bit_string(cpu_mask, 16));
 
-
     // DACs configuration default (might be skipped, already done in reinitDevices())
     if( !spidrctrl->setDacsDflt( device_nr ) ) {
       EUDAQ_ERROR("setDacsDflt: " + spidrctrl->errorString());
@@ -543,7 +508,124 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_DEBUG("setDecodersEna: OK");
     }
 
-    // Pixel configuration (might be skipped, already done in reinitDevices())
+    // Load Timepix3 XML config file
+    m_xmlfileName = config->Get( "XMLConfig_dev" + std::to_string(device_nr), "" );
+    if (m_xmlfileName.empty()) {
+      EUDAQ_DEBUG("Did not find configuration entry for \"XMLConfig_dev" + std::to_string(device_nr) + "\". Trying to use \"XMLConfig\".");
+      m_xmlfileName = config->Get( "XMLConfig", "" );
+    }
+    myTimepix3Config->ReadXMLConfig( m_xmlfileName );
+    EUDAQ_INFO("Reading configuration file " + m_xmlfileName );
+    std::string conftime = myTimepix3Config->getTime();
+    EUDAQ_INFO("Configuration file created on: " + conftime);
+
+    // Get DACs from XML config
+    map< string, int > xml_dacs = myTimepix3Config->getDeviceDACs();
+    map< string, int >::iterator xml_dacs_it;
+    for( xml_dacs_it = xml_dacs.begin(); xml_dacs_it != xml_dacs.end(); ++xml_dacs_it ) {
+
+      string name = xml_dacs_it->first;
+      int XMLval = xml_dacs_it->second;
+      int val = config->Get( name, XMLval ); // overwrite value from XML if it's uncommented in the conf
+
+      if( TPX3_DAC_CODES.find( name ) != TPX3_DAC_CODES.end() ) {
+        int daccode = TPX3_DAC_CODES.at( name );
+        if( !spidrctrl->setDac( device_nr, daccode, val ) ) {
+          EUDAQ_ERROR("Could not set DAC: " + name + " " + std::to_string(daccode) + " " + std::to_string(val) );
+          serious_error = true;
+        } else {
+          int readval = -1;
+          spidrctrl->getDac( device_nr, daccode, &readval );
+          if (val == readval) {
+            EUDAQ_INFO("DAC \"" + name + "\" was successfully set to " + std::to_string(readval) );
+          } else {
+            EUDAQ_ERROR("DAC \"" + name + "\" was set to " + std::to_string(val) + " but readback value was "  + std::to_string(readval) );
+          }
+        }
+
+      }
+      else if( name == "VTHRESH" ) {
+        m_xml_VTHRESH = val;
+      }
+      else if( name == "GeneralConfig" ) {
+        if ( !spidrctrl->setGenConfig( device_nr, val ) ) {
+          EUDAQ_ERROR("setGenConfig: " + spidrctrl->errorString());
+          serious_error = true;
+        } else {
+          int readval = -1;
+          spidrctrl->getGenConfig( device_nr, &readval );
+          if (val == readval) {
+            EUDAQ_INFO("General Config register was successfully set to 0x" + to_hex_string(readval, 4) );
+          } else {
+            EUDAQ_ERROR("General Config register was set to 0x" + to_hex_string(val, 4) + " but readback value was 0x"  + to_hex_string(readval, 4) );
+          }
+        }
+      }
+      else if( name == "PllConfig" ) {
+        if ( !spidrctrl->setPllConfig( device_nr, val ) ) {
+          EUDAQ_ERROR("setPllConfig: " + spidrctrl->errorString());
+          serious_error = true;
+        } else {
+          int readval = -1;
+          spidrctrl->getPllConfig( device_nr, &readval );
+          if (val == readval) {
+            EUDAQ_INFO("PLL Config register was successfully set to 0x" + to_hex_string(readval, 4) );
+          } else {
+            EUDAQ_ERROR("PLL Config register was set to 0x" + to_hex_string(val, 4) + " but readback value was 0x"  + to_hex_string(readval, 4) );
+          }
+        }
+      }
+      else if( name == "OutputBlockConfig" ) {
+        if ( !spidrctrl->setOutBlockConfig( device_nr, val ) ) {
+          EUDAQ_ERROR("setOutBlockConfig: " + spidrctrl->errorString());
+          serious_error = true;
+        } else {
+          int readval = -1;
+          spidrctrl->getOutBlockConfig( device_nr, &readval );
+          if (val == readval) {
+            EUDAQ_INFO("Output Block Config register was successfully set to 0x" + to_hex_string(readval, 4) );
+          } else {
+            EUDAQ_ERROR("Output Block Config register was set to 0x" + to_hex_string(val, 4) + " but readback value was 0x"  + to_hex_string(readval, 4) );
+          }
+        }
+      }
+    }
+
+    // Threshold
+    int threshold = config->Get( "threshold", m_xml_VTHRESH );
+    int coarse = threshold / 160;
+    int fine = threshold - coarse*160 + 352;
+    EUDAQ_INFO("Setting threshold to " + std::to_string(threshold));
+
+    // Coarse threshold:
+    if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_COARSE, coarse ) ) {
+      EUDAQ_ERROR("Could not set VTHRESH_COARSE: " + spidrctrl->errorString());
+      serious_error = true;
+    } else {
+      int readval = -1;
+      spidrctrl->getDac( device_nr, TPX3_VTHRESH_COARSE, &readval );
+      if (coarse == readval) {
+        EUDAQ_DEBUG("VTHRESH_COARSE was successfully set to 0x" + to_hex_string(readval, 4) );
+      } else {
+        EUDAQ_ERROR("VTHRESH_COARSE was set to 0x" + to_hex_string(coarse, 4) + " but readback value was 0x"  + to_hex_string(readval, 4) );
+      }
+    }
+
+    // Fine threshold:
+    if(!spidrctrl->setDac( device_nr, TPX3_VTHRESH_FINE, fine ) ) {
+      EUDAQ_ERROR("Could not set VTHRESH_FINE: " + spidrctrl->errorString());
+      serious_error = true;
+    } else {
+      int readval = -1;
+      spidrctrl->getDac( device_nr, TPX3_VTHRESH_FINE, &readval );
+      if (fine == readval) {
+        EUDAQ_DEBUG("VTHRESH_FINE was successfully set to 0x" + to_hex_string(readval, 4) );
+      } else {
+        EUDAQ_ERROR("VTHRESH_FINE was set to 0x" + to_hex_string(fine, 4) + " but readback value was 0x"  + to_hex_string(readval, 4) );
+      }
+    }
+
+    // Pixel reset (might be skipped, already done in reinitDevices())
     // Does NOT reset pixel configuration bits. This still needs to be done
     //  manually by setting all bits explicitely to zero.
     if( !spidrctrl->resetPixels( device_nr ) ) {
@@ -629,28 +711,6 @@ void Timepix3Producer::DoConfigure() {
     // return to default pixel configuration set
     spidrctrl->selectPixelConfig(1);
 
-    if( !spidrctrl->setGenConfig( device_nr,
-                                  TPX3_POLARITY_HPLUS |
-                                  TPX3_ACQMODE_TOA_TOT |
-                                  TPX3_GRAYCOUNT_ENA |
-                                  TPX3_TESTPULSE_ENA |
-                                  TPX3_FASTLO_ENA |
-                                  TPX3_SELECTTP_DIGITAL
-                                   ) ) {
-      EUDAQ_ERROR( "setGenConfig: " + spidrctrl->errorString());
-      serious_error = true;
-    } else {
-      int config = -1;
-      // check general configuration register
-      if (!spidrctrl->getGenConfig( device_nr, &config )) {
-        EUDAQ_ERROR("getGenConfig: " + spidrctrl->errorString());
-        serious_error = true;
-      } else {
-        EUDAQ_DEBUG("getGenConfig: 0x" + to_hex_string(config, 4));
-        // Unpack general config for human readable output
-        myTimepix3Config->unpackGeneralConfig( config );
-      }
-    }
     ////////////////////////////////////////
     // ----------------------------------------------------------
     // Test pulse and CTPR configuration
@@ -702,26 +762,6 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_ERROR( "setTpNumber: " + spidrctrl->errorString());
       serious_error = true;
     }
-
-/*  // not needed for digital testpulse injection
-    // Coarse vtp:
-    if(!spidrctrl->setDac( device_nr, TPX3_VTP_COARSE, 0x00 ) ) {
-      EUDAQ_ERROR("Could not set VTP_COARSE: " + spidrctrl->errorString());
-    } else {
-      int tmpval = -1;
-      spidrctrl->getDac( device_nr, TPX3_VTP_COARSE, &tmpval );
-      EUDAQ_EXTRA("Successfully set DAC: VTP_COARSE to 0x" + to_hex_string(tmpval,4));
-    }
-
-    // Fine vtp:
-    if(!spidrctrl->setDac( device_nr, TPX3_VTP_FINE, 0x001 ) ) {
-      EUDAQ_ERROR("Could not set VTP_FINE: " + spidrctrl->errorString());
-    } else {
-      int tmpval = -1;
-      spidrctrl->getDac( device_nr, TPX3_VTP_FINE, &tmpval );
-      EUDAQ_EXTRA("Successfully set DAC: VTP_FINE to 0x" + to_hex_string(tmpval,4));
-    }
-*/
 
     // Check settings
     int tp_period, tp_phase, tp_num;
