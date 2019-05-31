@@ -58,10 +58,13 @@ private:
     // if length is not defined, use a standard (full) one
     if (length<0 || length > std::numeric_limits<T>::digits) {
       length = std::numeric_limits<T>::digits;
+      // std::numeric_limits<T>::digits does not include sign bits
+      if (std::numeric_limits<T>::is_signed) {
+        length++;
+      }
     }
-    while(length >= 0) {
+    while(--length >= 0) {
       stream << ((data >> length) & 1);
-      length--;
     }
     return stream.str();
   }
