@@ -535,6 +535,14 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_DEBUG("setDacsDflt: OK");
     }
 
+    // Enable decoder
+    if( !spidrctrl->setDecodersEna( true ) ) {
+      EUDAQ_ERROR("setDecodersEna: " + spidrctrl->errorString());
+      serious_error = true;
+    } else {
+      EUDAQ_DEBUG("setDecodersEna: OK");
+    }
+
     // Pixel configuration (might be skipped, already done in reinitDevices())
     // Does NOT reset pixel configuration bits. This still needs to be done
     //  manually by setting all bits explicitely to zero.
