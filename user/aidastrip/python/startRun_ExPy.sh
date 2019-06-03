@@ -1,7 +1,6 @@
 #!/usr/bin/env sh                                                                                         
 BINPATH=../../../bin
 $BINPATH/euRun &
-sleep 10
+sleep 1
 
-python3 ExamplePyProducer.py &
-python3 ExamplePyDataCollector.py &
+python3 ExamplePyProducer.py

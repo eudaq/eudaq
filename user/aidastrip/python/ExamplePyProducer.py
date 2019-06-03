@@ -2,6 +2,8 @@
 # load binary lib/pyeudaq.so
 import pyeudaq
 import time
+import rogue
+import pyrogue
 
 class ExamplePyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
