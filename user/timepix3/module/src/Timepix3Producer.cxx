@@ -917,7 +917,7 @@ void Timepix3Producer::RunLoop() {
       std::cout << "Got a sample of a size " << size << std::endl;
       // look inside sample buffer...
       std::vector<eudaq::EventSPC> data_buffer;
-      while(1) {
+      while(m_running) {
         uint64_t data = spidrdaq->nextPacket();
 
         // ...until the sample buffer is empty
