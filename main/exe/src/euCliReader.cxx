@@ -11,8 +11,8 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<uint32_t> eventh(op, "E", "eventhigh", 0, "uint32_t", "event number high");
   eudaq::Option<uint32_t> triggerl(op, "tg", "trigger", 0, "uint32_t", "trigger number low");
   eudaq::Option<uint32_t> triggerh(op, "TG", "triggerhigh", 0, "uint32_t", "trigger number high");
-  eudaq::Option<uint32_t> timestampl(op, "ts", "timestamp", 0, "uint32_t", "timestamp low");
-  eudaq::Option<uint32_t> timestamph(op, "TS", "timestamphigh", 0, "uint32_t", "timestamp high");
+  eudaq::Option<uint64_t> timestampl(op, "ts", "timestamp", 0, "uint32_t", "timestamp low");
+  eudaq::Option<uint64_t> timestamph(op, "TS", "timestamphigh", 0, "uint32_t", "timestamp high");
   eudaq::OptionFlag stat(op, "s", "statistics", "enable print of statistics");
   eudaq::OptionFlag stdev(op, "std", "stdevent", "enable converter of StdEvent");
 
@@ -30,8 +30,8 @@ int main(int /*argc*/, const char **argv) {
   uint32_t eventh_v = eventh.Value();
   uint32_t triggerl_v = triggerl.Value();
   uint32_t triggerh_v = triggerh.Value();
-  uint32_t timestampl_v = timestampl.Value();
-  uint32_t timestamph_v = timestamph.Value();
+  uint64_t timestampl_v = timestampl.Value();
+  uint64_t timestamph_v = timestamph.Value();
   bool not_all_zero = eventl_v||eventh_v||triggerl_v||triggerh_v||timestampl_v||timestamph_v;
 
   eudaq::FileReaderUP reader;
@@ -64,8 +64,8 @@ int main(int /*argc*/, const char **argv) {
 
     bool in_range_tsn = false;
     if(timestampl_v!=0 || timestamph_v!=0){
-      uint32_t ts_beg = ev->GetTimestampBegin();
-      uint32_t ts_end = ev->GetTimestampEnd();
+      uint64_t ts_beg = ev->GetTimestampBegin();
+      uint64_t ts_end = ev->GetTimestampEnd();
       if(ts_beg >= timestampl_v && ts_end <= timestamph_v){
         in_range_tsn = true;
       }
