@@ -511,6 +511,8 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_DEBUG("setDecodersEna: OK");
     }
 
+    EUDAQ_INFO("Device temperature: " + std::to_string(getTpx3Temperature(device_nr)) + " °C");
+
     // Load Timepix3 XML config file
     m_xmlfileName = config->Get( "XMLConfig_dev" + std::to_string(device_nr), "" );
     if (m_xmlfileName.empty()) {
