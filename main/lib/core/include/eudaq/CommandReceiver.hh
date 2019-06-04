@@ -36,7 +36,7 @@ namespace eudaq {
     virtual void OnUnrecognised(const std::string &cmd, const std::string &argv);
     virtual void RunLoop();
     std::string Connect();
-    
+    void Disconnect();
     void SendStatus();
     void SetStatus(Status::State, const std::string&);
     void SetStatusMsg(const std::string&);

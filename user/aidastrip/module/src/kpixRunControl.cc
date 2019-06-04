@@ -17,6 +17,7 @@ public:
 
 private:
   uint32_t m_stop_second;
+  bool m_auto_reset;
   bool m_flag_running;
   std::chrono::steady_clock::time_point m_tp_start_run;
 
@@ -49,8 +50,8 @@ void kpixRunControl::DoStatus(eudaq::ConnectionSPC id,
   if (id->GetType()+"."+id->GetName() == m_check_full_name){
     /* //--> if you want a max event cut at RC level:
       std::string ev_str = status->GetTag("EventN");
-    //std::cout << "[CHECK] " << ev_str
-    //	      << std::endl;
+    std::cout << "[CHECK] " << ev_str
+    	      << std::endl;
     uint32_t evn = 0;
     if (ev_str.size())
       evn = atol(ev_str.c_str());
@@ -84,6 +85,7 @@ void kpixRunControl::StopRun(){
 void kpixRunControl::Configure(){
   auto conf = GetConfiguration();
   m_stop_second = conf->Get("KPIX_STOP_RUN_AFTER_N_SECONDS", 0);
+  m_auto_reset = conf->Get("AUTO_RESET", 0);
   m_check_full_name = conf->Get("PRODUCER_TO_CONTROL", "Producer.lycoris");
   RunControl::Configure();
 }
@@ -95,6 +97,7 @@ void kpixRunControl::Exec(){
       if (m_flag_goto_stop_run) {
 	std::cout<<"\t STOP from Run Control since kpix stopped running" <<std::endl;
 	StopRun();
+	if (m_auto_reset) Reset();
       }
 
       else if(m_flag_running && m_stop_second){
@@ -110,4 +113,6 @@ void kpixRunControl::Exec(){
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
+
+   
 }

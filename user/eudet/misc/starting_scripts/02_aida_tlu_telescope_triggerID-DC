@@ -16,7 +16,7 @@ xterm -T "Data Collector Trigger" -e 'euCliCollector -n TriggerIDSyncDataCollect
 sleep 1
 
 # Start TLU Producer
-xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://${TLUIP}:${RPCPORT}' &
+xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://${RUNCONTROLIP}:${RPCPORT}' &
 sleep 1
 
 # Start NI Producer locally connect to LV via TCP/IP

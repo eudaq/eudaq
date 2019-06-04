@@ -39,6 +39,19 @@ namespace eudaq {
      */
     bool Has(const std::string& key) const;
 
+    /**
+     * @brief Check if config file has section
+     * @param section
+     * @return True if section exists, false otherwise
+     */
+    bool HasSection(const std::string & section) const;
+
+    /**
+     * @brief get the list of keys in a section
+     * @return list of keys in section
+     */
+    std::vector<std::string> Keylist() const;
+
     void Save(std::ostream &file) const;
     void Load(std::istream &file, const std::string &section);
     bool SetSection(const std::string &section) const;
@@ -72,7 +85,6 @@ namespace eudaq {
     template <typename T> void Set(const std::string &key, const T &val);
     std::string Name() const;
     Configuration &operator=(const Configuration &other);
-    
     void Print(std::ostream &os, size_t offset=0) const;
     void Print() const;
 

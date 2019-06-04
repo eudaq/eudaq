@@ -369,6 +369,10 @@ namespace eudaq {
     return m_addr_client;
   }
 
+  void CommandReceiver::Disconnect(){
+    m_is_destructing = true;
+    OnTerminate();
+  }
   bool CommandReceiver::Deamon(){
     while(!m_is_destructing){
       std::this_thread::sleep_for(std::chrono::milliseconds(200));

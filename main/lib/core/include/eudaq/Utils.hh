@@ -33,7 +33,8 @@ namespace eudaq {
   }
 
   uint32_t DLLEXPORT str2hash(const std::string &stdstr);
-  
+  std::vector<std::string> splitString(std::string str, char delimiter);
+
   /** Sleep for a specified number of milliseconds.
    * \param ms The number of milliseconds
    */
