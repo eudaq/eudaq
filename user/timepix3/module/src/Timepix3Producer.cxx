@@ -680,7 +680,11 @@ void Timepix3Producer::DoConfigure() {
     for( int x = 0; x < NPIXX; x++ ) {
       for ( int y = 0; y < NPIXY; y++ ) {
         int threshold = matrix_thresholds[y][x]; // x & y are inverted when parsed from XML
-        // cout << x << " "<< y << " " << threshold << endl;
+         /*
+         if (threshold) {
+           cout << "threshold tune: " << x << " "<< y << " -> " << threshold << endl;
+         }
+         */
         if( !spidrctrl->setPixelThreshold( x, y, threshold ) ) pixfail = true;
       }
     }
@@ -697,6 +701,11 @@ void Timepix3Producer::DoConfigure() {
     for( int x = 0; x < NPIXX; x++ ) {
       for ( int y = 0; y < NPIXY; y++ ) {
         bool mask = matrix_mask[y][x]; // x & y are inverted when parsed from XML
+        /*
+        if (mask) {
+          cout << "mask: " << x << " "<< y << endl;
+        }
+        */
         if( !spidrctrl->setPixelMask( x, y, mask ) ) pixfail = true;
       }
     }
@@ -854,12 +863,6 @@ void Timepix3Producer::RunLoop() {
   spidrdaq->setSampling( true );
   //spidrdaq->startRecording( "test.dat", 123, "This is test data" );
 
-  // ----------------------------------------------------------
-  // Get data samples and display some pixel data details
-  // Start triggers
-  if( !spidrctrl->startAutoTrigger() )
-    EUDAQ_ERROR( "###startAutoTrigger" );
-  // ----------------------------------------------------------
   while(m_running) {
 
     bool next_sample = true;
@@ -885,7 +888,7 @@ void Timepix3Producer::RunLoop() {
         uint64_t header = (data & 0xF000000000000000) >> 60;
         //header_counter[header]++;
 
-        //std::cout << "Found header id: 0x" << std::hex << header << " data is: 0x" << data << std::dec << std::endl;
+        //std::cout << "Data is: 0x" << to_hex_string(data) << std::dec << std::endl;
 
         // it's TDC counter
         if(header == 0x6) {
@@ -895,7 +898,7 @@ void Timepix3Producer::RunLoop() {
             evup->AddSubEvent(subevt);
           }
           SendEvent(std::move(evup));
-          //std::cout << "Sending event with headers: " << listVector(header_counter) << endl;
+          //std::cout << "Sending 2 events with headers: " << listVector(header_counter) << endl;
           //header_counter.clear();
           data_buffer.clear();
 
@@ -965,23 +968,20 @@ void Timepix3Producer::DoStopRun() {
   if( !spidrctrl->getShutterCounter(&dataread) ) {
     EUDAQ_ERROR( "getShutterCounter: " + spidrctrl->errorString());
   } else {
-    EUDAQ_DEBUG( "getShutterCounter: OK");
+    EUDAQ_DEBUG( "getShutterCounter: " + std::to_string(dataread));
   }
-  std::cout << "Shutter count: " << dataread << std::endl;
 
   if( !spidrctrl->getShutterStart( 0, &timer_lo, &timer_hi ) ) {
     EUDAQ_ERROR( "getShutterStart: " + spidrctrl->errorString());
   } else {
-    EUDAQ_DEBUG( "getShutterStart: OK");
+    EUDAQ_DEBUG( "getShutterStart: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
   }
-  std::cout << "Shutter start: 0x" << to_hex_string(timer_hi,4) << to_hex_string(timer_lo,8) << std::endl;
 
   if( !spidrctrl->getShutterEnd( 0, &timer_lo, &timer_hi ) ) {
     EUDAQ_ERROR( "getShutterEnd: " + spidrctrl->errorString());
   } else {
-    EUDAQ_DEBUG( "getShutterEnd: OK");
+    EUDAQ_DEBUG( "getShutterEnd: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
   }
-  std::cout << "Shutter end: 0x" << to_hex_string(timer_hi,4) << to_hex_string(timer_lo,8) << std::endl;
 
   sleep(1);
   m_running = false;
