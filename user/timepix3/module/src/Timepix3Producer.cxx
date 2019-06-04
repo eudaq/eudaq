@@ -670,17 +670,52 @@ void Timepix3Producer::DoConfigure() {
       }
     }
 
+    // set pixels according to an XML file
+    // clear all
     spidrctrl->resetPixelConfig();
-    spidrctrl->setPixelTestEna( 10, 10 );
-    spidrctrl->setPixelTestEna( 11, 11 );
-    spidrctrl->setPixelTestEna( 12, 12 );
-    spidrctrl->setPixelMask( ALL_PIXELS, ALL_PIXELS );
-    spidrctrl->setPixelMask( 9, 9 );
-    spidrctrl->setPixelMask( 10, 10 );
-    spidrctrl->setPixelMask( 11, 11 );
-    spidrctrl->setPixelMask( 12, 12 );
-    //spidrctrl->setPixelMask( 10, 10, 0 );
-    EUDAQ_DEBUG("Setting testbit for all pixels");
+
+    // Get per-pixel thresholds from XML
+    bool pixfail = false;
+    vector< vector< int > > matrix_thresholds = myTimepix3Config->getMatrixDACs();
+    for( int x = 0; x < NPIXX; x++ ) {
+      for ( int y = 0; y < NPIXY; y++ ) {
+        int threshold = matrix_thresholds[y][x]; // x & y are inverted when parsed from XML
+        // cout << x << " "<< y << " " << threshold << endl;
+        if( !spidrctrl->setPixelThreshold( x, y, threshold ) ) pixfail = true;
+      }
+    }
+    if( !pixfail ) {
+      EUDAQ_DEBUG("Successfully loaded pixel thresholds.");
+    } else {
+      EUDAQ_ERROR("Something went wrong while building pixel thresholds.");
+      serious_error = true;
+    }
+
+    // Get pixel mask from XML
+    pixfail = false;
+    vector< vector< bool > > matrix_mask = myTimepix3Config->getMatrixMask();
+    for( int x = 0; x < NPIXX; x++ ) {
+      for ( int y = 0; y < NPIXY; y++ ) {
+        bool mask = matrix_mask[y][x]; // x & y are inverted when parsed from XML
+        if( !spidrctrl->setPixelMask( x, y, mask ) ) pixfail = true;
+      }
+    }
+    // Add pixels masked by the user in the conf
+    string user_mask = config->Get( "User_Mask", "" );
+    vector<TString> pairs = tokenise( user_mask, ":");
+    for( int k = 0; k < pairs.size(); ++k ) {
+      vector<TString> pair = tokenise( pairs[k], "," );
+      int x = pair[0].Atoi();
+      int y = pair[1].Atoi();
+      EUDAQ_INFO("Additinal user mask: " + std::to_string(x) + "," + std::to_string(y) );
+      if( !spidrctrl->setPixelMask( x, y, true ) ) pixfail = true;
+    }
+    if( !pixfail ) {
+      EUDAQ_DEBUG("Successfully loaded pixel mask.");
+    } else {
+      EUDAQ_ERROR("Something went wrong while building pixel mask.");
+      serious_error = true;
+    }
 
     // Upload the pixel configuration to the device
     // Actually set the pixel thresholds and mask
@@ -714,80 +749,7 @@ void Timepix3Producer::DoConfigure() {
       + " threshold set: " + std::to_string(cnt_thrs) );
     }
     // return to default pixel configuration set
-    spidrctrl->selectPixelConfig(1);
-
-    ////////////////////////////////////////
-    // ----------------------------------------------------------
-    // Test pulse and CTPR configuration
-    unsigned char *ctpr;
-
-    // read CTPR from device
-    if (!spidrctrl->getCtpr(device_nr, &ctpr)) {
-      EUDAQ_ERROR( "getCtpr: " + spidrctrl->errorString());
-      serious_error = true;
-    } else {
-      std::cout << "device CTPR = 0x ";
-      for (int i=0; i<(256/8); i++){
-        std::cout << to_hex_string(ctpr[i]) << " ";
-      }
-      std::cout << std::endl;
-    }
-
-    // Enable test-pulses for some columns
-    std::cout << "activating testpulse to columns: ";
-    for(int col=0; col<256; ++col ) {
-      //if( col >= 11 && col < 12 ) {
-        std::cout << col << " ";
-        spidrctrl->setCtprBit( col );
-      //} else {
-      //  spidrctrl->setCtprBit( col, 0);
-      //}
-    }
-    std::cout << std::endl;
-    // check content of local CTPR:
-    ctpr = spidrctrl->ctpr();
-    std::cout << "local  CTPR = 0x ";
-    for (int i=0; i<(256/8); i++){
-      std::cout << to_hex_string(ctpr[i]) << " ";
-    }
-    std::cout << std::endl;
-
-    // Upload test-pulse register to the device
-    if( !spidrctrl->setCtpr( device_nr ) ) {
-      EUDAQ_ERROR( "setCtpr: " + spidrctrl->errorString());
-      serious_error = true;
-    }
-
-    // Timepix3 test pulse configuration
-    if( !spidrctrl->setTpPeriodPhase( device_nr, 100, 0 ) ) {
-      EUDAQ_ERROR( "setTpPeriodPhase: " + spidrctrl->errorString());
-      serious_error = true;
-    }
-    if( !spidrctrl->setTpNumber( device_nr, 1 ) ) {
-      EUDAQ_ERROR( "setTpNumber: " + spidrctrl->errorString());
-      serious_error = true;
-    }
-
-    // Check settings
-    int tp_period, tp_phase, tp_num;
-    if( !spidrctrl->getTpPeriodPhase( device_nr, &tp_period, &tp_phase ) ||
-        !spidrctrl->getTpNumber( device_nr, &tp_num ) ) {
-      EUDAQ_ERROR( "getTpPeriodPhase, getTpNumber: " + spidrctrl->errorString());
-      serious_error = true;
-    } else {
-      EUDAQ_INFO("tp_phase = " + std::to_string(tp_phase) + ", tp_period = " + std::to_string(tp_period) + ", tp_num = " + std::to_string(tp_num));
-    }
-    // read CTPR from device
-    if (!spidrctrl->getCtpr(device_nr, &ctpr)) {
-      EUDAQ_ERROR( "getCtpr: " + spidrctrl->errorString());
-      serious_error = true;
-    } else {
-      std::cout << "device CTPR = 0x ";
-      for (int i=0; i<(256/8); i++){
-        std::cout << to_hex_string(ctpr[i]) << " ";
-      }
-      std::cout << std::endl;
-    }
+    spidrctrl->selectPixelConfig(0);
 
   }
   if (serious_error) {
@@ -831,18 +793,6 @@ void Timepix3Producer::DoStartRun() {
   } else {
     EUDAQ_DEBUG( "datadrivenReadout: OK");
   }
-
-  // ----------------------------------------------------------
-  // Configure the shutter trigger
-  int trigger_mode = 4; // SPIDR_TRIG_AUTO;
-  int trigger_length_us = 100000; // 100 ms
-  int trigger_freq_hz = 1; //  Hz
-  int trigger_count = 5; // triggers
-  if( !spidrctrl->setShutterTriggerConfig( trigger_mode, trigger_length_us,
-                                          trigger_freq_hz, trigger_count ) )
-    EUDAQ_ERROR( "###setShutterTriggerConfig" );
-
-  ////////////////////////////
 
   int device_nr = 0;
   // Start timer internally, if configured to do so
@@ -889,7 +839,7 @@ void Timepix3Producer::RunLoop() {
   ts_thread = std::thread(&Timepix3Producer::timestamp_thread, this);
 
   //int device_nr = 0;
-  std::map<int, int> header_counter;
+  //std::map<int, int> header_counter;
 
   // set sampling parameters
   spidrdaq->setSampleAll( true );
@@ -916,7 +866,7 @@ void Timepix3Producer::RunLoop() {
 
     if(next_sample) {
       auto size = spidrdaq->sampleSize();
-      std::cout << "Got a sample of a size " << size << std::endl;
+      //std::cout << "Got a sample of a size " << size << std::endl;
       // look inside sample buffer...
       std::vector<eudaq::EventSPC> data_buffer;
       while(m_running) {
@@ -926,9 +876,9 @@ void Timepix3Producer::RunLoop() {
         if(!data) break;
 
         uint64_t header = (data & 0xF000000000000000) >> 60;
-        header_counter[header]++;
+        //header_counter[header]++;
 
-        std::cout << "Found header id: 0x" << std::hex << header << " data is: 0x" << data << std::dec << std::endl;
+        //std::cout << "Found header id: 0x" << std::hex << header << " data is: 0x" << data << std::dec << std::endl;
 
         // it's TDC counter
         if(header == 0x6) {
@@ -938,6 +888,8 @@ void Timepix3Producer::RunLoop() {
             evup->AddSubEvent(subevt);
           }
           SendEvent(std::move(evup));
+          //std::cout << "Sending event with headers: " << listVector(header_counter) << endl;
+          //header_counter.clear();
           data_buffer.clear();
 
           // Create and send new trigger event
@@ -961,6 +913,8 @@ void Timepix3Producer::RunLoop() {
           evup->AddSubEvent(subevt);
         }
         SendEvent(std::move(evup));
+        //std::cout << "Sending event with headers: " << listVector(header_counter) << endl;
+        //header_counter.clear();
         data_buffer.clear();
       }
     } // Sample available
@@ -973,7 +927,7 @@ void Timepix3Producer::RunLoop() {
   ts_thread.join();
   ts_thread.~thread();
   // show header statitstics
-  std::cout << "Headers: " << listVector(header_counter) << endl;
+  //std::cout << "Headers: " << listVector(header_counter) << endl;
   EUDAQ_USER("Timepix3Producer exiting run loop.");
 } // RunLoop()
 
