@@ -106,7 +106,7 @@ private:
   template <typename T> std::string listVector(std::map<T, T> vec, std::string separator = ", ") {
     std::stringstream os;
     for(auto it : vec) {
-      os << "0x" << to_hex_string(it.first) << ": ";
+      os << "0x" << to_hex_string(it.first, 1) << ": ";
       os << static_cast<uint64_t>(it.second);
       os << separator;
     }
