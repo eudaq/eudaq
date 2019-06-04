@@ -787,14 +787,6 @@ void Timepix3Producer::DoStartRun() {
 
   EUDAQ_USER("Timepix3Producer starting run...");
 
-  // Set Timepix3 into acquisition mode
-  if( !spidrctrl->datadrivenReadout() ) {
-    EUDAQ_THROW( "Could not start data drivenreadout: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "datadrivenReadout: OK");
-  }
-
-  int device_nr = 0;
   // Start timer internally, if configured to do so
   if( !spidrctrl->restartTimers() ) {
     EUDAQ_THROW( "Could not send restartTimers command: " + spidrctrl->errorString());
@@ -802,7 +794,22 @@ void Timepix3Producer::DoStartRun() {
     EUDAQ_DEBUG( "restartTimers: OK");
   }
 
+  // Set Timepix3 into acquisition mode
+  if( !spidrctrl->datadrivenReadout() ) {
+    EUDAQ_THROW( "Could not start data driven readout: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "datadrivenReadout: OK");
+  }
+
+  // Open the shutter
+  if( !spidrctrl->openShutter() ) {
+    EUDAQ_THROW( "Could not open the shutter: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "openShutter: OK");
+  }
+
   if (!m_extT0) {
+    int device_nr = 0;
     // Restart timers to sync Timepix3 and TLU timestamps. Resets both SPIDR and Timepix3 timers.
     if( !spidrctrl->t0Sync(device_nr) ) {
       EUDAQ_THROW( "Could not send T0: " + spidrctrl->errorString());
@@ -937,7 +944,49 @@ void Timepix3Producer::RunLoop() {
 void Timepix3Producer::DoStopRun() {
   EUDAQ_USER("Timepix3Producer stopping run...");
   // Set a flag to signal to the polling loop that the run is over
+
+
+  // Close the shutter
+  if( !spidrctrl->closeShutter() ) {
+    EUDAQ_ERROR( "Could not close the shutter: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "closeShutter: OK");
+  }
+  // Stop Timepix3 readout
+  if( !spidrctrl->pauseReadout() ) {
+    EUDAQ_ERROR( "Could not stop data readout: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "pauseReadout: OK");
+  }
+
+  // Get some info
+  int dataread;
+  unsigned int timer_hi, timer_lo;
+  if( !spidrctrl->getShutterCounter(&dataread) ) {
+    EUDAQ_ERROR( "getShutterCounter: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "getShutterCounter: OK");
+  }
+  std::cout << "Shutter count: " << dataread << std::endl;
+
+  if( !spidrctrl->getShutterStart( 0, &timer_lo, &timer_hi ) ) {
+    EUDAQ_ERROR( "getShutterStart: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "getShutterStart: OK");
+  }
+  std::cout << "Shutter start: 0x" << to_hex_string(timer_hi,4) << to_hex_string(timer_lo,8) << std::endl;
+
+  if( !spidrctrl->getShutterEnd( 0, &timer_lo, &timer_hi ) ) {
+    EUDAQ_ERROR( "getShutterEnd: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "getShutterEnd: OK");
+  }
+  std::cout << "Shutter end: 0x" << to_hex_string(timer_hi,4) << to_hex_string(timer_lo,8) << std::endl;
+
+  sleep(1);
   m_running = false;
+
+  // wait for RunLoop() to finish
   std::lock_guard<std::mutex> lock{device_mutex_};
   if(spidrdaq) {
     delete spidrdaq;
