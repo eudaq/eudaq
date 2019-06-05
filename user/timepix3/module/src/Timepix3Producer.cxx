@@ -744,6 +744,21 @@ void Timepix3Producer::DoConfigure() {
       serious_error = true;
     }
 
+    // enable testpulse to pixels
+    string user_testpix = config->Get( "User_TestPix", "" );
+    conf_tmp.clear();
+    conf_tmp = tokenise( user_testpix, ':');
+    for( int k = 0; k < conf_tmp.size(); ++k ) {
+      vector<string> pair = tokenise( conf_tmp[k], ',' );
+      int x = std::stoi(pair[0]);
+      int y = std::stoi(pair[1]);
+      EUDAQ_INFO("Enabling testpulse to pixel: " + std::to_string(x) + "," + std::to_string(y) );
+      if( !spidrctrl->setPixelTestEna( x, y, true ) ) {
+        EUDAQ_ERROR("Something went wrong while building testpulse-enabled pixel matrix.");
+        serious_error = true;
+      }
+    }
+
     // Upload the pixel configuration to the device
     // Actually set the pixel thresholds and mask
     if( !spidrctrl->setPixelConfig( device_nr ) ) {
@@ -777,6 +792,24 @@ void Timepix3Producer::DoConfigure() {
     }
     // return to default pixel configuration set
     spidrctrl->selectPixelConfig(0);
+
+    // enable testpulse to columns - set CTPR
+    string user_testcols = config->Get( "User_TestCols", "" );
+    conf_tmp.clear();
+    conf_tmp = tokenise( user_testcols, ':');
+    for( int k = 0; k < conf_tmp.size(); ++k ) {
+      int col = std::stoi(conf_tmp[k]);
+      EUDAQ_INFO("Enabling testpulse in CTPR to column: " + std::to_string(col));
+      if( !spidrctrl->setCtprBit( col ) ) {
+        EUDAQ_ERROR("Something went wrong while enabling column in CTPR.");
+        serious_error = true;
+      }
+    }
+    // Upload test-pulse register to the device
+    if( !spidrctrl->setCtpr( device_nr ) ) {
+      EUDAQ_ERROR( "setCtpr: " + spidrctrl->errorString());
+      serious_error = true;
+    }
 
   }
   if (serious_error) {
