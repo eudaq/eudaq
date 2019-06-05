@@ -709,14 +709,32 @@ void Timepix3Producer::DoConfigure() {
         if( !spidrctrl->setPixelMask( x, y, mask ) ) pixfail = true;
       }
     }
+
+    auto tokenise = [](const std::string& istring, const char separator) {
+      std::vector<std::string> tokens;
+      if(istring.size()<1) {
+        return tokens;
+      }
+      tokens.push_back("");
+      for (int i=0; i<istring.size(); i++) {
+        if (istring[i] == separator) {
+          tokens.push_back("");
+        }
+        else {
+          tokens.back().push_back(istring[i]);
+        }
+      }
+      return tokens;
+    };
+
     // Add pixels masked by the user in the conf
     string user_mask = config->Get( "User_Mask", "" );
-    vector<TString> pairs = tokenise( user_mask, ":");
-    for( int k = 0; k < pairs.size(); ++k ) {
-      vector<TString> pair = tokenise( pairs[k], "," );
-      int x = pair[0].Atoi();
-      int y = pair[1].Atoi();
-      EUDAQ_INFO("Additinal user mask: " + std::to_string(x) + "," + std::to_string(y) );
+    vector<string> conf_tmp = tokenise( user_mask, ':');
+    for( int k = 0; k < conf_tmp.size(); ++k ) {
+      vector<string> pair = tokenise( conf_tmp[k], ',' );
+      int x = std::stoi(pair[0]);
+      int y = std::stoi(pair[1]);
+      EUDAQ_INFO("Additional user mask: " + std::to_string(x) + "," + std::to_string(y) );
       if( !spidrctrl->setPixelMask( x, y, true ) ) pixfail = true;
     }
     if( !pixfail ) {
