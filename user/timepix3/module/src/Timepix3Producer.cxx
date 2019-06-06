@@ -106,7 +106,7 @@ private:
   template <typename T> std::string listVector(std::map<T, T> vec, std::string separator = ", ") {
     std::stringstream os;
     for(auto it : vec) {
-      os << "0x" << to_hex_string(it.first) << ": ";
+      os << "0x" << to_hex_string(it.first, 1) << ": ";
       os << static_cast<uint64_t>(it.second);
       os << separator;
     }
@@ -680,7 +680,11 @@ void Timepix3Producer::DoConfigure() {
     for( int x = 0; x < NPIXX; x++ ) {
       for ( int y = 0; y < NPIXY; y++ ) {
         int threshold = matrix_thresholds[y][x]; // x & y are inverted when parsed from XML
-        // cout << x << " "<< y << " " << threshold << endl;
+         /*
+         if (threshold) {
+           cout << "threshold tune: " << x << " "<< y << " -> " << threshold << endl;
+         }
+         */
         if( !spidrctrl->setPixelThreshold( x, y, threshold ) ) pixfail = true;
       }
     }
@@ -697,17 +701,40 @@ void Timepix3Producer::DoConfigure() {
     for( int x = 0; x < NPIXX; x++ ) {
       for ( int y = 0; y < NPIXY; y++ ) {
         bool mask = matrix_mask[y][x]; // x & y are inverted when parsed from XML
+        /*
+        if (mask) {
+          cout << "mask: " << x << " "<< y << endl;
+        }
+        */
         if( !spidrctrl->setPixelMask( x, y, mask ) ) pixfail = true;
       }
     }
+
+    auto tokenise = [](const std::string& istring, const char separator) {
+      std::vector<std::string> tokens;
+      if(istring.size()<1) {
+        return tokens;
+      }
+      tokens.push_back("");
+      for (int i=0; i<istring.size(); i++) {
+        if (istring[i] == separator) {
+          tokens.push_back("");
+        }
+        else {
+          tokens.back().push_back(istring[i]);
+        }
+      }
+      return tokens;
+    };
+
     // Add pixels masked by the user in the conf
     string user_mask = config->Get( "User_Mask", "" );
-    vector<TString> pairs = tokenise( user_mask, ":");
-    for( int k = 0; k < pairs.size(); ++k ) {
-      vector<TString> pair = tokenise( pairs[k], "," );
-      int x = pair[0].Atoi();
-      int y = pair[1].Atoi();
-      EUDAQ_INFO("Additinal user mask: " + std::to_string(x) + "," + std::to_string(y) );
+    vector<string> conf_tmp = tokenise( user_mask, ':');
+    for( int k = 0; k < conf_tmp.size(); ++k ) {
+      vector<string> pair = tokenise( conf_tmp[k], ',' );
+      int x = std::stoi(pair[0]);
+      int y = std::stoi(pair[1]);
+      EUDAQ_INFO("Additional user mask: " + std::to_string(x) + "," + std::to_string(y) );
       if( !spidrctrl->setPixelMask( x, y, true ) ) pixfail = true;
     }
     if( !pixfail ) {
@@ -715,6 +742,21 @@ void Timepix3Producer::DoConfigure() {
     } else {
       EUDAQ_ERROR("Something went wrong while building pixel mask.");
       serious_error = true;
+    }
+
+    // enable testpulse to pixels
+    string user_testpix = config->Get( "User_TestPix", "" );
+    conf_tmp.clear();
+    conf_tmp = tokenise( user_testpix, ':');
+    for( int k = 0; k < conf_tmp.size(); ++k ) {
+      vector<string> pair = tokenise( conf_tmp[k], ',' );
+      int x = std::stoi(pair[0]);
+      int y = std::stoi(pair[1]);
+      EUDAQ_INFO("Enabling testpulse to pixel: " + std::to_string(x) + "," + std::to_string(y) );
+      if( !spidrctrl->setPixelTestEna( x, y, true ) ) {
+        EUDAQ_ERROR("Something went wrong while building testpulse-enabled pixel matrix.");
+        serious_error = true;
+      }
     }
 
     // Upload the pixel configuration to the device
@@ -750,6 +792,24 @@ void Timepix3Producer::DoConfigure() {
     }
     // return to default pixel configuration set
     spidrctrl->selectPixelConfig(0);
+
+    // enable testpulse to columns - set CTPR
+    string user_testcols = config->Get( "User_TestCols", "" );
+    conf_tmp.clear();
+    conf_tmp = tokenise( user_testcols, ':');
+    for( int k = 0; k < conf_tmp.size(); ++k ) {
+      int col = std::stoi(conf_tmp[k]);
+      EUDAQ_INFO("Enabling testpulse in CTPR to column: " + std::to_string(col));
+      if( !spidrctrl->setCtprBit( col ) ) {
+        EUDAQ_ERROR("Something went wrong while enabling column in CTPR.");
+        serious_error = true;
+      }
+    }
+    // Upload test-pulse register to the device
+    if( !spidrctrl->setCtpr( device_nr ) ) {
+      EUDAQ_ERROR( "setCtpr: " + spidrctrl->errorString());
+      serious_error = true;
+    }
 
   }
   if (serious_error) {
@@ -787,14 +847,6 @@ void Timepix3Producer::DoStartRun() {
 
   EUDAQ_USER("Timepix3Producer starting run...");
 
-  // Set Timepix3 into acquisition mode
-  if( !spidrctrl->datadrivenReadout() ) {
-    EUDAQ_THROW( "Could not start data drivenreadout: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "datadrivenReadout: OK");
-  }
-
-  int device_nr = 0;
   // Start timer internally, if configured to do so
   if( !spidrctrl->restartTimers() ) {
     EUDAQ_THROW( "Could not send restartTimers command: " + spidrctrl->errorString());
@@ -802,7 +854,22 @@ void Timepix3Producer::DoStartRun() {
     EUDAQ_DEBUG( "restartTimers: OK");
   }
 
+  // Set Timepix3 into acquisition mode
+  if( !spidrctrl->datadrivenReadout() ) {
+    EUDAQ_THROW( "Could not start data driven readout: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "datadrivenReadout: OK");
+  }
+
+  // Open the shutter
+  if( !spidrctrl->openShutter() ) {
+    EUDAQ_THROW( "Could not open the shutter: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "openShutter: OK");
+  }
+
   if (!m_extT0) {
+    int device_nr = 0;
     // Restart timers to sync Timepix3 and TLU timestamps. Resets both SPIDR and Timepix3 timers.
     if( !spidrctrl->t0Sync(device_nr) ) {
       EUDAQ_THROW( "Could not send T0: " + spidrctrl->errorString());
@@ -847,12 +914,6 @@ void Timepix3Producer::RunLoop() {
   spidrdaq->setSampling( true );
   //spidrdaq->startRecording( "test.dat", 123, "This is test data" );
 
-  // ----------------------------------------------------------
-  // Get data samples and display some pixel data details
-  // Start triggers
-  if( !spidrctrl->startAutoTrigger() )
-    EUDAQ_ERROR( "###startAutoTrigger" );
-  // ----------------------------------------------------------
   while(m_running) {
 
     bool next_sample = true;
@@ -878,7 +939,7 @@ void Timepix3Producer::RunLoop() {
         uint64_t header = (data & 0xF000000000000000) >> 60;
         //header_counter[header]++;
 
-        //std::cout << "Found header id: 0x" << std::hex << header << " data is: 0x" << data << std::dec << std::endl;
+        //std::cout << "Data is: 0x" << to_hex_string(data) << std::dec << std::endl;
 
         // it's TDC counter
         if(header == 0x6) {
@@ -888,7 +949,7 @@ void Timepix3Producer::RunLoop() {
             evup->AddSubEvent(subevt);
           }
           SendEvent(std::move(evup));
-          //std::cout << "Sending event with headers: " << listVector(header_counter) << endl;
+          //std::cout << "Sending 2 events with headers: " << listVector(header_counter) << endl;
           //header_counter.clear();
           data_buffer.clear();
 
@@ -937,7 +998,46 @@ void Timepix3Producer::RunLoop() {
 void Timepix3Producer::DoStopRun() {
   EUDAQ_USER("Timepix3Producer stopping run...");
   // Set a flag to signal to the polling loop that the run is over
+
+
+  // Close the shutter
+  if( !spidrctrl->closeShutter() ) {
+    EUDAQ_ERROR( "Could not close the shutter: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "closeShutter: OK");
+  }
+  // Stop Timepix3 readout
+  if( !spidrctrl->pauseReadout() ) {
+    EUDAQ_ERROR( "Could not stop data readout: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "pauseReadout: OK");
+  }
+
+  // Get some info
+  int dataread;
+  unsigned int timer_hi, timer_lo;
+  if( !spidrctrl->getShutterCounter(&dataread) ) {
+    EUDAQ_ERROR( "getShutterCounter: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "getShutterCounter: " + std::to_string(dataread));
+  }
+
+  if( !spidrctrl->getShutterStart( 0, &timer_lo, &timer_hi ) ) {
+    EUDAQ_ERROR( "getShutterStart: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "getShutterStart: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+  }
+
+  if( !spidrctrl->getShutterEnd( 0, &timer_lo, &timer_hi ) ) {
+    EUDAQ_ERROR( "getShutterEnd: " + spidrctrl->errorString());
+  } else {
+    EUDAQ_DEBUG( "getShutterEnd: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+  }
+
+  sleep(1);
   m_running = false;
+
+  // wait for RunLoop() to finish
   std::lock_guard<std::mutex> lock{device_mutex_};
   if(spidrdaq) {
     delete spidrdaq;
