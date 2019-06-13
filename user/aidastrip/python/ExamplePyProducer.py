@@ -2,8 +2,16 @@
 # load binary lib/pyeudaq.so
 import pyeudaq
 import time
-import rogue
 import pyrogue
+import rogue
+
+#import argparse
+
+kpixdir='/home/lycoris-admin/software/kpixDaq/kpix/software'
+pyrogue.addLibraryPath(kpixdir+'/python')
+import KpixDaq
+
+
 
 class ExamplePyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
@@ -11,9 +19,21 @@ class ExamplePyProducer(pyeudaq.Producer):
         self.is_running = 0
         print ('New instance of ExamplePyProducer')
 
+        print ('mq: init kpix root...')
+
+        ip = '192.168.2.10'
+        debug = False
+        
+        self.root= KpixDaq.DesyTrackerRoot(pollEn=False, ip=ip, debug=debug) 
+        print ('Reading all')
+        self.root.ReadAll()
+        self.root.waitOnUpdate()
+    
     def DoInitialise(self):        
         print ('DoInitialise')
         #print 'key_a(init) = ', self.GetInitItem("key_a")
+        # Print the version info
+        self.root.DesyTracker.AxiVersion.printStatus()
 
     def DoConfigure(self):        
         print ('DoConfigure')
@@ -58,3 +78,4 @@ if __name__ == "__main__":
     time.sleep(2)
     while(myproducer.IsConnected()):
         time.sleep(1)
+
