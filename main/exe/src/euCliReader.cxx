@@ -11,8 +11,8 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<uint32_t> eventh(op, "E", "eventhigh", 0, "uint32_t", "event number high");
   eudaq::Option<uint32_t> triggerl(op, "tg", "trigger", 0, "uint32_t", "trigger number low");
   eudaq::Option<uint32_t> triggerh(op, "TG", "triggerhigh", 0, "uint32_t", "trigger number high");
-  eudaq::Option<uint64_t> timestampl(op, "ts", "timestamp", 0, "uint32_t", "timestamp low");
-  eudaq::Option<uint64_t> timestamph(op, "TS", "timestamphigh", 0, "uint32_t", "timestamp high");
+  eudaq::Option<uint64_t> timestampl(op, "ts", "timestamp", 0, "uint64_t", "timestamp low");
+  eudaq::Option<uint64_t> timestamph(op, "TS", "timestamphigh", 0, "uint64_t", "timestamp high");
   eudaq::OptionFlag stat(op, "s", "statistics", "enable print of statistics");
   eudaq::OptionFlag stdev(op, "std", "stdevent", "enable converter of StdEvent");
 
