@@ -12,7 +12,6 @@ pyrogue.addLibraryPath(kpixdir+'/python')
 import KpixDaq
 
 
-
 class ExamplePyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
         pyeudaq.Producer.__init__(self, 'PyProducer', name, runctrl)
@@ -78,4 +77,5 @@ if __name__ == "__main__":
     time.sleep(2)
     while(myproducer.IsConnected()):
         time.sleep(1)
-
+    myproducer.root.__exit__(None,None,None) # to manually terminate the kpix
+    
