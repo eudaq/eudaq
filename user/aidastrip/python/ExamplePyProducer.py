@@ -36,7 +36,21 @@ class ExamplePyProducer(pyeudaq.Producer):
 
     def DoConfigure(self):        
         print ('DoConfigure')
+
+        print(f"Hard Reset")
+        self.root.HardReset()
+        
+        print(f"Count Reset")   
+        self.root.CountReset()
+        
         #print 'key_b(conf) = ', self.GetConfigItem("key_b")
+        kpixconf= self.GetConfigItem("KPIX_CONF_FILE")
+        runcount= int(self.GetConfigItem("RUN_COUNT"))
+        print (kpixconf)
+        self.root.LoadConfig(kpixconf)
+        self.root.ReadAll()
+        self.root.waitOnUpdate()
+        self.root.DesyTrackerRunControl.MaxRunCount.set(runcount)
 
     def DoStartRun(self):
         print ('DoStartRun')
@@ -45,33 +59,42 @@ class ExamplePyProducer(pyeudaq.Producer):
     def DoStopRun(self):        
         print ('DoStopRun')
         self.is_running = 0
-
+        self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+        
     def DoReset(self):        
         print ('DoReset')
         self.is_running = 0
+        self.root.HardReset()
+        self.root.CountReset()
 
     def RunLoop(self):
         print ("Start of RunLoop in ExamplePyProducer")
-        trigger_n = 0;
-        while(self.is_running):
-            ev = pyeudaq.Event("RawEvent", "sub_name")
-            ev.SetTriggerN(trigger_n)
-            #block = bytes(r'raw_data_string')
-            #ev.AddBlock(0, block)
-            #print ev
-            # Mengqing:
-            datastr = 'raw_data_string'
-            block = bytes(datastr, 'utf-8')
-            ev.AddBlock(0, block)
-            print(ev)
+        try: 
+            self.root.DesyTrackerRunControl.runState.setDisp('Running')
+            self.root.DesyTrackerRunControl.waitStopped()
+        except(KeyboardInterrupt):
+            self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+
+        # trigger_n = 0;
+        # while(self.is_running):
+        #     ev = pyeudaq.Event("RawEvent", "sub_name")
+        #     ev.SetTriggerN(trigger_n)
+        #     #block = bytes(r'raw_data_string')
+        #     #ev.AddBlock(0, block)
+        #     #print ev
+        #     # Mengqing:
+        #     datastr = 'raw_data_string'
+        #     block = bytes(datastr, 'utf-8')
+        #     ev.AddBlock(0, block)
+        #     print(ev)
             
-            self.SendEvent(ev)
-            trigger_n += 1
-            time.sleep(1)
-        print ("End of RunLoop in ExamplePyProducer")
+        #     self.SendEvent(ev)
+        #     trigger_n += 1
+        #     time.sleep(1)
+        # print ("End of RunLoop in ExamplePyProducer")
 
 if __name__ == "__main__":
-    myproducer = ExamplePyProducer("myproducer", "tcp://localhost:44000")
+    myproducer = ExamplePyProducer("newkpix", "tcp://localhost:44000")
     print ("connecting to runcontrol in localhost:44000", )
     myproducer.Connect()
     time.sleep(2)
