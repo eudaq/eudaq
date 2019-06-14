@@ -22,7 +22,16 @@ public:
     }
     return eudaq::Producer::Make(code_name, name, runctrl);
   };
-  
+
+
+  void DoStatus() override {
+	  PYBIND11_OVERLOAD(void, /* Return type */
+	                    eudaq::Producer,
+	                    DoStatus
+	                    );
+
+  }
+	
   void DoInitialise() override {
     PYBIND11_OVERLOAD(void, /* Return type */
 		      eudaq::Producer,
@@ -74,6 +83,7 @@ void init_pybind_producer(py::module &m){
   py::class_<eudaq::Producer, PyProducer, std::shared_ptr<eudaq::Producer>>
     producer_(m, "Producer");
   producer_.def(py::init(&eudaq::Producer::Make, &PyProducer::Make));
+  producer_.def("DoStatus", &eudaq::Producer::DoStatus);
   producer_.def("DoInitialise", &eudaq::Producer::DoInitialise);
   producer_.def("DoConfigure", &eudaq::Producer::DoConfigure);
   producer_.def("DoStartRun", &eudaq::Producer::DoStartRun);
@@ -90,5 +100,8 @@ void init_pybind_producer(py::module &m){
   producer_.def("GetInitItem", &eudaq::Producer::GetInitItem,
 		"Get an item from Producer's init section", py::arg("key")
 		);
+  producer_.def("SetStatusTag", &eudaq::Producer::SetStatusTag,
+                "", py::arg("key"), py::arg("val"));
+
 
 }
