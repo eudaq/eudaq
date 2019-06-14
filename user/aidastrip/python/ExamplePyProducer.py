@@ -2,6 +2,9 @@
 # load binary lib/pyeudaq.so
 import pyeudaq
 import time
+
+import os, sys, datetime
+
 import pyrogue
 import rogue
 
@@ -27,7 +30,14 @@ class ExamplePyProducer(pyeudaq.Producer):
         print ('Reading all')
         self.root.ReadAll()
         self.root.waitOnUpdate()
-    
+
+    def DoStatus(self):
+        #print ('DoStatus')
+        
+        stop = self.is_running and "false" or "true"
+        
+        pyeudaq.Producer.SetStatusTag(self,"KpixStopped", stop);
+        
     def DoInitialise(self):        
         print ('DoInitialise')
         #print 'key_a(init) = ', self.GetInitItem("key_a")
@@ -45,12 +55,18 @@ class ExamplePyProducer(pyeudaq.Producer):
         
         #print 'key_b(conf) = ', self.GetConfigItem("key_b")
         kpixconf= self.GetConfigItem("KPIX_CONF_FILE")
+        kpixout = self.GetConfigItem("KPIX_OUT_FILE")
         runcount= int(self.GetConfigItem("RUN_COUNT"))
-        print (kpixconf)
+
+        print (f"KPiX configured from {kpixconf}")
         self.root.LoadConfig(kpixconf)
+
         self.root.ReadAll()
         self.root.waitOnUpdate()
+        
         self.root.DesyTrackerRunControl.MaxRunCount.set(runcount)
+        if os.path.isdir(kpixout):
+            outfile = os.path.abspath(datetime.datetime.now().strftime(f"{kpixout}/Run_%Y%m%d_%H%M%S.dat") )
 
     def DoStartRun(self):
         print ('DoStartRun')
@@ -75,6 +91,7 @@ class ExamplePyProducer(pyeudaq.Producer):
         except(KeyboardInterrupt):
             self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
 
+        
         # trigger_n = 0;
         # while(self.is_running):
         #     ev = pyeudaq.Event("RawEvent", "sub_name")
