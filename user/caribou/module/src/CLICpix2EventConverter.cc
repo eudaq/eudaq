@@ -28,7 +28,8 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return matrix;
   };
 
-  static caribou::clicpix2_frameDecoder decoder(true, true, matrix_config());
+  static auto matrix = matrix_config();
+  static caribou::clicpix2_frameDecoder decoder(true, true, matrix);
   // No event
   if(!ev) {
     return false;
@@ -161,7 +162,20 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       tot = 1;
     }
 
-    plane.SetPixel(i, col, row, tot, shutter_open);
+    // Time defaults ot rising shutter edge:
+    double timestamp = shutter_open;
+
+    // Decide whether information is counter of ToA
+    if(matrix[std::make_pair(row, col)].GetCountingMode()) {
+      // FIXME currently we don't use counting mode at all
+      // cnt = cp2_pixel->GetCounter();
+    } else {
+      auto toa = cp2_pixel->GetTOA();
+      // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
+      timestamp = shutter_close - static_cast<double>(toa) / 0.1;
+    }
+
+    plane.SetPixel(i, col, row, tot, timestamp);
     i++;
   }
 
