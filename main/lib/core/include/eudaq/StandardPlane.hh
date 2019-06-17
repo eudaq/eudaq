@@ -62,7 +62,7 @@ namespace eudaq {
 
     void SetPixelHelper(uint32_t index, uint32_t x, uint32_t y, double pix, uint64_t time_ps,
                         bool pivot, uint32_t frame);
-    void PushPixelHelper(uint32_t x, uint32_t y, double pix, double time_ps, bool pivot,
+    void PushPixelHelper(uint32_t x, uint32_t y, double pix, uint64_t time_ps, bool pivot,
                          uint32_t frame);
     double GetPixel(uint32_t index, uint32_t frame) const;
     double GetPixel(uint32_t index) const;
