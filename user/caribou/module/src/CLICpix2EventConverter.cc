@@ -119,7 +119,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // If we never saw a shutter open we have a problem:
   if(!full_shutter) {
-    EUDAQ_WARN("Frame without shutter timestamps " + std::to_string(ev->GetEventNumber()));
+    EUDAQ_WARN("Frame without shutter timestamps: " + std::to_string(ev->GetEventNumber()));
     return false;
   }
 
@@ -151,7 +151,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   eudaq::StandardPlane plane(0, "Caribou", "CLICpix2");
 
   int i = 0;
-  plane.SetSizeZS(128, 128, data.size());
+  plane.SetSizeZS(128, 128, 0);
   for(const auto& px : data) {
     auto cp2_pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
     int col = px.first.first;
@@ -181,7 +181,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       timestamp = shutter_close - static_cast<double>(toa) / 0.1;
     }
 
-    plane.SetPixel(i, col, row, tot, timestamp);
+    plane.PushPixel(col, row, tot, timestamp);
     i++;
   }
 
