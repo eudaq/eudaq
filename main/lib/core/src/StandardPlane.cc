@@ -86,7 +86,7 @@ namespace eudaq{
     }
   }
 
-  void StandardPlane::PushPixelHelper(uint32_t x, uint32_t y, double p, uin64_t time_ps,
+  void StandardPlane::PushPixelHelper(uint32_t x, uint32_t y, double p, uint64_t time_ps,
 				      bool pivot, uint32_t frame) {
     if (frame > m_x.size())
       EUDAQ_THROW("Bad frame number " + to_string(frame) + " in PushPixel");
