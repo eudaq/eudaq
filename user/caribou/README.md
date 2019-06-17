@@ -23,3 +23,17 @@ The producer interfaces the Peary device manager to add devices and to control t
 * **DAQ Start / Stop**: During DAQ start and stop, the corresponding Peary device functions `daqStart()` and `daqStop()` are called.
 
 Since the Peary device libraries are not thread-safe, all access to Peary libraries is guarded using C++11 `std::lock_guard` with a central class-member mutex to avoid concurrent device access. The Peary device manager itself ensures that no two instances are executed on the same hardware. This means, only one EUDAQ2 producer can be run on each Caribou board.
+
+
+## Data Converters to StandardEvent
+
+### CLICpix2Event2StdEventConverter
+
+The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
+
+* `countingmode`: Boolean for configuring the frame decoder to indicate counting mode data. Defaults to `true`.
+* `longcnt`: Boolean for configuring the frame decoder to interpret the pixel value as single long 13-bit counter. Defaults to `false`.
+* `comp`: Boolean to switch on/off the pixel compression of CLICpix2 for interpreting the frame data. Defaults to `true`.
+* `sp_comp`: Boolean to switch on/off the super-pixel compression of CLICpix2 for interpreting the frame data. Defaults to `true`.
+* `discard_tot_below`: Integer value to discard pixels with certain ToT values. All pixels with a ToT below this value will be discarded immediately and not returned by the decoder. This only works when a ToT value is available, i.e. not when `longcnt` is enabled. If a pixel has a ToT value of 0 and this setting is `1`, the hit will be discarded - if it is set to `0`, the hit is kept. Defaults to `-1`, i.e. no pixels are discarded.
+* `discard_toa_below`: Integer value to discard pixels with certain ToA values. All pixels with a ToA below this value will be discarded immediately and not returned by the decoder. This only works when a ToA value is available, i.e. not with `countingmode` enabled. If a pixel has a ToA value of 0 and this setting is `1`, the hit will be discarded - if it is set to `0`, the hit is kept. Defaults to `-1`, i.e. no pixels are discarded.

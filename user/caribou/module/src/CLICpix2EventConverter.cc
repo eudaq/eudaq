@@ -22,6 +22,10 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   auto comp = conf->Get("comp", true);
   auto sp_comp = conf->Get("sp_comp", true);
 
+  // Integer to allow skipping pixels with certain ToT values directly when decoding
+  auto discard_tot_below = conf->Get("discard_tot_below", -1);
+  auto discard_toa_below = conf->Get("discard_toa_below", -1);
+
   // Prepare matrix decoder:
   static auto matrix_config = [counting, longcnt]() {
     std::map<std::pair<uint8_t, uint8_t>, caribou::pixelConfig> matrix;
@@ -163,6 +167,11 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // ToT will throw if longcounter is enabled:
     try {
       tot = cp2_pixel->GetTOT();
+
+      // Check if we want to skip low ToT values. Only skip if we actually read a ToT value
+      if(tot < discard_tot_below) {
+        continue;
+      }
     } catch(caribou::DataException&) {
       // Set ToT to one if not defined.
       tot = 1;
@@ -177,6 +186,12 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // cnt = cp2_pixel->GetCounter();
     } else {
       auto toa = cp2_pixel->GetTOA();
+
+      // Check if we want to skip low ToA values. Only skip if we actually read a ToA value and are not on counting mode
+      if(toa < discard_toa_below) {
+        continue;
+      }
+
       // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
       timestamp = shutter_close - static_cast<double>(toa) / 0.1;
     }
