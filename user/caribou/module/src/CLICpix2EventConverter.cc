@@ -16,13 +16,17 @@ double CLICpix2Event2StdEventConverter::last_shutter_open_(0);
 bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
+  // Retrieve matrix configuration from config:
+  auto counting = conf->Get("countingmode", true);
+  auto longtot = conf->Get("longcnt", false);
+
   // Prepare matrix decoder:
-  static auto matrix_config = []() {
+  static auto matrix_config = [counting, longtot]() {
     std::map<std::pair<uint8_t, uint8_t>, caribou::pixelConfig> matrix;
     for(uint8_t x = 0; x < 128; x++) {
       for(uint8_t y = 0; y < 128; y++) {
         // FIXME hard-coded matrix configuration for CLICpix2 - needs to be read from a configuration!
-        matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, true, false, false);
+        matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, counting, false, longtot);
       }
     }
     return matrix;
