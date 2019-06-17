@@ -86,14 +86,14 @@ namespace eudaq{
     }
   }
 
-  void StandardPlane::PushPixelHelper(uint32_t x, uint32_t y, double p, double time,
+  void StandardPlane::PushPixelHelper(uint32_t x, uint32_t y, double p, uin64_t time_ps,
 				      bool pivot, uint32_t frame) {
     if (frame > m_x.size())
       EUDAQ_THROW("Bad frame number " + to_string(frame) + " in PushPixel");
     m_x[frame].push_back(x);
     m_y[frame].push_back(y);
     m_pix[frame].push_back(p);
-    m_time[frame].push_back(time);
+    m_time[frame].push_back(time_ps);
     if (m_pivot.size())
       m_pivot[frame].push_back(pivot);
     // std::cout << "DBG: " << frame << ", " << x << ", " << y << ", " << p <<
@@ -101,7 +101,7 @@ namespace eudaq{
   }
 
   void StandardPlane::SetPixelHelper(uint32_t index, uint32_t x, uint32_t y,
-				     double pix, double time, bool pivot, uint32_t frame) {
+				     double pix, uint64_t time_ps, bool pivot, uint32_t frame) {
     if (frame >= m_pix.size())
       EUDAQ_THROW("Bad frame number " + to_string(frame) + " in SetPixel");
     if (frame < m_x.size()) {
@@ -117,7 +117,7 @@ namespace eudaq{
       m_pix.at(frame).at(index) = pix;
     }
     if (frame < m_time.size()) {
-      m_time.at(frame).at(index) = time;
+      m_time.at(frame).at(index) = time_ps;
     }
   }
 
@@ -130,10 +130,10 @@ namespace eudaq{
     SetupResult();
     return m_result_pix->at(index);
   }
-  double StandardPlane::GetTimestamp(uint32_t index, uint32_t frame) const {
+  uint64_t StandardPlane::GetTimestamp(uint32_t index, uint32_t frame) const {
     return m_time.at(frame).at(index);
   }
-  double StandardPlane::GetTimestamp(uint32_t index) const {
+  uint64_t StandardPlane::GetTimestamp(uint32_t index) const {
     SetupResult();
     return m_result_time->at(index);
   }
