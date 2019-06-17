@@ -12,6 +12,7 @@ import rogue
 
 kpixdir='/home/lycoris-admin/software/kpixDaq/kpix/software'
 pyrogue.addLibraryPath(kpixdir+'/python')
+
 import KpixDaq
 
 
@@ -24,7 +25,7 @@ class ExamplePyProducer(pyeudaq.Producer):
         print ('mq: init kpix root...')
 
         ip = '192.168.2.10'
-        debug = False
+        debug = True
         
         self.root= KpixDaq.DesyTrackerRoot(pollEn=False, ip=ip, debug=debug) 
         print ('Reading all')
@@ -68,6 +69,7 @@ class ExamplePyProducer(pyeudaq.Producer):
         if os.path.isdir(kpixout):
             outfile = os.path.abspath(datetime.datetime.now().strftime(f"{kpixout}/Run_%Y%m%d_%H%M%S.dat") )
 
+            
     def DoStartRun(self):
         print ('DoStartRun')
         self.is_running = 1
@@ -88,8 +90,10 @@ class ExamplePyProducer(pyeudaq.Producer):
         try: 
             self.root.DesyTrackerRunControl.runState.setDisp('Running')
             self.root.DesyTrackerRunControl.waitStopped()
+            self.is_running = False
         except(KeyboardInterrupt):
             self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+            self.is_running = False
 
         
         # trigger_n = 0;
@@ -117,5 +121,5 @@ if __name__ == "__main__":
     time.sleep(2)
     while(myproducer.IsConnected()):
         time.sleep(1)
-    myproducer.root.__exit__(None,None,None) # to manually terminate the kpix
+    myproducer.root.__exit__(None,None,None) # to manually terminate the kpix once terminated
     
