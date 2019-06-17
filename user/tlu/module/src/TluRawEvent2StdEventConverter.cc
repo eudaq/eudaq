@@ -10,7 +10,7 @@ public:
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
     Register<TluRawEvent2StdEventConverter>(TluRawEvent2StdEventConverter::m_id_factory);
-} 
+}
 
 bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   if(!d2->IsFlagPacket()){
@@ -29,5 +29,9 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     d2->SetTag(TLU+stm+"_TSE", std::to_string(d1->GetTimestampEnd()));
     d2->SetTag(TLU+stm+"_TRG", std::to_string(d1->GetTriggerN()));
   }
+
+  // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
+  d2->SetTimeBegin(static_cast<uint64_t>(d1->GetTimestampBegin()) * 1000);
+  d2->SetTimeEnd(static_cast<uint64_t>(d1->GetTimestampEnd()) * 1000);
   return true;
 }
