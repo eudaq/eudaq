@@ -4,6 +4,7 @@ This module allows to integrate devices running with the Caribou readout system 
 
 Currently, this producer is in early development stage and has only been tested in the AIDA mode, i.e. receiving a global clock and a T0 signal at beginning of the run.
 The producer interfaces the Peary device manager to add devices and to control them. The following actions are performed in the different FSM stages:
+
 * **Initialisation**: The device to be instantiated is taken from the name of the producer (added with `-t <name>` on the command line). This means, the following command
 
     ```
@@ -16,9 +17,16 @@ The producer interfaces the Peary device manager to add devices and to control t
     * `log_level`: Set the Peary-internal logging verbosity for output on the terminal of the producer. Please refer to the Peary documentation for more information
     * `config_file`: Configuration file in Peary-format to be passed to the device. It should be noted, that the file access will happen locally by the producer, i.e. the value has to point to a file locally available to the producer on the Caribou system.
 
-* **Configuration**: During configuration, the device is powered using Peary's `powerOn()` command. After this, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the `configure()` command of the Peary device interface is called. In addition, the following register names are looked for in the configuration and sent to the device:
+* **Configuration**: During configuration, the device is powered using Peary's `powerOn()` command. After this, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the `configure()` command of the Peary device interface is called.
 
-    * `threshold`
+    In addition, a register value can be overwritten at the configure stage by setting the name and value in the EUDAQ configuration file, e.g.
+
+    ```toml
+    register_key = "threshold"
+    register_value = 123
+    ```
+
+    Both keys need to be set, of one or the other is missing, no change of configuration is attempted.
 
 * **DAQ Start / Stop**: During DAQ start and stop, the corresponding Peary device functions `daqStart()` and `daqStop()` are called.
 

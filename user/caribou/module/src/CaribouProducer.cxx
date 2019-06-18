@@ -123,10 +123,11 @@ void CaribouProducer::DoConfigure() {
   device_->configure();
 
   // Set additional registers from the configuration:
-  if(config->Has("threshold")) {
-    auto threshold = config->Get("threshold", 0);
-    device_->setRegister("threshold", threshold);
-    EUDAQ_USER("Setting threshold " + std::to_string(threshold));
+  if(config->Has("register_key") || config->Has("register_value")) {
+    auto key = config->Get("register_key", "");
+    auto value = config->Get("register_value", 0);
+    device_->setRegister(key, value);
+    EUDAQ_USER("Setting " + key + " = " + std::to_string(value));
   }
 
   // Select which ADC signal to regularly fetch:
