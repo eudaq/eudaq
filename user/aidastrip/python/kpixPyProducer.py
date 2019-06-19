@@ -1,18 +1,16 @@
 #! /usr/bin/env python
 # load binary lib/pyeudaq.so
-import pyeudaq
-import time
+import os, sys, datetime, time
+sys.path.append('./')
+from _EuDataTools import EuDataStream
 
-import os, sys, datetime
+import pyeudaq
 
 import pyrogue
 import rogue
 
-#import argparse
-
 kpixdir='/home/lycoris-admin/software/kpixDaq/kpix/software'
 pyrogue.addLibraryPath(kpixdir+'/python')
-
 import KpixDaq
 
 
@@ -81,7 +79,7 @@ class kpixPyProducer(pyeudaq.Producer):
         # start experiments to get data streams connected @ Jun 18
         dataline = self.root.udp.application(dest=1)
         #fp = KpixDaq.KpixStreamInfo() # mq added
-        fp = KpixDaq.EuDataStream() # mq 
+        fp = EuDataStream() # mq 
         fp.setEudaq(self)
         pyrogue.streamTap(dataline, fp)
             
