@@ -10,4 +10,4 @@ $BINPATH/euCliCollector -n kpixDataCollector -t kpixDC &
 
 sleep 1
 
-python3 ExamplePyProducer.py
+python3 kpixPyProducer.py

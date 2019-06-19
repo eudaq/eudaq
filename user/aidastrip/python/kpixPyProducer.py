@@ -16,11 +16,11 @@ pyrogue.addLibraryPath(kpixdir+'/python')
 import KpixDaq
 
 
-class ExamplePyProducer(pyeudaq.Producer):
+class kpixPyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
         pyeudaq.Producer.__init__(self, 'PyProducer', name, runctrl)
         self.is_running = 0
-        print ('New instance of ExamplePyProducer')
+        print ('New instance of kpixPyProducer')
 
         print ('mq: init kpix root...')
         
@@ -107,14 +107,14 @@ class ExamplePyProducer(pyeudaq.Producer):
         self.root.CountReset()
 
     def RunLoop(self):
-        print ("Start of RunLoop in ExamplePyProducer")
+        print ("Start of RunLoop in kpixPyProducer")
 
         while (self.is_running):
             self.root.DesyTrackerRunControl.waitStopped()
             self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
             self.is_running = False
             #time.sleep(1)
-        print ("End of RunLoop in ExamplePyProducer")
+        print ("End of RunLoop in kpixPyProducer")
 
         # trigger_n = 0;
         # while(self.is_running):
@@ -132,10 +132,10 @@ class ExamplePyProducer(pyeudaq.Producer):
         #     self.SendEvent(ev)
         #     trigger_n += 1
         #     time.sleep(1)
-        # print ("End of RunLoop in ExamplePyProducer")
+        # print ("End of RunLoop in kpixPyProducer")
 
 if __name__ == "__main__":
-    myproducer= ExamplePyProducer("newkpix", "tcp://localhost:44000")
+    myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
     print ("connecting to runcontrol in localhost:44000", )
     myproducer.Connect()
     time.sleep(2)
