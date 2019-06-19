@@ -154,7 +154,6 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "Caribou", "CLICpix2");
 
-  int i = 0;
   plane.SetSizeZS(128, 128, 0);
   for(const auto& px : data) {
     auto cp2_pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
@@ -197,7 +196,6 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
 
     plane.PushPixel(col, row, tot, timestamp);
-    i++;
   }
 
   // Add the plane to the StandardEvent
