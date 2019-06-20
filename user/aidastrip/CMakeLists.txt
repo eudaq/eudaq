@@ -8,7 +8,7 @@ message(STATUS "user/aidastrip is to be built (USER_AIDASTRIP_BUILD=ON)")
 
 
 ##-- Choose which kpix version to use:
-option(USE_KPIX_OLD "Use old libkpix.so.1 with old kpix DAQ." ON)
+option(USER_AIDASTRIP_KPIX_OLD "Use old libkpix.so.1 with old kpix DAQ." OFF)
   
 ##-- Global Preparation:
 #-- EUDAQ_MODULE needed for compilation at lower level CMakeLists
@@ -16,8 +16,8 @@ get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 
 if(USE_KPIX_OLD)
-  set(KPIX_INCLUDE_DIR /usr/local/include/kpix1)
-  set(KPIX_LIB_DIR /usr/local/lib/kpix1)
+  set(KPIX_INCLUDE_DIR /usr/local/include/kpixSw_3.10)
+  set(KPIX_LIB_DIR /usr/local/lib/kpixSw_3.10)
 else()
   set(KPIX_INCLUDE_DIR /usr/local/include/kpix)
   set(KPIX_LIB_DIR /usr/local/lib/kpix)
