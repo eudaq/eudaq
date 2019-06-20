@@ -17,7 +17,7 @@ endif()
 
 ## -- lycoris converter
 add_executable(${EXE_CLI_LYCORIS_DATACON} src/lycorisCliConverter.cxx)
-target_link_libraries(${EXE_CLI_LYCORIS_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES}  -L/usr/local/lib/kpix/ -lkpix )
+target_link_libraries(${EXE_CLI_LYCORIS_DATACON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES}  -L${KPIX_LIB_DIR} -lkpix )
 list(APPEND INSTALL_TARGETS ${EXE_CLI_LYCORIS_DATACON})
 
 ## -- mu3e root converter, direct save mimosa with trigger id out to root file
@@ -31,11 +31,12 @@ include_directories(${ROOT_INCLUDE_DIR})
 if(ROOT_USE_FILE)
   include(${ROOT_USE_FILE})
 endif()
-include_directories(/usr/local/include/kpix)
+include_directories(${KPIX_INCLUDE_DIR})
+message("[mengqing] aidastrip/exe is ${KPIX_INCLUDE_DIR}")
 
 ##--- set run path of the dynamic kpix lib
 set_target_properties(${INSTALL_TARGETS} PROPERTIES INSTALL_RPATH
-  ${EUDAQ_INSTALL_RPATH}:/usr/local/lib/kpix/)
+  ${EUDAQ_INSTALL_RPATH}:${KPIX_LIB_DIR})
 
 # Get all other source files to be compiled as executables:
 FILE(GLOB TARGET_FILES "src/eu*.cxx")
