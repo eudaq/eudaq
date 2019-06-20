@@ -12,8 +12,8 @@
 #include <fstream>
 #include <unordered_map>
 
-#include "KpixEvent.h"
-//#include "KpixSample.h"
+#include "KpixEvent_v1.h"
+//#include "KpixSample_v1.h"
 #include "lycorisRootAnalyzer.h"
 
 int main(int /*argc*/, const char **argv) {
