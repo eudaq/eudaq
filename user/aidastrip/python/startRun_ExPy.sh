@@ -1,5 +1,5 @@
 #!/usr/bin/env sh                                                                                         
-BINPATH=../../../bin
+BINPATH=/opt/eudaq2/bin
 $BINPATH/euRun -n kpixRunControl &
 sleep 1
 
