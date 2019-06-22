@@ -102,7 +102,7 @@ install:
 #- call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 - ps: >-
-    Switch (${env:compiler_version})
+    Switch ("$env:compiler_version")
     {
       "VS2013" {
       If (${env:platform} -eq "x86") {
@@ -297,4 +297,4 @@ for:
       only:
         - compiler_version: VS2019
         
-    image: Visual Studio 2019
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
