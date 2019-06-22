@@ -16,7 +16,7 @@ clone_depth: 1
 
 platform: 
   - x86 
-  - x64
+#   - x64
 
 # comments on options:
 # BIFAHCAL: Requires cactus and does not compile properly on Windows
