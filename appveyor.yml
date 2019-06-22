@@ -3,7 +3,7 @@ version: 1.10.0.{build}
 pull_requests:
   do_not_increment_build_number: true
   
-image: Visual Studio 2019      
+# image: Visual Studio 2019      
 
 branches:
   only:
@@ -27,6 +27,7 @@ environment:
   PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
   matrix:
     - build_type: library_only
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       compiler_version: VS2019
       root_flavour: 6      
 
