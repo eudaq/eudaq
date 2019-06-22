@@ -130,7 +130,7 @@ install:
       break
       }
       "VS2019" {
-        If (${env:PLATFORM} -eq "x86") {
+        If ("$env:PLATFORM" -eq "x86") {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat" } else {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
         };
