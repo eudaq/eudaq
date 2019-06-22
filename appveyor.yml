@@ -24,50 +24,9 @@ environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
   matrix:
-    - build_type: full
-      compiler_version: VS2013
-      root_flavour: 5
-    - build_type: minimum
-      compiler_version: VS2013
-      root_flavour: 5
     - build_type: library_only
-      compiler_version: VS2013
-      root_flavour: 5
-    - build_type: full
-      compiler_version: VS2015
-      root_flavour: 5
-    - build_type: minimum
-      compiler_version: VS2015
-      root_flavour: 5
-    - build_type: library_only
-      compiler_version: VS2015
-      root_flavour: 5
-    - build_type: full
-      compiler_version: VS2017
-      root_flavour: 5
-    - build_type: minimum
-      compiler_version: VS2017
-      root_flavour: 5
-    - build_type: library_only
-      compiler_version: VS2017
-      root_flavour: 5
-    - build_type: full
       compiler_version: VS2019
-      root_flavour: 5
-    - build_type: minimum
-      compiler_version: VS2019
-      root_flavour: 5
-    - build_type: library_only
-      compiler_version: VS2019      
-      root_flavour: 5
-    - build_type: full
-      compiler_version: VS2019
-      root_flavour: 6
-    - build_type: minimum
-      compiler_version: VS2019
-      root_flavour: 6
-    - build_type: library_only
-      compiler_version: VS2019      
+      image:Visual Studio 2019      
       root_flavour: 6      
 
 matrix:
@@ -170,8 +129,8 @@ install:
       }
       "VS2019" {
         If (${platform} -eq "x86") {
-          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\VC\Auxiliary\Build\vcvars32.bat" } else {
-          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\VC\Auxiliary\Build\vcvars32.bat"
+          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat" } else {
+          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
         };
       break
       }
