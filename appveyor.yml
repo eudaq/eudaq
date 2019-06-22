@@ -14,8 +14,9 @@ branches:
 # set clone depth
 clone_depth: 1
 
-platform: x86 
-#   - x64
+platform: 
+  - x86 
+  - x64
 
 # comments on options:
 # BIFAHCAL: Requires cactus and does not compile properly on Windows
@@ -26,7 +27,6 @@ environment:
   PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
   matrix:
     - build_type: library_only
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       compiler_version: VS2019
       root_flavour: 6      
 
@@ -297,4 +297,4 @@ for:
       only:
         - compiler_version: VS2019
         
-    image: Visual Studio 2019 Preview   
+    image: Visual Studio 2019
