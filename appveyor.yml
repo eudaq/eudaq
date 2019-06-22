@@ -26,7 +26,6 @@ environment:
   matrix:
     - build_type: library_only
       compiler_version: VS2019
-      image:Visual Studio 2019      
       root_flavour: 6      
 
 matrix:
