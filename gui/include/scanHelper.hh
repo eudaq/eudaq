@@ -93,7 +93,7 @@ private:
      * @param msg
      * @return false
      */
-    bool ERROR(string msg) {    EUDAQ_ERROR(msg); return false;}
+    bool ERROR(string msg) {    std::cout << msg <<std::endl; EUDAQ_ERROR(msg); return false;}
     /**
      * @brief read the global config
      * @param conf
