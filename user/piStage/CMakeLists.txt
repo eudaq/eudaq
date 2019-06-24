@@ -1,5 +1,6 @@
 if(WIN32)
-  message(STATUS "PIStage producer is not supported on Windows, rethink the choice of your OS")
+  message(STATUS "PIStage producer is not supported on Windows, you are very
+  welcome to implement the windows functionalitites")
   return()
 endif()
 
