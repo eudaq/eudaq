@@ -391,6 +391,7 @@ namespace tlu {
       }else{
       std::cout << "\tSuccess." << std::endl;
     }
+    return 1;
   }
 
   int AidaTluController::InitializeClkChip(const std::string & filename, uint8_t verbose){
