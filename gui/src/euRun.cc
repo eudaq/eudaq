@@ -572,9 +572,7 @@ void RunControlGUI::on_btn_LoadScanFile_clicked()
  */
 void RunControlGUI::on_btnStartScan_clicked()
 {
-
-
-   if(m_scan_active == true) {
+   if(m_scan_active == true){
        QMessageBox::StandardButton reply;
        reply = QMessageBox::question(NULL,"Interrupt Scan","Do you want to stop immediately?\n Hitting no will stop after finishing the current step",
                                      QMessageBox::Yes|QMessageBox::No|QMessageBox::Abort);
@@ -591,8 +589,6 @@ void RunControlGUI::on_btnStartScan_clicked()
            btnStartScan->setText("Scan stops after current step");
        }
    } else {
-       EUDAQ_INFO("STARTING SCAN");
-
        if(!readScanConfig())
           return;
        m_scan_active = true;
@@ -613,6 +609,7 @@ void RunControlGUI::nextStep()
 {
     if(!m_scan_active){
         btnStartScan->setText("Start scan");
+        std::cout << "Stopping scan" << std::endl;
         m_scan_interrupt_received = false;
         on_btnStop_clicked();
         return;
@@ -622,23 +619,16 @@ void RunControlGUI::nextStep()
     std::string conf = m_scan.nextConfig();
     EUDAQ_USER("Next file ("+to_string(m_scan.currentStep())+"): "+conf );
     if(m_scan_interrupt_received ==false && m_scan_active==true && conf !="finished") {
+        std::cout << "Next step" << std::endl;
         txtConfigFileName->setText(QString(conf.c_str()));
         QCoreApplication::processEvents();
-//        on_btnReset_clicked();
         while(!allConnectionsInState(eudaq::Status::STATE_STOPPED) && m_scan.currentStep()!=0){
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
-            cout << "Waiting for reset"<<endl;
+            std::cout << "Waiting until all components are stopped"<<std::endl;
         }
-//        std::this_thread::sleep_for (std::chrono::seconds(3));
-//        on_btnInit_clicked();
-//        while(!allConnectionsInState(eudaq::Status::STATE_UNCONF)){
-//            updateInfos();
-//            QCoreApplication::processEvents();
-//            std::this_thread::sleep_for (std::chrono::seconds(1));
-//            cout << "Waiting for init"<<endl;
-//        }
+
         updateInfos();
         std::this_thread::sleep_for (std::chrono::seconds(3));
         on_btnConfig_clicked();
@@ -646,9 +636,11 @@ void RunControlGUI::nextStep()
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
-            cout << "Waiting for configuration"<<endl;
+            std::cout << "Waiting until all components are (re)configured"<<std::endl;
         }
         updateInfos();
+        std::cout << "Ready for next step"<<std::endl;
+
         std::this_thread::sleep_for(std::chrono::seconds(3));
         on_btnStart_clicked();
         if(m_scan.scanIsTimeBased())
