@@ -47,7 +47,8 @@ We recommend a gcc version 4.9 or later.
 ROOT 6 is required for the Online Monitor GUI.
 
 ### User projects and modules
-
+- Dummy: Skeletons to add user modules - not to be changed. Required by
+[addModule.sh](etc/addModule.sh), that creates your module for you
 - [example](user/example/README.md): run the example without hardware, see below Execution
 - [eudet](user/eudet/README.md): EUDET-type beam telescopes and EUDET and AIDA TLU, required: Cactus/Ipbus Software for AIDA TLU and ZestSC1+Tlufirmware+Libusb for EUDET TLU
 - [aidastrip](user/aidastrip/): SiStrip telescope for DESY TB24 (AIDA2020 WP15 development)
@@ -58,6 +59,8 @@ ROOT 6 is required for the Online Monitor GUI.
 - [timepix3](user/timepix3/README.md): Timepix3 read out, required: Spidr
 - [tlu](user/tlu/README.md): folder for Trigger Logic Units: EUDET and AIDA TLU
 - [torch](user/torch/README.md): test beam user
+- MuPix8: No readme given, as only converter
+- [PI Stages](user/piStage/README.md): Producer to control the rotation and translation stages from PI
 - [experimental](user/experimental/README.md): developed, not tested (with hardware)
 
 
