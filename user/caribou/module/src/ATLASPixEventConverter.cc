@@ -28,12 +28,9 @@ bool ATLASPixEvent2StdEventConverter::timestamps_cleared_(false);
 bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
-  std::cout << "before reading the config" << std::endl;
-  // Retrieve chip configuration from config:
+    // Retrieve chip configuration from config:
   auto clkdivend2 = conf->Get("clkdivend2", 7);
   auto clockcycle = conf->Get("clock_cycle", 8); // value in [ns]
-
-  std::cout << "clkdivend2 = " << clkdivend2 << ", clockcycle = " << clockcycle << std::endl;
 
   // No event
   if(!ev || ev->NumBlocks() < 1) {
