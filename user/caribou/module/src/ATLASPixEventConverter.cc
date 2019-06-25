@@ -29,7 +29,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
     // Retrieve chip configuration from config:
-  auto clkdivend2 = conf->Get("clkdivend2", 7);
+  auto clkdivend2 = conf->Get("clkdivend2", 7) + 1;
   auto clockcycle = conf->Get("clock_cycle", 8); // value in [ns]
 
   // No event
