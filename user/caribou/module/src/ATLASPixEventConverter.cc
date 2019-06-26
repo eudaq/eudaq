@@ -24,10 +24,13 @@ uint64_t ATLASPixEvent2StdEventConverter::fpga_ts3_(0);
 bool ATLASPixEvent2StdEventConverter::new_ts1_(false);
 bool ATLASPixEvent2StdEventConverter::new_ts2_(false);
 bool ATLASPixEvent2StdEventConverter::timestamps_cleared_(false);
-uint32_t ATLASPixEvent2StdEventConverter::clkdivend2M_(7);
-double ATLASPixEvent2StdEventConverter::clockcycle_(8);
+
 bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+
+    // Retrieve chip configuration from config:
+  auto clkdivend2 = conf->Get("clkdivend2", 7) + 1;
+  auto clockcycle = conf->Get("clock_cycle", 8); // value in [ns]
 
   // No event
   if(!ev || ev->NumBlocks() < 1) {
@@ -73,10 +76,10 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     long long hit_ts = static_cast<long long>(readout_ts_) + ts_diff;
 
     // Convert the timestamp to nanoseconds:
-    double timestamp = clockcycle_ * static_cast<double>(hit_ts);
+    double timestamp = clockcycle * static_cast<double>(hit_ts);
 
     // calculate ToT only when pixel is good for storing (division is time consuming)
-    int tot = static_cast<int>(ts2 - ((hit_ts % static_cast<long long>(64 * clkdivend2M_)) / clkdivend2M_));
+    int tot = static_cast<int>(ts2 - ((hit_ts % static_cast<long long>(64 * clkdivend2)) / clkdivend2));
     if(tot < 0) {
       tot += 64;
     }

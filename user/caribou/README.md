@@ -45,3 +45,10 @@ The following parameters can be passed in the configuration in order to influenc
 * `sp_comp`: Boolean to switch on/off the super-pixel compression of CLICpix2 for interpreting the frame data. Defaults to `true`.
 * `discard_tot_below`: Integer value to discard pixels with certain ToT values. All pixels with a ToT below this value will be discarded immediately and not returned by the decoder. This only works when a ToT value is available, i.e. not when `longcnt` is enabled. If a pixel has a ToT value of 0 and this setting is `1`, the hit will be discarded - if it is set to `0`, the hit is kept. Defaults to `-1`, i.e. no pixels are discarded.
 * `discard_toa_below`: Integer value to discard pixels with certain ToA values. All pixels with a ToA below this value will be discarded immediately and not returned by the decoder. This only works when a ToA value is available, i.e. not with `countingmode` enabled. If a pixel has a ToA value of 0 and this setting is `1`, the hit will be discarded - if it is set to `0`, the hit is kept. Defaults to `-1`, i.e. no pixels are discarded.
+
+### ATLASPixEvent2StdEventConverter
+
+The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
+
+* `clkdivend2`: Value of clkdivend2 register in ATLASPix specifying the speed of TS2 counter. Default is `7`.
+* `clock_cycle`:  Clock period of the hit timestamps, defaults to `8` (ns). The value needs to be provided in `ns`.
