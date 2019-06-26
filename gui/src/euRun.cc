@@ -246,7 +246,7 @@ eudaq::Status::State RunControlGUI::updateInfos(){
         if(!conn_status.second)
       continue;
         auto state_conn = conn_status.second->GetState();
-        state_conn < state ? state = (eudaq::Status::State)state_conn : state = state ;
+        state_conn < state ? state = eudaq::Status::State(state_conn) : state = state ;
         m_model_conns.SetStatus(conn_status.first, conn_status.second);
       }
     }
@@ -438,7 +438,7 @@ bool RunControlGUI::removeStatusDisplay(std::pair<eudaq::ConnectionSPC, eudaq::S
     }
     return true;
 }
-bool RunControlGUI::addToGrid(const QString objectName, QString displayedName) {
+bool RunControlGUI::addToGrid(const QString & objectName, QString displayedName) {
 
     if(m_str_label.count(objectName)==1) {
         //QMessageBox::warning(NULL,"ERROR - Status display","Duplicating display entry request: "+objectName);
@@ -617,7 +617,7 @@ void RunControlGUI::nextStep()
     if(m_scan.currentStep()!=0)
         on_btnStop_clicked();
     std::string conf = m_scan.nextConfig();
-    EUDAQ_USER("Next file ("+to_string(m_scan.currentStep())+"): "+conf );
+    EUDAQ_USER("Next file ("+std::to_string(m_scan.currentStep())+"): "+conf );
     if(m_scan_interrupt_received ==false && m_scan_active==true && conf !="finished") {
         std::cout << "Next step" << std::endl;
         txtConfigFileName->setText(QString(conf.c_str()));
