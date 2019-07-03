@@ -195,13 +195,14 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       timestamp = shutter_close - static_cast<double>(toa) / 0.1;
     }
 
-    plane.PushPixel(col, row, tot, timestamp);
+    // Timestamp is stored in picoseconds
+    plane.PushPixel(col, row, tot, static_cast<uint64_t>(timestamp) * 1000);
   }
 
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
 
-  // Store frame begin and end:
+  // Store frame begin and end in picoseconds
   d2->SetTimeBegin(static_cast<uint64_t>(shutter_open) * 1000);
   d2->SetTimeEnd(static_cast<uint64_t>(shutter_close) * 1000);
 

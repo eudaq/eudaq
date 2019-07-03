@@ -93,12 +93,13 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // Create a StandardPlane representing one sensor plane
     eudaq::StandardPlane plane(0, "Caribou", "ATLASPix");
     plane.SetSizeZS(25, 400, 1);
-    plane.SetPixel(0, col, row, tot, timestamp);
+    // Timestamp is stored in picoseconds
+    plane.SetPixel(0, col, row, tot, static_cast<uint64_t>(timestamp) * 1000);
 
     // Add the plane to the StandardEvent
     d2->AddPlane(plane);
 
-    // Store frame begin and end:
+    // Store time in picoseconds
     d2->SetTimeBegin(static_cast<uint64_t>(timestamp) * 1000);
     d2->SetTimeEnd(static_cast<uint64_t>(timestamp) * 1000);
 
