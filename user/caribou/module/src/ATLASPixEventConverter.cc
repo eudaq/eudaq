@@ -99,8 +99,9 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     d2->AddPlane(plane);
 
     // Store frame begin and end:
-    d2->SetTimeBegin(timestamp);
-    d2->SetTimeEnd(timestamp);
+    d2->SetTimeBegin(static_cast<uint64_t>(timestamp) * 1000);
+    d2->SetTimeEnd(static_cast<uint64_t>(timestamp) * 1000);
+
 
     return true;
   } else {

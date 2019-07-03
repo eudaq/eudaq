@@ -202,8 +202,8 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   d2->AddPlane(plane);
 
   // Store frame begin and end:
-  d2->SetTimeBegin(shutter_open);
-  d2->SetTimeEnd(shutter_close);
+  d2->SetTimeBegin(static_cast<uint64_t>(shutter_open) * 1000);
+  d2->SetTimeEnd(static_cast<uint64_t>(shutter_close) * 1000);
 
   // Indicate that data was successfully converted
   return true;
