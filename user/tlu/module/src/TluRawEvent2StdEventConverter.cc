@@ -30,8 +30,8 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     d2->SetTag(TLU+stm+"_TRG", std::to_string(d1->GetTriggerN()));
   }
 
-  // Set timestamps for StdEvent in nanoseconds (timestamps are nanoseconds):
-  d2->SetTimeBegin(static_cast<double>(d1->GetTimestampBegin()));
-  d2->SetTimeEnd(static_cast<double>(d1->GetTimestampEnd()));
+  // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
+  d2->SetTimeBegin(static_cast<uint64_t>(d1->GetTimestampBegin()) * 1000);
+  d2->SetTimeEnd(static_cast<uint64_t>(d1->GetTimestampEnd()) * 1000);
   return true;
 }

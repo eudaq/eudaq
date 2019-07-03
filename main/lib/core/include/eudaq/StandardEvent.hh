@@ -30,35 +30,35 @@ namespace eudaq {
     virtual void Print(std::ostream & os,size_t offset = 0) const;
 
     /**
-     * @brief Funtion to retrieve begin of this event in nanosecons
+     * @brief Funtion to retrieve begin of this event in picosecons
      * @return Start time of this event
      */
-    double GetTimeBegin() const;
+    uint64_t GetTimeBegin() const;
 
     /**
-     * @brief Funtion to retrieve end of this event in nanosecons
+     * @brief Funtion to retrieve end of this event in picosecons
      * @return End time of this event
      */
-    double GetTimeEnd() const;
+    uint64_t GetTimeEnd() const;
 
     /**
-     * @brief Set begin time of event in nanoseconds
-     * @param begin Begin of events in nanoseconds
+     * @brief Set begin time of event in picoseconds
+     * @param begin Begin of events in picoseconds
      */
-    void SetTimeBegin(double begin) { time_begin = begin; };
+    void SetTimeBegin(uint64_t begin) { time_begin = begin; };
 
     /**
-     * @brief Set end time of event in nanoseconds
-     * @param end End of events in nanoseconds
+     * @brief Set end time of event in picoseconds
+     * @param end End of events in picoseconds
      */
-     void SetTimeEnd(double end) { time_end = end; };
+     void SetTimeEnd(uint64_t end) { time_end = end; };
 
     static StdEventSP MakeShared();
     static const uint32_t m_id_factory = cstr2hash("StandardEvent");
 
   private:
     std::vector<StandardPlane> m_planes;
-    double time_begin{}, time_end{};
+    uint64_t time_begin, time_end;
   };
 
   inline std::ostream &operator<<(std::ostream &os, const StandardPlane &pl) {
