@@ -165,7 +165,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       event_end = (timestamp > event_end) ? timestamp : event_end;
 
       // creating new pixel object with non-calibrated values of tot and toa
-      plane.PushPixel(col, row, tot, timestamp);
+      plane.PushPixel(col, row, tot, static_cast<uint64_t>(timestamp) * 1000);
     }
   }
 
@@ -173,8 +173,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   d2->AddPlane(plane);
 
   // Store event begin and end:
-  d2->SetTimeBegin(event_begin);
-  d2->SetTimeEnd(event_end);
+  d2->SetTimeBegin(static_cast<uint64_t>(event_begin) * 1000);
+  d2->SetTimeEnd(static_cast<uint64_t>(event_end) * 1000);
 
   return data_found;
 }
