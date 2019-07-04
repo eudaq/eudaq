@@ -76,15 +76,13 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     long long hit_ts = static_cast<long long>(readout_ts_) + ts_diff;
 
     // Convert the timestamp to nanoseconds:
-    double timestamp = clockcycle * static_cast<double>(hit_ts);
+    uint64_t timestamp = clockcycle * hit_ts;
 
     // calculate ToT only when pixel is good for storing (division is time consuming)
     int tot = static_cast<int>(ts2 - ((hit_ts % static_cast<long long>(64 * clkdivend2)) / clkdivend2));
     if(tot < 0) {
       tot += 64;
     }
-    // convert ToT to nanoseconds
-    // double tot_ns = tot * m_clockCycle;
 
     LOG(DEBUG) << "HIT: TS1: " << ts1 << "\t0x" << std::hex << ts1 << "\tTS2: " << ts2 << "\t0x" << std::hex << ts2
     << "\tTS_FULL: " << hit_ts << "\t" << timestamp << "ns"
@@ -94,14 +92,14 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     eudaq::StandardPlane plane(0, "Caribou", "ATLASPix");
     plane.SetSizeZS(25, 400, 1);
     // Timestamp is stored in picoseconds
-    plane.SetPixel(0, col, row, tot, static_cast<uint64_t>(timestamp) * 1000);
+    plane.SetPixel(0, col, row, tot, timestamp * 1000);
 
     // Add the plane to the StandardEvent
     d2->AddPlane(plane);
 
     // Store time in picoseconds
-    d2->SetTimeBegin(static_cast<uint64_t>(timestamp) * 1000);
-    d2->SetTimeEnd(static_cast<uint64_t>(timestamp) * 1000);
+    d2->SetTimeBegin(timestamp * 1000);
+    d2->SetTimeEnd(timestamp * 1000);
 
 
     return true;
