@@ -14,7 +14,7 @@ namespace eudaq {
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouCLICpix2Event");
   private:
     static bool t0_seen_;
-    static double last_shutter_open_;
+    static uint64_t last_shutter_open_;
   };
 
   class ATLASPixEvent2StdEventConverter: public eudaq::StdEventConverter{

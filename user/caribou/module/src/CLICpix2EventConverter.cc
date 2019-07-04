@@ -12,7 +12,7 @@ namespace{
 }
 
 bool CLICpix2Event2StdEventConverter::t0_seen_(false);
-double CLICpix2Event2StdEventConverter::last_shutter_open_(0);
+uint64_t CLICpix2Event2StdEventConverter::last_shutter_open_(0);
 bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
@@ -109,13 +109,13 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Calculate time stamps, CLICpix2 runs on 100MHz clock:
   bool shutterOpen = false;
   bool full_shutter = false;
-  double shutter_open = 0, shutter_close = 0;
+  uint64_t shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
     if((timestamp >> 48) == 3) {
-      shutter_open = static_cast<double>(timestamp & 0xffffffffffff) * 10.;
+      shutter_open = (timestamp & 0xffffffffffff) * 10.;
       shutterOpen = true;
     } else if((timestamp >> 48) == 1 && shutterOpen == true) {
-      shutter_close = static_cast<double>(timestamp & 0xffffffffffff) * 10.;
+      shutter_close = (timestamp & 0xffffffffffff) * 10.;
       shutterOpen = false;
       full_shutter = true;
     }
@@ -177,7 +177,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
 
     // Time defaults ot rising shutter edge:
-    double timestamp = shutter_open;
+    auto timestamp = shutter_open;
 
     // Decide whether information is counter of ToA
     if(matrix[std::make_pair(row, col)].GetCountingMode()) {
@@ -192,19 +192,19 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
 
       // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
-      timestamp = shutter_close - static_cast<double>(toa) / 0.1;
+      timestamp = shutter_close - toa * 10;
     }
 
     // Timestamp is stored in picoseconds
-    plane.PushPixel(col, row, tot, static_cast<uint64_t>(timestamp) * 1000);
+    plane.PushPixel(col, row, tot, timestamp * 1000);
   }
 
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
 
   // Store frame begin and end in picoseconds
-  d2->SetTimeBegin(static_cast<uint64_t>(shutter_open) * 1000);
-  d2->SetTimeEnd(static_cast<uint64_t>(shutter_close) * 1000);
+  d2->SetTimeBegin(shutter_open * 1000);
+  d2->SetTimeEnd(shutter_close * 1000);
 
   // Indicate that data was successfully converted
   return true;
