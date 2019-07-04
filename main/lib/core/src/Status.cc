@@ -107,7 +107,8 @@ namespace eudaq {
     {STATE_UNINIT, "UNINIT"},
     {STATE_UNCONF, "UNCONF"},
     {STATE_CONF, "CONF"},
-    {STATE_RUNNING, "RUNNING"}
+    {STATE_RUNNING, "RUNNING"},
+    {STATE_STOPPED, "STOPPED"}
   };
 
   std::map<uint32_t, std::string> Status::m_map_level_str = {

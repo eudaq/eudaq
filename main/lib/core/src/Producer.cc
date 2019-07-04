@@ -36,8 +36,8 @@ namespace eudaq {
   void Producer::OnConfigure(){
     EUDAQ_INFO(GetFullName() + " is to be configured...");
     try{
-      if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF))
-	EUDAQ_THROW("OnConfigure can not be called unless in STATE_UNCONF or STATE_CONF");
+      if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF) && !IsStatus(Status::STATE_STOPPED))
+    EUDAQ_THROW("OnConfigure can not be called unless in STATE_UNCONF or STATE_CONF or STATE_STOPPED");
       SetStatus(Status::STATE_UNCONF, "Configuring");
       auto conf = GetConfiguration();
       if(!conf)
@@ -57,7 +57,7 @@ namespace eudaq {
   void Producer::OnStartRun(){
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be started...");
     try{
-      if(!IsStatus(Status::STATE_CONF))
+      if(!IsStatus(Status::STATE_CONF) && !IsStatus(Status::STATE_STOPPED))
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
       std::map<std::string, std::shared_ptr<DataSender>> senders;
       std::string dc_str = GetConfiguration()->Get("EUDAQ_DC", "");
