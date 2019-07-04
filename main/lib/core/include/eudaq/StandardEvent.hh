@@ -58,7 +58,7 @@ namespace eudaq {
 
   private:
     std::vector<StandardPlane> m_planes;
-    uint64_t time_begin, time_end;
+    uint64_t time_begin{0}, time_end{0};
   };
 
   inline std::ostream &operator<<(std::ostream &os, const StandardPlane &pl) {
