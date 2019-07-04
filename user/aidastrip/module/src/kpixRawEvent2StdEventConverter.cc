@@ -13,15 +13,21 @@
 #include "KpixSample.h"
 #include <map>
 
+#include "kpix_left_and_right.h"
+
 class kpixRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
 	bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
 	static const uint32_t m_id_factory = eudaq::cstr2hash("KpixRawEvent");
 	
 	void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle) const;
-	void parseSample(KpixSample* sample) const;
+	int parseSample( KpixSample* sample) const;
 	
 private:
+	int getStdPlaneID(uint kpix) const;
+
+	unordered_map<uint, uint> _lkpix2strip = kpix_left();
+	unordered_map<uint, uint> _rkpix2strip = kpix_right();
 };
 
 namespace{
@@ -70,6 +76,11 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	// TODO: hard coded to be 6 plane. - MQ
 	for (auto id=0; id<6; id++){
 		eudaq::StandardPlane plane(id, "strip", "lycoris");
+		plane.SetSizeZS(920, // x, width, TODO: half sensor 
+		                1, // y, height
+		                0, // not used 
+		                1); // TODO: only 1 frame, define for us as bucket
+		plane.Print(std::cout);
 		d2->AddPlane(plane);
 	}
 	
@@ -109,7 +120,8 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	for (uint is=0; is<cycle.count(); is++){
 		sample = cycle.sample(is);
 
-		parseSample(sample);
+		int planeID = parseSample(sample);
+		std::cout << "[+] plane : "<< planeID<< std::endl;
 		// parseSample: you need to return the Plane ID (based on kpix ID), and the fired strips positions for parseFrame to add to the Plane. TODO
 		
 		
@@ -118,7 +130,7 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	return;
 }
 
-void kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample) const {
+int kpixRawEvent2StdEventConverter::parseSample( KpixSample* sample) const {
 
 	uint         kpix;
 	uint         channel;
@@ -128,20 +140,39 @@ void kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample) const {
 	
 	if (sample->getEmpty()){ 
 		printf ("empty sample\n");
-		return;
+		return -1;
 	}
+
+	type    = sample->getSampleType();
+	if (type != KpixSample::Data) return -1; // if not DATA, return
 	
 	kpix    = sample->getKpixAddress();
 	channel = sample->getKpixChannel();
 	bucket  = sample->getKpixBucket();
-	type    = sample->getSampleType();
 	value   = sample->getSampleValue();
 
-	std::cout<< kpix    << "   "
+	std::cout<<"\t"
+	         << kpix    << "   "
 	         << channel	<< "   "
 	         << bucket	<< "   "
 	         << value   << "   " 
 	         << std::endl;
+
 	
 	
+	return getStdPlaneID(kpix);
+	
+	
+}
+
+int kpixRawEvent2StdEventConverter::getStdPlaneID(uint kpix) const{
+
+	//TODO: feature to add, read kpix number with plane configuration from external txt file
+	if (kpix == 6  | kpix == 7  ) return 0; 
+	if (kpix == 8  | kpix == 9  ) return 1; 
+	if (kpix == 10 | kpix == 11 ) return 2;
+	
+	if (kpix == 12 | kpix == 13 ) return 3;
+	if (kpix == 14 | kpix == 15 ) return 4;
+	if (kpix == 16 | kpix == 17 ) return 5; 
 }
