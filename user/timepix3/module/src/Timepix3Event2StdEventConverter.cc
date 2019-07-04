@@ -55,16 +55,16 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   m_syncTimeTDC = timestamp_raw;
   timestamp = timestamp_raw + (static_cast<long long int>(m_TDCoverflowCounter) << 35);
 
-  double triggerTime =
-  static_cast<double>(timestamp + static_cast<long long int>(stamp) / 12) / (8. * 0.04); // 320 MHz clock
+  // Calculate timestamp in picoseconds assuming 320 MHz clock:
+  uint64_t triggerTime = (timestamp + static_cast<long long int>(stamp) / 12) * 3125;
 
-  // Set timestamps for StdEvent in nanoseconds (timestamps are nanoseconds):
+  // Set timestamps for StdEvent in nanoseconds (timestamps are picoseconds):
   d2->SetTimeBegin(triggerTime);
   d2->SetTimeEnd(triggerTime);
   return true;
 }
 
-unsigned long long int Timepix3RawEvent2StdEventConverter::m_syncTime(0);
+uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -86,7 +86,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   plane.SetSizeZS(256, 256, 0);
 
   // Event time stamps, defined by first and last pixel timestamp found in the data block:
-  double event_begin = std::numeric_limits<double>::max(), event_end = std::numeric_limits<double>::lowest();
+  uint64_t event_begin = std::numeric_limits<uint64_t>::max(), event_end = std::numeric_limits<uint64_t>::lowest();
 
   for(const auto& pixdata : vpixdata) {
     // Get the header (first 4 bits): 0x4 is the "heartbeat" signal, 0xA and 0xB are pixel data
@@ -114,7 +114,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       if(header2 == 0x5) {
         // The data is shifted 16 bits to the right, then 44 to the left in order to match the timestamp format (net 28 left)
         m_syncTime = (m_syncTime & 0x00000FFFFFFFFFFF) + ((pixdata & 0x00000000FFFF0000) << 28);
-        if(!m_clearedHeader && static_cast<double>(m_syncTime) / (4096. * 40000000.) < 6.) {
+
+        if(!m_clearedHeader && (m_syncTime / 4096 / 40) < 6000000) {
           m_clearedHeader = true;
         }
       }
@@ -145,11 +146,10 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       const uint64_t toa((data & 0x0FFFC000) >> 14);
 
       // Calculate the timestamp.
-      unsigned long long int time =
-      (((spidrTime << 18) + (toa << 4) + (15 - ftoa)) << 8) + (m_syncTime & 0xFFFFFC0000000000);
+      uint64_t time = (((spidrTime << 18) + (toa << 4) + (15 - ftoa)) << 8) + (m_syncTime & 0xFFFFFC0000000000);
 
       // Adjusting phases for double column shift
-      time += ((static_cast<unsigned long long int>(col) / 2 - 1) % 16) * 256;
+      time += ((static_cast<uint64_t>(col) / 2 - 1) % 16) * 256;
 
       // The time from the pixels has a maximum value of ~26 seconds. We compare the pixel time to the "heartbeat"
       // signal (which has an overflow of ~4 years) and check if the pixel time has wrapped back around to 0
@@ -157,15 +157,15 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         time += 0x0000040000000000;
       }
 
-      // Convert final timestamp into ns and add the timing offset (in nano seconds) from the detectors file (if any)
-      const double timestamp = static_cast<double>(time) / (4096. / 25.);
+      // Convert final timestamp into picoseconds
+      const uint64_t timestamp = time * 1000 / 4096 * 25;
 
       // Set event start/stop:
       event_begin = (timestamp < event_begin) ? timestamp : event_begin;
       event_end = (timestamp > event_end) ? timestamp : event_end;
 
       // creating new pixel object with non-calibrated values of tot and toa
-      plane.PushPixel(col, row, tot, static_cast<uint64_t>(timestamp) * 1000);
+      plane.PushPixel(col, row, tot, timestamp);
     }
   }
 
@@ -173,8 +173,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   d2->AddPlane(plane);
 
   // Store event begin and end:
-  d2->SetTimeBegin(static_cast<uint64_t>(event_begin) * 1000);
-  d2->SetTimeEnd(static_cast<uint64_t>(event_end) * 1000);
+  d2->SetTimeBegin(event_begin);
+  d2->SetTimeEnd(event_end);
 
   return data_found;
 }

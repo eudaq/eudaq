@@ -12,7 +12,7 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("Timepix3RawEvent");
   private:
-    static unsigned long long int m_syncTime;
+    static uint64_t m_syncTime;
     static bool m_clearedHeader;
   };
 
