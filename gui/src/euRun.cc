@@ -622,7 +622,7 @@ void RunControlGUI::nextStep()
         std::cout << "Next step" << std::endl;
         txtConfigFileName->setText(QString(conf.c_str()));
         QCoreApplication::processEvents();
-        while(!allConnectionsInState(eudaq::Status::STATE_STOPPED) && m_scan.currentStep()!=0){
+        while(!allConnectionsInState(eudaq::Status::STATE_STOPPED) && !m_scan.scanHasbeenStarted()){
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
@@ -651,6 +651,7 @@ void RunControlGUI::nextStep()
         m_scan_active = false;
         m_scan_interrupt_received = false;
     }
+    m_scan.scanStarted();
     return;
 }
 /**
