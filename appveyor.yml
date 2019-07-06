@@ -212,7 +212,7 @@ before_build:
           };        
           If (${env:root_flavour} -eq "6") {
             Write-Host "Downloading root from root.cern.ch"; 
-            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.16.00.win32.vc15.zip' -storageLocation 'C:\\root_v6.16.00.win32.vc15.zip'; 7z -y x C:\\root_v6.16.00.win32.vc15.zip -oC:\; 
+            appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v6.18.00.win32.vc16.zip' -storageLocation 'C:\\root_v6.18.00.win32.vc16.zip'; 7z -y x C:\\root_v6.18.00.win32.vc16.zip -oC:\; 
           };
           break
         }
