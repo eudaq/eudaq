@@ -119,7 +119,7 @@ install:
 #- call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 - ps: >-
-    Write-Host ${env:APPVEYOR_BUILD_WORKER_IMAGE}
+    Write-Host ${env:APPVEYOR_BUILD_WORKER_IMAGE};
     Switch ("$env:compiler_version")
     {
       "VS2013" {
