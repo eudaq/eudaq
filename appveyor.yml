@@ -27,7 +27,7 @@ environment:
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       root_flavour: 6      
 
-matrix:
+  # matrix:
   # basic idea - in order to save time and have a full coverage at the same time:
   # build everything buildable for regular tests and do limited builds only for releases
   #   exclude:
