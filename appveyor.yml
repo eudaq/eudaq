@@ -2,13 +2,9 @@ version: 1.10.0.{build}
 
 pull_requests:
   do_not_increment_build_number: true
-  
-# image: Visual Studio 2019      
 
 branches:
   only:
-  - master
-  - v1.x-dev
   - feature-CI-v1.x-dev
 
 # set clone depth
@@ -42,6 +38,28 @@ matrix:
   # To be revisited when release appears on appveyor
   allow_failures:
     - compiler_version: VS2019
+    
+for:
+  -
+    matrix:
+      except:
+        - build_type: full
+          platform: x86
+        - build_type: library_only
+          platform: x64
+        
+    skip_non_tags: true
+  -
+    matrix:
+      except:
+        - compiler_version: VS2019
+        
+    image: Visual Studio 2017
+  -
+    matrix:
+      only:
+        - compiler_version: VS2019        
+     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019    
       
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
@@ -100,8 +118,9 @@ init:
 install:
 #- '"C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /x86'
 #- call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
-- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 - ps: >-
+    Write-Host ${env:APPVEYOR_BUILD_WORKER_IMAGE}
     Switch ("$env:compiler_version")
     {
       "VS2013" {
@@ -276,25 +295,4 @@ deploy:
 on_finish:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
-for:
-  -
-    matrix:
-      except:
-        - build_type: full
-          platform: x86
-        - build_type: library_only
-          platform: x64
-        
-    skip_non_tags: true
-  -
-    matrix:
-      except:
-        - compiler_version: VS2019
-        
-    image: Visual Studio 2017
-  -
-    matrix:
-      only:
-        - compiler_version: VS2019
-        
-    image: Visual Studio 2019
+
