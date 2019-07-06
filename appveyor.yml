@@ -147,6 +147,8 @@ install:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 - ps: >-
     Write-Host ${env:APPVEYOR_BUILD_WORKER_IMAGE};
+    Write-Host "$env:PLATFORM";
+    Write-Host "${env:platform}"
     Switch ("$env:compiler_version")
     {
       "VS2013" {
