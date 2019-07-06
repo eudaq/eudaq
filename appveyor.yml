@@ -102,7 +102,6 @@ init:
         break
       }
       "library_only" {
-            "full" {
         $env:BUILD_AHCAL="OFF"
         $env:BUILD_BIFAHCAL="OFF"
         $env:BUILD_TESTING="OFF"
