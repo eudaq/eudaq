@@ -99,6 +99,41 @@ init:
         $env:PYTHON="C:\\Python36"
         $env:PYTHON_VERSION="3.6.1" 
         $env:PYTHON_ARCH="32"
+        break
+      }
+      "library_only" {
+            "full" {
+        $env:BUILD_AHCAL="OFF"
+        $env:BUILD_BIFAHCAL="OFF"
+        $env:BUILD_TESTING="OFF"
+        $env:BUILD_WITH_QT4="OFF"
+        $env:BUILD_allproducer="OFF"
+        $env:BUILD_altro="OFF"
+        $env:BUILD_altroUSB="OFF"
+        $env:BUILD_cmspixel="OFF"
+        $env:BUILD_depfet="OFF"
+        $env:BUILD_drs4="ON"
+        $env:BUILD_fortis="OFF"
+        $env:BUILD_gui="OFF"
+        $env:BUILD_main="OFF"
+        $env:BUILD_manual="OFF"
+        $env:BUILD_mimoroma="OFF"
+        $env:BUILD_miniTLU="OFF"
+        $env:BUILD_ni="OFF"
+        $env:BUILD_nreader="OFF"
+        $env:BUILD_offlinemon="OFF"
+        $env:BUILD_onlinemon="ON"
+        $env:BUILD_palpidefs="OFF"
+        $env:BUILD_pixelmanproducer="OFF"
+        $env:BUILD_python="OFF"
+        $env:BUILD_root="OFF"
+        $env:BUILD_taki="OFF"
+        $env:BUILD_timepixdummy="OFF"
+        $env:BUILD_tlu="OFF"
+        $env:IGNORE_KNOWN_ISSUES="OFF"
+        $env:PYTHON="C:\\Python36"
+        $env:PYTHON_VERSION="3.6.1" 
+        $env:PYTHON_ARCH="32"
       }
     }
     
