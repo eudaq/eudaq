@@ -21,6 +21,7 @@ platform:
 environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+  INSTALL_AFS: no
   matrix:
     - build_type: library_only
       compiler_version: VS2019
@@ -63,8 +64,6 @@ cache:
 init:
 # The following line enables the remote desktop connection and show the connection information.
 - ps: >-
-#     iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-    
     Switch (${env:build_type})
     {
       "full" {
@@ -273,18 +272,20 @@ before_build:
       }
     #}    
 
-- ps: appveyor\install_afs.ps1;
-
-- ps: Restart-Computer -Force
-
-- ps: Start-Sleep -s 10;
+- ps: >-
+    If (${env:INSTALL_AFS} -eq "yes") {
+        appveyor\install_afs.ps1;
+        Restart-Computer -Force;
+        Start-Sleep -s 10;
+    }
 
 build_script:
-- ps: If( Test-Path("\\afs\desy.de\group\telescopes\")) { Write-Host("Afs seems to work properly")} ElseIf ( Test-Path("\\cern.ch\")) {Write-Host("Afs seems to work properly, but desy afs down?"); } Else { Write-Host("Something wrong with the afs installation"); }
-
-- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
-
-- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware")) {Write-Host ("Reusing cached tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of copying from AFS")} Else {Write-Host "Copying tlufirmware from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\tlufirmware" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware") -recurse}
+- ps: >-
+    If (${env:INSTALL_AFS} -eq "yes") {
+      If( Test-Path("\\afs\desy.de\group\telescopes\")) { Write-Host("Afs seems to work properly")} ElseIf ( Test-Path("\\cern.ch\")) {Write-Host("Afs seems to work properly, but desy afs down?"); } Else { Write-Host("Something wrong with the afs installation"); };
+      If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse};
+      If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware")) {Write-Host ("Reusing cached tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of copying from AFS")} Else {Write-Host "Copying tlufirmware from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\tlufirmware" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware") -recurse};
+    }
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")) {Write-Host ("Reusing cached libusb-win32 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Downloading libusb-win32 from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; $zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip $zipargument;  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32-bin-1.2.6.0") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")}
 
