@@ -58,7 +58,7 @@ for:
     matrix:
       only:
         - compiler_version: VS2019        
-          APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019    
+          APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017    
       
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
