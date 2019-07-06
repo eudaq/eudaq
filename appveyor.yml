@@ -148,7 +148,7 @@ install:
 - ps: >-
     Write-Host ${env:APPVEYOR_BUILD_WORKER_IMAGE};
     Write-Host "$env:PLATFORM";
-    Write-Host "${env:platform}"
+    Write-Host "${env:platform}";
     Switch ("$env:compiler_version")
     {
       "VS2013" {
