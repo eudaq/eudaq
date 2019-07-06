@@ -63,7 +63,7 @@ cache:
 init:
 # The following line enables the remote desktop connection and show the connection information.
 - ps: >-
-    iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#     iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
     
     Switch (${env:build_type})
     {
@@ -177,8 +177,10 @@ install:
       }
       "VS2019" {
         If ("$env:PLATFORM" -eq "x86") {
-          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x86" } else {
-          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64"
+          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x86";
+          $env:GENERATOR="-G \"Visual Studio 16 2019\" -A Win32" } else {
+          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64";
+          $env:PATH="-G \"Visual Studio 16 2019\" -A x64"
         };
       break
       }
@@ -297,7 +299,7 @@ build_script:
 
 - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
-- cmd: cmake -DIGNORE_KNOWN_ISSUES=%IGNORE_KNOWN_ISSUES% -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_drs4=%BUILD_drs4% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% %PALPIDEFS_SPECIAL_PARAMETER% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu%  ..
+- cmd: cmake %GENERATOR% -DIGNORE_KNOWN_ISSUES=%IGNORE_KNOWN_ISSUES% -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_drs4=%BUILD_drs4% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% %PALPIDEFS_SPECIAL_PARAMETER% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu%  ..
 
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
