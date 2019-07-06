@@ -297,4 +297,4 @@ for:
       only:
         - compiler_version: VS2019
         
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    image: Visual Studio 2019
