@@ -21,7 +21,7 @@ platform:
 environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
-  INSTALL_AFS: no
+  INSTALL_AFS: yes
   matrix:
     - build_type: library_only
       compiler_version: VS2019
