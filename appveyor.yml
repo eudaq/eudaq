@@ -24,6 +24,7 @@ environment:
   matrix:
     - build_type: library_only
       compiler_version: VS2019
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 Preview 
       root_flavour: 6      
 
 matrix:
@@ -49,16 +50,8 @@ for:
           platform: x64
         
     skip_non_tags: true
-  -
-    matrix:
-      except:
-        - compiler_version: VS2019
-          APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-  -
-    matrix:
-      only:
-        - compiler_version: VS2019        
-          APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 Preview    
+
+
       
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
