@@ -132,6 +132,8 @@ init:
         $env:BUILD_pixelmanproducer="OFF"
         $env:BUILD_python="OFF"
         $env:BUILD_root="OFF"
+        $env:BUILD_rpi-controller="OFF"
+        $env:BUILD_runsplitter="OFF"
         $env:BUILD_taki="OFF"
         $env:BUILD_timepixdummy="OFF"
         $env:BUILD_tlu="OFF"
