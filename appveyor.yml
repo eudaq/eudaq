@@ -10,8 +10,8 @@ branches:
 # set clone depth
 clone_depth: 1
 
-platform: 
-  - x86 
+  # platform: 
+  #   - x86 
   #   - x64
 
 # comments on options:
@@ -27,7 +27,13 @@ environment:
     - build_type: library_only
       compiler_version: VS2019
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      platform: x86
       root_flavour: 6      
+    - build_type: library_only
+      compiler_version: VS2019
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      platform: x64
+      root_flavour: 6            
 
   # matrix:
   # basic idea - in order to save time and have a full coverage at the same time:
