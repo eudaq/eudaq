@@ -1,4 +1,4 @@
-#!/usr/bin/env sh                                                                                         
+#!/bin/bash     
 
 export EUDAQ_DIR=/opt/eudaq2/
 export PYTHONPATH=${EUDAQ_DIR}/lib:${PYTHONPATH}

@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 
 if [ -z "$LD_LIBRARY_PATH" ]
 then

@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 # load binary lib/pyeudaq.so
 import os, sys, datetime, time
-sys.path.append('./')
-from _EuDataTools import EuDataStream
 
 import pyeudaq
 
@@ -12,6 +10,9 @@ import rogue
 kpixdir='/home/lycoris-admin/software/kpixDaq/kpix/software'
 pyrogue.addLibraryPath(kpixdir+'/python')
 import KpixDaq
+
+sys.path.append('./')
+from _EuDataTools import EuDataStream
 
 
 class kpixPyProducer(pyeudaq.Producer):
