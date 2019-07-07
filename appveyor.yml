@@ -21,7 +21,8 @@ platform:
 environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
-  INSTALL_AFS: yes
+  INSTALL_AFS: no
+  INSTALL_ROOT: no
   matrix:
     - build_type: library_only
       compiler_version: VS2019
@@ -135,15 +136,13 @@ init:
       }
     }
     
-    #$env:build_with_root="no"
-    #If () {
-      $env:build_with_root="yes"
-    #}
+    $env:build_with_root="no"
+    If (${env:BUILD_root} -eq "ON") {
+      $env:INSTALL_ROOT="yes"
+    }
 
 install:
-#- '"C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /x86'
-#- call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
-#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 - ps: >-
     Write-Host ${env:APPVEYOR_BUILD_WORKER_IMAGE};
     Write-Host "$env:PLATFORM";
@@ -212,14 +211,14 @@ install:
 
 - "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
 
-- ps: >- 
-    appveyor\install_qt.ps1;
-    $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# - ps: >- 
+#     appveyor\install_qt.ps1;
+#     $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
     
 before_build:    
 - ps: >- 
 
-    #If (${env:build_with_root} -eq "yes") {
+    If (${env:INSTALL_ROOT} -eq "yes") {
       $env:ROOTSYS="C:\root"
       $env:PATH="${env:ROOTSYS}\bin;${env:PATH}"
       Switch (${env:compiler_version})
@@ -275,7 +274,7 @@ before_build:
           $host.SetShouldExit($LastExitCode)
         }
       }
-    #}    
+    }    
 
 - ps: >-
     If (${env:INSTALL_AFS} -eq "yes") {
