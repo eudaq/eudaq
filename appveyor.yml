@@ -321,7 +321,6 @@ after_build:
 #- cmd: dir %APPVEYOR_BUILD_FOLDER%
 - ps: >-
     cpack;
-    # cpack -G NSIS;
     Push-AppveyorArtifact *.zip    
 
 #artifacts:
