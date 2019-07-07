@@ -213,7 +213,7 @@ install:
 - "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
 
 - ps: >- 
-    appveyor\install_qt.ps1
+    appveyor\install_qt.ps1;
     $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
     
 before_build:    
