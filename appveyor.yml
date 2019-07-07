@@ -316,11 +316,11 @@ build_script:
 - cmd: msbuild INSTALL.vcxproj
 
 after_build:
-- cmd: 7z -o%APPVEYOR_BUILD_FOLDER% a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
-- cmd: dir %APPVEYOR_BUILD_FOLDER%
+#- cmd: 7z -o%APPVEYOR_BUILD_FOLDER% a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
+#- cmd: dir %APPVEYOR_BUILD_FOLDER%
 - ps: >-
     7z -o%APPVEYOR_BUILD_FOLDER% a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%;
-    Push-AppveyorArtifact eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
+    # Push-AppveyorArtifact eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
     cpack;
     cpack -G NSIS;
 
