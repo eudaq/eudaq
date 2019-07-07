@@ -321,8 +321,8 @@ after_build:
 #- cmd: dir %APPVEYOR_BUILD_FOLDER%
 - ps: >-
     cpack;
-    cpack -G NSIS;
-    # Push-AppveyorArtifact eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip    
+    # cpack -G NSIS;
+    Push-AppveyorArtifact *.zip    
 
 #artifacts:
 #  - path: %APPVEYOR_BUILD_FOLDER%/eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
