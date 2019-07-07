@@ -320,7 +320,7 @@ after_build:
 #- cmd: 7z -o%APPVEYOR_BUILD_FOLDER% a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
 #- cmd: dir %APPVEYOR_BUILD_FOLDER%
 - ps: >-
-    cpack;
+    cpack -G ZIP;
     Push-AppveyorArtifact *.zip    
 
 #artifacts:
