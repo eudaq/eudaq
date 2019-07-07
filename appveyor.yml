@@ -134,11 +134,10 @@ init:
         $env:PYTHON_VERSION="3.6.1" 
         $env:PYTHON_ARCH="32"
       }
-    }
+    };
     
-    $env:build_with_root="no"
     If (${env:BUILD_root} -eq "ON") {
-      $env:INSTALL_ROOT="yes"
+      $env:INSTALL_ROOT="yes";
     }
 
 install:
