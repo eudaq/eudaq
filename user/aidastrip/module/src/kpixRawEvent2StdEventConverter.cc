@@ -137,7 +137,7 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 		}
 
 		std::cout << "[+] plane : "<< planeID << ", hitX at : " << hitX << std::endl;
-		auto plane = d2->GetPlane(planeID);
+		auto &plane = d2->GetPlane(planeID);
 		plane.PushPixel(hitX, // x
 		                1,  // y, always to be 1 since we are strips
 		                1  // T pix
@@ -145,11 +145,8 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	}// - sample loop over
 
 	// debug:
-	auto plane = d2->GetPlane(0);
-	auto planeX = plane.XVector();
-	for (auto&& i : planeX) {
-		cout << i << endl;
-	}
+	auto &plane = d2->GetPlane(0);
+	std::cout << "debug: Num of Hit pixels: " << plane.HitPixels() << std::endl;
 	return;
 }
 
