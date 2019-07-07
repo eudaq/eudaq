@@ -1,6 +1,6 @@
 option(USE_ROOT "Compiling main library using ROOT" ON)
 if (USE_ROOT)
-   FIND_PACKAGE( ROOT REQUIRED )
+   FIND_PACKAGE( ROOT )
 
    if (ROOT_FOUND)
      INCLUDE_DIRECTORIES( ${ROOT_INCLUDE_DIRS} )
