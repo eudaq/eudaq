@@ -238,11 +238,10 @@ install:
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x86";
           $env:GENERATOR="-G `"Visual Studio 16 2019`" -A Win32";
           If (("$env:SETUP_QT" -eq "yes") -and ("$env:INSTALL_QT_IF_NOT_PREINSTALLED" -eq "yes")) {
-            $clnt = new-object System.Net.WebClient; 
             Write-Host("Downloading file for Qt installation.");	
-            $clnt.DownloadFile("http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe","qt-unified-windows-x86-online.exe") -Wait;
+            Start-FileDownload 'http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe';
             $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win32_msvc2019";
-            Start-Process "C:\\qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script tools/qt-installer-windows.qs" -Wait;
+            Start-Process "qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script tools/qt-installer-windows.qs" -Wait;
           } } else {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64";
           $env:GENERATOR="-G `"Visual Studio 16 2019`" -A x64"
