@@ -24,17 +24,17 @@ environment:
   INSTALL_ROOT: no
   SETUP_QT: no
   INSTALL_QT_IF_NOT_PREINSTALLED: no
-  matrix:
-    - build_type: standard
-      compiler_version: VS2019
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      platform: x86
-      root_flavour: 6     
-    - build_type: standard
-      compiler_version: VS2019
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      platform: x64
-      root_flavour: 6            
+  matrix:      
+    #- build_type: standard
+    #  compiler_version: VS2019
+    #  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    #  platform: x86
+    #  root_flavour: 6     
+    #- build_type: standard
+    #  compiler_version: VS2019
+    #  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    #  platform: x64
+    #  root_flavour: 6            
     - build_type: library_only
       compiler_version: VS2019
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
