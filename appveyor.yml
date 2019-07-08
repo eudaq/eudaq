@@ -182,7 +182,7 @@ init:
         $env:BUILD_palpidefs="OFF"
         $env:BUILD_pixelmanproducer="OFF"
         $env:BUILD_python="OFF"
-        $env:BUILD_root="ON"
+        $env:BUILD_root="OFF"
         $env:BUILD_rpi_controller="OFF"
         $env:BUILD_runsplitter="OFF"
         $env:BUILD_taki="OFF"
@@ -193,6 +193,7 @@ init:
         $env:PYTHON="C:\\Python36"
         $env:PYTHON_VERSION="3.6.1" 
         $env:PYTHON_ARCH="32"
+        $env:INSTALL_ROOT="yes"
         break
       }
     };
