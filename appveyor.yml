@@ -237,7 +237,7 @@ install:
         If ("$env:PLATFORM" -eq "x86") {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x86";
           $env:GENERATOR="-G `"Visual Studio 16 2019`" -A Win32";
-          If (("$env:SETUP_QT" -eq "yes") -and ("$env:INSTALL_QT_IF_NOT_PREINSTALLED" -eq "yes") {
+          If (("$env:SETUP_QT" -eq "yes") -and ("$env:INSTALL_QT_IF_NOT_PREINSTALLED" -eq "yes")) {
             $clnt = new-object System.Net.WebClient; 
             Write-Host("Downloading file for Qt installation.");	
             $clnt.DownloadFile("http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe","qt-unified-windows-x86-online.exe");
@@ -246,7 +246,7 @@ install:
           } } else {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64";
           $env:GENERATOR="-G `"Visual Studio 16 2019`" -A x64"
-          If (("$env:SETUP_QT" -eq "yes") -and ("$env:INSTALL_QT_IF_NOT_PREINSTALLED" -eq "yes") {
+          If (("$env:SETUP_QT" -eq "yes") -and ("$env:INSTALL_QT_IF_NOT_PREINSTALLED" -eq "yes")) {
             $clnt = new-object System.Net.WebClient; 
             Write-Host("Downloading file for Qt installation.");	
             $clnt.DownloadFile("http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe","qt-unified-windows-x86-online.exe");
