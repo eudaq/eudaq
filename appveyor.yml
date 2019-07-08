@@ -242,7 +242,7 @@ install:
             pwd;
             Start-FileDownload 'http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe';
             $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win32_msvc2019";
-            Start-Process "qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script C://projects/eudaq/appveyor/qt-installer-windows.qs";
+            Start-Process "qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script C://projects/eudaq/appveyor/qt-installer-windows.qs" -Wait;
           } } else {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64";
           $env:GENERATOR="-G `"Visual Studio 16 2019`" -A x64"
