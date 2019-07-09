@@ -175,7 +175,7 @@ init:
         $env:BUILD_ni="OFF"
         $env:BUILD_nreader="OFF"
         $env:BUILD_offlinemon="OFF"
-        $env:BUILD_onlinemon="ON"
+        $env:BUILD_onlinemon="OFF"
         $env:BUILD_palpidefs="OFF"
         $env:BUILD_pixelmanproducer="OFF"
         $env:BUILD_python="OFF"
@@ -194,7 +194,7 @@ init:
       }
     };
     
-    If (${env:BUILD_root} -eq "ON") {
+    If ((${env:BUILD_root} -eq "ON") -or (${env:BUILD_onlinemon} -eq "ON") -or (${env:BUILD_offlinemon} -eq "ON")) {
       $env:INSTALL_ROOT="yes";
     }
     
