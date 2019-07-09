@@ -228,7 +228,7 @@ install:
       break
       }
       "VS2017" {
-        If (${platform} -eq "x86") {
+        If ("$env:PLATFORM" -eq "x86") {
           "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat" 
           $env:GENERATOR="-G `"Visual Studio 15 2017`" -A Win32";
           If ("$env:SETUP_QT" -eq "yes") {	
