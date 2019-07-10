@@ -7,7 +7,8 @@ import pyeudaq
 import pyrogue
 import rogue
 
-kpixdir='/home/lycoris-admin/software/kpixDaq/kpix/software'
+kpixdir='/home/lycoris-dev/workspace/kpix/software'
+
 pyrogue.addLibraryPath(kpixdir+'/python')
 import KpixDaq
 
@@ -134,7 +135,8 @@ class kpixPyProducer(pyeudaq.Producer):
         # print ("End of RunLoop in kpixPyProducer")
 
 if __name__ == "__main__":
-    myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
+#    myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
+    myproducer= kpixPyProducer("newkpix", "tcp://192.168.200.1:44000")
     print ("connecting to runcontrol in localhost:44000", )
     myproducer.Connect()
     time.sleep(2)

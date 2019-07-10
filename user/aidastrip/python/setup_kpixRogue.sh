@@ -11,7 +11,8 @@ then
 fi
 
 #1 Setup Kpix, Rogue, and Surf DIRs
-export KPIX_DIR=/home/lycoris-admin/software/kpixDaq/kpix/software/
+#export KPIX_DIR=/home/lycoris-admin/software/kpixDaq/kpix/software/
+export KPIX_DIR=/home/lycoris-dev/workspace/kpix/software/
 export ROGUE_DIR=${KPIX_DIR}/rogue/
 export SURF_DIR=${KPIX_DIR}/../firmware/submodules/surf/
 

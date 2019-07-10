@@ -10,7 +10,7 @@ import sys
 import pyrogue
 import rogue
 
-kpixdir='/home/lycoris-admin/software/kpixDaq/kpix/software'
+kpixdir='/home/lycoris-dev/workspace/kpix/software'
 pyrogue.addLibraryPath(kpixdir+'/python')
 import KpixDaq
 
@@ -41,7 +41,7 @@ class EuDataStream(rogue.interfaces.stream.Slave):
 
            # mq start here
            if self.eudaq:
-               print (' --Connected with EUDAQ side:')
+               #print (' --Connected with EUDAQ side:')
 
                #- new a eudaq raw Event:
                ev = pyeudaq.Event("RawEvent", "KpixRawEvent") # to distinguish from the old kpix DAQ 'KpixRawEvt'
