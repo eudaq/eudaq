@@ -644,8 +644,13 @@ void RunControlGUI::nextStep()
         std::this_thread::sleep_for(std::chrono::seconds(3));
         on_btnStart_clicked();
         if(m_scan.scanIsTimeBased())
+        {
             m_scanningTimer.start(1000*m_scan.timePerStep());
-    // stop the scan here
+            EUDAQ_USER("Time based scan next step");}
+        else {
+            EUDAQ_USER("Event based scan next step");
+        }
+        // stop the scan here
     } else {
         btnStartScan->setText("Start scan");
         m_scan_active = false;
