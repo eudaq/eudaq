@@ -8,7 +8,7 @@ branches:
   - master
   - v1.x-dev
 
-image: Visual Studio 2019 Preview
+image: Visual Studio 2019
 
 configuration: Release
 
@@ -21,77 +21,8 @@ platform: x86
 # 
 environment:
   matrix:
-    - build_type: full
-      ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
-      BUILD_AHCAL: OFF
-      BUILD_BIFAHCAL: OFF
-      BUILD_TESTING: OFF
-      BUILD_WITH_QT4: OFF
-      BUILD_allproducer: OFF
-      BUILD_altro: OFF
-      BUILD_altroUSB: OFF
-      BUILD_cmspixel: OFF
-      BUILD_depfet: OFF
-      BUILD_drs4: ON
-      BUILD_fortis: OFF
-      BUILD_gui: ON
-      BUILD_main: OFF
-      BUILD_manual: OFF
-      BUILD_mimoroma: OFF
-      BUILD_miniTLU: OFF
-      BUILD_ni: ON
-      BUILD_nreader: OFF
-      BUILD_offlinemon: OFF
-      BUILD_onlinemon: ON
-      BUILD_palpidefs: OFF
-      BUILD_pixelmanproducer: OFF
-      BUILD_python: ON
-      BUILD_root: ON
-      BUILD_taki: OFF
-      BUILD_timepixdummy: OFF
-      BUILD_tlu: ON
-      IGNORE_KNOWN_ISSUES: ON
-      PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.1" 
-      PYTHON_ARCH: "32"
-    - build_type: minimum
-      ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
-      BUILD_AHCAL: OFF
-      BUILD_BIFAHCAL: OFF
-      BUILD_TESTING: OFF
-      BUILD_WITH_QT4: OFF
-      BUILD_allproducer: OFF
-      BUILD_altro: OFF
-      BUILD_altroUSB: OFF
-      BUILD_cmspixel: OFF
-      BUILD_depfet: OFF
-      BUILD_drs4: OFF
-      BUILD_fortis: OFF
-      BUILD_gui: ON
-      BUILD_main: OFF
-      BUILD_manual: OFF
-      BUILD_mimoroma: OFF
-      BUILD_miniTLU: OFF
-      BUILD_ni: ON
-      BUILD_nreader: OFF
-      BUILD_offlinemon: OFF
-      BUILD_onlinemon: ON
-      BUILD_palpidefs: OFF
-      BUILD_pixelmanproducer: OFF
-      BUILD_python: ON
-      BUILD_root: OFF
-      BUILD_taki: OFF
-      BUILD_timepixdummy: OFF
-      BUILD_tlu: ON
-      IGNORE_KNOWN_ISSUES: OFF
-      PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.1" 
-      PYTHON_ARCH: "32"      
     - build_type: library_only
-      ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.11.0\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: 'C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       BUILD_AHCAL: OFF
       BUILD_BIFAHCAL: OFF
       BUILD_TESTING: OFF

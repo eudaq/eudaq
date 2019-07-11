@@ -92,27 +92,6 @@ matrix:
         env:
             - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
             - ROOT6_FILENAME_LINUX=root_v6.16.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - os: linux
-        addons:
-          apt:
-            sources:
-                - ubuntu-toolchain-r-test
-            packages:
-                - g++-5      
-        env:
-            - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-            - ROOT6_FILENAME_LINUX=root_v6.16.00.Linux-ubuntu16-x86_64-gcc5.4.tar.gz
-      - os: linux
-        addons:
-          apt:
-            sources:
-                - ubuntu-toolchain-r-test
-            packages:
-                - g++-7      
-        env:
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-            - ROOT6_FILENAME_LINUX=root_v6.16.00.Linux-ubuntu18-x86_64-gcc7.3.tar.gz
-            - BUILD_manual=ON
       - os: osx
         osx_image: xcode9.3
         compiler: clang      
