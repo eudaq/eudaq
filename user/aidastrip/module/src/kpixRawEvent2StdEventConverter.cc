@@ -79,7 +79,7 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	// TODO: hard coded to be 6 plane. - MQ
 	for (auto id=0; id<6; id++){
 		eudaq::StandardPlane plane(id, "lycoris", "lycoris");
-		plane.SetSizeZS(920, // x, width, TODO: strip ID of half sensor 
+		plane.SetSizeZS(1840, // x, width, TODO: strip ID of half sensor 
 		                1, // y, height
 		                0 // not used 
 		                ); // TODO: only 1 frame, define for us as bucket, i.e. only bucket 0 is considered
@@ -198,9 +198,9 @@ std::tuple<int, int> kpixRawEvent2StdEventConverter::parseSample( KpixSample* sa
 int kpixRawEvent2StdEventConverter::getStdPlaneID(uint kpix) const{
 
 	//TODO: feature to add, read kpix number with plane configuration from external txt file
-	if (kpix == 6  | kpix == 7  ) return 0; 
-	if (kpix == 8  | kpix == 9  ) return 1; 
-	if (kpix == 10 | kpix == 11 ) return 2;
+	if (kpix == 0  | kpix == 1  ) return 0; 
+	if (kpix == 2  | kpix == 3  ) return 1; 
+	if (kpix == 4 | kpix == 5 ) return 2;
 	
 	if (kpix == 12 | kpix == 13 ) return 3;
 	if (kpix == 14 | kpix == 15 ) return 4;
