@@ -148,7 +148,7 @@ init:
         $env:BUILD_timepix3="OFF"
         $env:BUILD_timepixdummy="OFF"
         $env:BUILD_tlu="ON"
-        $env:IGNORE_KNOWN_ISSUES="ON
+        $env:IGNORE_KNOWN_ISSUES="ON"
         $env:SETUP_QT="yes"
         $env:INSTALL_QT_IF_NOT_PREINSTALLED="yes"
         break
