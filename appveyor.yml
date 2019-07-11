@@ -17,12 +17,15 @@ clone_depth: 1
 # comments on options:
 # BIFAHCAL: Requires cactus and does not compile properly on Windows
 # cmspixel: Required pxar compiles on Windows but there are some minor problems afterwards
-# 
+# ROOT6 only with x86 for the moment
+# ROOT6 only with VS2019 and higher
+# ROOT5 only with x86
+# VS2019 has currently not Qt pre-installed
 environment:
-  PATH: 'C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
   INSTALL_AFS: no
   INSTALL_ROOT: no
   SETUP_QT: no
+  SETUP_PYTHON: no
   INSTALL_QT_IF_NOT_PREINSTALLED: no
   matrix:      
     - build_type: standard
@@ -113,9 +116,6 @@ init:
         $env:BUILD_timepixdummy="OFF"
         $env:BUILD_tlu="ON"
         $env:IGNORE_KNOWN_ISSUES="ON"
-        $env:PYTHON="C:\\Python36"
-        $env:PYTHON_VERSION="3.6.1" 
-        $env:PYTHON_ARCH="32"
         break
       }
       "standard" {
@@ -148,10 +148,7 @@ init:
         $env:BUILD_timepix3="OFF"
         $env:BUILD_timepixdummy="OFF"
         $env:BUILD_tlu="ON"
-        $env:IGNORE_KNOWN_ISSUES="ON"
-        $env:PYTHON="C:\\Python36"
-        $env:PYTHON_VERSION="3.6.1" 
-        $env:PYTHON_ARCH="32"
+        $env:IGNORE_KNOWN_ISSUES="ON
         $env:SETUP_QT="yes"
         $env:INSTALL_QT_IF_NOT_PREINSTALLED="yes"
         break
@@ -187,9 +184,6 @@ init:
         $env:BUILD_timepixdummy="OFF"
         $env:BUILD_tlu="OFF"
         $env:IGNORE_KNOWN_ISSUES="OFF"
-        $env:PYTHON="C:\\Python36"
-        $env:PYTHON_VERSION="3.6.1" 
-        $env:PYTHON_ARCH="32"
         break
       }
     };
