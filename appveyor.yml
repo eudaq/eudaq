@@ -7,6 +7,7 @@ branches:
   only:
   - master
   - v1.x-dev
+  - v1.x-dev-fix-ci-quickly
 
 image: Visual Studio 2019
 
