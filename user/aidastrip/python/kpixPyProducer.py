@@ -21,9 +21,7 @@ class kpixPyProducer(pyeudaq.Producer):
         pyeudaq.Producer.__init__(self, 'PyProducer', name, runctrl)
         self.is_running = 0
         print ('New instance of kpixPyProducer')
-
-        print ('mq: init kpix root...')
-        
+                
         self.ip = '192.168.2.10'
         self.debug = False
         self.root = None
@@ -42,23 +40,22 @@ class kpixPyProducer(pyeudaq.Producer):
     def DoInitialise(self):        
         print ('DoInitialise')
         #print 'key_a(init) = ', self.GetInitItem("key_a")
-        # Print the version info
+        #-- start of set up desytrackerroot obj
+        if not self.root:
+            print (' MQ: init kpix root...')
+            self.root= KpixDaq.DesyTrackerRoot(pollEn=False, ip=self.ip, debug=self.debug) 
 
-        self.root= KpixDaq.DesyTrackerRoot(pollEn=False, ip=self.ip, debug=self.debug) 
-        print ('Reading all')
-        self.root.ReadAll()
-        self.root.waitOnUpdate()
+            print ('Reading all')
+            self.root.ReadAll()
+            self.root.waitOnUpdate()
+            # Print the version info
+            self.root.DesyTracker.AxiVersion.printStatus()
+        #-- end of set up desytrackerroot obj
 
-        self.root.DesyTracker.AxiVersion.printStatus()
 
-    def DoConfigure(self):        
+    def DoConfigure(self):
         print ('DoConfigure')
-
-        print(f"Hard Reset")
-        self.root.HardReset()
-        
-        print(f"Count Reset")   
-        self.root.CountReset()
+               
         
         #print 'key_b(conf) = ', self.GetConfigItem("key_b")
         kpixconf= self.GetConfigItem("KPIX_CONF_FILE")
@@ -70,8 +67,9 @@ class kpixPyProducer(pyeudaq.Producer):
 
         self.root.ReadAll()
         self.root.waitOnUpdate()
-        
-        self.root.DesyTrackerRunControl.MaxRunCount.set(runcount)
+
+        if runcount != 0:
+            self.root.DesyTrackerRunControl.MaxRunCount.set(runcount)
         if os.path.isdir(kpixout):
             outfile = os.path.abspath(datetime.datetime.now().strftime(f"{kpixout}/Run_%Y%m%d_%H%M%S.dat") )
             print (f"write kpix outfile to {outfile}")
@@ -86,9 +84,20 @@ class kpixPyProducer(pyeudaq.Producer):
         pyrogue.streamTap(dataline, fp)
             
     def DoStartRun(self):
+        print(f"Hard Reset")
+        self.root.HardReset()
+        time.sleep(.2)
+                
+        print(f"Count Reset")   
+        self.root.CountReset()
+        time.sleep(.2)
+
+        self.root.DesyTrackerRunControl.runCount.set(0)
+
         print ('DoStartRun')
         self.is_running = 1
-        #try: 
+        #try:
+
         self.root.DesyTrackerRunControl.runState.setDisp('Running')
         #except(KeyboardInterrupt):
         #    self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
@@ -99,7 +108,11 @@ class kpixPyProducer(pyeudaq.Producer):
         print ('DoStopRun')
         self.is_running = 0
         self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
-        
+        self.root.DataWriter.open.set(False)
+                    
+        print (' MQ: stop DesyTrackerRunControl')
+        #self.root.stop()
+         
     def DoReset(self):        
         print ('DoReset')
         self.is_running = 0
@@ -108,12 +121,12 @@ class kpixPyProducer(pyeudaq.Producer):
 
     def RunLoop(self):
         print ("Start of RunLoop in kpixPyProducer")
-
         while (self.is_running):
             self.root.DesyTrackerRunControl.waitStopped()
             self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
             self.is_running = False
-            #time.sleep(1)
+            time.sleep(1)
+        # end of while loop
         print ("End of RunLoop in kpixPyProducer")
 
         # trigger_n = 0;
@@ -135,8 +148,8 @@ class kpixPyProducer(pyeudaq.Producer):
         # print ("End of RunLoop in kpixPyProducer")
 
 if __name__ == "__main__":
-#    myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
-    myproducer= kpixPyProducer("newkpix", "tcp://192.168.200.1:44000")
+    myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
+#    myproducer= kpixPyProducer("newkpix", "tcp://192.168.200.1:44000")
     print ("connecting to runcontrol in localhost:44000", )
     myproducer.Connect()
     time.sleep(2)
