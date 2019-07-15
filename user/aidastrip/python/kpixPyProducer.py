@@ -18,6 +18,8 @@ from _EuDataTools import EuDataStream
 
 class kpixPyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
+        print("__init__")
+        
         pyeudaq.Producer.__init__(self, 'PyProducer', name, runctrl)
         self.is_running = 0
         print ('New instance of kpixPyProducer')
@@ -26,6 +28,13 @@ class kpixPyProducer(pyeudaq.Producer):
         self.debug = False
         self.root = None
 
+    def __enter__(self):
+        print("__enter__")
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("__exit__")
+                
     def DoTerminate(self):
         """ Essencial to terminate KPiX class object correctly. """
         print ('DoTerminate')
@@ -51,7 +60,6 @@ class kpixPyProducer(pyeudaq.Producer):
             # Print the version info
             self.root.DesyTracker.AxiVersion.printStatus()
         #-- end of set up desytrackerroot obj
-
 
     def DoConfigure(self):
         print ('DoConfigure')
@@ -111,13 +119,14 @@ class kpixPyProducer(pyeudaq.Producer):
         self.root.DataWriter.open.set(False)
                     
         print (' MQ: stop DesyTrackerRunControl')
-        #self.root.stop()
+        #self.root.stop() # TODO: if the stop() works properly with new kpix daq commit, uncomment here
          
     def DoReset(self):        
         print ('DoReset')
         self.is_running = 0
         self.root.HardReset()
         self.root.CountReset()
+        #self.root.stop()
 
     def RunLoop(self):
         print ("Start of RunLoop in kpixPyProducer")
@@ -148,12 +157,22 @@ class kpixPyProducer(pyeudaq.Producer):
         # print ("End of RunLoop in kpixPyProducer")
 
 if __name__ == "__main__":
-    myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
-#    myproducer= kpixPyProducer("newkpix", "tcp://192.168.200.1:44000")
-    print ("connecting to runcontrol in localhost:44000", )
-    myproducer.Connect()
-    time.sleep(2)
-    while(myproducer.IsConnected()):
-        time.sleep(1)
-            
+    # myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
+    # print ("connecting to runcontrol in localhost:44000" )
+    # #    myproducer= kpixPyProducer("newkpix", "tcp://192.168.200.1:44000")
     
+    # myproducer.Connect()
+    # time.sleep(2)
+
+    # while(myproducer.IsConnected()):
+    #     time.sleep(1)
+
+
+    with kpixPyProducer("newkpix", "tcp://localhost:44000") as myproducer:
+        print ("connecting to runcontrol in localhost:44000" )
+
+        myproducer.Connect()
+        time.sleep(2)
+
+        while(myproducer.IsConnected()):
+            time.sleep(1)
