@@ -3,6 +3,12 @@ set(${PROJECT_NAME}_VERSION_MAJOR 2 )
 set(${PROJECT_NAME}_VERSION_MINOR 4 )
 set(${PROJECT_NAME}_VERSION_PATCH 0 )
 
+# Add support for building in conda environment
+if (DEFINED ENV{CONDA_PREFIX})
+   set(CMAKE_PREFIX_PATH "$ENV{CONDA_PREFIX}")
+   link_directories($ENV{CONDA_PREFIX}/lib)
+endif()
+
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
