@@ -1,0 +1,31 @@
+channels:
+  - anaconda
+dependencies:
+  - llvm
+  - libselinux-cos6-x86_64
+  - libselinux-devel-cos6-x86_64
+  - libsepol-cos6-x86_64
+  - libsepol-devel-cos6-x86_64
+  - libxau-cos6-x86_64
+  - libxau-devel-cos6-x86_64
+  - libdrm-cos6-x86_64
+  - libx11-common-cos6-x86_64
+  - libx11-cos6-x86_64
+  - libx11-devel-cos6-x86_64
+  - libxdamage-cos6-x86_64
+  - libxdamage-devel-cos6-x86_64
+  - libxext-cos6-x86_64
+  - libxext-devel-cos6-x86_64
+  - libxfixes-cos6-x86_64
+  - libxfixes-devel-cos6-x86_64
+  - libxxf86vm-cos6-x86_64
+  - libxxf86vm-devel-cos6-x86_64
+  - mesa
+  - mesa-libegl-cos6-x86_64
+  - mesa-libegl-devel-cos6-x86_64
+  - mesa-libgbm-cos6-x86_64
+  - mesa-libgl-cos6-x86_64
+  - mesa-libgl-devel-cos6-x86_64
+  - mesa-dri-drivers-cos6-x86_64
+  - mesa-dri1-drivers-cos6-x86_64
+  
