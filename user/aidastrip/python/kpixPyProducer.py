@@ -70,6 +70,11 @@ class kpixPyProducer(pyeudaq.Producer):
         kpixout = self.GetConfigItem("KPIX_OUT_FILE")
         runcount= int(self.GetConfigItem("RUN_COUNT"))
 
+        print(f"Hard Reset")
+        self.root.HardReset()
+        print(f"Count Reset")        
+        self.root.CountReset()
+        
         print (f"KPiX configured from {kpixconf}")
         self.root.LoadConfig(kpixconf)
 
@@ -87,29 +92,23 @@ class kpixPyProducer(pyeudaq.Producer):
         # start experiments to get data streams connected @ Jun 18
         dataline = self.root.udp.application(dest=1)
         #fp = KpixDaq.KpixStreamInfo() # mq added
-        fp = EuDataStream() # mq 
-        fp.setEudaq(self)
-        pyrogue.streamTap(dataline, fp)
+        # fp = EuDataStream() # mq 
+        # fp.setEudaq(self)
+        # pyrogue.streamTap(dataline, fp)
             
     def DoStartRun(self):
-        print(f"Hard Reset")
-        self.root.HardReset()
-        time.sleep(.2)
-                
-        print(f"Count Reset")   
-        self.root.CountReset()
-        time.sleep(.2)
+        # print(f"Hard Reset")
+        # self.root.HardReset()
+        # time.sleep(.2)
+        
+        # print(f"Count Reset")   
+        # self.root.CountReset()
+        # time.sleep(.2)
 
-        self.root.DesyTrackerRunControl.runCount.set(0)
+        #self.root.DesyTrackerRunControl.runCount.set(0)
 
         print ('DoStartRun')
         self.is_running = 1
-        #try:
-
-        self.root.DesyTrackerRunControl.runState.setDisp('Running')
-        #except(KeyboardInterrupt):
-        #    self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
-        #    self.is_running = False
 
         
     def DoStopRun(self):        
@@ -130,44 +129,27 @@ class kpixPyProducer(pyeudaq.Producer):
 
     def RunLoop(self):
         print ("Start of RunLoop in kpixPyProducer")
-        while (self.is_running):
+        
+        try:
+
+            self.root.DesyTrackerRunControl.runState.setDisp('Running')
             self.root.DesyTrackerRunControl.waitStopped()
+        except(KeyboardInterrupt or not self.is_running):
             self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
-            self.is_running = False
-            time.sleep(1)
+        self.is_running=False
+        # while (self.is_running):
+        #     self.root.DesyTrackerRunControl.waitStopped()
+        #     self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+        #     self.is_running = False
+        #     time.sleep(1)
+
         # end of while loop
+        #self.is_running=False
         print ("End of RunLoop in kpixPyProducer")
 
-        # trigger_n = 0;
-        # while(self.is_running):
-        #     ev = pyeudaq.Event("RawEvent", "sub_name")
-        #     ev.SetTriggerN(trigger_n)
-        #     #block = bytes(r'raw_data_string')
-        #     #ev.AddBlock(0, block)
-        #     #print ev
-        #     # Mengqing:
-        #     datastr = 'raw_data_string'
-        #     block = bytes(datastr, 'utf-8')
-        #     ev.AddBlock(0, block)
-        #     print(ev)
-            
-        #     self.SendEvent(ev)
-        #     trigger_n += 1
-        #     time.sleep(1)
-        # print ("End of RunLoop in kpixPyProducer")
 
 if __name__ == "__main__":
-    # myproducer= kpixPyProducer("newkpix", "tcp://localhost:44000")
-    # print ("connecting to runcontrol in localhost:44000" )
     # #    myproducer= kpixPyProducer("newkpix", "tcp://192.168.200.1:44000")
-    
-    # myproducer.Connect()
-    # time.sleep(2)
-
-    # while(myproducer.IsConnected()):
-    #     time.sleep(1)
-
-
     with kpixPyProducer("newkpix", "tcp://localhost:44000") as myproducer:
         print ("connecting to runcontrol in localhost:44000" )
 
