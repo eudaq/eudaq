@@ -7,7 +7,8 @@ import pyeudaq
 import pyrogue
 import rogue
 
-kpixdir='/home/lycoris-dev/workspace/kpix/software'
+import os
+kpixdir=os.environ['KPIX_DIR']
 
 pyrogue.addLibraryPath(kpixdir+'/python')
 import KpixDaq
@@ -64,7 +65,8 @@ class kpixPyProducer(pyeudaq.Producer):
     def DoConfigure(self):
         print ('DoConfigure')
                
-        
+        self.root.DesyTrackerRunControl.runRate.setDisp('Auto')
+
         #print 'key_b(conf) = ', self.GetConfigItem("key_b")
         kpixconf= self.GetConfigItem("KPIX_CONF_FILE")
         kpixout = self.GetConfigItem("KPIX_OUT_FILE")
@@ -92,9 +94,9 @@ class kpixPyProducer(pyeudaq.Producer):
         # start experiments to get data streams connected @ Jun 18
         dataline = self.root.udp.application(dest=1)
         #fp = KpixDaq.KpixStreamInfo() # mq added
-        # fp = EuDataStream() # mq 
-        # fp.setEudaq(self)
-        # pyrogue.streamTap(dataline, fp)
+        fp = EuDataStream() # mq 
+        fp.setEudaq(self)
+        pyrogue.streamTap(dataline, fp)
             
     def DoStartRun(self):
         # print(f"Hard Reset")

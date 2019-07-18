@@ -10,7 +10,9 @@ import sys
 import pyrogue
 import rogue
 
-kpixdir='/home/lycoris-dev/workspace/kpix/software'
+import os
+kpixdir=os.environ['KPIX_DIR']
+
 pyrogue.addLibraryPath(kpixdir+'/python')
 import KpixDaq
 
