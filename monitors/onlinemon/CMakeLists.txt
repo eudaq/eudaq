@@ -1,5 +1,5 @@
 if(WIN32)
-  find_package(ROOT REQUIRED COMPONENTS Core Hist RIO)
+  find_package(ROOT REQUIRED)
 else()
   find_package(ROOT REQUIRED)
 endif()
