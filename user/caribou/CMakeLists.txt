@@ -3,19 +3,19 @@ get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
 
-option(USER_TIMEPIX3_BUILD "build timepix3" OFF)
+option(USER_CARIBOU_BUILD "build caribou support" OFF)
 
-if(NOT USER_TIMEPIX3_BUILD)
-  message(STATUS "user/timepix3 is NOT to be built (USER_TIMEPIX3_BUILD=OFF)")
+if(NOT USER_CARIBOU_BUILD)
+  message(STATUS "user/caribou is NOT to be built (USER_CARIBOU_BUILD=OFF)")
   return()
 else()
-  message(STATUS "user/timepix3 is to be built (USER_TIMEPIX3_BUILD=ON)")
+  message(STATUS "user/caribou is to be built (USER_CARIBOU_BUILD=ON)")
 endif()
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
-FIND_PACKAGE(SPIDR REQUIRED)
-FIND_PACKAGE(ROOT REQUIRED)
-FIND_PACKAGE(XercesC REQUIRED)
+
+# Peary and its CLICpix2 component
+FIND_PACKAGE(Peary REQUIRED COMPONENTS CLICpix2 ATLASPix)
 
 add_subdirectory(module)
