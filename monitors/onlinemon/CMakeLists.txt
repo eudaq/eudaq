@@ -1,7 +1,7 @@
 if(WIN32)
-  find_package(ROOT REQUIRED COMPONENTS Gui Core Hist RIO)
+  find_package(ROOT REQUIRED COMPONENTS Core Hist RIO)
 else()
-  find_package(ROOT REQUIRED COMPONENTS Gui)
+  find_package(ROOT REQUIRED)
 endif()
 
 INCLUDE(${ROOT_USE_FILE})
