@@ -143,6 +143,7 @@ void WienerProducer::OnStatus(){
   /* Func:
    * update the current and voltage status to the GUI.
    */
+  SetStatusTag("HV [A]", m_HV_volts);
   SetStatusTag("HV [A]", m_HV_curr);
   SetStatusTag("HV ", m_states);
   SetStatusTag("LV [A]", m_LV_curr);
