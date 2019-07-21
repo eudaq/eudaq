@@ -39,11 +39,6 @@ public:
 private:
   std::string m_ip;
   bool m_stop;
-  //std::string m_HV;
-  //std::string m_LV;
-  //std::string m_HI;
-  //std::string m_LI;
-  //std::string m_daqV;
   std::string m_daq_chan;
   std::string m_LV_chan;
   std::string m_HV_chan;
@@ -51,6 +46,9 @@ private:
   std::string m_daq_curr;
   std::string m_HV_curr;
   std::string m_LV_curr;
+
+  std::string m_HV_volts;
+  const std::string m_HV_volts_limit;
   
 };
 namespace{
@@ -67,7 +65,7 @@ std::string GetNumber(std::string input, bool digitonly);
 WienerProducer::WienerProducer(const std::string & name, const std::string & runcontrol)
   :eudaq::Producer(name, runcontrol),
   m_ip("192.168.3.2"),m_stop(true),
-  // m_HV("70.00"), m_HI("0.004"),
+  m_HV_volts("70.00"), m_HV_volts_limit("150"),
   // m_LV("3.00"), m_LI("0.5"), m_daqV("12"),
   m_daq_chan("303"),
   m_LV_chan("0,1,6,7"),
@@ -90,7 +88,11 @@ void WienerProducer::DoInitialise(){
 void WienerProducer::DoConfigure(){
   printf("DoConfig");
   std::cout<< ""<<std::endl;
-  //system();
+
+  auto conf = GetConfiguration();
+  conf->Print(std::cout);
+  m_HV_chan = conf->Get("HV_chan", "100,101,102,105,106,107");
+  m_HV_volts = conf->Get("HV_volts", "70.00");
 }
 
 void WienerProducer::DoStartRun(){
@@ -125,7 +127,7 @@ void WienerProducer::OnStatus(){
   SetStatusTag("LV [A]", m_LV_curr);
   SetStatusTag("DAQ[A]",  m_daq_curr);
   
-  SetStatusTag("Hello,", "I am Wiener"); // test
+  //  SetStatusTag("Hello,", "I am Wiener"); // test
 }
 
 void WienerProducer::RunLoop(){
