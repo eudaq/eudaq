@@ -106,6 +106,7 @@ void WienerProducer::DoConfigure(){
   }
 
   // Then WRITE the voltage:
+  
   Power(m_HV_chan, false);
   SetVoltage(m_HV_chan, m_HV_volts);
 
@@ -143,6 +144,7 @@ void WienerProducer::OnStatus(){
    * update the current and voltage status to the GUI.
    */
   SetStatusTag("HV [A]", m_HV_curr);
+  SetStatusTag("HV ", m_states);
   SetStatusTag("LV [A]", m_LV_curr);
   SetStatusTag("DAQ[A]",  m_daq_curr);
   
@@ -208,17 +210,17 @@ bool WienerProducer::Power(std::string channels, bool switchon){
 
     std::string res = exec(cmd.c_str());
 
-    if (switchon){
-      while (true){
-	std::this_thread::sleep_for(5s);
-	std::cout << "I am checking status!" << std::endl;
-	bool notfinish = checkstatus(chan, "outputRampUp"); 
-	if (!notfinish) break;
-      }
-      update_curr(channels);
-    }
+    std::string tomatch = "outputRampDown";
+    if (switchon) tomatch = "outputRampOn";
     
-       
+    while (true){
+      std::this_thread::sleep_for(2s);
+      std::cout << "I am checking status!" << std::endl;
+      bool notfinish = checkstatus(chan, "outputRampUp"); 
+      if (!notfinish) break;
+    }
+    update_curr(channels);
+    
     // update states:
     std::istringstream iss(res);
     std::string s1, state;
@@ -233,7 +235,7 @@ bool WienerProducer::Power(std::string channels, bool switchon){
 
   m_states = states;
   // Check if the operations are succeed?
-  EUDAQ_INFO("States UPDATE - " + channels +" : "+ states);
+  EUDAQ_INFO("States UPDATE - " + channels +" : "+ m_states);
   
   // skip safety check because it is switching off.
   if (!switchon) return true;
