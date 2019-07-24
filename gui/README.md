@@ -14,7 +14,7 @@ Shows the overall state of the DAQ. The component with the lowest state defines 
   - UNCONF: Initialized but not yet configured
   - CONF: Configured - ready to take data
   - STOPPED: Data taking has been stopped and the system has not been
-  reconfigured afterwards. 
+  reconfigured afterwards.
   - RUNNING: Actively running
 
 #### Control
@@ -85,3 +85,4 @@ A scan can be defined to be `nested`. If so, all previous configurations are rep
  - `nested`: Repeat all scan sections with [i<iScan] for each step if set to `1`, no effect otherwise. Default:`0`
  - `eventCounter`: Required if [global.timeBasedScan!=1]. 
  Defines the component that triggers the next step, if it has seen [gloabl.neventsPerStep] events.
+
