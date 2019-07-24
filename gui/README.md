@@ -1,4 +1,3 @@
-
 ## EUDAQ version 2 Graphical User Interface
 
 This README section features 2 GUIs: A `LogCollecor` GUI and a main `RunControl GUI`.
