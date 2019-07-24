@@ -12,9 +12,7 @@ Shows the overall state of the DAQ. The component with the lowest state defines 
   - ERROR: Something went wrong
   - UNINIT: The startup state - Init required to continue
   - UNCONF: Initialized but not yet configured
-  - CONF: Configured - ready to take data
-  - STOPPED: Data taking has been stopped and the system has not been
-  reconfigured afterwards. 
+  - CONF: Configures
   - RUNNING: Actively running
 
 #### Control
