@@ -28,8 +28,8 @@ public:
 	bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
 	static const uint32_t m_id_factory = eudaq::cstr2hash("KpixRawEvent");
 	
-	void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle) const;
-  std::tuple<int, int> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp) const;
+  void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle, bool isSelfTrig ) const;
+  std::tuple<int, int> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
 	
 private:
 	int getStdPlaneID(uint kpix) const;
@@ -61,8 +61,13 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	// 	d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
 	// 	d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
 	// }
-
+	
 	KpixEvent    cycle;
+
+	string triggermode = d1->GetTag("triggermode", "internal");
+	bool isSelfTrig = triggermode == "internal" ? true:false ;
+	if (isSelfTrig)
+	  EUDAQ_INFO("I am using Self Trigger for kpix Event Converter :)");
 	
 	std::vector<uint8_t> block = rawev->GetBlock(0); // related to SendEvent(ev) @ _EuDataTools
 	if (block.size() == 0 ){
@@ -98,7 +103,7 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	// /* read kpix data */
 	cycle.copy(kpixEvent, size_of_kpix);
 
-	parseFrame(d2, cycle);
+	parseFrame(d2, cycle, isSelfTrig);
 	
 	// std::cout << "\t Uint32_t  = " << kpixEvent << "\n"
 	//           << "\t evtNum    = " << kpixEvent[0] << std::endl;	
@@ -110,7 +115,7 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 }
 
 
-void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle) const{
+void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle, bool isSelfTrig) const{
 
 	d2->Print(std::cout);
 	std::vector<double>   vec_ExtTstamp;
@@ -154,7 +159,7 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  sample = cycle.sample(is);
 	  
 	  // parseSample: you need to return the Plane ID (based on kpix ID), and the fired strips positions for parseFrame to add to the Plane. TODO
-	  auto hit     = parseSample(sample, vec_ExtTstamp);
+	  auto hit     = parseSample(sample, vec_ExtTstamp, isSelfTrig);
 	  auto planeID = std::get<0>(hit);
 	  auto hitX    = std::get<1>(hit);
 	  
@@ -182,7 +187,8 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 }
 
 std::tuple<int, int> kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample,
-								 std::vector<double>   vec_ExtTstamp) 
+								 std::vector<double>   vec_ExtTstamp,
+								 bool isSelfTrig) 
 const{
   /*
     usage: 

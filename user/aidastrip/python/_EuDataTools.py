@@ -38,7 +38,7 @@ class EuDataStream(rogue.interfaces.stream.Slave):
        ba = bytearray(frame.getPayload())
        frame.read(ba, 0)
        if frame.getChannel() == 0:
-           print(f'Got Frame: {len(ba)} bytes')
+           #print(f'Got Frame: {len(ba)} bytes') # mengqing 
            d = KpixDaq.parseFrame(ba)
 
            # mq start here
@@ -55,6 +55,8 @@ class EuDataStream(rogue.interfaces.stream.Slave):
                ev.SetTimestamp( d['runtime']*5, d['runtime']*5+5, False) # end time += 1*runtime cycle
                
                ev.SetTag("Stamp","fromEuDataTools") # to remove
+               ev.SetTag("triggermode", self.eudaq.triggermode)
+               
                block = bytes(ba)  # tentative mq, to verify
                ev.AddBlock(0, block ) # tentative mq, to verify
                self.eudaq.SendEvent(ev)
