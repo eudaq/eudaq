@@ -1,12 +1,23 @@
 import sys
-from ctypes import cdll, create_string_buffer, byref, c_uint, c_void_p, c_char_p, c_size_t, c_uint8, POINTER,c_long
+import ctypes
+from ctypes import cdll, byref, c_uint, c_void_p, c_char_p, c_size_t, c_uint8, POINTER, c_long
 import numpy
 import os.path
 
+if sys.version_info[0] > 2:
+    def create_string_buffer(string):
+        # Python 3 ctype bug
+        # https://stackoverflow.com/questions/7237133/create-string-buffer-throwing-error-typeerror-str-bytes-expected-instead-of-str
+        string = string.encode('utf-8')
+        return ctypes.create_string_buffer(string)
+else:
+    def create_string_buffer(string):
+        return ctypes.create_string_buffer(string)
+
 # construct the path to the library from the location of this script
-libext = '.so' # default extension on Linux
-libdir = 'lib' # default installation directory on Linux/OSX
-libprefix = 'lib' # default prefix for libraries on Linux/OSX
+libext = '.so'  # default extension on Linux
+libdir = 'lib'  # default installation directory on Linux/OSX
+libprefix = 'lib'  # default prefix for libraries on Linux/OSX
 if sys.platform.startswith('darwin'):
     # OSX-specific library extension
     libext = '.dylib'
@@ -16,58 +27,73 @@ elif sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
     libdir = 'bin'
     libprefix = ""
 # construct the absolute path to the shared library relatively from this file
-libpath = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,libdir))
+libpath = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, libdir))
 
 # for Windows systems: check that the libpath is also in the system's PATH
 # where the shared library does not have the full RPATH set by CMake when installing
 if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
     if libpath not in os.environ['PATH']:
-        print "Info: Adding '", libpath, "' to the PATH environment so the EUDAQ shared libarary can be found."
-        os.environ['PATH'] = libpath + ";" + os.environ['PATH'] #prepend our libpath
+        print("Info: Adding '", libpath, "' to the PATH environment so the EUDAQ shared libarary can be found.")
+        os.environ['PATH'] = libpath + ";" + os.environ['PATH']  # prepend our libpath
 
 # construct the library name with full absolute path
-libname = os.path.join(libpath,libprefix+"PyEUDAQ"+libext)
+libname = os.path.join(libpath, libprefix + "PyEUDAQ" + libext)
 try:
     lib = cdll.LoadLibrary(libname)
 except:
-    print "ERROR: Could not load the shared library '", libname, "'!"
+    print("ERROR: Could not load the shared library '", libname, "'!")
     exit(404)
 
+
 class PyRunControl(object):
-    def __init__(self,addr = "tcp://44000"):
-        lib.PyRunControl_new.restype = c_void_p # Needed
+    def __init__(self, addr="tcp://44000"):
+        lib.PyRunControl_new.restype = c_void_p  # Needed
         self.obj = lib.PyRunControl_new(create_string_buffer(addr))
+
     def GetStatus(self):
         lib.PyRunControl_GetStatus(c_void_p(self.obj))
+
     def StartRun(self):
         lib.PyRunControl_StartRun(c_void_p(self.obj))
+
     def StopRun(self):
         lib.PyRunControl_StopRun(c_void_p(self.obj))
-    def Configure(self,cfg):
+
+    def Configure(self, cfg):
         lib.PyRunControl_Configure(c_void_p(self.obj), create_string_buffer(cfg))
+
     def PrintConnections(self):
         lib.PyRunControl_PrintConnections(c_void_p(self.obj))
-    @property 
+
+    @property
     def NumConnections(self):
         return lib.PyRunControl_NumConnections(c_void_p(self.obj))
-    @property 
+
+    @property
     def RunNumber(self):
         return lib.PyRunControl_GetRunNumber(c_void_p(self.obj))
-    @property 
+
+    @property
     def AllOk(self):
         return lib.PyRunControl_AllOk(c_void_p(self.obj))
 
-lib.PyProducer_SendEvent.argtypes = [c_void_p,POINTER(c_uint8), c_size_t]
+
+lib.PyProducer_SendEvent.argtypes = [c_void_p, POINTER(c_uint8), c_size_t]
+
+
 class PyProducer(object):
-    def __init__(self, name, rcaddr = "tcp://localhost:44000",board_id=0):
-        lib.PyProducer_new.restype = c_void_p # Needed
-        self.obj = lib.PyProducer_new(create_string_buffer(name), 
-                                      create_string_buffer(rcaddr),board_id)
-    def SendEvent(self,data):
+    def __init__(self, name, rcaddr="tcp://localhost:44000", board_id=0):
+        lib.PyProducer_new.restype = c_void_p  # Needed
+        self.obj = lib.PyProducer_new(create_string_buffer(name),
+                                      create_string_buffer(rcaddr), board_id)
+
+    def SendEvent(self, data):
         data_p = data.ctypes.data_as(POINTER(c_uint8))
-        lib.PyProducer_SendEvent(c_void_p(self.obj),data_p,data.nbytes)
+        lib.PyProducer_SendEvent(c_void_p(self.obj), data_p, data.nbytes)
+
     def GetRunNumber(self):
         return lib.PyProducer_GetRunNumber(c_void_p(self.obj))
+
     def GetConfigParameter(self, item):
         buf_len = 1024
         buf = create_string_buffer(buf_len)
@@ -77,15 +103,17 @@ class PyProducer(object):
         if not str_len:
             raise NotImplementedError('A configuration parameter with more than %d characters is not supported!', buf_len)
         return buf.value
+
     @property
     def Configuring(self):
         return lib.PyProducer_IsConfiguring(c_void_p(self.obj))
+
     @Configuring.setter
     def Configuring(self, value):
         if value:
             # try to set configured state, otherwise set error state
             if not lib.PyProducer_SetConfigured(c_void_p(self.obj)):
-             lib.PyProducer_SetError(c_void_p(self.obj))
+                lib.PyProducer_SetError(c_void_p(self.obj))
         else:
             # if we set configured to 'false' there has been an error
             lib.PyProducer_SetError(c_void_p(self.obj))
@@ -93,64 +121,73 @@ class PyProducer(object):
     @property
     def StartingRun(self):
         return lib.PyProducer_IsStartingRun(c_void_p(self.obj))
+
     @StartingRun.setter
     def StartingRun(self, value):
         if value:
             # try to set running state/send BORE, otherwise set error state
             if not lib.PyProducer_SendBORE(c_void_p(self.obj)):
-             lib.PyProducer_SetError(c_void_p(self.obj))
+                lib.PyProducer_SetError(c_void_p(self.obj))
         else:
             # if we set this property to 'false' there has been an error
             lib.PyProducer_SetError(c_void_p(self.obj))
+
     @property
     def StoppingRun(self):
         return lib.PyProducer_IsStoppingRun(c_void_p(self.obj))
+
     @StoppingRun.setter
     def StoppingRun(self, value):
         if value:
             # try to set stopped state/send EORE, otherwise set error state
             if not lib.PyProducer_SendEORE(c_void_p(self.obj)):
-             lib.PyProducer_SetError(c_void_p(self.obj))
+                lib.PyProducer_SetError(c_void_p(self.obj))
         else:
             # if we set this property to 'false' there has been an error
             lib.PyProducer_SetError(c_void_p(self.obj))
+
     @property
     def Terminating(self):
         return lib.PyProducer_IsTerminating(c_void_p(self.obj))
+
     @property
     def Error(self):
         return lib.PyProducer_IsError(c_void_p(self.obj))
 
 
-
 ##########################################
-lib.PyTluProducer_SendEvent.argtypes = [c_void_p,c_uint, c_long,c_char_p]
-lib.PyTluProducer_SendEventExtraInfo.argtypes = [c_void_p,c_uint, c_long,c_char_p,c_char_p,c_char_p]
+lib.PyTluProducer_SendEvent.argtypes = [c_void_p, c_uint, c_long, c_char_p]
+lib.PyTluProducer_SendEventExtraInfo.argtypes = [c_void_p, c_uint, c_long, c_char_p, c_char_p, c_char_p]
+
+
 class PyTluProducer(object):
-    def __init__(self,rcaddr = "tcp://localhost:44000"):
-        lib.PyTluProducer_new.restype = c_void_p # Needed
+    def __init__(self, rcaddr="tcp://localhost:44000"):
+        lib.PyTluProducer_new.restype = c_void_p  # Needed
         self.obj = lib.PyTluProducer_new(create_string_buffer(rcaddr))
-    def SendEvent(self,data):
 
-        lib.PyTluProducer_SendEvent(c_void_p(self.obj),data[0],data[1],create_string_buffer(str(data[2])))
+    def SendEvent(self, data):
 
-    def SendEventExtraInfo(self, data,particles,scalers):
+        lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])))
+
+    def SendEventExtraInfo(self, data, particles, scalers):
 
         lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])),
                                     create_string_buffer(str(particles)), create_string_buffer(str(scalers)))
 
-    def SendEventList(self, data_list,particles,scalers):
-        if len(data_list)==0:
+    def SendEventList(self, data_list, particles, scalers):
+        if len(data_list) == 0:
             print("got empty list")
             return
         for data in data_list[:-1]:
             lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])))
-        data=data_list[-1]
+        data = data_list[-1]
         lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])),
                                     create_string_buffer(str(particles)), create_string_buffer(str(scalers)))
+
     def GetRunNumber(self):
         return lib.PyTluProducer_GetRunNumber(c_void_p(self.obj))
-    def GetConfigParameter(self, item,default=None):
+
+    def GetConfigParameter(self, item, default=None):
         buf_len = 1024
         buf = create_string_buffer(buf_len)
         str_len = lib.PyTluProducer_GetConfigParameter(c_void_p(self.obj), create_string_buffer(item), buf, buf_len)
@@ -165,12 +202,13 @@ class PyTluProducer(object):
     @property
     def Configuring(self):
         return lib.PyTluProducer_IsConfiguring(c_void_p(self.obj))
+
     @Configuring.setter
     def Configuring(self, value):
         if value:
             # try to set configured state, otherwise set error state
             if not lib.PyTluProducer_SetConfigured(c_void_p(self.obj)):
-             lib.PyTluProducer_SetError(c_void_p(self.obj))
+                lib.PyTluProducer_SetError(c_void_p(self.obj))
         else:
             # if we set configured to 'false' there has been an error
             lib.PyTluProducer_SetError(c_void_p(self.obj))
@@ -178,59 +216,56 @@ class PyTluProducer(object):
     @property
     def StartingRun(self):
         return lib.PyTluProducer_IsStartingRun(c_void_p(self.obj))
+
     @StartingRun.setter
     def StartingRun(self, value):
         if value:
             # try to set running state/send BORE, otherwise set error state
             if not lib.PyTluProducer_SendBORE(c_void_p(self.obj)):
-             lib.PyTluProducer_SetError(c_void_p(self.obj))
+                lib.PyTluProducer_SetError(c_void_p(self.obj))
         else:
             # if we set this property to 'false' there has been an error
             lib.PyTluProducer_SetError(c_void_p(self.obj))
+
     @property
     def StoppingRun(self):
         return lib.PyTluProducer_IsStoppingRun(c_void_p(self.obj))
+
     @StoppingRun.setter
     def StoppingRun(self, value):
         if value:
             # try to set stopped state/send EORE, otherwise set error state
             if not lib.PyTluProducer_SendEORE(c_void_p(self.obj)):
-             lib.PyTluProducer_SetError(c_void_p(self.obj))
+                lib.PyTluProducer_SetError(c_void_p(self.obj))
         else:
             # if we set this property to 'false' there has been an error
             lib.PyTluProducer_SetError(c_void_p(self.obj))
+
     @property
     def Terminating(self):
         return lib.PyTluProducer_IsTerminating(c_void_p(self.obj))
+
     @property
     def Error(self):
         return lib.PyTluProducer_IsError(c_void_p(self.obj))
 ##########################################
 
 
-
-
-
-
-
-
-
-
-
-
 class PyDataCollector(object):
-    def __init__(self,name = "", rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001", runnumberfile="../data/runnumber.dat"):
-        lib.PyDataCollector_new.restype = c_void_p # Needed
+    def __init__(self, name="", rcaddr="tcp://localhost:44000", listenaddr="tcp://44001", runnumberfile="../data/runnumber.dat"):
+        lib.PyDataCollector_new.restype = c_void_p  # Needed
         self.obj = lib.PyDataCollector_new(create_string_buffer(name),
-                                           create_string_buffer(rcaddr), 
+                                           create_string_buffer(rcaddr),
                                            create_string_buffer(listenaddr),
                                            create_string_buffer(runnumberfile))
 
+
 class PyLogCollector(object):
-    def __init__(self,name = "", rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001", loglevel="INFO"):
-        lib.PyDataCollector_new.restype = c_void_p # Needed
-        self.obj = lib.PyLogCollector_new(create_string_buffer(rcaddr), 
+    def __init__(self, name="", rcaddr="tcp://localhost:44000", listenaddr="tcp://44001", loglevel="INFO"):
+        lib.PyDataCollector_new.restype = c_void_p  # Needed
+        self.obj = lib.PyLogCollector_new(create_string_buffer(rcaddr),
                                           create_string_buffer(listenaddr),
                                           create_string_buffer(loglevel))
+
     def SetStatus(self, loglevel):
         lib.PyLogCollector_SetStatus(c_void_p(self.obj), create_string_buffer(loglevel))
