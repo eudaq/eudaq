@@ -36,6 +36,7 @@ class kpixPyProducer(pyeudaq.Producer):
         self.outfile = None
         self.runcount = None
         self.root = None
+        self.triggermode = False
 
     def __enter__(self):
         print("__enter__")
@@ -60,16 +61,22 @@ class kpixPyProducer(pyeudaq.Producer):
     def DoConfigure(self):
         print ('DoConfigure')
 
-        self.kpixconf= self.GetConfigItem("KPIX_CONF_FILE")
-        self.runcount= int(self.GetConfigItem("RUN_COUNT"))
+        if self.GetConfigItem("KPIX_CONF_FILE"):
+            self.kpixconf= self.GetConfigItem("KPIX_CONF_FILE")
+        
+        if self.GetConfigItem("RUN_COUNT"):
+            self.runcount= int(self.GetConfigItem("RUN_COUNT"))
 
+        if self.GetConfigItem("KPIX_TRIGGER_MODE"):
+            self.triggermode= self.GetConfigItem("KPIX_TRIGGER_MODE")
+        
         kpixout = self.GetConfigItem("KPIX_OUT_FILE")
         if os.path.isdir(kpixout):
             self.outfile = os.path.abspath(datetime.datetime.now().strftime(f"{kpixout}/Run_%Y%m%d_%H%M%S.dat"))
         else:
             self.outfile = os.path.abspath(datetime.datetime.now().strftime(f"/scratch/data/Run_%Y%m%d_%H%M%S.dat"))
         print (f"write kpix outfile to {self.outfile}")
-        
+
         if self.root:
             print (" I do have DESY root opened already")
         else:
@@ -82,61 +89,78 @@ class kpixPyProducer(pyeudaq.Producer):
         
     def DoStopRun(self):        
         print ('DoStopRun')
-        self.is_running = 0
         self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
         self.root.DataWriter.open.set(False)
         self.is_running=0
-        print(f'Ending Run')
+        print(f'DoStopRun: Ending Run')
             
     def DoReset(self):        
         print ('DoReset')
+        if self.root:
+            self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+            self.root.DataWriter.open.set(False)
+            print(f'DoReset: Ending Run')
+ 
         self.is_running = 0
-
+        
     def RunLoop(self):
         print ("Start of RunLoop in kpixPyProducer")
 
-        with KpixDaq.DesyTrackerRoot(pollEn=False, ip=self.ip, debug=self.debug) as self.root:
+        with KpixDaq.DesyTrackerRoot(pollEn=False, ip=self.ip, debug=self.debug) as root:
+            print (root)
+            self.root = root
+            
+            if self.root:
+                print (" runloop : I do have DESY root opened now")
+                print (self.root)
+            else:
+                print ("No DESY root currently opened.")
+            
             print ('Reading all')
-            self.root.ReadAll()
-            self.root.waitOnUpdate()
+            root.ReadAll()
+            root.waitOnUpdate()
 
             # Print the version info
-            self.root.DesyTracker.AxiVersion.printStatus()
+            root.DesyTracker.AxiVersion.printStatus()
 
             #fi     
-            self.root.DataWriter.dataFile.setDisp(self.outfile)
-            self.root.DataWriter.open.set(True)
+            root.DataWriter.dataFile.setDisp(self.outfile)
+            root.DataWriter.open.set(True)
             print(f'Opening data file: {self.outfile}')
             
             print("Hard Reset")
-            self.root.HardReset()
+            root.HardReset()
             print("Count Reset")
-            self.root.CountReset()
+            root.CountReset()
 
             print('Writing initial configuration')
-            self.root.LoadConfig(self.kpixconf)
-            self.root.ReadAll()
-            self.root.waitOnUpdate()
+            root.LoadConfig(self.kpixconf)
+            root.ReadAll()
+            root.waitOnUpdate()
             
             print (f"KPiX configured from {self.kpixconf}")
             if self.runcount:
-                self.root.DesyTrackerRunControl.MaxRunCount.set(self.runcount)
+                root.DesyTrackerRunControl.MaxRunCount.set(self.runcount)
 
-            # # connect kpix udp data stream to EUDAQ @ Jun 18
-            # dataline = root.udp.application(dest=1)
-            # #fp = KpixDaq.KpixStreamInfo() # mq added
-            # fp = EuDataStream() # mq 
-            # fp.setEudaq(self)
-            # pyrogue.streamTap(dataline, fp)
+            # connect kpix udp data stream to EUDAQ @ Jun 18
+            dataline = root.udp.application(dest=1)
+            #fp = KpixDaq.KpixStreamInfo() # mq added
+            fp = EuDataStream() # mq 
+            fp.setEudaq(self)
+            pyrogue.streamTap(dataline, fp)
             
-            self.root.DesyTrackerRunControl.runState.setDisp('Running')
-            self.root.DesyTrackerRunControl.waitStopped()
-            self.root.DataWriter.open.set(False)
+            root.DesyTrackerRunControl.runState.setDisp('Running')
+            root.DesyTrackerRunControl.waitStopped()
+            root.DataWriter.open.set(False)
             self.is_running=0
             print(f'runloop: Ending Run')
       
 
             print ("Ended: kpixDAQ root is going to be killed.")
+
+            print ("self.root will be None.")
+            self.root = None
+            
         # fi- with statement
             
         print ("End of RunLoop in kpixPyProducer")
