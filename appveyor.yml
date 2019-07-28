@@ -74,6 +74,7 @@ cache:
   
 init:
 # The following line enables the remote desktop connection and show the connection information.
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 - ps: >-
     Switch (${env:build_type})
     {
@@ -112,7 +113,8 @@ init:
       }
       "standard" {
         $env:BUILD_AHCAL="OFF"
-        $env:BUILD_BIFAHCAL="OFF"
+     
+   $env:BUILD_BIFAHCAL="OFF"
         $env:BUILD_TESTING="OFF"
         $env:BUILD_WITH_QT4="OFF"
         $env:BUILD_allproducer="OFF"
