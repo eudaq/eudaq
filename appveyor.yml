@@ -7,20 +7,24 @@ branches:
   only:
   - feature-CI-v1.x-dev
 
-# set clone depth
+# set clone depth to minimum in order to increase speed
 clone_depth: 1
 
-  # platform: 
-  #   - x86 
-  #   - x64
-
 # comments on options:
+# ROOT6 is currently only x86 compatible (x64 and arm planned)
+# ROOT6 works only with VS2019 and higher
+# ROOT5 is only x86 compatible
+# VS2019 appveyor image has currently no Qt pre-installed
 # BIFAHCAL: Requires cactus and does not compile properly on Windows
-# cmspixel: Required pxar compiles on Windows but there are some minor problems afterwards
-# ROOT6 only with x86 for the moment
-# ROOT6 only with VS2019 and higher
-# ROOT5 only with x86
-# VS2019 has currently not Qt pre-installed
+# CMSPIXEL: Required pxar compiles on Windows but there are some minor problems afterwards
+
+# current build strategy:
+# Differentiation of standard / library only build
+
+# How to install QT:
+# https://salsa.debian.org/debian/wireshark/blob/debian/master/tools/qt-installer-windows.qs
+# https://git.kaidan.im/lnj/qli-installer
+
 environment:
   INSTALL_AFS: no
   INSTALL_ROOT: no
@@ -29,19 +33,10 @@ environment:
   INSTALL_QT_IF_NOT_PREINSTALLED: no
   matrix:      
     - build_type: standard
-      compiler_version: VS2017
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      platform: x86
-      root_flavour: 5     
-    - build_type: library_only
-      compiler_version: VS2017
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      platform: x64           
-    - build_type: library_only
       compiler_version: VS2019
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x86      
-    - build_type: library_only
+    - build_type: standard
       compiler_version: VS2019
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x64
