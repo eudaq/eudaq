@@ -245,7 +245,7 @@ install:
             Write-Host("Downloading file for Qt installation.");	
             Start-FileDownload 'http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe';
             $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win32_msvc2017";
-            Start-Process "qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script appveyor/qt-installer-windows.qs" -Wait;
+            Start-Process ".\qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script appveyor/qt-installer-windows.qs" -Wait -NoNewWindow;
           } } else {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64";
           $env:GENERATOR="-G `"Visual Studio 16 2019`" -A x64"
@@ -253,7 +253,7 @@ install:
             Write-Host("Downloading file for Qt installation.");	
             Start-FileDownload 'http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe';
             $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win64_msvc2017_64";
-            Start-Process "C:\\qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script C://projects/eudaq/appveyor/qt-installer-windows.qs" -Wait;
+            Start-Process ".\qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script C://projects/eudaq/appveyor/qt-installer-windows.qs" -Wait -NoNewWindow;
           }           
         };
       choco install nsis -pre;
