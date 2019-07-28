@@ -73,8 +73,6 @@ cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\tinyxml'  
   
 init:
-# The following line enables the remote desktop connection and show the connection information.
-- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 - ps: >-
     Switch (${env:build_type})
     {
@@ -198,6 +196,9 @@ init:
     }
 
 install:
+
+# The following line enables the remote desktop connection and show the connection information.
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - ps: >-
     Write-Host ${env:APPVEYOR_BUILD_WORKER_IMAGE};
