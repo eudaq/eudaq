@@ -111,8 +111,7 @@ init:
       }
       "standard" {
         $env:BUILD_AHCAL="OFF"
-     
-   $env:BUILD_BIFAHCAL="OFF"
+        $env:BUILD_BIFAHCAL="OFF"
         $env:BUILD_TESTING="OFF"
         $env:BUILD_WITH_QT4="OFF"
         $env:BUILD_allproducer="OFF"
