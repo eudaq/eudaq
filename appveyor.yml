@@ -36,10 +36,7 @@ environment:
       compiler_version: VS2019
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x86      
-    - build_type: standard
-      compiler_version: VS2019
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      platform: x64
+
   
 
   # matrix:
@@ -182,7 +179,14 @@ init:
         break
       }
     };
-    
+
+    If ((${env:PLATFORM} -eq "x64")) {
+      $env:INSTALL_ROOT="no";
+      $env:BUILD_root="OFF";
+      $env:BUILD_offlinemon="OFF";
+      $env:BUILD_onlinemon="OFF"      
+    }
+
     If ((${env:BUILD_root} -eq "ON") -or (${env:BUILD_onlinemon} -eq "ON") -or (${env:BUILD_offlinemon} -eq "ON")) {
       $env:INSTALL_ROOT="yes";
     }
@@ -238,8 +242,7 @@ install:
           If (("$env:SETUP_QT" -eq "yes") -and ("$env:INSTALL_QT_IF_NOT_PREINSTALLED" -eq "yes")) {
             Write-Host("Downloading file for Qt installation.");	
             Start-FileDownload 'http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe';
-            $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win32_msvc2019";
-            $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'));
+            $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win32_msvc2017";
             Start-Process "qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script appveyor/qt-installer-windows.qs" -Wait;
           } } else {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64";
@@ -247,7 +250,7 @@ install:
           If (("$env:SETUP_QT" -eq "yes") -and ("$env:INSTALL_QT_IF_NOT_PREINSTALLED" -eq "yes")) { 
             Write-Host("Downloading file for Qt installation.");	
             Start-FileDownload 'http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe';
-            $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win64_msvc2019_64";
+            $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win64_msvc2017_64";
             Start-Process "C:\\qt-unified-windows-x86-online.exe" -ArgumentList "--verbose --script C://projects/eudaq/appveyor/qt-installer-windows.qs" -Wait;
           }           
         };
