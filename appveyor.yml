@@ -34,6 +34,7 @@ environment:
   matrix:      
     - build_type: standard
       compiler_version: VS2019
+      root_flavour: 6
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x86      
 
