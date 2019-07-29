@@ -307,6 +307,7 @@ before_build:
     If (${env:INSTALL_ROOT} -eq "yes") {
       $env:ROOTSYS="C:\root"
       $env:PATH="${env:ROOTSYS}\bin;${env:PATH}"
+      $env:ROOT_DIR="C:\root\cmake"
       Switch (${env:compiler_version})
       {
         "VS2013" {
