@@ -133,7 +133,7 @@ init:
         $env:BUILD_palpidefs="OFF"
         $env:BUILD_pixelmanproducer="OFF"
         $env:BUILD_python="ON"
-        $env:BUILD_root="ON"
+        $env:BUILD_root="OFF"
         $env:BUILD_rpi_controller="OFF"
         $env:BUILD_runsplitter="OFF"
         $env:BUILD_taki="OFF"
