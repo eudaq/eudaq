@@ -246,7 +246,7 @@ install:
             Start-FileDownload 'http://download.qt.io/official_releases/online_installers/qt-unified-windows-x86-online.exe';
             $env:QT_INSTALLER_VERSION_STRING="qt.qt5.5130.win32_msvc2017";
             .\qt-unified-windows-x86-online.exe --verbose --script appveyor/qt-installer-windows.qs | Out-Null;
-            .\appveyor\Invoke-CmdScript "C:\Qt\5.13.0\msvc2017\bin\qtenv2.bat";
+            appveyor\Invoke-CmdScript.ps1 "C:\Qt\5.13.0\msvc2017\bin\qtenv2.bat";
           } } else {
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64";
           $env:GENERATOR="-G `"Visual Studio 16 2019`" -A x64"
