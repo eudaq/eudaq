@@ -28,21 +28,21 @@ public:
 	bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
 	static const uint32_t m_id_factory = eudaq::cstr2hash("KpixRawEvent");
 	
-  void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle, bool isSelfTrig ) const;
-  std::tuple<int, int> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
+	void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle, bool isSelfTrig ) const;
+	std::tuple<int, int> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
 	
 private:
 	int getStdPlaneID(uint kpix) const;
-  
+	
 	unordered_map<uint, uint> _lkpix2strip = kpix_left();
 	unordered_map<uint, uint> _rkpix2strip = kpix_right();
 	bool                      _pivot = false; // for StdPlane class which is designed for Mimosa;
-  
+	
 };
 
 namespace{
-  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
-    Register<kpixRawEvent2StdEventConverter>(kpixRawEvent2StdEventConverter::m_id_factory);
+	auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
+		Register<kpixRawEvent2StdEventConverter>(kpixRawEvent2StdEventConverter::m_id_factory);
 }
 
 bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
@@ -187,10 +187,10 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 }
 
 std::tuple<int, int> kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample,
-								 std::vector<double>   vec_ExtTstamp,
-								 bool isSelfTrig) 
-const{
-  /*
+                                                                 std::vector<double>   vec_ExtTstamp,
+                                                                 bool isSelfTrig) 
+	const{
+	/*
     usage: 
     - decode the 2 * 32bit kpix [sample]
     - return tuple with positive kpix id, otherwise kpix id is negative
