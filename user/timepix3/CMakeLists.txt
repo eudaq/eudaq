@@ -14,8 +14,8 @@ endif()
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
+# Packages required for the producer. If not present, only the data converter is built
 FIND_PACKAGE(SPIDR)
-FIND_PACKAGE(ROOT REQUIRED)
 FIND_PACKAGE(XercesC)
 
 add_subdirectory(module)
