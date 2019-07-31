@@ -3,7 +3,7 @@
 RPCPORT=44000
 
 # Start Run Control
-xterm -T "Run Control" -e 'euRun -n kpixRunControl' &
+xterm -T "Run Control" -e 'euRun' &
 sleep 2 
 
 # Start Logger
@@ -18,21 +18,12 @@ sleep 1
 # Start TLU Producer
 xterm -T "AidaTluProducer" -e 'euCliProducer -n AidaTluProducer -t aida_tlu -r tcp://${RUNCONTROLIP}:${RPCPORT}' & 
 
-# Start Kpix DataCollector
-xterm -T "Data Collector KPiX" -e 'euCliCollector -n kpixDataCollector -t kpixDC -r tcp://${RUNCONTROLIP}:${RPCPORT}'&
-sleep 1
-
-# Start Kpix Producer
-python3 ${EUDAQ}/user/aidastrip/python/kpixPyProducer.py &
-sleep 1
 
 # Start NI Producer locally connect to LV via TCP/IP
 xterm -T "NI/Mimosa Producer" -e 'euCliProducer -n NiProducer -t ni_mimosa -r tcp://${NIIP}:${RPCPORT}' &
 sleep 1
 
-# Start PI Stage
-xterm -T "PI Stage" -e 'euCliProducer -n PIStageProducer -t Stage ' &
-sleep 1
-
 # OnlineMonitor
-xterm -T "Online Monitor" -e 'StdEventMonitor -t StdEventMonitor -r tcp://${RUNCONTROLIP}' & 
+#xterm -T "Online Monitor" -e 'StdEventMonitor -t StdEventMonitor -r tcp://${RUNCONTROLIP}' & 
+
+xterm -T "PI Stage" -e 'euCliProducer -n PIStageProducer -t Stage ' &
