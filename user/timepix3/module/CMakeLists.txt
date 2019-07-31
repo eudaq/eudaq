@@ -1,10 +1,19 @@
+LINK_DIRECTORIES(${SPIDR_LIB_PATH})
 INCLUDE_DIRECTORIES(include ${SPIDR_INCLUDE_DIR} ${ROOT_INCLUDE_DIRS})
-aux_source_directory(src MODULE_SRC)
 
-add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} ${SPIDR_LIB} ${XercesC_LIBRARY} ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
+LIST(APPEND MODULE_SRC src/Timepix3Event2StdEventConverter.cc)
 
-install(TARGETS
+IF(FOUND_SPIDR AND FOUND_XercesC)
+  LIST(APPEND MODULE_SRC src/Timepix3Config.cxx src/Timepix3Producer.cxx)
+  SET(ext_libraries "libSpidrTpx3Lib.so" "libxerxes-c.so")
+ELSE()
+  MESSAGE(WARNING "Timepix3 Producer is NOT built because SPIDR and/or Xerces-C have not been found")
+ENDIF()
+
+ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
+TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_LCIO_LIBRARY} ${ext_libraries})
+
+INSTALL(TARGETS
   ${EUDAQ_MODULE}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
