@@ -12,4 +12,4 @@ FIND_LIBRARY(SPIDR_LIB NAMES "SpidrTpx3Lib" HINTS "/usr/lib" "${SPIDRLIBS}" "$EN
 MESSAGE(STATUS "-- SPIDR include at ${SPIDR_INCLUDE_DIR} -- Found")
 MESSAGE(STATUS "-- SPIDR library at ${SPIDR_LIB} -- Found")
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SPIDR REQUIRED_VARS SPIDR_LIB SPIDR_INCLUDE_DIR FAIL_MESSAGE "Could not find SPIDR, make sure all necessary components are compiled and that the variable SPIDRPATH points to the installation location:\n$ export SPIDRPATH=/your/path/to/SPIDR\n")
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(SPIDR REQUIRED_VARS SPIDR_LIB SPIDR_INCLUDE_DIR FAIL_MESSAGE "Could not find SPIDR, make sure all necessary components are compiled and that the variable SPIDRPATH points to the installation location:\n\n\t$ export SPIDRPATH=/your/path/to/SPIDR\n\n")
