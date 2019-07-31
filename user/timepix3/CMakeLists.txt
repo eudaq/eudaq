@@ -15,7 +15,7 @@ endif()
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
 FIND_PACKAGE(SPIDR)
-FIND_PACKAGE(ROOT)
+FIND_PACKAGE(ROOT REQUIRED)
 FIND_PACKAGE(XercesC)
 
 add_subdirectory(module)
