@@ -211,13 +211,13 @@ bool WienerProducer::Power(std::string channels, bool switchon){
 
     std::string res = exec(cmd.c_str());
 
-    std::string tomatch = "outputRampDown";
-    if (switchon) tomatch = "outputRampOn";
+    std::string status = "outputRampDown";
+    if (switchon) status = "outputRampOn";
     
     while (true){
       std::this_thread::sleep_for(2s);
       std::cout << "I am checking status!" << std::endl;
-      bool notfinish = checkstatus(chan, "outputRampUp"); 
+      bool notfinish = checkstatus(chan, status); 
       if (!notfinish) break;
     }
     update_curr(channels);
