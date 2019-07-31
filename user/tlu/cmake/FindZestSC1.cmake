@@ -42,7 +42,7 @@ ELSE(WIN32)
     HINTS "${extern_lib_path}/Inc" ${arg})
 ENDIF(WIN32)
 
-if (WIN32) 
+if (WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1
       HINTS "${extern_lib_path}/Lib/amd64"
@@ -59,14 +59,14 @@ if (WIN32)
   endif()
 elseif (UNIX)
     #MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
-    
+
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
 	HINTS "${extern_lib_path}/macosx/Lib" ${arg})
     else()
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-	HINTS "${extern_lib_path}/Lib" 
-	      "${extern_lib_path}/linux/Lib" 
+	HINTS "${extern_lib_path}/Lib"
+	      "${extern_lib_path}/linux/Lib"
         ${arg})
     endif()
 else()
@@ -91,13 +91,13 @@ if (NOT ZESTSC1_LIBRARY)
 	copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1/linux" ${CMAKE_CURRENT_LIST_DIR}/../extern/ZestSC1)
     else()
 	copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1/macosx" ${CMAKE_CURRENT_LIST_DIR}/../extern/ZestSC1)
-    endif()    
+    endif()
     else()
     copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1" ${CMAKE_CURRENT_LIST_DIR}/../extern)
     endif()
     find_zestsc1_in_extern(NO_DEFAULT_PATH)
   ELSE()
-      MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+      MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software. Converter will be built anyway.")
       return()
   ENDIF()
 endif()

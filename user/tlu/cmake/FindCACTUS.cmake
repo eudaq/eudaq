@@ -16,15 +16,15 @@ if(NOT CACTUS_UHAL_HEADER_FOUND)
   file(GLOB_RECURSE CACTUS_UHAL_HEADER_FOUND
     /opt/cactus/*/uhal.hpp)
 endif()
-  
+
 if(NOT CACTUS_UHAL_HEADER_FOUND)
-    message(STATUS "No CACTUS/uhal header: AIDA TLU is NOT to be built. Please refer to the documentation on how to obtain the software.")
+    message(STATUS "No CACTUS/uhal header: AIDA TLU Producer is NOT to be built. Please refer to the documentation on how to obtain the software. Converter will be built anyway.")
   return()
 endif()
 
 message(STATUS "Check for CACTUS header uhal.hpp: ${CACTUS_UHAL_HEADER_FOUND} -- ok")
 
-# using the 1st found file uhal.hpp.  
+# using the 1st found file uhal.hpp.
 list(GET CACTUS_UHAL_HEADER_FOUND 0 CACTUS_UHAL_HEADER_FILE)
 get_filename_component(CACTUS_UHAL_HEADER_FILE ${CACTUS_UHAL_HEADER_FILE} ABSOLUTE)
 
