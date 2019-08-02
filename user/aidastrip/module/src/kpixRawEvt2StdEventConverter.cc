@@ -1,10 +1,10 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 //--> ds
-#include "Data_v1.h"
-#include "XmlVariables_v1.h"
-#include "KpixEvent_v1.h"
-#include "KpixSample_v1.h"
+#include "Data.h"
+#include "XmlVariables.h"
+#include "KpixEvent.h"
+#include "KpixSample.h"
 
 class kpixRawEvt2StdEventConverter: public eudaq::StdEventConverter{
 public:

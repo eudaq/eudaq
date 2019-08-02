@@ -12,7 +12,7 @@
 #include <fstream>
 #include <unordered_map>
 
-#include "KpixEvent_v1.h"
+#include "KpixEvent.h"
 //#include "KpixSample_v1.h"
 #include "lycorisRootAnalyzer.h"
 
