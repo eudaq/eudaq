@@ -1,8 +1,5 @@
-if(WIN32)
-  find_package(ROOT REQUIRED)
-else()
-  find_package(ROOT REQUIRED)
-endif()
+find_package(ROOT REQUIRED COMPONENTS Core Gui)
+
 
 INCLUDE(${ROOT_USE_FILE})
 
@@ -52,6 +49,9 @@ ADD_EXECUTABLE(OnlineMon.exe ${OnlineMon_SOURCES} ${OnlineMon_DICTIONARY})
 TARGET_INCLUDE_DIRECTORIES(OnlineMon.exe PRIVATE 
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/monitors/onlinemon/include>
 )
+
+message(${ROOT_LIBRARIES})
+
 TARGET_LINK_LIBRARIES(OnlineMon.exe EUDAQ ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
 #get_target_property(OnlineMon_EUDAQ_HEADERS EUDAQ INCLUDE_DIRECTORIES)
