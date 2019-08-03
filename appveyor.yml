@@ -411,7 +411,7 @@ after_build:
     Push-AppveyorArtifact *.zip;    
     If (${env:build_type} -eq "standard" -Or ${env:build_type} -eq "full") {
        cpack -C Debug -G NSIS;
-       $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'));
+       # $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'));
        Push-AppveyorArtifact *.exe;    
     };
 
