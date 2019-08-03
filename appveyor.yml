@@ -37,8 +37,10 @@ environment:
       root_flavour: 6
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x86      
-
-  
+    - build_type: library_only
+      compiler_version: VS2019
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      platform: x64      
 
   # matrix:
   # basic idea - in order to save time and have a full coverage at the same time:
@@ -120,7 +122,7 @@ init:
         $env:BUILD_altroUSB="OFF"
         $env:BUILD_cmspixel="OFF"
         $env:BUILD_depfet="OFF"
-        $env:BUILD_drs4="ON"
+        $env:BUILD_drs4="OFF"
         $env:BUILD_fortis="OFF"
         $env:BUILD_gui="ON"
         $env:BUILD_main="ON"
@@ -128,19 +130,19 @@ init:
         $env:BUILD_mimoroma="OFF"
         $env:BUILD_ni="ON"
         $env:BUILD_nreader="OFF"
-        $env:BUILD_offlinemon="OFF"
+        $env:BUILD_offlinemon="ON"
         $env:BUILD_onlinemon="ON"
         $env:BUILD_palpidefs="OFF"
         $env:BUILD_pixelmanproducer="OFF"
-        $env:BUILD_python="ON"
+        $env:BUILD_python="OFF"
         $env:BUILD_root="OFF"
         $env:BUILD_rpi_controller="OFF"
-        $env:BUILD_runsplitter="OFF"
+        $env:BUILD_runsplitter="ON"
         $env:BUILD_taki="OFF"
         $env:BUILD_timepix3="OFF"
         $env:BUILD_timepixdummy="OFF"
         $env:BUILD_tlu="ON"
-        $env:IGNORE_KNOWN_ISSUES="ON"
+        $env:IGNORE_KNOWN_ISSUES="OFF"
         $env:SETUP_QT="yes"
         $env:INSTALL_QT_IF_NOT_PREINSTALLED="yes"
         break
@@ -405,6 +407,7 @@ after_build:
     cpack -C Debug -G ZIP;
     Push-AppveyorArtifact *.zip;    
     cpack -C Debug -G NSIS;
+    $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'));
     Push-AppveyorArtifact *.exe;    
 
 #artifacts:
