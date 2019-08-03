@@ -1,8 +1,10 @@
-FIND_PACKAGE( ROOT REQUIRED)
+FIND_PACKAGE( ROOT REQUIRED COMPONENTS Core Gui)
 
 SET(OfflineMon_name OfflineMonitor)
 
-INCLUDE_DIRECTORIES( . inc ${ROOT_INCLUDE_DIR} ../../extern/rapidxml-1.13)
+INCLUDE(${ROOT_USE_FILE})
+
+INCLUDE_DIRECTORIES( . inc ${ROOT_INCLUDE_DIRS} ../../extern/rapidxml-1.13)
 
 SET (OfflineMon_SOURCES
   src/OfflineMonitor.cxx

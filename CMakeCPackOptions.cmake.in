@@ -75,7 +75,10 @@ if(CPACK_GENERATOR MATCHES "DEB")
 endif()
 
 if(CPACK_GENERATOR MATCHES "NSIS")
-
+  
+  # DOCUMENTATION
+  # https://nsis.sourceforge.io/Add_uninstall_information_to_Add/Remove_Programs
+  
   #should be included automatically but does not work otherwise 
   include(CPackComponent)
   

@@ -74,6 +74,7 @@ cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\libusb-win32'
   - '%APPVEYOR_BUILD_FOLDER%\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b'
   - '%APPVEYOR_BUILD_FOLDER%\extern\tinyxml'  
+  - '%APPVEYOR_BUILD_FOLDER%\extern\rapidxml-1.13'    
   
 init:
 - ps: >-
@@ -383,6 +384,8 @@ build_script:
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")) {Write-Host ("Reusing cached libusb-win32 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Downloading libusb-win32 from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; $zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip $zipargument;  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32-bin-1.2.6.0") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")}
 
+- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\rapidxml-1.13")) {Write-Host ("Reusing cached rapidxml " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\rapidxml-1.13" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Downloading rapidxml from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://downloads.sourceforge.net/project/rapidxml/rapidxml/rapidxml%201.13/rapidxml-1.13.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; $zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip $zipargument;  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\rapidxml-1.13") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\rapidxml-1.13")}
+
 - ps: If (${env:BUILD_cmspixel} -eq "ON") { Write-Host("Installing pxarcore as required by cmspixel producer"); . ".\appveyor\install_pxar.ps1" }
 
 - ps: If (${env:BUILD_palpidefs} -eq "ON") { Write-Host("Installing palpidefs drivers as required by palpidefs producer"); . ".\appveyor\install_tinyxml.ps1";. ".\appveyor\install_palpidefs_driver.ps1" }
@@ -406,9 +409,11 @@ after_build:
 - ps: >-
     cpack -C Debug -G ZIP;
     Push-AppveyorArtifact *.zip;    
-    cpack -C Debug -G NSIS;
-    $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'));
-    Push-AppveyorArtifact *.exe;    
+    If (${env:build_type} -eq "standard" -Or ${env:build_type} -eq "full") {
+       cpack -C Debug -G NSIS;
+       $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'));
+       Push-AppveyorArtifact *.exe;    
+    };
 
 #artifacts:
 #  - path: %APPVEYOR_BUILD_FOLDER%/eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
