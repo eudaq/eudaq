@@ -403,9 +403,9 @@ after_build:
 #- cmd: dir %APPVEYOR_BUILD_FOLDER%
 - ps: >-
     cpack -C Debug -G ZIP;
-    Push-AppveyorArtifact *.zip    
+    Push-AppveyorArtifact *.zip;    
     cpack -C Debug -G NSIS;
-    Push-AppveyorArtifact *.exe    
+    Push-AppveyorArtifact *.exe;    
 
 #artifacts:
 #  - path: %APPVEYOR_BUILD_FOLDER%/eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
