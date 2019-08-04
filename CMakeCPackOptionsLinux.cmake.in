@@ -1,0 +1,110 @@
+# This file is configured at cmake time, and loaded at cpack time.
+# To pass variables to cpack from cmake, they must be configured
+# in this file.
+if(CPACK_GENERATOR MATCHES "DEB")
+
+  # https://cmake.org/cmake/help/v3.7/module/CPackDeb.html
+  #set(CPACK_SET_DESTDIR "OFF")
+ 
+  #should be included automatically but does not work otherwise 
+  include(CPackComponent)
+  
+  set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/eudaq")
+    
+  set(CPACK_DEB_COMPONENT_INSTALL "ON")   
+  set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS)
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+  set(CPACK_DEBIAN_PACKAGE_DEBUG YES)
+  
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "EUDAQ collaboration <github.com/eudaq/eudaq>")
+  set(CPACK_DEBIAN_PACKAGE_NAME "EUDAQ")
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT) 
+  set(CPACK_DEBIAN_PACKAGE_VERSION)
+  set(CPACK_DEBIAN_PACKAGE_RELEASE)
+
+  
+  #main library  
+  cpack_add_component(MAIN_LIB DISPLAY_NAME "core library" DESCRIPTION "core library")
+
+  #main library c bindings: requires eudaq library
+  cpack_add_component(MAIN_PYTHON DISPLAY_NAME "core library python binding" DESCRIPTION "core library python binding" DISABLED DEPENDS MAIN_LIB)
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_TLU_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")    
+
+  #main exe: requires eudaq library
+  cpack_add_component(MAIN_EXE DISPLAY_NAME "core executables" DESCRIPTION "core executables" DISABLED DEPENDS MAIN_LIB)
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_TLU_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")    
+  
+  #main gui exe: requires eudaq library
+  cpack_add_component(GUI DISPLAY_NAME "gui core executables" DESCRIPTION "gui core executables"  DISABLED DEPENDS MAIN_LIB)
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_TLU_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")  
+  
+  #offline monitor: requires eudaq library and root
+  cpack_add_component(OFFLINEMON DISPLAY_NAME "offline monitor" DESCRIPTION "offline monitor" DISABLED DEPENDS MAIN_LIB)
+  set( CPACK_DEBIAN_OFFLINEMON_PACKAGE_CONTROL_EXTRA "@PROJECT_SOURCE_DIR@/cmake/cpack/debian/scripts/offlinemon/preinst" )  
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_TLU_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")  
+  
+  #online monitor: requires eudaq library and root
+  cpack_add_component(ONLINEMON DISPLAY_NAME "online monitor" DESCRIPTION "online monitor" DISABLED DEPENDS MAIN_LIB)
+  set( CPACK_DEBIAN_ONLINEMON_PACKAGE_CONTROL_EXTRA "@PROJECT_SOURCE_DIR@/cmake/cpack/debian/scripts/onlinemon/preinst" )  
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_TLU_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")    
+
+  #TLU producer: requires eudaq library
+  cpack_add_component(TLU DISPLAY_NAME "TLU producer" DESCRIPTION "TLU producer" DISABLED DEPENDS MAIN_LIB)
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_TLU_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")  
+
+  #NI producer: requires eudaq library
+  cpack_add_component(NI DISPLAY_NAME "NI producer" DESCRIPTION "NI producer" DISABLED DEPENDS MAIN_LIB)
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_NI_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")  
+
+  #RPICONTROLLER producer: requires eudaq library
+  cpack_add_component(RPICONTROLLER DISPLAY_NAME "RPi producer" DESCRIPTION "Rpi producer" DISABLED DEPENDS MAIN_LIB)
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_RPICONTROLLER_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")  
+
+  #CMSPIXEL producer: requires eudaq library
+  cpack_add_component(CMSPIXEL DISPLAY_NAME "CMSpix producer" DESCRIPTION "CMSpix producer" DISABLED DEPENDS MAIN_LIB)
+  # should be set auomatically from the DEPENDS but either it does not work yet or I am doing somehing wrong
+  set(CPACK_DEBIAN_CMSPIXEL_PACKAGE_DEPENDS "eudaq-main_lib (=@EUDAQ_LIB_VERSION_STRIPPED@)")    
+endif()
+
+if(CPACK_GENERATOR MATCHES "NSIS")
+  
+  # DOCUMENTATION
+  # https://nsis.sourceforge.io/Add_uninstall_information_to_Add/Remove_Programs
+  
+  #should be included automatically but does not work otherwise 
+  include(CPackComponent)
+  
+  #set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}\\\\hw.bmp")
+  set(CPACK_NSIS_MODIFY_PATH ON)
+  set(CPACK_NSIS_MUI_ICON "@CMAKE_CURRENT_SOURCE_DIR@/images/eudaq_logo.ico")
+  set(CPACK_NSIS_MUI_UNIICON "@CMAKE_CURRENT_SOURCE_DIR@/images/eudaq_logo.ico")  
+  
+  cpack_add_component(MAIN_LIB DISPLAY_NAME "core library" DESCRIPTION "core library" GROUP CORE INSTALL_TYPES MINIMUM TYPICAL ALL)
+  cpack_add_component(MAIN_PYTHON DISPLAY_NAME "core library python binding" DESCRIPTION "core library python binding" DISABLED GROUP CORE DEPENDS MAIN_LIB INSTALL_TYPES TYPICAL ALL)
+  cpack_add_component(MAIN_EXE DISPLAY_NAME "core executables" DESCRIPTION "core executables" DISABLED GROUP CORE DEPENDS MAIN_LIB INSTALL_TYPES ALL TYPICAL)
+  cpack_add_component(GUI DISPLAY_NAME "gui core executables" DESCRIPTION "gui core executables"  DISABLED GROUP CORE DEPENDS MAIN_LIB INSTALL_TYPES ALL TYPICAL)
+
+  cpack_add_component(OFFLINEMON DISPLAY_NAME "offline monitor" DESCRIPTION "offline monitor" DISABLED GROUP MONITORS DEPENDS MAIN_LIB INSTALL_TYPES ALL TYPICAL)
+  cpack_add_component(ONLINEMON DISPLAY_NAME "online monitor" DESCRIPTION "online monitor" DISABLED GROUP MONITORS DEPENDS MAIN_LIB INSTALL_TYPES ALL TYPICAL)
+
+  cpack_add_component(TLU DISPLAY_NAME "TLU producer" DESCRIPTION "TLU producer" DISABLED GROUP PRODUCERS DEPENDS MAIN_LIB INSTALL_TYPES TYPICAL ALL)
+  cpack_add_component(NI DISPLAY_NAME "NI producer" DESCRIPTION "NI producer" DISABLED GROUP PRODUCERS DEPENDS MAIN_LIB INSTALL_TYPES TYPICAL ALL)
+  cpack_add_component(RPICONTROLLER DISPLAY_NAME "RPi producer" DESCRIPTION "Rpi producer" DISABLED GROUP PRODUCERS DEPENDS MAIN_LIB INSTALL_TYPES ALL)
+  cpack_add_component(CMSPIXEL DISPLAY_NAME "CMSpix producer" DESCRIPTION "CMSpix producer" DISABLED GROUP PRODUCERS DEPENDS MAIN_LIB INSTALL_TYPES ALL)
+
+  cpack_add_component_group(PRODUCERS DISPLAY_NAME "producers" DESCRIPTION "DAQ specific producers which provide a data stream to EUDAQ.")
+  cpack_add_component_group(MONITORS DISPLAY_NAME "monitoring" DESCRIPTION "Monitoring programs providing graphical feedback during and after data taking.")
+  cpack_add_component_group(CORE DISPLAY_NAME "core" DESCRIPTION "Core library and executables.")
+
+  cpack_add_install_type(ALL DISPLAY_NAME "All")
+  cpack_add_install_type(TYPICAL DISPLAY_NAME "Typical")
+  cpack_add_install_type(MINIMUM DISPLAY_NAME "Minimum")
+endif()

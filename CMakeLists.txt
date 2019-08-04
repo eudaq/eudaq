@@ -270,7 +270,15 @@ MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )
 MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )
 
 # Set everything for packaging with CPACK
-include (CMakeCPack.cmake)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  include (CMakeCPackWindows.cmake)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+  include (CMakeCPackDarwin.cmake)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  include (CMakeCPackLinux.cmake)
+else()
+  message("System ${CMAKE_SYSTEM_NAME} not prepared for Cpack" )
+endif()
 
 include(CMakePackageConfigHelpers)
 
