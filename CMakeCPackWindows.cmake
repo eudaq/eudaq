@@ -3,8 +3,8 @@
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "EUDAQ is distributed data acquisition sysem")
 set(CPACK_PACKAGE_VENDOR "EUDAQ collaboration")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}\README.md")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}\LICENSE.md")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
 set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
 set(CPACK_PACKAGE_VERSION "${EUDAQ_LIB_VERSION_STRIPPED}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
@@ -101,6 +101,7 @@ endif()
 
 # Set the options file that needs to be included inside CMakeCPackOptions.cmake
 set(QT_DIALOG_CPACK_OPTIONS_FILE ${CMake_BINARY_DIR}/Source/QtDialog/QtDialogCPack.cmake)
+
 configure_file("CMakeCPackOptionsWindows.cmake.in" "CMakeCPackOptionsWindows.cmake" @ONLY)
 set(CPACK_PROJECT_CONFIG_FILE "CMakeCPackOptionsWindows.cmake")
 
