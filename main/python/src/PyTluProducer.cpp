@@ -36,15 +36,18 @@ class PyTluProducer : public eudaq::Producer {
       ev.SetTag("trigger",trigger);
       eudaq::DataSender::SendEvent(ev);
     }
-    void SendEventExtraInfo(unsigned event, long timestamp,const std::string & trigger, const std::string & particles, const std::string & Scaler) {
+    void SendEventExtraInfo(unsigned event, long timestamp,const std::string & trigger, const std::string & particles, const std::string & status, const std::string & scalers) {
       TLUEvent ev(m_run, event, timestamp);
 
       m_events=trigger;
       m_particles=particles;
-      m_status=Scaler;
+      m_status=status;
+      m_timestamp=std::to_string(timestamp / 40000000.0);  // convert 40 MHz timestamp to seconds
+      m_scalers=scalers;
       ev.SetTag("trigger",trigger);
       ev.SetTag("PARTICLES",particles);
-      ev.SetTag("STATUS",Scaler);
+      ev.SetTag("STATUS",status);
+      ev.SetTag("SCALER",scalers);
       eudaq::DataSender::SendEvent(ev);
     }
 
@@ -115,6 +118,8 @@ class PyTluProducer : public eudaq::Producer {
       m_connectionstate.SetTag("TRIG", m_events);
       m_connectionstate.SetTag("PARTICLES", m_particles);
       m_connectionstate.SetTag("STATUS", m_status);
+      m_connectionstate.SetTag("TIMESTAMP", m_timestamp);
+      m_connectionstate.SetTag("SCALER", m_scalers);
     }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
       std::cout << "[PyTluProducer] Unrecognised: (" << cmd.length() << ") " << cmd;
@@ -168,7 +173,7 @@ private:
   enum PyState {Init, Configuring, Configured, StartingRun, Running, StoppingRun, Stopped, Terminating, Resetting, Error};
   PyState m_internalstate; 
   unsigned m_run, m_evt;
-  std::string m_events,m_particles,m_status;
+  std::string m_events, m_particles, m_status, m_timestamp, m_scalers;
   eudaq::Configuration * m_config;
 };
 
@@ -177,7 +182,7 @@ extern "C" {
   DLLEXPORT PyTluProducer* PyTluProducer_new( char *rcaddress){return new PyTluProducer(std::string(rcaddress));}
   // functions for I/O
   DLLEXPORT void PyTluProducer_SendEvent(PyTluProducer *pp, unsigned event, long timestamp, char* trigger){pp->SendEvent(event,timestamp,std::string(trigger));}
-  DLLEXPORT void PyTluProducer_SendEventExtraInfo(PyTluProducer *pp, unsigned event, long timestamp, char* trigger, char* particles, char* Scaler){pp->SendEventExtraInfo(event,timestamp,std::string(trigger),std::string(particles),std::string(Scaler));}
+  DLLEXPORT void PyTluProducer_SendEventExtraInfo(PyTluProducer *pp, unsigned event, long timestamp, char* trigger, char* particles, char* status, char* scalers){pp->SendEventExtraInfo(event,timestamp,std::string(trigger),std::string(particles),std::string(status), std::string(scalers));}
 
   DLLEXPORT int PyTluProducer_GetConfigParameter(PyTluProducer *pp, char *item, char *buf, int buf_len){
     std::string value = pp->GetConfigParameter(std::string(item));
