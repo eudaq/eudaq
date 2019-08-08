@@ -10,9 +10,11 @@ endif()
 include_directories( ${LIBXML2_INCLUDE_DIR} )
 #include_directories(${KPIX_INCLUDE_DIR})
 include_directories(. include)
-include_directories(${ROOT_INCLUDE_DIR})
+
+#include_directories(${ROOT_INCLUDE_DIR})
 if(ROOT_USE_FILE)
   include(${ROOT_USE_FILE})
+  message("[exe] root include dir is ${ROOT_USE_FILE}")
 endif()
 
 ##-- Setup global variables:

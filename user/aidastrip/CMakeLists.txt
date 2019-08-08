@@ -6,8 +6,13 @@ message(STATUS "Its LIBXML2_INCLUDE_DIR is ${LIBXML2_INCLUDE_DIR}")
 find_package(kpix QUIET)
 set(KPIX_LIBRARY kpix::kpix)
 
+find_package(ROOT QUIET)
+if(ROOT_FOUND)
+  list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+endif(ROOT_FOUND)
+
 ##-- OPT: Compile AIDA strip?
-cmake_dependent_option(USER_AIDASTRIP_BUILD "build AIDA strip" ON "LibXml2_FOUND;kpix_FOUND" OFF)
+cmake_dependent_option(USER_AIDASTRIP_BUILD "build AIDA strip" ON "LibXml2_FOUND;kpix_FOUND;ROOT_FOUND" OFF)
 
 
 if(NOT USER_AIDASTRIP_BUILD)
@@ -15,7 +20,6 @@ if(NOT USER_AIDASTRIP_BUILD)
   return()
 endif()
 message(STATUS "user/aidastrip is to be built (USER_AIDASTRIP_BUILD=ON)")
-
 
   
 ##-- Global Preparation:
@@ -33,9 +37,7 @@ add_subdirectory(module)
 ## 2) ROOT analyzer/converter dependent on ROOT:
 
 ##- In case sometimes cmake did not find ROOT:
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
-find_package(ROOT QUIET)
 cmake_dependent_option(USER_AIDASTRIP_EXE "build aux. AIDASTRIP executables (requires ROOT)." ON
   "ROOT_FOUND" OFF)
 

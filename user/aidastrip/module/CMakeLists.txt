@@ -1,6 +1,12 @@
 ##-- add include directories:
-include_directories(include)
+include_directories(. include)
 include_directories( ${LIBXML2_INCLUDE_DIR} )
+
+include_directories(${ROOT_INCLUDE_DIRS})
+message("module: ${ROOT_INCLUDE_DIRS}")
+if(ROOT_USE_FILE)
+  include(${ROOT_USE_FILE})
+endif()
 
 ##-- add all cxx files from source directory:
 aux_source_directory(src MODULE_SRC)
@@ -21,10 +27,10 @@ if (USER_AIDASTRIP_KPIX_OLD)
 
   add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
   target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
-  ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES}
-  -L${KPIX_LIB_DIR} -lkpix
-  ${LIBXML2_LIBRARIES}
-  )
+	${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES}
+	-L${KPIX_LIB_DIR} -lkpix
+	${LIBXML2_LIBRARIES}
+	)
 
   ##--- set run path of the dynamic kpix lib
   set_target_properties(${EUDAQ_MODULE}
@@ -35,6 +41,7 @@ else()
 
   add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
   target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
+	${ROOT_LIBRARIES}
 	${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES}
 	${KPIX_LIBRARY} # this handles the IMPORTED targets auto and lets embed compiler flags, include paths, library dependencies
 	${LIBXML2_LIBRARIES}
