@@ -11,8 +11,7 @@ namespace{
   Register<CLICpix2Event2StdEventConverter>(CLICpix2Event2StdEventConverter::m_id_factory);
 }
 
-bool CLICpix2Event2StdEventConverter::t0_seen_(false);
-bool CLICpix2Event2StdEventConverter::second_t0_seen_(false);
+size_t CLICpix2Event2StdEventConverter::t0_seen_(0);
 uint64_t CLICpix2Event2StdEventConverter::last_shutter_open_(0);
 bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
@@ -131,28 +130,24 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Check for a sane shutter:
   if(shutter_open > shutter_close) {
     EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
-    // should this also be interpreted as second T0?
-    second_t0_seen_ = true; // ??
     return false;
   }
 
   // Check if there was a T0:
-  if(!t0_seen_) {
-    // Last shutter open had higher timestamp than this one:
-    t0_seen_ = (last_shutter_open_ > shutter_open);
-  } else if(!second_t0_seen_){
-    second_t0_seen_ = (last_shutter_open_ > shutter_open);
+  if(last_shutter_open_ > shutter_open) {
+      t0_seen_++;
   }
   last_shutter_open_ = shutter_open;
 
   // FIXME - hardcoded configuration:
   bool drop_before_t0 = true;
   // No T0 signal seen yet, dropping frame:
-  if(drop_before_t0 && !t0_seen_) {
+  if(drop_before_t0 && (t0_seen_==0)) {
     return false;
   }
   // drop everything after second t0 has been seen:
-  if(second_t0_seen_) {
+  if(t0_seen_>1) {
+      EUDAQ_WARN("Detected T0" << t0_seen_ << " times.");
       return false;
   }
 
