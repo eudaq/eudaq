@@ -131,6 +131,8 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Check for a sane shutter:
   if(shutter_open > shutter_close) {
     EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
+    // should this also be interpreted as second T0?
+    second_t0_seen_ = true; // ??
     return false;
   }
 
