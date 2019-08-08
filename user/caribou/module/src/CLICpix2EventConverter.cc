@@ -12,6 +12,7 @@ namespace{
 }
 
 bool CLICpix2Event2StdEventConverter::t0_seen_(false);
+bool CLICpix2Event2StdEventConverter::second_t0_seen_(false);
 uint64_t CLICpix2Event2StdEventConverter::last_shutter_open_(0);
 bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
@@ -137,6 +138,8 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   if(!t0_seen_) {
     // Last shutter open had higher timestamp than this one:
     t0_seen_ = (last_shutter_open_ > shutter_open);
+  } else if(!second_t0_seen_){
+    second_t0_seen_ = (last_shutter_open_ > shutter_open);
   }
   last_shutter_open_ = shutter_open;
 
@@ -145,6 +148,10 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // No T0 signal seen yet, dropping frame:
   if(drop_before_t0 && !t0_seen_) {
     return false;
+  }
+  // drop everything after second t0 has been seen:
+  if(second_t0_seen_) {
+      return false;
   }
 
   // Decode the data:
