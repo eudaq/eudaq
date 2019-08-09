@@ -10,6 +10,7 @@ unordered_map<uint, uint> kpix_left(){
   m1.insert(make_pair(6,916));
   m1.insert(make_pair(7,917));
   m1.insert(make_pair(8,918));
+	std::cout<<"TEST DEBUGGING OUTPUT KPIXMAP" << std::endl;
   m1.insert(make_pair(9,919));
   m1.insert(make_pair(10,9999));
   m1.insert(make_pair(11,610));
