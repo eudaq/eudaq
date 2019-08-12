@@ -41,7 +41,7 @@
 
 // Template for useful funcs for this class:
 double smallest_time_diff( vector<double> ext_list, int int_value);
-void timestamp_histo_test(char* outStr);
+std::string timestamp_histo_test();
 
 // Real Class start:
 class kpixRawEvent2StdEventConverter: public eudaq::StdEventConverter{
@@ -83,21 +83,20 @@ namespace{
 
 kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 	//createMap("/home/lorenzo/data/real_calib/calib_normalgain.txt");
-	//_file = new TFile("esx.root","RECREATE");
-	_histo = new TH1F("histo","",10e3,0,10e6);
+
+
+	auto outRoot =	timestamp_histo_test();
+    outRoot = "./TEST_HISTO/TEST_" + outRoot + "_histo.root";
+
+     _file =new TFile(outRoot.c_str(),"recreate");
+	_histo = new TH1F("histo","",10e3,0,10e3);
+	TH1::AddDirectory(kFALSE);
 }
-kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){/*
-	stringstream tmp;
-	  string outRoot;
-	  tmp.str("");
-	char myStr[80];
-	  timestamp_histo_test(myStr);
-	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
-	  outRoot = tmp.str();
-	  TFile* _file =new TFile(outRoot.c_str(),"recreate");
+kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){
 	//_file = new TFile("esx.root","RECREATE");
-	  _histo->Write();
-	  _file->Close();*/
+	_file->cd();
+	_histo->Write();
+	_file->Close();
 }
 
 
@@ -267,12 +266,9 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 		);    // use bucket as input for frame_num
 
 	  //Fill test array
-std::cout << "HITCHARGE" << hitCharge << std::endl;
+	  std::cout << "HITCHARGE" << hitCharge << std::endl;
 	  _histo->Fill(hitCharge);
-std::cout << "ADDRESS" << _histo << std::endl;
-	//TCanvas c1;
-	//_histo->Draw();
-	//c1.SaveAs("/home/lorenzo/GitHub/eudaq/build/canv.pdf");
+	  std::cout << "ADDRESS" << _histo << std::endl;
 	
 	  histo_test->Fill(hitCharge);
 
@@ -280,17 +276,17 @@ std::cout << "ADDRESS" << _histo << std::endl;
 
 
 	  //~Loco 09/08 histogram written here
-	  stringstream tmp;
-	  string outRoot;
-	  tmp.str("");
-char myStr[80];
-	  timestamp_histo_test(myStr);
-	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
-	  outRoot = tmp.str();
-	  TFile* file =new TFile(outRoot.c_str(),"recreate");
-	  histo_test->SetStats(0);
-	  histo_test->Write();
-	  file->Close();
+// 	  stringstream tmp;
+// 	  string outRoot;
+// 	  tmp.str("");
+// char myStr[80];
+// 	  timestamp_histo_test(myStr);
+// 	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
+// 	  outRoot = tmp.str();
+// 	  TFile* file =new TFile(outRoot.c_str(),"recreate");
+// 	  histo_test->SetStats(0);
+// 	  histo_test->Write();
+// 	  file->Close();
 
 	  
 /*
@@ -484,23 +480,26 @@ double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID,
 //~LoCo 12/09
 //------ code for file timestamps:
 
-void timestamp_histo_test(char* outStr){
+std::string timestamp_histo_test(){
+	
+	timeval curTime;
+	gettimeofday(&curTime, NULL);
+	int milli = curTime.tv_usec / 1000;
+	//unsigned long micro = curTime.tv_sec*(uint64_t)1000000+curTime.tv_usec;
+	
+	char buffer [80];
+	
+	strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", localtime(&curTime.tv_sec));
+	
+	char currentTime[84] = "";
+	sprintf(currentTime, "%s_%d", buffer, milli);
+	
+	// for(int i=0; i < 84; ++i){
+	//   outStr[i] = currentTime[i];
+	// }
 
-  timeval curTime;
-  gettimeofday(&curTime, NULL);
-  int milli = curTime.tv_usec / 1000;
-  //unsigned long micro = curTime.tv_sec*(uint64_t)1000000+curTime.tv_usec;
-
-  char buffer [80];
-
-  strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", localtime(&curTime.tv_sec));
-
-  char currentTime[84] = "";
-  sprintf(currentTime, "%s_%d", buffer, milli);
-
-  for(int i=0; i < 84; ++i){
-    outStr[i] = currentTime[i];
-  }
+	return std::string(currentTime);
+  
 }
 
 //------ code for time diff:
