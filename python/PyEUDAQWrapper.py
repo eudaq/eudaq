@@ -5,11 +5,12 @@ import numpy
 import os.path
 
 if sys.version_info[0] > 2:
-    def create_string_buffer(string):
-        # Python 3 ctype bug
-        # https://stackoverflow.com/questions/7237133/create-string-buffer-throwing-error-typeerror-str-bytes-expected-instead-of-str
-        string = string.encode('utf-8')
-        return ctypes.create_string_buffer(string)
+    def create_string_buffer(init):
+        if not isinstance(init, int):
+            # Python 3 ctype bug
+            # https://stackoverflow.com/questions/7237133/create-string-buffer-throwing-error-typeerror-str-bytes-expected-instead-of-str
+            init = init.encode('utf-8')
+        return ctypes.create_string_buffer(init)
 else:
     def create_string_buffer(string):
         return ctypes.create_string_buffer(string)
@@ -157,7 +158,7 @@ class PyProducer(object):
 
 ##########################################
 lib.PyTluProducer_SendEvent.argtypes = [c_void_p, c_uint, c_long, c_char_p]
-lib.PyTluProducer_SendEventExtraInfo.argtypes = [c_void_p, c_uint, c_long, c_char_p, c_char_p, c_char_p]
+lib.PyTluProducer_SendEventExtraInfo.argtypes = [c_void_p, c_uint, c_long, c_char_p, c_char_p, c_char_p, c_char_p]
 
 
 class PyTluProducer(object):
@@ -166,15 +167,13 @@ class PyTluProducer(object):
         self.obj = lib.PyTluProducer_new(create_string_buffer(rcaddr))
 
     def SendEvent(self, data):
-
         lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])))
 
-    def SendEventExtraInfo(self, data, particles, scalers):
+    def SendEventExtraInfo(self, data, particles, status, scalers):
+        lib.PyTluProducer_SendEventExtraInfo(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])),
+                                             create_string_buffer(str(particles)), create_string_buffer(str(status)), create_string_buffer(str(scalers)))
 
-        lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])),
-                                    create_string_buffer(str(particles)), create_string_buffer(str(scalers)))
-
-    def SendEventList(self, data_list, particles, scalers):
+    def SendEventList(self, data_list, particles, status):
         if len(data_list) == 0:
             print("got empty list")
             return
@@ -182,7 +181,7 @@ class PyTluProducer(object):
             lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])))
         data = data_list[-1]
         lib.PyTluProducer_SendEvent(c_void_p(self.obj), data[0], data[1], create_string_buffer(str(data[2])),
-                                    create_string_buffer(str(particles)), create_string_buffer(str(scalers)))
+                                    create_string_buffer(str(particles)), create_string_buffer(str(status)))
 
     def GetRunNumber(self):
         return lib.PyTluProducer_GetRunNumber(c_void_p(self.obj))
