@@ -17,9 +17,12 @@
 #include <vector>
 #include <math.h> // fabs
 
-
+#include "TH1.h"
 
 #include "kpix_left_and_right.h"
+//~LoCo 08/08 histogram (TODO: optimize)
+//#include <TH1.h>
+#define maxlength 5000
 
 
 //~LoCo 08/08 histogram (TODO: optimize)
@@ -38,7 +41,6 @@ void timestamp_histo_test(char* outStr);
 class kpixRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
 	kpixRawEvent2StdEventConverter();
-	~kpixRawEvent2StdEventConverter();
 	
 	bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
 	static const uint32_t m_id_factory = eudaq::cstr2hash("KpixRawEvent");
@@ -47,17 +49,16 @@ public:
 	std::map<std::pair<int,int>, double> createMap(const char* filename);//~LoCo 05/08
 
   	//~LoCo 02/08: added third output to parseSample, ADC value. 05/08: fourth, bucket=0.
-  	std::tuple<int, int, int, uint, double> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
+  	std::tuple<int, int, int, uint> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
 	
-	//~LoCo 07/08 ConvertADC2fC: called inside parseFrame. 09/08 inside parseSample
-	double ConvertADC2fC( int channelID, int planeID, int hitVal ) const;
+	//~LoCo 07/08 ConvertADC2fC: called inside parseFrame. 08/08 added array as fourth input
+	int ConvertADC2fC( int hitX, int planeID, int hitVal, double* array1_169 ) const;
 
 private:
 	int getStdPlaneID(uint kpix) const;
 	int getStdKpixID(uint hitX, int planeID) const;
 
-	TFile* _file;
-	TH1F* _histo;
+
 	unordered_map<uint, uint> _lkpix2strip = kpix_left();
 	unordered_map<uint, uint> _rkpix2strip = kpix_right();
 
@@ -73,26 +74,8 @@ namespace{
 }
 
 kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
-	//createMap("/home/lorenzo/data/real_calib/calib_normalgain.txt");
-	//_file = new TFile("esx.root","RECREATE");
-	_histo = new TH1F("histo","",10e3,0,10e6);
+	createMap("/home/lorenzo/data/real_calib/calib_normalgain.txt");
 }
-kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){/*
-	stringstream tmp;
-	  string outRoot;
-	  tmp.str("");
-	char myStr[80];
-	  timestamp_histo_test(myStr);
-	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
-	  outRoot = tmp.str();
-	  TFile* _file =new TFile(outRoot.c_str(),"recreate");
-	//_file = new TFile("esx.root","RECREATE");
-	  _histo->Write();
-	  _file->Close();*/
-}
-
-
-// ~CONVERTING~
 
 bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
 	
@@ -155,7 +138,9 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	  if (Calib_map.empty()) std::cout << "OH NOOOOO" << std::endl;
 
 	  //JUST A TEST
-	  std::cout << "The slope is " << Calib_map.at(std::make_pair(2,1022)) << std::endl;
+	  std::cout << "The slope is " << Calib_map.at(std::make_pair(2,1117)) << std::endl;
+	  //JUST A TEST TO SEE WHEN IT DOES !NOT! WORK
+	  //std::cout << Calib_map.at(std::make_pair(1,1079)) << std::endl;
 
 	  // /* read kpix data */
 	  cycle.copy(kpixEvent, size_of_kpix);
@@ -219,9 +204,6 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  printf("[test] I am a test! --\n");
 	  std::cout << "Number of planes : "<< d2->NumPlanes() << std::endl;
 
-	  //~LoCo 12/08 create test histogram
-	  TH1F *histo_test = new TH1F("histo_test","",10e3,0,10e3);
-
 	  printf("[dev] kpix ID,  channel, strip,  bucket,   ADC\n");
 	  for (is=0; is<cycle.count(); is++){
 	  sample = cycle.sample(is);
@@ -231,11 +213,9 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  // parseSample: you need to return the Plane ID (based on kpix ID), and the fired strips positions for parseFrame to add to the Plane. TODO
 	  auto hit     = parseSample(sample, vec_ExtTstamp, isSelfTrig);
 	  if ( std::get<3>(hit) != 0 ) continue; // ignore bucket != 0 sample
-	  if ( std::get<4>(hit) < 0 ) continue; // ignore charges < 0 sample
 	  auto planeID = std::get<0>(hit);
 	  auto hitX    = std::get<1>(hit);
 	  auto hitVal  = std::get<2>(hit);
-	  auto hitCharge = std::get<4>(hit);
 	  
 	  if ( planeID < 0 ) continue; // ignore non-DATA sample
 	  if ( hitX == 9999 ) continue; // ignore not connected strips
@@ -257,37 +237,13 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 		1     // T pix
 		);    // use bucket as input for frame_num
 
-	  //Fill test array
-std::cout << "HITCHARGE" << hitCharge << std::endl;
-	  _histo->Fill(hitCharge);
-std::cout << "ADDRESS" << _histo << std::endl;
-	//TCanvas c1;
-	//_histo->Draw();
-	//c1.SaveAs("/home/lorenzo/GitHub/eudaq/build/canv.pdf");
-	
-	  histo_test->Fill(hitCharge);
+	  //~LoCo 08/08 histogram
+	  double hitValues_chan0[maxlength] = {0};//Istogramma per il kpix
 
+	  //~Loco 07/08
+	  ConvertADC2fC(hitX, planeID, hitVal, hitValues_chan0);
+	  		
 	  }// - sample loop over
-
-
-	  //~Loco 09/08 histogram written here
-	  stringstream tmp;
-	  string outRoot;
-	  tmp.str("");
-char myStr[80];
-	  timestamp_histo_test(myStr);
-	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
-	  outRoot = tmp.str();
-	  TFile* file =new TFile(outRoot.c_str(),"recreate");
-	  histo_test->SetStats(0);
-	  histo_test->Write();
-	  file->Close();
-
-	  
-/*
-	  //~LoCo 09/08 file
-	  TFile* file = new TFile("esx.root","RECREATE");
-	  */
 
 	  // debug:
 	  auto &plane = d2->GetPlane(0);
@@ -296,10 +252,8 @@ char myStr[80];
 	  return;
 }
 
-// ~PARSESAMPLE~
-
 //~LoCo 02/08: added third output to parseSample, the ADC value. 05/08: fourth, bucket=0.
-std::tuple<int, int, int, uint, double> kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample,
+std::tuple<int, int, int, uint> kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample,
 								 std::vector<double>   vec_ExtTstamp,
 								 bool isSelfTrig) 
 const{
@@ -319,11 +273,11 @@ const{
   
   if (sample->getEmpty()){ 
     printf ("empty sample\n");
-    return std::make_tuple(-1, strip, value, bucket, hitCharge);
+    return std::make_tuple(-1, strip, value, bucket);
   }
   
   type    = sample->getSampleType();
-  if (type != KpixSample::Data) return std::make_tuple(-1, strip, value, bucket, hitCharge); // if not DATA, return
+  if (type != KpixSample::Data) return std::make_tuple(-1, strip, value, bucket); // if not DATA, return
   
   kpix    = sample->getKpixAddress();
   channel = sample->getKpixChannel();
@@ -337,7 +291,7 @@ const{
   // Cut- selftrig and extTrig time diff:
   double trig_diff = smallest_time_diff(vec_ExtTstamp, tstamp);
   if (  trig_diff < 0.0 && trig_diff > 3.0 )
-    return std::make_tuple(-1, strip, value, bucket, hitCharge);
+    return std::make_tuple(-1, strip, value, bucket);
   
   if (strip != 9999)
     std::cout<<"\t"
@@ -353,7 +307,7 @@ const{
 	  hitCharge=ConvertADC2fC(channel, kpix, value);
 
   
-  return std::make_tuple(getStdPlaneID(kpix), strip, value, bucket, hitCharge);
+  return std::make_tuple(getStdPlaneID(kpix), strip, value, bucket);
 
 }
 
@@ -371,9 +325,7 @@ int kpixRawEvent2StdEventConverter::getStdPlaneID(uint kpix) const{
   if ( kpix == 10 | kpix == 11 )  return 3; 
 }
 
-// ~GETSTDKPIXID~
-
-//~LoCo 05/08. Notice: this works only after hitX reversal. Notice: useless, probably
+//~LoCo 05/08. Notice: this works only after hitX reversal. TODO: add bool variable 'reverse' for each plane, and use that as well
 int kpixRawEvent2StdEventConverter::getStdKpixID(uint hitX, int planeID) const{
 
   if ( ( planeID == 0 ) && ( hitX <= 919 ) ) return 0;
@@ -391,8 +343,6 @@ int kpixRawEvent2StdEventConverter::getStdKpixID(uint hitX, int planeID) const{
 
 }
 
-// ~CREATEMAP~
-
 //~LoCo 05/08. File format: kpix\t channel \t bucket=0\t slope
 std::map<std::pair<int,int>, double> kpixRawEvent2StdEventConverter::createMap(const char* filename){//~LoCo 02/08: Lookup table
 		
@@ -407,7 +357,7 @@ std::map<std::pair<int,int>, double> kpixRawEvent2StdEventConverter::createMap(c
 	  int map_check1=0, map_check2=0;
 	  double map_d;
 
-	  //Create Map. ~LoCo 07/08: key is <kpix,channel ID>, value is slope
+	  //Create Map. ~LoCo 07/08: key is <kpix,strip ID (from channel ID through left and right maps)>, value is slope
 	  while ( true ) {
 		
 		map_tmp=map_a;
@@ -428,8 +378,12 @@ std::map<std::pair<int,int>, double> kpixRawEvent2StdEventConverter::createMap(c
 		if ( map_c != 0 ) continue;
 
 		//Finally can create map.
-
-			Calib_map[std::make_pair(map_a, map_b)] = map_d;
+		if ( map_a%2 == 0 ) {
+			Calib_map[std::make_pair(map_a, _rkpix2strip.at(map_b))] = map_d;
+		}
+		if ( map_a%2 != 0 ) {
+			Calib_map[std::make_pair(map_a, _lkpix2strip.at(map_b))] = map_d;
+		}
 		
 	  }
 
@@ -437,61 +391,38 @@ std::map<std::pair<int,int>, double> kpixRawEvent2StdEventConverter::createMap(c
 
 	  myfile_calib.close();
 
-	std::cout<<"TEST DEBUGGING OUTPUT CALIBMAP" << std::endl;
-
 	  return Calib_map;
 
 }
 
-// ~CONVERTADC2FC~
-
 //~LoCo 02/08: convert hitVal (ADC) to fC with Lookup table. 07/08: function to pass array with channel values
-//~LoCo 09/08 REWRITTEN: works with channel, not strip
-double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID, int hitVal ) const{
+int kpixRawEvent2StdEventConverter::ConvertADC2fC( int hitX, int planeID, int hitVal, double* array1_169 ) const{
+
+	  int conv_kpix=getStdKpixID(hitX, planeID);
+	  int conv_strip=hitX;
+	  int j1_169=0;
+	  
+	  if (planeID==0 | planeID==3 | planeID==4) conv_strip = 1839 - conv_strip;
 
 	  double hitCharge;
+std::cout << conv_kpix << "OHIOIHOA" << conv_strip << Calib_map.at(std::make_pair(conv_kpix,conv_strip)) << std::endl;
+	  if ( Calib_map.at(std::make_pair(conv_kpix,conv_strip)) > 1.0 ) {
 
-	  std::cout << kpixID << "AAA" << channelID << "BBB" << Calib_map.at(std::make_pair(kpixID,channelID)) << std::endl;
-
-	  if ( Calib_map.at(std::make_pair(kpixID,channelID)) > 1.0 ) {
-
-	  	hitCharge = hitVal/Calib_map.at(std::make_pair(kpixID,channelID));
+	  	hitCharge = hitVal/Calib_map.at(std::make_pair(conv_kpix,conv_strip));
 
 		//Check result, might comment it later
-	  	std::cout << "Conversion: kpix #" << kpixID << ", channel #" << channelID << ", hitVal " << hitVal << ", hitCharge " << hitCharge << std::endl;
+	  	std::cout << "Conversion: kpix #" << conv_kpix << ", channel #" << conv_strip << ", hitVal " << hitVal << ", hitCharge " << hitCharge << std::endl;
 
 	  }
 
 	  else {
 	  	std::cout << "!!NOTICE: channel excluded from conversion" << std::endl;
 	  }
+	  if (planeID==1 && conv_strip==169) {array1_169[j1_169]=hitCharge;j1_169++;}
 
-	  return hitCharge;
+	  return 3;
 	  
 
-}
-
-
-//~LoCo 12/09
-//------ code for file timestamps:
-
-void timestamp_histo_test(char* outStr){
-
-  timeval curTime;
-  gettimeofday(&curTime, NULL);
-  int milli = curTime.tv_usec / 1000;
-  //unsigned long micro = curTime.tv_sec*(uint64_t)1000000+curTime.tv_usec;
-
-  char buffer [80];
-
-  strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", localtime(&curTime.tv_sec));
-
-  char currentTime[84] = "";
-  sprintf(currentTime, "%s_%d", buffer, milli);
-
-  for(int i=0; i < 84; ++i){
-    outStr[i] = currentTime[i];
-  }
 }
 
 //------ code for time diff:
