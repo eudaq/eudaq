@@ -275,24 +275,19 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  }// - sample loop over
 
 
-	  //~Loco 09/08 histogram written here
-// 	  stringstream tmp;
-// 	  string outRoot;
-// 	  tmp.str("");
-// char myStr[80];
-// 	  timestamp_histo_test(myStr);
-// 	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
-// 	  outRoot = tmp.str();
-// 	  TFile* file =new TFile(outRoot.c_str(),"recreate");
-// 	  histo_test->SetStats(0);
-// 	  histo_test->Write();
-// 	  file->Close();
+	  //~Loco 09/08 histogram written here. TODO: move everything to deconstructor
+	  stringstream tmp;
+	  string outRoot;
+	  tmp.str("");
+	  char myStr[84];
+	  timestamp_histo_test(myStr);
+	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
+	  outRoot = tmp.str();
+	  TFile* file =new TFile(outRoot.c_str(),"recreate");
+	  histo_test->SetStats(0);
+	  histo_test->Write();
+	  file->Close();
 
-	  
-/*
-	  //~LoCo 09/08 file
-	  TFile* file = new TFile("esx.root","RECREATE");
-	  */
 
 	  // debug:
 	  auto &plane = d2->GetPlane(0);
@@ -378,7 +373,7 @@ int kpixRawEvent2StdEventConverter::getStdPlaneID(uint kpix) const{
 
 // ~GETSTDKPIXID~
 
-//~LoCo 05/08. Notice: this works only after hitX reversal. Notice: useless, probably
+//~LoCo 05/08. Notice: this works only after hitX reversal. TODO: remove this useless function, really just remove it
 int kpixRawEvent2StdEventConverter::getStdKpixID(uint hitX, int planeID) const{
 
   if ( ( planeID == 0 ) && ( hitX <= 919 ) ) return 0;
@@ -456,14 +451,15 @@ double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID,
 
 	  double hitCharge;
 
-	  std::cout << kpixID << "AAA" << channelID << "BBB" << Calib_map.at(std::make_pair(kpixID,channelID)) << std::endl;
+	  //TEST
+	  //std::cout << kpixID << "AAA" << channelID << "BBB" << Calib_map.at(std::make_pair(kpixID,channelID)) << std::endl;
 
 	  if ( Calib_map.at(std::make_pair(kpixID,channelID)) > 1.0 ) {
 
 	  	hitCharge = hitVal/Calib_map.at(std::make_pair(kpixID,channelID));
 
 		//Check result, might comment it later
-	  	std::cout << "Conversion: kpix #" << kpixID << ", channel #" << channelID << ", hitVal " << hitVal << ", hitCharge " << hitCharge << std::endl;
+	  	//std::cout << "Conversion: kpix #" << kpixID << ", channel #" << channelID << ", hitVal " << hitVal << ", hitCharge " << hitCharge << std::endl;
 
 	  }
 
@@ -477,26 +473,21 @@ double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID,
 }
 
 
-//~LoCo 12/09
+//~LoCo 12/09. Look: only milliseconds are needed. Note down how many milliseconds from one file to another.
 //------ code for file timestamps:
 
-std::string timestamp_histo_test(){
-	
-	timeval curTime;
-	gettimeofday(&curTime, NULL);
-	int milli = curTime.tv_usec / 1000;
-	//unsigned long micro = curTime.tv_sec*(uint64_t)1000000+curTime.tv_usec;
-	
-	char buffer [80];
-	
-	strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", localtime(&curTime.tv_sec));
-	
-	char currentTime[84] = "";
-	sprintf(currentTime, "%s_%d", buffer, milli);
-	
-	// for(int i=0; i < 84; ++i){
-	//   outStr[i] = currentTime[i];
-	// }
+void timestamp_histo_test(char* outStr, char* outStr2){
+
+  timeval curTime;
+  gettimeofday(&curTime, NULL);
+  int milli = curTime.tv_usec / 1000;
+
+  char buffer [80];
+
+  strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", localtime(&curTime.tv_sec));
+
+  char currentTime[84] = "";
+  sprintf(currentTime, "%s_%d", buffer, milli);
 
 	return std::string(currentTime);
   
