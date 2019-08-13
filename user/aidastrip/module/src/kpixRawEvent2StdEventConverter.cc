@@ -104,7 +104,7 @@ kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 	auto outRoot =  timestamp_milli_seconds();
 	auto outRoot_ped =  timestamp_milli_seconds();
 	outRoot = "./TEST_HISTO/TEST_" + outRoot + "_histo.root";
-	outRoot_ped = "./TEST_PEDESTAL/TEST_" + outRoot_ped + "_histo.root";
+	outRoot_ped = "./TEST_PEDESTAL/TEST_" + outRoot_ped + "_pedestal.root";
 
 	_file =new TFile(outRoot.c_str(),"recreate");
 	_histo = new TH1F("histo","",10e3,0,10e3);
@@ -362,9 +362,9 @@ const{
   hitCharge=ConvertADC2fC(channel, kpix, value);
 
   //~LoCo 13/08: Fill _pedestal_resolution
-  _pedestal_results[kpix][channel][bucket].push_back(3.5);
+  //_pedestal_results[kpix][channel][bucket].push_back(3.5);
   //if ( hitCharge != -1 ) FillPedRes(kpix, channel, bucket, hitCharge, _pedestal_results[kpix][channel][bucket]);
-    std::cout << "DEBUG: PEDRES" << _pedestal_results[kpix][channel][bucket].at(0) << std::endl;
+    //std::cout << "DEBUG: PEDRES" << _pedestal_results[kpix][channel][bucket].at(0) << std::endl;
 
   
   return std::make_tuple(getStdPlaneID(kpix), strip, hitCharge, bucket);
