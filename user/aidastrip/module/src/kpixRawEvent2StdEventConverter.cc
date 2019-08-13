@@ -14,6 +14,7 @@
 
 #include <map>
 #include <tuple>
+#include <array>
 #include <vector>
 #include <math.h> // fabs
 
@@ -28,6 +29,7 @@
 #include "TFile.h"
 #include "TRandom.h"
 #include "TF1.h"
+#include "TTree.h"
 #define maxlength 5000
 
 
@@ -41,7 +43,9 @@
 
 // Template for useful funcs for this class:
 double smallest_time_diff( vector<double> ext_list, int int_value);
-std::string timestamp_histo_test();
+
+//~LoCo 12/09
+std::string timestamp_milli_seconds();
 
 // Real Class start:
 class kpixRawEvent2StdEventConverter: public eudaq::StdEventConverter{
@@ -55,11 +59,14 @@ public:
 	void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle, bool isSelfTrig ) const;
 	std::map<std::pair<int,int>, double> createMap(const char* filename);//~LoCo 05/08
 
-  	//~LoCo 02/08: added third output to parseSample, ADC value. 05/08: fourth, bucket=0.
-  	std::tuple<int, int, int, uint, double> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
+  	//~LoCo 02/08: added third output to parseSample, ADC value. 05/08: fourth, bucket=0. 13/08 ADC value substituted with fC value
+  	std::tuple<int, int, double, uint> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
 	
 	//~LoCo 07/08 ConvertADC2fC: called inside parseFrame. 09/08 inside parseSample
 	double ConvertADC2fC( int channelID, int planeID, int hitVal ) const;
+
+	//~LoCo 13/08 FillPedRes(): branch of pedestal tree
+	vector<double> FillPedRes(uint kpix, uint channel, uint bucket, double hitCharge, vector<double> _PedRes) const;
 
 private:
 	int getStdPlaneID(uint kpix) const;
@@ -73,6 +80,15 @@ private:
 	//~LoCo 05/08: can call map in monitor with .at
 	std::map<std::pair<int,int>, double> Calib_map = createMap("/home/lorenzo/data/real_calib/calib_normalgain.txt");
 	bool                      _pivot = false; // for StdPlane class which is designed for Mimosa;
+
+	//~LoCo 13/08: for pedestal
+	TFile* _rFile;
+	TTree* _pedestal;
+	double _pedestal_median, _pedestal_MAD;
+	int _kpix_num, _channel_num, _bucket_num;
+	int _kpix_checking = 12;
+	int _bucket_checking = 1;
+	vector<double> _pedestal_results[12][1024][1];
 	
 };
 
@@ -82,21 +98,36 @@ namespace{
 }
 
 kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
-	//createMap("/home/lorenzo/data/real_calib/calib_normalgain.txt");
 
 
-	auto outRoot =	timestamp_histo_test();
-    outRoot = "./TEST_HISTO/TEST_" + outRoot + "_histo.root";
+	//~LoCo 12/08 Test histogram for testing
+	auto outRoot =  timestamp_milli_seconds();
+	auto outRoot_ped =  timestamp_milli_seconds();
+	outRoot = "./TEST_HISTO/TEST_" + outRoot + "_histo.root";
+	outRoot_ped = "./TEST_PEDESTAL/TEST_" + outRoot_ped + "_histo.root";
 
-     _file =new TFile(outRoot.c_str(),"recreate");
+	_file =new TFile(outRoot.c_str(),"recreate");
 	_histo = new TH1F("histo","",10e3,0,10e3);
 	TH1::AddDirectory(kFALSE);
+	_rFile = new TFile(outRoot_ped.c_str(),"recreate");
+
+	//~LoCo 13/08: Pedestal needed to check with Uwe's code
+	_pedestal = new TTree("Online_pedestal_tree", "A ROOT Tree");
+	_pedestal->Branch("Online_pedestal_median", &_pedestal_median, "Online_pedestal_median/D");
+	_pedestal->Branch("Online_kpix_num", &_kpix_num, "Online_kpix_num/I");
+	_pedestal->Branch("Online_channel_num", &_channel_num, "Online_channel_num/I:");
+	_pedestal->Branch("Online_bucket_num", &_bucket_num, "Online_bucket_num/I");
+	_pedestal->Branch("Online_pedestal_MAD", &_pedestal_MAD, "Online_pedestal_MAD/D");
 }
+
 kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){
-	//_file = new TFile("esx.root","RECREATE");
+
 	_file->cd();
 	_histo->Write();
 	_file->Close();
+	_rFile->cd();
+	_rFile->Write();
+	_rFile->Close();
 }
 
 
@@ -158,12 +189,12 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	}
 
 
-	  //~LoCo 02/08: Lookup table TEST. 05/08:
+	  //~LoCo 02/08: Lookup table TEST. 05/08: TODO: do it with EUDAQ_LOGGER
 
-	  if (Calib_map.empty()) std::cout << "OH NOOOOO" << std::endl;
+	  //if (Calib_map.empty()) std::cout << "OH NOOOOO" << std::endl;
 
 	  //JUST A TEST
-	  std::cout << "The slope is " << Calib_map.at(std::make_pair(2,1022)) << std::endl;
+	  //std::cout << "The slope is " << Calib_map.at(std::make_pair(2,1022)) << std::endl;
 
 	  // /* read kpix data */
 	  cycle.copy(kpixEvent, size_of_kpix);
@@ -227,9 +258,6 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  printf("[test] I am a test! --\n");
 	  std::cout << "Number of planes : "<< d2->NumPlanes() << std::endl;
 
-	  //~LoCo 12/08 create test histogram
-	  TH1F *histo_test = new TH1F("histo_test","",10e3,0,10e3);
-
 	  printf("[dev] kpix ID,  channel, strip,  bucket,   ADC\n");
 	  for (is=0; is<cycle.count(); is++){
 	  sample = cycle.sample(is);
@@ -239,11 +267,10 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  // parseSample: you need to return the Plane ID (based on kpix ID), and the fired strips positions for parseFrame to add to the Plane. TODO
 	  auto hit     = parseSample(sample, vec_ExtTstamp, isSelfTrig);
 	  if ( std::get<3>(hit) != 0 ) continue; // ignore bucket != 0 sample
-	  if ( std::get<4>(hit) < 0 ) continue; // ignore charges < 0 sample
+	  auto hitCharge = std::get<2>(hit);
+	  if ( hitCharge < 0 ) continue; // ignore charges < 0 sample
 	  auto planeID = std::get<0>(hit);
 	  auto hitX    = std::get<1>(hit);
-	  auto hitVal  = std::get<2>(hit);
-	  auto hitCharge = std::get<4>(hit);
 	  
 	  if ( planeID < 0 ) continue; // ignore non-DATA sample
 	  if ( hitX == 9999 ) continue; // ignore not connected strips
@@ -266,27 +293,9 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 		);    // use bucket as input for frame_num
 
 	  //Fill test array
-	  std::cout << "HITCHARGE" << hitCharge << std::endl;
 	  _histo->Fill(hitCharge);
-	  std::cout << "ADDRESS" << _histo << std::endl;
-	
-	  histo_test->Fill(hitCharge);
 
 	  }// - sample loop over
-
-
-	  //~Loco 09/08 histogram written here. TODO: move everything to deconstructor
-	  stringstream tmp;
-	  string outRoot;
-	  tmp.str("");
-	  char myStr[84];
-	  timestamp_histo_test(myStr);
-	  tmp << "./TEST_HISTO/TEST_" << myStr << "_histo.root";
-	  outRoot = tmp.str();
-	  TFile* file =new TFile(outRoot.c_str(),"recreate");
-	  histo_test->SetStats(0);
-	  histo_test->Write();
-	  file->Close();
 
 
 	  // debug:
@@ -298,8 +307,8 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 
 // ~PARSESAMPLE~
 
-//~LoCo 02/08: added third output to parseSample, the ADC value. 05/08: fourth, bucket=0.
-std::tuple<int, int, int, uint, double> kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample,
+//~LoCo 02/08: added third output to parseSample, the ADC value. 05/08: fourth, bucket=0. 13/08: removed third output ADC value, now third output is fC value
+std::tuple<int, int, double, uint> kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample,
 								 std::vector<double>   vec_ExtTstamp,
 								 bool isSelfTrig) 
 const{
@@ -314,16 +323,16 @@ const{
   uint         bucket;
   uint         value;
   double       tstamp;
-  double       hitCharge=-1;
+  double       hitCharge=-1;//~LoCo: to get ADC charge in fC
   KpixSample::SampleType type;
   
   if (sample->getEmpty()){ 
     printf ("empty sample\n");
-    return std::make_tuple(-1, strip, value, bucket, hitCharge);
+    return std::make_tuple(-1, strip, hitCharge, bucket);
   }
   
   type    = sample->getSampleType();
-  if (type != KpixSample::Data) return std::make_tuple(-1, strip, value, bucket, hitCharge); // if not DATA, return
+  if (type != KpixSample::Data) return std::make_tuple(-1, strip, hitCharge, bucket); // if not DATA, return
   
   kpix    = sample->getKpixAddress();
   channel = sample->getKpixChannel();
@@ -337,7 +346,7 @@ const{
   // Cut- selftrig and extTrig time diff:
   double trig_diff = smallest_time_diff(vec_ExtTstamp, tstamp);
   if (  trig_diff < 0.0 && trig_diff > 3.0 )
-    return std::make_tuple(-1, strip, value, bucket, hitCharge);
+    return std::make_tuple(-1, strip, hitCharge, bucket);
   
   if (strip != 9999)
     std::cout<<"\t"
@@ -349,11 +358,16 @@ const{
 	     << std::endl;
 
 
+  //~LoCo: to return fC value
+  hitCharge=ConvertADC2fC(channel, kpix, value);
 
-	  hitCharge=ConvertADC2fC(channel, kpix, value);
+  //~LoCo 13/08: Fill _pedestal_resolution
+  _pedestal_results[kpix][channel][bucket].push_back(3.5);
+  //if ( hitCharge != -1 ) FillPedRes(kpix, channel, bucket, hitCharge, _pedestal_results[kpix][channel][bucket]);
+    std::cout << "DEBUG: PEDRES" << _pedestal_results[kpix][channel][bucket].at(0) << std::endl;
 
   
-  return std::make_tuple(getStdPlaneID(kpix), strip, value, bucket, hitCharge);
+  return std::make_tuple(getStdPlaneID(kpix), strip, hitCharge, bucket);
 
 }
 
@@ -449,7 +463,7 @@ std::map<std::pair<int,int>, double> kpixRawEvent2StdEventConverter::createMap(c
 //~LoCo 09/08 REWRITTEN: works with channel, not strip
 double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID, int hitVal ) const{
 
-	  double hitCharge;
+	  double hitCharge=-1;
 
 	  //TEST
 	  //std::cout << kpixID << "AAA" << channelID << "BBB" << Calib_map.at(std::make_pair(kpixID,channelID)) << std::endl;
@@ -472,25 +486,48 @@ double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID,
 
 }
 
+// ~FILLPEDRES~
+
+//~LoCo 13/08: Fill vector double pedestal_results already existent as +++private+++
+vector<double> kpixRawEvent2StdEventConverter::FillPedRes(uint kpix, uint channel, uint bucket, double hitCharge, vector<double> _PedRes) const{
+
+	  int kpix_checking = 12;
+	  int bucket_checking = 1;
+
+	  if (bucket < bucket_checking){
+
+		if ( kpix < kpix_checking ){
+std::cout << "DEBUG: PEDRES1" << _PedRes.at(0) << std::endl;
+			_PedRes.push_back(hitCharge);
+std::cout << "DEBUG: PEDRES2" << _PedRes.at(0) << std::endl;
+		}
+	  }
+
+	  return _PedRes;
+}
 
 //~LoCo 12/09. Look: only milliseconds are needed. Note down how many milliseconds from one file to another.
 //------ code for file timestamps:
 
-void timestamp_histo_test(char* outStr, char* outStr2){
-
-  timeval curTime;
-  gettimeofday(&curTime, NULL);
-  int milli = curTime.tv_usec / 1000;
-
-  char buffer [80];
-
-  strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", localtime(&curTime.tv_sec));
-
-  char currentTime[84] = "";
-  sprintf(currentTime, "%s_%d", buffer, milli);
+std::string timestamp_milli_seconds(){
+	
+	timeval curTime;
+	gettimeofday(&curTime, NULL);
+	int milli = curTime.tv_usec / 1000;
+	//unsigned long micro = curTime.tv_sec*(uint64_t)1000000+curTime.tv_usec;
+	
+	char buffer [80];
+	
+	strftime(buffer, 80, "%Y_%m_%d_%H_%M_%S", localtime(&curTime.tv_sec));
+	
+	char currentTime[84] = "";
+	sprintf(currentTime, "%s_%d", buffer, milli);
+	
+	// for(int i=0; i < 84; ++i){
+	//   outStr[i] = currentTime[i];
+	// }
 
 	return std::string(currentTime);
-  
 }
 
 //------ code for time diff:
