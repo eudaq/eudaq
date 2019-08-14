@@ -18,8 +18,6 @@
 #include <vector>
 #include <math.h> // fabs
 
-
-
 #include "kpix_left_and_right.h"
 
 
@@ -30,6 +28,7 @@
 #include "TRandom.h"
 #include "TF1.h"
 #include "TTree.h"
+#include "TObject.h"
 #define maxlength 5000
 
 
@@ -43,7 +42,8 @@
 
 // Template for useful funcs for this class:
 double smallest_time_diff( vector<double> ext_list, int int_value);
-
+double RotateStrip(double strip, int sensor);
+	
 //~LoCo 12/09
 std::string timestamp_milli_seconds();
 
@@ -65,8 +65,8 @@ public:
 	//~LoCo 07/08 ConvertADC2fC: called inside parseFrame. 09/08 inside parseSample
 	double ConvertADC2fC( int channelID, int planeID, int hitVal ) const;
 
-	//~LoCo 13/08 FillPedRes(): array of vectors
-	void FillPedRes(uint kpix, uint channel, uint bucket, double hitCharge, vector<double> _pedestal_results[][1024][1]) const;
+	// //~LoCo 13/08 FillPedRes(): array of vectors
+	// void FillPedRes(uint kpix, uint channel, uint bucket, double hitCharge, vector<double> _pedestal_results[][1024][1]) const;
 
 private:
 	int getStdPlaneID(uint kpix) const;
@@ -83,11 +83,12 @@ private:
 
 	//~LoCo 13/08: for pedestal
 	TFile* _rFile;
-	TTree* _pedestal;
-	double _pedestal_median, _pedestal_MAD;
-	int _kpix_num, _channel_num, _bucket_num;
-	int _kpix_checking = 12;
-	int _bucket_checking = 1;
+	TTree* _pedestal_tree = nullptr;
+	//~MQ: mutable variables to be modified in const functions:
+	mutable double _pedestal_median, _pedestal_MAD;
+	mutable int _kpix_num=-1, _channel_num=-1, _bucket_num=-1 ;
+	mutable double _charge;
+	
 	vector<double> _pedestal_results[12][1024][1];
 	
 };
@@ -109,15 +110,24 @@ kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 	_file = new TFile(outRoot.c_str(),"recreate");
 	_histo = new TH1F("histo","",10e3,0,10e3);
 	TH1::AddDirectory(kFALSE);
-	_rFile = new TFile(outRoot_ped.c_str(),"recreate");
-
-	//~LoCo 13/08: Pedestal needed to check with Uwe's code
-	_pedestal = new TTree("Online_pedestal_tree", "A ROOT Tree");
-	_pedestal->Branch("Online_pedestal_median", &_pedestal_median, "Online_pedestal_median/D");
-	_pedestal->Branch("Online_kpix_num", &_kpix_num, "Online_kpix_num/I");
-	_pedestal->Branch("Online_channel_num", &_channel_num, "Online_channel_num/I:");
-	_pedestal->Branch("Online_bucket_num", &_bucket_num, "Online_bucket_num/I");
-	_pedestal->Branch("Online_pedestal_MAD", &_pedestal_MAD, "Online_pedestal_MAD/D");
+	
+	_rFile = new TFile("test_pedestal.root","update");
+	
+	//~MQ: check if there is a tree inside the rfile, if not create:
+	if(_rFile->Get("pedestal_tree")){
+		_rFile->GetObject("pedestal_tree", _pedestal_tree);
+		_pedestal_tree->SetBranchAddress("kpix_num",    &_kpix_num);
+		_pedestal_tree->SetBranchAddress("channel_num", &_channel_num);
+		_pedestal_tree->SetBranchAddress("bucket_num",  &_bucket_num);
+		_pedestal_tree->SetBranchAddress("charge",      &_charge );
+	}
+	else{
+		_pedestal_tree = new TTree("pedestal_tree", "pedestal_tree");
+		_pedestal_tree->Branch("kpix_num",    &_kpix_num,    "kpix_num/I");
+		_pedestal_tree->Branch("channel_num", &_channel_num, "channel_num/I");
+		_pedestal_tree->Branch("bucket_num",  &_bucket_num,  "bucket_num/I");
+		_pedestal_tree->Branch("charge",      &_charge,      "charge/D");
+	}
 }
 
 kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){
@@ -125,9 +135,14 @@ kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){
 	_file->cd();
 	_histo->Write();
 	_file->Close();
+	delete _file;
+	
 	_rFile->cd();
-	_rFile->Write();
+	//~MQ: options needed for writing to the same tree:
+	_pedestal_tree->Write(0, TObject::kWriteDelete, 0);
 	_rFile->Close();
+	delete _rFile;
+	
 }
 
 
@@ -139,16 +154,6 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	auto rawev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 	if (!rawev)
 		return false;
-	// check eudaq/StdEventConverter.cc: already done with Convert():
-	// // Copy from NiRawEvent2StdEventConverter @ Jun 20
-	// if(!d2->IsFlagPacket()){
-	// 	d2->SetFlag(d1->GetFlag());
-	// 	d2->SetRunN(d1->GetRunN());
-	// 	d2->SetEventN(d1->GetEventN());
-	// 	d2->SetStreamN(d1->GetStreamN());
-	// 	d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
-	// 	d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
-	// }
 	
 	KpixEvent    cycle;
 
@@ -274,6 +279,7 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  
 	  if ( planeID < 0 ) continue; // ignore non-DATA sample
 	  if ( hitX == 9999 ) continue; // ignore not connected strips
+	  else hitX = RotateStrip(hitX, planeID);
 	  
 	  // PushPixel here. ~LoCo 01/08: changed '>' to '>='. Tested and kept
 	  if (planeID >= d2->NumPlanes()){
@@ -288,13 +294,13 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  auto &plane = d2->GetPlane(planeID);
 
 	  plane.PushPixel(hitX, // x
-		1,    // y, always to be 1 since we are strips
-		1     // T pix
-		);    // use bucket as input for frame_num
-
+	                  1,    // y, always to be 1 since we are strips
+	                  1     // T pix
+	                  );    // use bucket as input for frame_num
+	  
 	  //Fill test array
 	  _histo->Fill(hitCharge);
-
+	  
 	  }// - sample loop over
 
 
@@ -339,7 +345,8 @@ const{
   bucket  = sample->getKpixBucket();
   value   = sample->getSampleValue();
   tstamp  = sample->getSampleTime();
-  
+
+ 
   if (kpix%2 == 0) strip = _lkpix2strip.at(channel);
   else strip = _rkpix2strip.at(channel);
 
@@ -361,9 +368,16 @@ const{
   //~LoCo: to return fC value
   hitCharge=ConvertADC2fC(channel, kpix, value);
 
+
+  _kpix_num = kpix;
+  _channel_num = channel;
+  _bucket_num = bucket;
+  _charge = hitCharge;
+  _pedestal_tree -> Fill();
+  
   //~LoCo 13/08: Fill _pedestal_resolution
   //_pedestal_results[kpix][channel][bucket].push_back(3.5);
-  if ( hitCharge != -1 ) FillPedRes(kpix, channel, bucket, hitCharge, _pedestal_results);
+  //if ( hitCharge != -1 ) FillPedRes(kpix, channel, bucket, hitCharge, _pedestal_results);
     //std::cout << "DEBUG: PEDRES" << _pedestal_results[kpix][channel][bucket].at(0) << std::endl;
 
   
@@ -387,23 +401,23 @@ int kpixRawEvent2StdEventConverter::getStdPlaneID(uint kpix) const{
 
 // ~GETSTDKPIXID~
 
-//~LoCo 05/08. Notice: this works only after hitX reversal. TODO: remove this useless function, really just remove it
-int kpixRawEvent2StdEventConverter::getStdKpixID(uint hitX, int planeID) const{
+// //~LoCo 05/08. Notice: this works only after hitX reversal. TODO: remove this useless function, really just remove it
+// int kpixRawEvent2StdEventConverter::getStdKpixID(uint hitX, int planeID) const{
 
-  if ( ( planeID == 0 ) && ( hitX <= 919 ) ) return 0;
-  if ( ( planeID == 0 ) && ( hitX >= 920 ) ) return 1;
-  if ( ( planeID == 1 ) && ( hitX <= 919 ) ) return 3;
-  if ( ( planeID == 1 ) && ( hitX >= 920 ) ) return 2;
-  if ( ( planeID == 2 ) && ( hitX <= 919 ) ) return 5;
-  if ( ( planeID == 2 ) && ( hitX >= 920 ) ) return 4;
-  if ( ( planeID == 3 ) && ( hitX <= 919 ) ) return 10;
-  if ( ( planeID == 3 ) && ( hitX >= 920 ) ) return 11;
-  if ( ( planeID == 4 ) && ( hitX <= 919 ) ) return 8;
-  if ( ( planeID == 4 ) && ( hitX >= 920 ) ) return 9;
-  if ( ( planeID == 5 ) && ( hitX <= 919 ) ) return 7;
-  if ( ( planeID == 5 ) && ( hitX >= 920 ) ) return 6;
+//   if ( ( planeID == 0 ) && ( hitX <= 919 ) ) return 0;
+//   if ( ( planeID == 0 ) && ( hitX >= 920 ) ) return 1;
+//   if ( ( planeID == 1 ) && ( hitX <= 919 ) ) return 3;
+//   if ( ( planeID == 1 ) && ( hitX >= 920 ) ) return 2;
+//   if ( ( planeID == 2 ) && ( hitX <= 919 ) ) return 5;
+//   if ( ( planeID == 2 ) && ( hitX >= 920 ) ) return 4;
+//   if ( ( planeID == 3 ) && ( hitX <= 919 ) ) return 10;
+//   if ( ( planeID == 3 ) && ( hitX >= 920 ) ) return 11;
+//   if ( ( planeID == 4 ) && ( hitX <= 919 ) ) return 8;
+//   if ( ( planeID == 4 ) && ( hitX >= 920 ) ) return 9;
+//   if ( ( planeID == 5 ) && ( hitX <= 919 ) ) return 7;
+//   if ( ( planeID == 5 ) && ( hitX >= 920 ) ) return 6;
 
-}
+// }
 
 // ~CREATEMAP~
 
@@ -465,15 +479,9 @@ double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID,
 
 	  double hitCharge=-1;
 
-	  //TEST
-	  //std::cout << kpixID << "AAA" << channelID << "BBB" << Calib_map.at(std::make_pair(kpixID,channelID)) << std::endl;
-
 	  if ( Calib_map.at(std::make_pair(kpixID,channelID)) > 1.0 ) {
 
 	  	hitCharge = hitVal/Calib_map.at(std::make_pair(kpixID,channelID));
-
-		//Check result, might comment it later
-	  	//std::cout << "Conversion: kpix #" << kpixID << ", channel #" << channelID << ", hitVal " << hitVal << ", hitCharge " << hitCharge << std::endl;
 
 	  }
 
@@ -488,23 +496,23 @@ double kpixRawEvent2StdEventConverter::ConvertADC2fC( int channelID, int kpixID,
 
 // ~FILLPEDRES~
 
-//~LoCo 13/08: Fill vector double pedestal_results already existent as +++private+++
-void kpixRawEvent2StdEventConverter::FillPedRes(uint kpix, uint channel, uint bucket, double hitCharge, vector<double> _pedestal_results[][1024][1]) const{
+// //~LoCo 13/08: Fill vector double pedestal_results already existent as +++private+++
+// void kpixRawEvent2StdEventConverter::FillPedRes(uint kpix, uint channel, uint bucket, double hitCharge, vector<double> _pedestal_results[][1024][1]) const{
 
-	  int kpix_checking = 12;
-	  int bucket_checking = 1;
+// 	  int kpix_checking = 12;
+// 	  int bucket_checking = 1;
 
-	  if (bucket < bucket_checking){
+// 	  if (bucket < bucket_checking){
 
-		if ( kpix < kpix_checking ){
-//std::cout << "DEBUG: PEDRES1" << _PedRes.at(0) << std::endl;
-			_pedestal_results[kpix][channel][bucket].push_back(hitCharge);
-std::cout << "DEBUG 2: PEDRES" << _pedestal_results[kpix][channel][bucket].at(0) << std::endl;
-		}
-	  }
+// 		if ( kpix < kpix_checking ){
+// //std::cout << "DEBUG: PEDRES1" << _PedRes.at(0) << std::endl;
+// 			_pedestal_results[kpix][channel][bucket].push_back(hitCharge);
+// std::cout << "DEBUG 2: PEDRES" << _pedestal_results[kpix][channel][bucket].at(0) << std::endl;
+// 		}
+// 	  }
 
-	  return;
-}
+// 	  return;
+// }
 
 //~LoCo 12/09. Look: only milliseconds are needed. Note down how many milliseconds from one file to another.
 //------ code for file timestamps:
@@ -542,4 +550,15 @@ double smallest_time_diff( vector<double> ext_list, int int_value){
 	}
     }
   return trigger_diff;
+}
+
+double RotateStrip(double strip, int sensor)
+{
+		
+	if (sensor == 0 || sensor == 5 || sensor == 4) // kpix side showing towards beam movement beam side  KPIX >  < Beam
+		return strip; // sensor 2 and sensor 5 have no stereo angle
+	
+	else  // kpix side in direction of beam movement KPIX < < BEAM
+		return (-strip + 1839); // has to be 1839, because StandardPlane defines x-axis as a vector, and the SetSizeZs is to give the size of the vector, so the strip to input has to be set from 0 to 1839 
+	
 }
