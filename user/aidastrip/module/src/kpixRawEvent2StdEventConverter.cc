@@ -288,7 +288,7 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	  }
 
 	  //~LoCo: hitX is changed for planes 0, 3, 4. Now all planes have same axis direction
-	  if (planeID==0 | planeID==3 | planeID==4) hitX = 1839 - hitX;
+	  //if (planeID==0 | planeID==3 | planeID==4) hitX = 1839 - hitX;
 
 	  std::cout << "[+] plane : "<< planeID << ", hitX at : " << hitX << std::endl;
 	  auto &plane = d2->GetPlane(planeID);
