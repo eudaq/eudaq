@@ -2,8 +2,7 @@
  * Author: Mengqing <mengqing.wu@desy.de>
  * Date: 2019 Jun 20
  * Note: based on new KPiX DAQ for Lycoris telescope.
- * TODO: Pedestal read from a given file, has to think how to pass the file instead of hard-coded.@Aug 15, 2019 by Mengqing
- * Notice: only bucket 0 is used for any case!
+ * TODO: the pedestal root file has to be there, and needs to be cleared for each run manually, to be fixed. @ August 14, 2019
  */
 
 #include "eudaq/StdEventConverter.hh"
@@ -21,13 +20,6 @@
 #include <math.h> // fabs
 
 #include "kpix_left_and_right.h"
-#include "TBFunctions.h"
-
-//~LoCo 08/08 histogram (TODO: optimize)
-#include "TH1F.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TObject.h"
 
 
 //~LoCo 08/08 histogram (TODO: optimize)
@@ -36,6 +28,8 @@
 #include "TFile.h"
 #include "TRandom.h"
 #include "TF1.h"
+#include "TTree.h"
+#include "TObject.h"
 #define maxlength 5000
 
 // Template for useful funcs for this class:
@@ -44,26 +38,6 @@ double RotateStrip(double strip, int sensor);
 	
 //~LoCo 12/09
 std::string timestamp_milli_seconds();
-
-namespace eudaq{
-	typedef std::pair<int, int> Key;
-
-	typedef	struct {
-		double median;
-		double mad;
-		double charge;
-	} Value;
-	
-	typedef std::map< Key, Value > Database;
-
-	typedef struct {
-		int kpix;
-		int channel;
-		int strip;
-		double charge;
-	} Hit;
-	
-}
 
 // Real Class start:
 class kpixRawEvent2StdEventConverter: public eudaq::StdEventConverter{
@@ -74,35 +48,39 @@ public:
 	bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
 	static const uint32_t m_id_factory = eudaq::cstr2hash("KpixRawEvent");
 	
-	void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle ) const;
-	//std::tuple<int, int, double> parseSample( KpixSample* sample) const;
-	eudaq::Hit parseSample( KpixSample* sample) const;
+	void parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle, bool isSelfTrig ) const;
+	std::map<std::pair<int,int>, double> createMap(const char* filename);//~LoCo 05/08
+
+  	//~LoCo 02/08: added third output to parseSample, ADC value. 05/08: fourth, bucket=0. 13/08 ADC value substituted with fC value
+  	std::tuple<int, int, double, uint> parseSample( KpixSample* sample, std::vector<double>   vec_ExtTstamp,  bool isSelfTrig) const;
 	
+	//~LoCo 07/08 ConvertADC2fC: called inside parseFrame. 09/08 inside parseSample
+	double ConvertADC2fC( int channelID, int planeID, int hitVal ) const;
+
 
 private:
 	int getStdPlaneID(uint kpix) const;
 	int getStdKpixID(uint hitX, int planeID) const;
-	std::map<std::pair<int,int>, double> createMap(const char* filename);//~LoCo 05/08
-	//~LoCo 07/08 ConvertADC2fC: called inside parseFrame. 09/08 inside parseSample
-	double ConvertADC2fC( int channelID, int planeID, int hitVal ) const;
 
-	
-private:
-	
-	bool                      _pivot = false; // for StdPlane class which is designed for Mimosa;
-	int                       _numofkpix = 24;
+	TFile* _file;
+	TH1F* _histo;
 	unordered_map<uint, uint> _lkpix2strip = kpix_left();
 	unordered_map<uint, uint> _rkpix2strip = kpix_right();
+
 	//~LoCo 05/08: can call map in monitor with .at
 	std::map<std::pair<int,int>, double> Calib_map = createMap("/home/lorenzo/data/real_calib/calib_normalgain.txt");
+	bool                      _pivot = false; // for StdPlane class which is designed for Mimosa;
 
-	mutable bool m_isSelfTrig;
-	mutable eudaq::Database m_sampleDB;
-
-	// different from cycle-to-cycle
-	mutable std::vector<double> m_vec_ExtTstamp;
-	mutable std::vector<double> m_KpixChargeList_perCycle[24]; // hardcoded to have up to 24 kpix
-	mutable std::vector<double> m_common_mode_perCycle;
+	//~LoCo 13/08: for pedestal
+	TFile* _rFile;
+	TTree* _pedestal_tree = nullptr;
+	//~MQ: mutable variables to be modified in const functions:
+	mutable double _pedestal_median, _pedestal_MAD;
+	mutable int _kpix_num=-1, _channel_num=-1, _bucket_num=-1 ;
+	mutable double _charge;
+	
+	vector<double> _pedestal_results[12][1024][1];
+	
 };
 
 namespace{
@@ -112,51 +90,49 @@ namespace{
 
 kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 
-	TTree* pedestal_tree = nullptr;
-	double pedestal_median=0, pedestal_MAD=0;
-	int kpix_num=-1, channel_num=-1, bucket_num=-1 ;
-	
-	TH1::AddDirectory(kFALSE);
+	//~LoCo 12/08 Test histogram for testing
+	auto outRoot =  timestamp_milli_seconds();
+	auto outRoot_ped =  timestamp_milli_seconds();
+	outRoot = "./TEST_HISTO/TEST_" + outRoot + "_histo.root";
+	outRoot_ped = "./TEST_PEDESTAL/TEST_" + outRoot_ped + "_pedestal.root";
 
-	std::string pedfile_name = "/opt/data/eudaq2-dev/Run_20190802_115859.dat.tree_pedestal.root";
-	std::string pedtree_name = "pedestal_tree";
-	TFile* rFile = new TFile(pedfile_name.c_str(),"read");
+	_file = new TFile(outRoot.c_str(),"recreate");
+	_histo = new TH1F("histo","",10e3,0,10e3);
+	TH1::AddDirectory(kFALSE);
+	
+	_rFile = new TFile("test_pedestal.root","update");
 	
 	//~MQ: check if there is a tree inside the rfile, if not create:
-	if ( rFile->Get(pedtree_name.c_str()) ) {
-		rFile->GetObject(pedtree_name.c_str(),  pedestal_tree);
-		
-		pedestal_tree->SetBranchAddress("kpix_num",    &kpix_num);
-		pedestal_tree->SetBranchAddress("channel_num", &channel_num);
-		pedestal_tree->SetBranchAddress("bucket_num",  &bucket_num);
-		pedestal_tree->SetBranchAddress("pedestal_median",   &pedestal_median );
-		pedestal_tree->SetBranchAddress("pedestal_MAD",      &pedestal_MAD );
+	if(_rFile->Get("pedestal_tree")){
+		_rFile->GetObject("pedestal_tree", _pedestal_tree);
+		_pedestal_tree->SetBranchAddress("kpix_num",    &_kpix_num);
+		_pedestal_tree->SetBranchAddress("channel_num", &_channel_num);
+		_pedestal_tree->SetBranchAddress("bucket_num",  &_bucket_num);
+		_pedestal_tree->SetBranchAddress("charge",      &_charge );
 	}
 	else{
-		EUDAQ_ERROR("your pedestal tree file is not valid, check it!");
+		_pedestal_tree = new TTree("pedestal_tree", "pedestal_tree");
+		_pedestal_tree->Branch("kpix_num",    &_kpix_num,    "kpix_num/I");
+		_pedestal_tree->Branch("channel_num", &_channel_num, "channel_num/I");
+		_pedestal_tree->Branch("bucket_num",  &_bucket_num,  "bucket_num/I");
+		_pedestal_tree->Branch("charge",      &_charge,      "charge/D");
 	}
-
-	for(Long64_t entry = 0; entry< pedestal_tree->GetEntries(); entry++){
-		pedestal_tree->GetEntry(entry);
-		if (bucket_num != 0 ) continue;
-		if (pedestal_MAD == 0 ) continue;
-		
-		eudaq::Value vv;
-		vv.median = pedestal_median;
-		vv.mad    = pedestal_MAD;
-		vv.charge = 0.0;
-		
-		m_sampleDB[ std::make_pair( kpix_num, channel_num ) ]= vv;
-		
-	}
-
-	rFile->Close();
-	delete pedestal_tree;
-	delete rFile;
-
 }
 
-kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){}
+kpixRawEvent2StdEventConverter::~kpixRawEvent2StdEventConverter(){
+
+	_file->cd();
+	_histo->Write();
+	_file->Close();
+	delete _file;
+	
+	_rFile->cd();
+	//~MQ: options needed for writing to the same tree:
+	_pedestal_tree->Write(0, TObject::kWriteDelete, 0);
+	_rFile->Close();
+	delete _rFile;
+	
+}
 
 
 // ~CONVERTING~
@@ -168,16 +144,14 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	if (!rawev)
 		return false;
 	
-	// TODO: currently is hard coded to change trigger mode
-	//string triggermode = d1->GetTag("triggermode", "internal");
-    string triggermode = "external";
-	m_isSelfTrig = triggermode == "internal" ? true:false ;
+	KpixEvent    cycle;
+
+	string triggermode = d1->GetTag("triggermode", "internal");
+	bool isSelfTrig = triggermode == "internal" ? true:false ;
 	
-	if (m_isSelfTrig)
-		EUDAQ_INFO("kpixConverter is doing Self Trigger mode :)");
-	else
-		EUDAQ_INFO("kpixConverter is doing External Trigger mode");
-		
+	if (isSelfTrig)
+	  EUDAQ_INFO("I am using Self Trigger for kpix Event Converter :)");
+	
 	std::vector<uint8_t> block = rawev->GetBlock(0); // related to SendEvent(ev) @ _EuDataTools
 	if (block.size() == 0 ){
 		EUDAQ_THROW("empty data");
@@ -208,177 +182,166 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 		d2->AddPlane(plane);
 	}
 
-	// /* read kpix data */
-	KpixEvent    cycle;
-	cycle.copy(kpixEvent, size_of_kpix);
 
-	// /* parse kpix frame */
-	parseFrame(d2, cycle);
+	  //~LoCo 02/08: Lookup table TEST. 05/08: TODO: do it with EUDAQ_LOGGER
+
+	  //if (Calib_map.empty()) std::cout << "OH NOOOOO" << std::endl;
+
+	  //JUST A TEST
+	  //std::cout << "The slope is " << Calib_map.at(std::make_pair(2,1022)) << std::endl;
+
+	  // /* read kpix data */
+	  cycle.copy(kpixEvent, size_of_kpix);
+
+	  parseFrame(d2, cycle, isSelfTrig);
 	
-	return true;
+	  // std::cout << "\t Uint32_t  = " << kpixEvent << "\n"
+	  //           << "\t evtNum    = " << kpixEvent[0] << std::endl;	
+	  // std::cout << "\t kpixEvent.evtNum = " << cycle.eventNumber() <<std::endl;
+	  // std::cout << "\t kpixEvent.timestamp = "<< cycle.timestamp() <<std::endl;
+	  // std::cout << "\t kpixEvent.count = "<< cycle.count() <<std::endl;
+      
+  	  return true;
 }
 
 // ~PARSEFRAME~
 
-void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle) const{
-	
-	m_vec_ExtTstamp.clear();
-	m_KpixChargeList_perCycle[24].clear();
-	for (auto && entry: m_sampleDB ){
-		entry.second.charge = 0.0;
-	}
-	
+void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent &cycle, bool isSelfTrig) const{
+
+	d2->Print(std::cout);
+	std::vector<double>   vec_ExtTstamp;
+	vec_ExtTstamp.clear();
 	
 	/* globally set variable holders*/
 	KpixSample   *sample;
-	uint         is;           // global for loop int
+	//uint         emptysamples=0;
+	uint         is;
 	double       bunchClk;
 	uint         subCount;
-
-	if (m_isSelfTrig){
-		for (is = 0; is < cycle.count(); is++){
-			sample = cycle.sample(is);
-			if ( sample->getSampleType() != KpixSample::Timestamp ) continue; // if not external timestamp
-			
-			bunchClk = sample -> getBunchCount();
-			subCount = sample -> getSubCount();
-			
-			double time = bunchClk + double(subCount * 0.125); 
-			m_vec_ExtTstamp.push_back(time);
-		}
-	}
-
+	KpixSample::SampleType type;
 
 	/*
-	 * loop over all samples inside the frame to:
-	 * 1) ext trig:  fill the sample map
-	 * 2) self trig: push pixel here
+	 * Jul 25, 2019 MQ
+	 + *logic idea*: 
+	   1. loop all the samples first to get the external timestamp into a vector as Uwe's analysis_newdaq.cxx
+	   2. then process it again to read Data.
+	 + DONE: x coordinate reversed for Planes 0, 3, 4: now every plane has same axis. ~LoCo 01/08
+	 + TODO! add a switch to tell if you are self-trig or ext-trig
 	 */
-	printf("[dev] kpix ID,  channel, strip,  bucket,   ADC\n");
-	for (is=0; is<cycle.count(); is++){
-		
-		sample = cycle.sample(is);
-		if (sample ->getSampleType() != KpixSample::Data || sample ->getKpixBucket() !=0 ) continue;  // ignore non-DATA sample, ignore bucket != 0 sample
+	 for (is = 0; is < cycle.count(); is++){
 
-		// cut out not wanted samples
-		auto hit = parseSample(sample);
-		if ( hit.kpix == -1 ) continue ; // ignore empty sample or bad self-trig sample;
-		
-		
-		if (m_isSelfTrig){
-			
-			auto planeID = getStdPlaneID(hit.kpix);
-			auto hitX    = hit.strip;
-			
-			if ( hitX == 9999 ) continue; // ignore not connected strips
-			else hitX = RotateStrip(hitX, planeID);
-			
-			if (planeID >= d2->NumPlanes()){
-				EUDAQ_WARN("Ignoring non-existing plane : " + planeID);
-				continue;
-			}
-			
-			// PushPixel here. ~LoCo 01/08: changed '>' to '>='. Tested and kept
-			std::cout << "[+] plane : "<< planeID << ", hitX at : " << hitX << std::endl;
-			auto &plane = d2->GetPlane(planeID);
-			plane.PushPixel(hitX, // x
-			                1,    // y, always to be 1 since we are strips
-			                1     // T pix
-			                );    // use bucket as input for frame_num
-		}
-		else {
-			// fill charge to m_sampleDB with pedestal median subtracted charge 
-			if ( m_sampleDB.count( std::make_pair(hit.kpix, hit.channel) ) ){
-				
-				double charge_corr_ped = hit.charge - m_sampleDB[std::make_pair(hit.kpix, hit.channel)].median;
-					
-				m_sampleDB[std::make_pair(hit.kpix, hit.channel)].charge = charge_corr_ped;
-				m_KpixChargeList_perCycle[hit.kpix].push_back(charge_corr_ped);
-			}
-		}
-		
-	}// - sample loop over
-
-	if (!m_isSelfTrig){
-		// find common mode median for each kpix and remove it
-		// add up all the corrected charge for each kpix
-		for (is = 0; is<_numofkpix; is++){
-			
-			m_common_mode_perCycle[is] = median(m_KpixChargeList_perCycle[is]);
-			
-		}
-		// 2nd loop over all samples: correct charge from common mode noise
-		for (auto && entry : m_sampleDB){
-			int kpix = entry.first.first;
-			double charge_corr_CM = entry.second.charge - m_common_mode_perCycle[kpix];
-			// TODO: plot  with cluster_analysis.cxx output :
-			// - noise
-			// - charge_corr_CM
-
-			
-			
-		}
-		
-		
-		// no clustering just push the best S/N strips so far
-
-	}
+	  	sample = cycle.sample(is);
+	  	bunchClk = sample -> getBunchCount();
+	  	subCount = sample -> getSubCount();
+	  	type     = sample -> getSampleType();
+	  
+	  	if (type == 2){ // external timestamp
+	    		double time = bunchClk + double(subCount * 0.125); 
+	    		vec_ExtTstamp.push_back(time);
+	  	}
+	  }
 	
-	
-	// debug:
-	auto &plane = d2->GetPlane(0);
-	std::cout << "debug: Num of Hit pixels: " << plane.HitPixels() << std::endl;
-	
-	return;
+	/* Jun 20, 2019 MQ
+	   + *idea*: once you read one kpixID, use the m_ids to find the plane ID, Get it from d2, and pushPixel().
+	   + DONE: one needs to fix how to cheat EUDAQ that we are a huge pixel intead of strips...
+	   Jul 4, 2019 MQ
+	   + DONE: PushPixel happend here, found Plane with a function.
+	*/
+
+	  //~LoCo tests
+	  printf("[test] I am a test! --\n");
+	  std::cout << "Number of planes : "<< d2->NumPlanes() << std::endl;
+
+	  printf("[dev] kpix ID,  channel, strip,  bucket,   ADC\n");
+	  for (is=0; is<cycle.count(); is++){
+	  sample = cycle.sample(is);
+
+	  
+	  
+	  // parseSample: you need to return the Plane ID (based on kpix ID), and the fired strips positions for parseFrame to add to the Plane. TODO
+	  auto hit     = parseSample(sample, vec_ExtTstamp, isSelfTrig);
+	  if ( std::get<3>(hit) != 0 ) continue; // ignore bucket != 0 sample
+	  auto hitCharge = std::get<2>(hit);
+	  if ( hitCharge < 0 ) continue; // ignore charges < 0 sample
+	  auto planeID = std::get<0>(hit);
+	  auto hitX    = std::get<1>(hit);
+	  
+	  if ( planeID < 0 ) continue; // ignore non-DATA sample
+	  if ( hitX == 9999 ) continue; // ignore not connected strips
+	  else hitX = RotateStrip(hitX, planeID);
+	  
+	  // PushPixel here. ~LoCo 01/08: changed '>' to '>='. Tested and kept
+	  if (planeID >= d2->NumPlanes()){
+	    EUDAQ_WARN("Ignoring non-existing plane : " + planeID);
+	    continue;
+	  }
+
+	  //~LoCo: hitX is changed for planes 0, 3, 4. Now all planes have same axis direction
+	  //if (planeID==0 | planeID==3 | planeID==4) hitX = 1839 - hitX;
+
+	  std::cout << "[+] plane : "<< planeID << ", hitX at : " << hitX << std::endl;
+	  auto &plane = d2->GetPlane(planeID);
+
+	  plane.PushPixel(hitX, // x
+	                  1,    // y, always to be 1 since we are strips
+	                  1     // T pix
+	                  );    // use bucket as input for frame_num
+	  
+	  //Fill test array
+	  _histo->Fill(hitCharge);
+	  
+	  }// - sample loop over
+
+
+	  // debug:
+	  auto &plane = d2->GetPlane(0);
+	  std::cout << "debug: Num of Hit pixels: " << plane.HitPixels() << std::endl;
+
+	  return;
 }
-	
-
 
 // ~PARSESAMPLE~
 
 //~LoCo 02/08: added third output to parseSample, the ADC value. 05/08: fourth, bucket=0. 13/08: removed third output ADC value, now third output is fC value
-eudaq::Hit kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample) const{
+std::tuple<int, int, double, uint> kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample,
+	         std::vector<double>   vec_ExtTstamp,
+	         bool isSelfTrig) const{
 	/*
 	  usage: 
 	  - decode the 2 * 32bit kpix [sample]
 	  - return tuple with positive kpix id, otherwise kpix id is negative
 	*/
 	uint         kpix;
-	bool         badflag;
 	uint         channel;
 	int          strip = 9999;
 	uint         bucket;
 	uint         value;
 	double       tstamp;
 	double       hitCharge=-1;//~LoCo: to get ADC charge in fC
+	KpixSample::SampleType type;
+	
+	if (sample->getEmpty()){ 
+		printf ("empty sample\n");
+		return std::make_tuple(-1, strip, hitCharge, bucket);
+	}
+	
+	type    = sample->getSampleType();
+	if (type != KpixSample::Data) return std::make_tuple(-1, strip, hitCharge, bucket); // if not DATA, return
 	
 	kpix    = sample->getKpixAddress();
 	channel = sample->getKpixChannel();
+	bucket  = sample->getKpixBucket();
 	value   = sample->getSampleValue();
 	tstamp  = sample->getSampleTime();
-	
-
-	if (sample->getSampleType() != KpixSample::Data)
-		throw "Debug: you have non DATA kpix sample leaked in parseSample() check your code!" ;
-	
-
-	if (sample->getKpixBucket() != 0 )
-		throw "Debug: you have non bucket0 sample leaked in parseSample() check your code!";
 	
 	
 	if (kpix%2 == 0) strip = _lkpix2strip.at(channel);
 	else strip = _rkpix2strip.at(channel);
 	
-	// Self-Trigger Cut : selftrig and extTrig time diff.
-	if (m_isSelfTrig){
-		double trig_diff = smallest_time_diff(m_vec_ExtTstamp, tstamp);
-		if (  trig_diff < 0.0 && trig_diff > 3.0 ) badflag = true;
-	}
-
-	if (sample->getEmpty()){ 
-		printf ("empty sample\n");
-		badflag = true;
-	}
+	// Cut- selftrig and extTrig time diff:
+	double trig_diff = smallest_time_diff(vec_ExtTstamp, tstamp);
+	if (  trig_diff < 0.0 && trig_diff > 3.0 )
+		return std::make_tuple(-1, strip, hitCharge, bucket);
 	
 	if (strip != 9999)
 		std::cout<<"\t"
@@ -391,15 +354,16 @@ eudaq::Hit kpixRawEvent2StdEventConverter::parseSample(KpixSample* sample) const
 	
 	
 	//~LoCo: to return fC value
-	hitCharge = ConvertADC2fC(channel, kpix, value);
-
-	eudaq::Hit hit;
-	hit.kpix =  badflag ?  -1 :kpix;
-	hit.channel = channel;
-	hit.strip = strip;
-	hit.charge = hitCharge;
-
-	return hit;
+	hitCharge=ConvertADC2fC(channel, kpix, value);
+	
+	
+	_kpix_num = kpix;
+	_channel_num = channel;
+	_bucket_num = bucket;
+	_charge = hitCharge;
+	_pedestal_tree -> Fill();
+	
+	return std::make_tuple(getStdPlaneID(kpix), strip, hitCharge, bucket);
 }
 
 // ~GETSTDPLANEID~
