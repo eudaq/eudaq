@@ -55,7 +55,7 @@ class EuDataStream(rogue.interfaces.stream.Slave):
                ev.SetTimestamp( d['runtime']*5, d['runtime']*5+5, False) # end time += 1*runtime cycle
                
                ev.SetTag("Stamp","fromEuDataTools") # to remove
-               ev.SetTag("triggermode", self.eudaq.triggermode)
+               #ev.SetTag("triggermode", self.eudaq.triggermode)
                
                block = bytes(ba)  # tentative mq, to verify
                ev.AddBlock(0, block ) # tentative mq, to verify

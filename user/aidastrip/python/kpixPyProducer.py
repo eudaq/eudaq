@@ -52,7 +52,11 @@ class kpixPyProducer(pyeudaq.Producer):
     def DoStatus(self):
         #print ('DoStatus')
         stop = self.is_running and "false" or "true"
-        pyeudaq.Producer.SetStatusTag(self,"KpixStopped", stop);
+        kpix_running = "false"
+        if self.root:
+            kpix_running = self.root._running and "true" or "false"
+        pyeudaq.Producer.SetStatusTag(self,"ProducerStopped", stop);
+        pyeudaq.Producer.SetStatusTag(self,"KpixRunning", kpix_running);
         
     def DoInitialise(self):        
         print ('DoInitialise')
@@ -74,11 +78,12 @@ class kpixPyProducer(pyeudaq.Producer):
         if os.path.isdir(kpixout):
             self.outfile = os.path.abspath(datetime.datetime.now().strftime(f"{kpixout}/Run_%Y%m%d_%H%M%S.dat"))
         else:
-            self.outfile = os.path.abspath(datetime.datetime.now().strftime(f"/scratch/data/Run_%Y%m%d_%H%M%S.dat"))
+            self.outfile = os.path.abspath(datetime.datetime.now().strftime(f"./Run_%Y%m%d_%H%M%S.dat"))
         print (f"write kpix outfile to {self.outfile}")
 
         if self.root:
             print (" I do have DESY root opened already")
+            self.root
         else:
             print ("No DESY root currently opened.")
 
@@ -89,25 +94,31 @@ class kpixPyProducer(pyeudaq.Producer):
         
     def DoStopRun(self):        
         print ('DoStopRun')
-        self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
-        self.root.DataWriter.open.set(False)
+        if self.root:
+            self.root.DataWriter.open.set(False)
+            #self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+            self.root.__exit__()
+            print(f'DoStopRun: Ending Run')
+        #endif
+
         self.is_running=0
-        print(f'DoStopRun: Ending Run')
             
     def DoReset(self):        
         print ('DoReset')
         if self.root:
-            self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
             self.root.DataWriter.open.set(False)
+            #self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+            self.root.stop()
             print(f'DoReset: Ending Run')
- 
+        #endif
+            
         self.is_running = 0
         
     def RunLoop(self):
         print ("Start of RunLoop in kpixPyProducer")
 
         with KpixDaq.DesyTrackerRoot(pollEn=False, ip=self.ip, debug=self.debug) as root:
-            print (root)
+            #print (root)
             self.root = root
             
             if self.root:
@@ -123,7 +134,6 @@ class kpixPyProducer(pyeudaq.Producer):
             # Print the version info
             root.DesyTracker.AxiVersion.printStatus()
 
-            #fi     
             root.DataWriter.dataFile.setDisp(self.outfile)
             root.DataWriter.open.set(True)
             print(f'Opening data file: {self.outfile}')
