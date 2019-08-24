@@ -41,6 +41,31 @@ environment:
       compiler_version: VS2019
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       platform: x64      
+    - build_type: library_only
+      compiler_version: VS2017
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      platform: x64            
+    - build_type: library_only
+      compiler_version: VS2017
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      platform: x86                  
+    - build_type: library_only
+      compiler_version: VS2015
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      platform: x64                  
+    - build_type: library_only
+      compiler_version: VS2015
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      platform: x86      
+    - build_type: library_only
+      compiler_version: VS2013
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
+      platform: x64
+    - build_type: library_only
+      compiler_version: VS2013
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
+      platform: x86      
+      
 
   # matrix:
   # basic idea - in order to save time and have a full coverage at the same time:
