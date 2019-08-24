@@ -23,7 +23,7 @@ clone_depth: 1
 
 # How to install QT:
 # https://salsa.debian.org/debian/wireshark/blob/debian/master/tools/qt-installer-windows.qs
-# https://git.kaidan.im/lnj/qli-installer
+# https://git.kaidan.im/lnj/qli-installer 
 
 environment:
   INSTALL_AFS: no
