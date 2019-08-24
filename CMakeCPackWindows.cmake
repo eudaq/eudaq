@@ -9,7 +9,8 @@ set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
 set(CPACK_PACKAGE_VERSION "${EUDAQ_LIB_VERSION_STRIPPED}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "eudaq-${EUDAQ_LIB_VERSION_STRIPPED}")
-set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/images/eudaq_logo.bmp")
+# https://stackoverflow.com/questions/28768417/how-to-set-an-icon-in-nsis-install-cmake
+set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/images\\\\eudaq_logo.bmp")
 
 option(CMAKE_INSTALL_DEBUG_LIBRARIES
   "Install Microsoft runtime debug libraries with CMake." FALSE)
