@@ -2,7 +2,7 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/StdEventConverter.hh"
 
-#include "SampicDataFormat.hh"
+#include "SampicEvent.hh"
 
 #include <iostream>
 #include <fstream>
