@@ -51,6 +51,7 @@ namespace eudaq{
 	typedef	struct {
 		double median;
 		double mad;
+		double noise;
 		double charge;
 	} Value;
 	
@@ -85,7 +86,8 @@ private:
 	int createMap(const char* filename);//~LoCo 05/08
 	//~LoCo 07/08 ConvertADC2fC: called inside parseFrame. 09/08 inside parseSample
 	double ConvertADC2fC( int channelID, int planeID, int hitVal ) const;
-
+	void loopdir(TDirectory* dir, string histname, std::unordered_map<int, TH1F*> &hists) const;
+	std::unordered_map<int, TH1F*> loadNoiseDB() const;
 	
 private:
 	
@@ -95,7 +97,7 @@ private:
 	unordered_map<uint, uint> _rkpix2strip = kpix_right();
 	//~LoCo 05/08: can call map in monitor with .at
 	//std::map<std::pair<int,int>, double> m_calib_map = createMap("/home/lorenzo/data/real_calib/calib_normalgain.txt");
-  mutable std::map<std::pair<int,int>, double> m_calib_map;
+	mutable std::map<std::pair<int,int>, double> m_calib_map;
 
 	mutable bool m_isSelfTrig;
 	mutable eudaq::Database m_sampleDB;
@@ -114,9 +116,10 @@ namespace{
 kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 	
 	createMap("/opt/data/calib_normalgain.csv");
-
+	auto noise_hists = loadNoiseDB();
 		
 	TTree* pedestal_tree;
+	TFile* rFile;
 	double pedestal_median=0, pedestal_MAD=0;
 	int kpix_num=-1, channel_num=-1, bucket_num=-1 ;
 	
@@ -124,9 +127,10 @@ kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 
 	
 	std::string pedfile_name ="/opt/data/eudaq2-dev/Run_20190802_121655.dat.tree_pedestal.root";
+	
 	  //"/opt/data/eudaq2-dev/Run_20190802_115859.dat.tree_pedestal.root";
 	std::string pedtree_name = "pedestal_tree";
-	TFile* rFile = new TFile(pedfile_name.c_str(),"read");
+	rFile = new TFile(pedfile_name.c_str(),"read");
 
 	//~MQ: check if there is a tree inside the rfile, if not create:
 	if ( rFile->Get(pedtree_name.c_str()) ) {
@@ -142,7 +146,7 @@ kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 		EUDAQ_ERROR("your pedestal tree file is not valid, check it!");
 	}
 
-			
+	
 	for(Long64_t entry = 0; entry< pedestal_tree->GetEntries(); entry++){
 
 		pedestal_tree->GetEntry(entry);
@@ -153,12 +157,20 @@ kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 		vv.median = pedestal_median;
 		vv.mad    = pedestal_MAD;
 		vv.charge = 0.0;
+
+		//-- get the noise out of noise_hists
+		if (!noise_hists.count(kpix_num)) std::cout << "Oh you do not have noise hist for kpix = "<< kpix_num << std::endl;
+		
+		auto noise_hist = noise_hists[kpix_num];
+		double noise = noise_hist->GetBinContent( channel_num+1 );
+		vv.noise = noise;
 		
 		m_sampleDB[ std::make_pair( kpix_num, channel_num ) ]= vv;
 		
 	}
 
 	rFile->Close();
+
 
 	delete rFile;
 }
@@ -234,7 +246,6 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 	for (auto && entry: m_sampleDB ){
 		entry.second.charge = 0.0;
 	}
-	
 	
 	/* globally set variable holders*/
 	KpixSample   *sample;
@@ -346,6 +357,7 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 			// temperarily ignore S/N but use a harsh charge level cut
 			
 			if (charge_corr_CM > 1.5 ){
+			//if ( charge_corr_CM > 3*entry.second.noise ){
 			//if (true){
 			  std::cout << "[+] plane : "<< planeID << ", hitX at : " << strip << std::endl;
 			  auto &plane = d2->GetPlane( getStdPlaneID(kpix) );
@@ -555,4 +567,64 @@ double RotateStrip(double strip, int sensor){
 	else  // kpix side in direction of beam movement KPIX < < BEAM
 		return (-strip + 1839); // has to be 1839, because StandardPlane defines x-axis as a vector, and the SetSizeZs is to give the size of the vector, so the strip to input has to be set from 0 to 1839 
 	
+}
+
+std::unordered_map<int,TH1F*> kpixRawEvent2StdEventConverter::loadNoiseDB()const{
+	TH1::AddDirectory(kFALSE);
+		
+	std::string noisefile_name ="/opt/data/eudaq2-dev/Run_20190802_121655.dat_Run_20190802_121655.cluster.root";
+	//~MQ: load noise distribution histos
+	TFile* rFile = new TFile(noisefile_name.c_str(),"read");
+	std::unordered_map<int, TH1F*> noise_hists;
+	loopdir(rFile, "noise", noise_hists);
+	std::cout<< "[debug] how many noise hists found? -- "
+	         << noise_hists.size()
+	         << std::endl;
+	rFile->Close();
+	delete rFile;
+	return noise_hists;
+}
+		
+void kpixRawEvent2StdEventConverter::loopdir(TDirectory* dir, string histname, std::unordered_map<int, TH1F*> &hists)const{
+
+	TDirectory *dirsav = gDirectory;
+	TIter keys_iter(dir->GetListOfKeys());
+	TKey* key;
+	
+	while ((key = (TKey*)keys_iter())){
+		if (key->IsFolder()){
+			dir->cd(key->GetName());
+			TDirectory *subdir = gDirectory;
+			loopdir(subdir, histname, hists);
+			dirsav->cd();
+			continue;
+		}//-- recursively call this function
+		else{
+			string keyname = key->GetName();
+			string keytype = key->GetClassName();
+			
+			// if noise_v_channel, find TH1 with name "noise_v_channel_k#_b0"
+			if (int(histname.find("noise") != -1)){
+				//int found1 = keyname.find("noise_v_channel_k");
+				//int found2 = keyname.find("_b0");
+				if (int(keytype.find("TH1") == -1)) continue;
+				for ( int aa = 0; aa<12; aa++ ){
+					string tomatch = "noise_v_channel_k" ;
+					tomatch = tomatch + aa + "_b0";
+					if(keyname == tomatch){
+						TH1F *hist = (TH1F*)key->ReadObj();
+						hist->SetName(key->GetName());
+						hists[aa]= hist;
+						
+					}
+					
+				}
+				
+			}//-- case1 - look for 'noise' histogram
+			
+		}
+	}//-- loop over keys inside a TDirectory
+	
+
+
 }
