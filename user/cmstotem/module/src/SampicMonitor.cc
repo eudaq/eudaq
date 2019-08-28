@@ -1,6 +1,7 @@
 #include "eudaq/Monitor.hh"
-#include "eudaq/StandardEvent.hh"
-#include "eudaq/StdEventConverter.hh"
+#include "eudaq/TTreeEventConverter.hh"
+
+#include "TTree.h"
 
 #include "SampicEvent.hh"
 
@@ -112,13 +113,12 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
   if(m_en_print)
     ev->Print(std::cout);
   if(m_en_std_converter){
-    auto stdev = std::dynamic_pointer_cast<eudaq::SampicEvent>(ev);
-    if(!stdev){
-      stdev = eudaq::SampicEvent::MakeShared();
-      eudaq::StdEventConverter::Convert(ev, stdev, nullptr); //no conf
-    }
-    if(m_en_std_print)
-      stdev->Print(std::cout);
+    eudaq::TTreeEventSP stdev;
+    std::cout << "to be converted!!!"<<std::endl;
+    eudaq::TTreeEventConverter::Convert(ev, stdev, nullptr); //no conf
+    std::cout << "converted!!!"<<std::endl;
+    if (m_en_std_print)
+      stdev->Show(0);//(std::cout);
   }
 }
 
