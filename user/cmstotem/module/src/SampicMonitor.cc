@@ -4,13 +4,11 @@
 #include "TFile.h"
 #include "TTree.h"
 
+#include "MonitorWindow.hh"
 #include "SampicEvent.hh"
 
 #include "TApplication.h"
 #include "TTimer.h"
-#include "TGFrame.h"
-#include "TGStatusBar.h"
-#include "TGListTree.h"
 
 #include <iostream>
 #include <fstream>
@@ -40,8 +38,7 @@ private:
   bool m_en_std_converter;
   bool m_en_std_print;
 
-  std::unique_ptr<TGMainFrame> m_main;
-  TGStatusBar* m_status_bar;
+  std::unique_ptr<MonitorWindow> m_main;
   std::future<bool> m_daemon;
 };
 
@@ -51,7 +48,22 @@ namespace{
 }
 
 SampicMonitor::SampicMonitor(const std::string & name, const std::string & runcontrol)
-  :eudaq::Monitor(name, runcontrol){
+  :eudaq::Monitor(name, runcontrol),
+   TApplication(name.c_str(), nullptr, nullptr),
+   m_main(new MonitorWindow(this, "Sampic monitor")){
+  if (!m_main)
+    EUDAQ_THROW("Error Allocationg main window");
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+  TApplication::SetReturnFromRun(true);
+  if (!m_daemon.valid())
+    m_daemon = std::async(std::launch::async, &SampicMonitor::Run, this);
+
+  //m_main->Connect("CloseWindow()", "MainFrame", this, "~SampicMonitor()");
+}
+
+SampicMonitor::~SampicMonitor(){
+  TApplication::Terminate();
 }
 
 void SampicMonitor::DoInitialise(){
@@ -68,6 +80,7 @@ void SampicMonitor::DoConfigure(){
 }
 
 void SampicMonitor::DoStartRun(){
+  m_main->SetRunNumber(GetRunNumber());
   m_file.reset(TFile::Open(Form("run%d.root", GetRunNumber()), "recreate"));
   m_stdev.reset(new TTree);
 }
@@ -80,6 +93,11 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
     if (m_en_std_print)
       m_stdev->Print();//(std::cout);
   }
+}
+
+bool SampicMonitor::Run(){
+  TApplication::Run(false);
+  return true;
 }
 
 void SampicMonitor::DoStopRun(){
