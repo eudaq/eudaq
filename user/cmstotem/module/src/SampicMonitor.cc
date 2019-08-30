@@ -76,20 +76,11 @@ SampicMonitor::SampicMonitor(const std::string & name, const std::string & runco
   if (!m_daemon.valid())
     m_daemon = std::async(std::launch::async, &TApplication::Run, this, 0);
 
-  // book all monitoring elements
-  m_g_trg_time = m_main->Book<TGraph>("/trig_vs_time");
-  m_g_evt_time = m_main->Book<TGraph>("/event_vs_time");
-  m_h_occup_allchan = m_main->Book<TH1D>("/channels_occup", "ch_occup", "Channels occupancy;Channel number;Entries", 32, 0., 32.);
-  for (size_t i = 0; i < 32; ++i) {
-    m_h_maxamp_per_chan[i] = m_main->Book<TH1D>(Form("/ch%d/max_ampl", i), Form("max_ampl_ch%d", i), Form("Channel %d;Maximum amplitude (V);Entries", i), 100, 0., 1.);
-    m_h_occup_per_chan[i] = m_main->Book<TH1D>(Form("/ch%d/occupancy", i), Form("occup_ch%d", i), Form("Channel %d;Samples multiplicity;Entries", i), 20, 0., 20.);
-  }
-
   // auxiliary info
   for (uint16_t i = 0; i < 64; ++i)
     m_sampic_samples_time[i] = i*sampic::kSamplingPeriod;
 
-  auto hist = m_main->Book<TH1D>("/test", "test_hist", "testing;x;y", 100, 0., 10.);
+  auto hist = m_main->Book<TH1D>("test", "Test", "test_hist", "testing;x;y", 100, 0., 10.);
   if (!m_test_daemon.valid())
     m_test_daemon = std::async(std::launch::async, &SampicMonitor::test, this, hist);
 }
@@ -107,11 +98,17 @@ void SampicMonitor::DoConfigure(){
   m_sampic_last_sample = conf->Get("SAMPIC_SHOW_LAST_SAMPLE", 0);
   m_sampic_num_baseline = conf->Get("SAMPIC_NUM_BASELINE", 10);
 
-  if (m_sampic_last_sample) {
-    for (size_t i = 0; i < 32; ++i) {
-      m_g_last_sample[i] = m_main->Book<TGraph>(Form("/ch%d/last_sample", i));
-    }
+  // book all monitoring elements
+  m_g_trg_time = m_main->Book<TGraph>("trig_vs_time", "Trigger time");
+  m_g_evt_time = m_main->Book<TGraph>("event_vs_time", "Event time");
+  m_h_occup_allchan = m_main->Book<TH1D>("channels_occup", "Occupancy, all channels", "ch_occup", "Channels occupancy;Channel number;Entries", 32, 0., 32.);
+  for (size_t i = 0; i < 32; ++i) {
+    m_h_maxamp_per_chan[i] = m_main->Book<TH1D>(Form("ch%d/max_ampl", i), "Max amplitude", Form("max_ampl_ch%d", i), Form("Channel %d;Maximum amplitude (V);Entries", i), 100, 0., 1.);
+    m_h_occup_per_chan[i] = m_main->Book<TH1D>(Form("ch%d/occupancy", i), "Occupancy", Form("occup_ch%d", i), Form("Channel %d;Samples multiplicity;Entries", i), 20, 0., 20.);
+    if (m_sampic_last_sample)
+      m_g_last_sample[i] = m_main->Book<TGraph>(Form("ch%d/last_sample", i), "Last sample");
   }
+
 
   m_main->SetStatus(MonitorWindow::Status::configured);
   m_main->ResetCounters();
@@ -134,7 +131,7 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
 
   auto event = std::make_shared<eudaq::SampicEvent>(*ev);
 
-  m_main->Get<TH1D>("/test")->Fill(ev->GetEventN());
+  m_main->Get<TH1D>("test")->Fill(ev->GetEventN());
   const float ts = event->header().sf2Timestamp()/1.e6;
   m_g_trg_time->SetPoint(m_g_trg_time->GetN(), ts, ev->GetTriggerN());
   m_g_evt_time->SetPoint(m_g_evt_time->GetN(), ts, ev->GetEventN());

@@ -39,12 +39,10 @@ public:
   void CleanMonitors();
 
   /// Add a new monitor to the stack, as a simple TObject-derivative
-  template<typename T, typename... Args> T* Book(const std::string& path, Args&&... args) {
+  template<typename T, typename... Args> T* Book(const std::string& path, const std::string& name, Args&&... args) {
     auto obj = new T(std::forward<Args>(args)...);
-    std::string /*name = obj->GetName();
-    if (name.empty())*/
-      name = path;
-    auto item = m_tree_list->AddItem(nullptr, name.c_str());
+    auto parent = BookStructure(path);
+    auto item = m_tree_list->AddItem(parent, name.c_str());
     auto it_icon = m_obj_icon.find(obj->ClassName());
     if (it_icon != m_obj_icon.end())
       item->SetPictures(it_icon->second, it_icon->second);
@@ -71,6 +69,7 @@ public:
 private:
   /// List of status bar attributes
   enum class StatusBarPos { status = 0, run_number, tot_events, an_events, num_parts };
+  TGListTreeItem* BookStructure(const std::string& path, TGListTreeItem* par = nullptr);
 
   // ROOT GUI objects handled
   TGHorizontalFrame* m_top_win;
@@ -94,6 +93,7 @@ private:
   };
   /// List of all objects handled and monitored
   std::map<std::string, MonitoredObject> m_objects;
+  std::map<std::string, TGListTreeItem*> m_dirs;
   /// List of all summary plots sharing one canvas
   std::map<std::string, std::vector<std::string> > m_summaries;
   std::map<std::string, const TGPicture*> m_obj_icon = {

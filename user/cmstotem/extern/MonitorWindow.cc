@@ -182,13 +182,13 @@ void MonitorWindow::AddSummary(const std::string& path, const std::vector<std::s
   m_left_canv->MapWindow();
 }
 
-void MonitorWindow::DrawElement(TGListTreeItem* it, int){
+void MonitorWindow::DrawElement(TGListTreeItem* it, int val){
   m_drawable.clear();
   for (auto& obj : m_objects)
     if (obj.second.item == it)
       m_drawable.emplace_back(obj.second.object);
-  if (m_drawable.empty())
-    throw std::runtime_error("Failed to retrieve the tree item!");
+  if (m_drawable.empty()) // did not find in objects, must be a directory
+    return;
   Update();
 }
 
@@ -201,6 +201,23 @@ void MonitorWindow::CleanMonitors(){
   for (auto& mon : m_objects)
     mon.second.object->Clear();
   Update();
+}
+
+TGListTreeItem* MonitorWindow::BookStructure(const std::string& path, TGListTreeItem* par){
+  auto tok = TString(path).Tokenize("/");
+  if (tok->IsEmpty())
+    return par;
+  TGListTreeItem* prev = nullptr;
+  std::string full_path;
+  for (int i = 0; i < tok->GetEntriesFast()-1; ++i) {
+    const auto iter = tok->At( i );
+    TString dir_name = dynamic_cast<TObjString*>( iter )->String();
+    full_path += dir_name+"/";
+    if (m_dirs.count(full_path) == 0)
+      m_dirs[full_path] = m_tree_list->AddItem(prev, dir_name);
+    prev = m_dirs[full_path];
+  }
+  return prev;
 }
 
 std::ostream& operator<<(std::ostream& os, const MonitorWindow::Status& stat){
