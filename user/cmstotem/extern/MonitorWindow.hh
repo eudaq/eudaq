@@ -23,34 +23,43 @@ public:
   MonitorWindow(TApplication*, const std::string& name);
   ~MonitorWindow();
 
+  /// List of FSM states
   enum class Status { idle, configured, running, error };
   friend std::ostream& operator<<(std::ostream&, const Status&);
 
+  /// Reset the status bar events counters
   void ResetCounters();
   void SetRunNumber(int run);
-  void SetStatus(Status st);
-  void SetTree(TTree*);
-  void SaveTree();
+  void SetLastEventNum(int num);
+  void SetMonitoredEventsNum(int num);
 
-  /*template<typename T, typename E> using FillingMethod = std::function<void(T*,E*)>;
-  template<typename T, typename E, typename... Args> void Book(const FillingMethod<T,E>& meth, const char* path, Args&&... args) {
-    //m_objects.emplace_back(std::make_pair(new T(std::forward<Args>(args)...), meth));
-    m_objects.emplace_back(std::pair<TObject*,FillingMethod<TObject,eudaq::Event> >(new T(std::forward<Args>(args)...), meth));
-  }*/
-  //template<typename T> using FillingMethod = std::function<void(T*,eudaq::Event*)>;
-  template<typename T, typename... Args> T* Book(const char* path, Args&&... args) {
+  /// Update the FSM
+  void SetStatus(Status st);
+  void SaveFile();
+  void CleanMonitors();
+
+  /// Add a new monitor to the stack, as a simple TObject-derivative
+  template<typename T, typename... Args> T* Book(const std::string& path, Args&&... args) {
     auto obj = new T(std::forward<Args>(args)...);
-    auto item = m_tree_list->AddItem(nullptr, path);
+    std::string /*name = obj->GetName();
+    if (name.empty())*/
+      name = path;
+    auto item = m_tree_list->AddItem(nullptr, name.c_str());
     auto it_icon = m_obj_icon.find(obj->ClassName());
     if (it_icon != m_obj_icon.end())
       item->SetPictures(it_icon->second, it_icon->second);
-    m_objects[path] = std::make_pair(item, obj);
+    m_objects[path] = MonitoredObject{item, obj};
+    m_left_canv->MapSubwindows();
+    m_left_canv->MapWindow();
     return obj;
   }
-  template<typename T> T* Get(const char* name) {
+  /// Retrieve a monitored object by its path and type
+  template<typename T> T* Get(const std::string& name) {
     return dynamic_cast<T*>(Get(name));
   }
-  TObject* Get(const char* name);
+  /// Retrieve a monitored object by its path
+  TObject* Get(const std::string& name);
+  void AddSummary(const std::string& path, const std::vector<std::string>& objs);
 
   void DrawElement(TGListTreeItem*, int);
   void DrawMenu(TGListTreeItem*, int, int, int);
@@ -60,6 +69,7 @@ public:
   void Quit();
 
 private:
+  /// List of status bar attributes
   enum class StatusBarPos { status = 0, run_number, tot_events, an_events, num_parts };
 
   // ROOT GUI objects handled
@@ -76,20 +86,27 @@ private:
   const TGPicture* m_icon_db, *m_icon_save, *m_icon_del;
   const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tgraph;
 
+  /// Timer for auto-refresh loop
   std::unique_ptr<TTimer> m_timer;
-  std::map<std::string, std::pair<TGListTreeItem*, TObject*> > m_objects;
+  struct MonitoredObject {
+    TGListTreeItem* item = nullptr;
+    TObject* object = nullptr;
+  };
+  /// List of all objects handled and monitored
+  std::map<std::string, MonitoredObject> m_objects;
+  /// List of all summary plots sharing one canvas
+  std::map<std::string, std::vector<std::string> > m_summaries;
   std::map<std::string, const TGPicture*> m_obj_icon = {
     {"TH1", m_icon_th1}, {"TH1F", m_icon_th1}, {"TH1D", m_icon_th1}, {"TH1I", m_icon_th1},
     {"TH2", m_icon_th2}, {"TH2F", m_icon_th2}, {"TH2D", m_icon_th2}, {"TH2I", m_icon_th2},
     {"TGraph", m_icon_tgraph}
   };
+  /// List of all objects to be drawn on main canvas
   std::vector<TObject*> m_drawable;
-  //std::vector<std::pair<TObject*, FillingMethod<TObject,eudaq::Event> > > m_objects;
-  //std::vector<std::pair<TObject*, std::function<void(TObject*,eudaq::Event*)> > > m_objects;
 
+  /// Parent owning application
   TApplication* m_parent = nullptr;
-  TTree* m_tree = nullptr;
-
+  /// Current "FSM" status
   Status m_status = Status::idle;
 
   ClassDef(MonitorWindow, 0);

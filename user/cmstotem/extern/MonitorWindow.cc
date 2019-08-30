@@ -3,7 +3,7 @@
 #include "TApplication.h"
 #include "TTimer.h"
 #include "TGButton.h"
-#include "TTree.h"
+#include "TFile.h"
 #include "TGFileDialog.h"
 #include "TCanvas.h"
 
@@ -45,12 +45,12 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
   right_frame->AddFrame(m_toolbar, new TGLayoutHints(kLHintsExpandX, 2, 2, 2, 2));
   m_button_save = new TGPictureButton(m_toolbar, m_icon_save);
   m_button_save->SetEnabled(false);
-  m_button_save->Connect("Clicked()", NAME, this, "SaveTree()");
+  m_button_save->Connect("Clicked()", NAME, this, "SaveFile()");
   m_toolbar->AddFrame(m_button_save, new TGLayoutHints(kLHintsLeft, 2, 1, 0, 0));
 
   m_button_clean = new TGPictureButton(m_toolbar, m_icon_del);
   m_button_clean->SetEnabled(false);
-  m_button_clean->Connect("Clicked()", NAME, this, "CleanTree()");
+  m_button_clean->Connect("Clicked()", NAME, this, "CleanMonitors()");
   m_toolbar->AddFrame(m_button_clean, new TGLayoutHints(kLHintsLeft, 1, 2, 0, 0));
 
   auto update_toggle = new TGCheckButton(m_toolbar, "&Update", 1);
@@ -99,10 +99,26 @@ void MonitorWindow::ResetCounters(){
   m_status_bar->SetText("Run: N/A", (int)StatusBarPos::run_number);
   m_status_bar->SetText("Curr. event: N/A", (int)StatusBarPos::tot_events);
   m_status_bar->SetText("Analysed events: N/A", (int)StatusBarPos::an_events);
+  m_button_save->SetEnabled(false);
+  m_button_clean->SetEnabled(false);
 }
 
 void MonitorWindow::SetRunNumber(int run){
   m_status_bar->SetText(Form("Run: %u", run), 1);
+  m_button_save->SetEnabled(true);
+  m_button_clean->SetEnabled(true);
+}
+
+void MonitorWindow::SetLastEventNum(int num){
+  if (m_status != Status::running)
+    return;
+  m_status_bar->SetText(Form("Curr. event: %d", num), (int)StatusBarPos::tot_events);
+}
+
+void MonitorWindow::SetMonitoredEventsNum(int num){
+  if (m_status != Status::running)
+    return;
+  m_status_bar->SetText(Form("Analysed events: %d", num), (int)StatusBarPos::an_events);
 }
 
 void MonitorWindow::SetStatus(Status st){
@@ -111,27 +127,24 @@ void MonitorWindow::SetStatus(Status st){
   m_status_bar->SetText(st_txt.str().c_str(), (int)StatusBarPos::status);
 }
 
-void MonitorWindow::SetTree(TTree* tree){
-  m_tree = tree;
-  m_button_save->SetEnabled(true);
-  m_button_clean->SetEnabled(true);
-}
-
-void MonitorWindow::SaveTree(){
-  if (!m_tree || !m_button_save)
+void MonitorWindow::SaveFile(){
+  if (!m_button_save)
     return;
-  static TString dir(".");
   TGFileInfo fi;
-  const char *filetypes[] = { //"All files",     "*",
-                            "ROOT files",    "*.root",
-                            //"ROOT macros",   "*.C",
-                            //"Text files",    "*.[tT][xX][tT]",
-                            0,               0 };
-  fi.fFileTypes = filetypes;
-  fi.fIniDir = StrDup(dir);
-  new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fi);
-  dir = fi.fIniDir;
-  m_tree->SaveAs(fi.fFilename);
+  { // first define the output file
+    static TString dir(".");
+    const char *filetypes[] = {"ROOT files", "*.root",
+                               0,            0 };
+    fi.fFileTypes = filetypes;
+    fi.fIniDir = StrDup(dir);
+    new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fi);
+    dir = fi.fIniDir;
+  }
+  // then save all collections
+  auto file = std::make_unique<TFile>(fi.fFilename, "recreate");
+  for (auto& obj : m_objects)
+    obj.second.object->Write();
+  file->Close();
 }
 
 void MonitorWindow::SwitchUpdate(bool up){
@@ -142,12 +155,6 @@ void MonitorWindow::SwitchUpdate(bool up){
 }
 
 void MonitorWindow::Update(){
-  if (m_tree && m_status == Status::running) {
-    int ev_num = 0;
-    m_tree->SetBranchAddress("event_n", &ev_num);
-    m_status_bar->SetText(Form("Analysed events: %d", ev_num), (int)StatusBarPos::an_events);
-    m_status_bar->SetText(Form("Curr. event: %d", m_tree->GetEntriesFast()), (int)StatusBarPos::tot_events);
-  }
   std::cout << "Update..." << std::endl;
   if (!m_drawable.empty()) {
     TCanvas* canv = m_main_canvas->GetCanvas();
@@ -162,18 +169,24 @@ void MonitorWindow::Update(){
   }
 }
 
-TObject* MonitorWindow::Get(const char* name){
+TObject* MonitorWindow::Get(const std::string& name){
   auto it = m_objects.find(name);
   if (it == m_objects.end())
     throw std::runtime_error("Failed to retrieve object with path \""+std::string(name)+"\"!");
-  return it->second.second;
+  return it->second.object;
+}
+
+void MonitorWindow::AddSummary(const std::string& path, const std::vector<std::string>& objs){
+  m_summaries[path] = objs;
+  m_left_canv->MapSubwindows();
+  m_left_canv->MapWindow();
 }
 
 void MonitorWindow::DrawElement(TGListTreeItem* it, int){
   m_drawable.clear();
   for (auto& obj : m_objects)
-    if (obj.second.first == it)
-      m_drawable.emplace_back(obj.second.second);
+    if (obj.second.item == it)
+      m_drawable.emplace_back(obj.second.object);
   if (m_drawable.empty())
     throw std::runtime_error("Failed to retrieve the tree item!");
   Update();
@@ -182,6 +195,12 @@ void MonitorWindow::DrawElement(TGListTreeItem* it, int){
 void MonitorWindow::DrawMenu(TGListTreeItem* it, int but, int x, int y){
   if (but == 3)
     m_context_menu->Popup(x, y, this);
+}
+
+void MonitorWindow::CleanMonitors(){
+  for (auto& mon : m_objects)
+    mon.second.object->Clear();
+  Update();
 }
 
 std::ostream& operator<<(std::ostream& os, const MonitorWindow::Status& stat){
