@@ -40,13 +40,14 @@ public:
 
   /// Add a new monitor to the stack, as a simple TObject-derivative
   template<typename T, typename... Args> T* Book(const std::string& path, const std::string& name, Args&&... args) {
+    if (m_objects.count(path) != 0)
+      return Get<T>(path);
     auto obj = new T(std::forward<Args>(args)...);
-    auto parent = BookStructure(path);
-    auto item = m_tree_list->AddItem(parent, name.c_str());
+    auto item = m_tree_list->AddItem(BookStructure(path), name.c_str());
     auto it_icon = m_obj_icon.find(obj->ClassName());
     if (it_icon != m_obj_icon.end())
       item->SetPictures(it_icon->second, it_icon->second);
-    m_objects[path] = MonitoredObject{item, obj};
+    m_objects[path] = MonitoredObject{item, obj, true, ""};
     m_left_canv->MapSubwindows();
     m_left_canv->MapWindow();
     return obj;
@@ -57,7 +58,8 @@ public:
   }
   /// Retrieve a monitored object by its path
   TObject* Get(const std::string& name);
-  void AddSummary(const std::string& path, const std::vector<std::string>& objs);
+  void SetPersistant(const TObject* obj, bool pers = true);
+  void SetDrawOptions(const TObject* obj, Option_t* opt);
 
   void DrawElement(TGListTreeItem*, int);
   void DrawMenu(TGListTreeItem*, int, int, int);
@@ -83,13 +85,15 @@ private:
   TContextMenu* m_context_menu;
 
   const TGPicture* m_icon_db, *m_icon_save, *m_icon_del;
-  const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tgraph;
+  const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tgraph, *m_icon_track;
 
   /// Timer for auto-refresh loop
   std::unique_ptr<TTimer> m_timer;
   struct MonitoredObject {
     TGListTreeItem* item = nullptr;
     TObject* object = nullptr;
+    bool persist = true;
+    Option_t* draw_opt = "";
   };
   /// List of all objects handled and monitored
   std::map<std::string, MonitoredObject> m_objects;
@@ -99,10 +103,10 @@ private:
   std::map<std::string, const TGPicture*> m_obj_icon = {
     {"TH1", m_icon_th1}, {"TH1F", m_icon_th1}, {"TH1D", m_icon_th1}, {"TH1I", m_icon_th1},
     {"TH2", m_icon_th2}, {"TH2F", m_icon_th2}, {"TH2D", m_icon_th2}, {"TH2I", m_icon_th2},
-    {"TGraph", m_icon_tgraph}
+    {"TGraph", m_icon_tgraph}, {"TMultiGraph", m_icon_track}
   };
   /// List of all objects to be drawn on main canvas
-  std::vector<TObject*> m_drawable;
+  std::vector<MonitoredObject*> m_drawable;
 
   /// Parent owning application
   TApplication* m_parent = nullptr;

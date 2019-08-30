@@ -19,6 +19,7 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
    m_icon_th1(gClient->GetPicture("h1_t.xpm")),
    m_icon_th2(gClient->GetPicture("h2_t.xpm")),
    m_icon_tgraph(gClient->GetPicture("graph.xpm")),
+   m_icon_track(gClient->GetPicture("eve_track.xpm")),
    m_timer(new TTimer){
   SetWindowName(name.c_str());
 
@@ -90,6 +91,7 @@ MonitorWindow::~MonitorWindow(){
   gClient->FreePicture(m_icon_th1);
   gClient->FreePicture(m_icon_th2);
   gClient->FreePicture(m_icon_tgraph);
+  gClient->FreePicture(m_icon_track);
   m_parent->Terminate(1);
 }
 
@@ -155,17 +157,24 @@ void MonitorWindow::SwitchUpdate(bool up){
 }
 
 void MonitorWindow::Update(){
-  std::cout << "Update..." << std::endl;
   if (!m_drawable.empty()) {
     TCanvas* canv = m_main_canvas->GetCanvas();
     canv->cd();
     canv->Clear();
-    canv->Divide(m_drawable.size(), 1); //FIXME
+    if (m_drawable.size() > 1) {
+      int ncol = ceil(sqrt(m_drawable.size()));
+      int nrow = ceil(m_drawable.size()*1./ncol);
+      canv->Divide(ncol, nrow);
+    }
     for (size_t i = 0; i < m_drawable.size(); ++i) {
       canv->cd(i+1);
-      m_drawable.at(i)->Draw();
+      auto& dr = m_drawable.at(i);
+      dr->object->Draw(dr->draw_opt);
     }
     canv->Update();
+    for (auto& dr : m_drawable)
+      if (!dr->persist)
+        dr->object->Clear();
   }
 }
 
@@ -176,19 +185,15 @@ TObject* MonitorWindow::Get(const std::string& name){
   return it->second.object;
 }
 
-void MonitorWindow::AddSummary(const std::string& path, const std::vector<std::string>& objs){
-  m_summaries[path] = objs;
-  m_left_canv->MapSubwindows();
-  m_left_canv->MapWindow();
-}
-
 void MonitorWindow::DrawElement(TGListTreeItem* it, int val){
   m_drawable.clear();
   for (auto& obj : m_objects)
     if (obj.second.item == it)
-      m_drawable.emplace_back(obj.second.object);
+      m_drawable.emplace_back(&obj.second);
   if (m_drawable.empty()) // did not find in objects, must be a directory
-    return;
+    for (auto& obj : m_objects)
+      if (obj.second.item->GetParent() == it)
+        m_drawable.emplace_back(&obj.second);
   Update();
 }
 
@@ -201,6 +206,22 @@ void MonitorWindow::CleanMonitors(){
   for (auto& mon : m_objects)
     mon.second.object->Clear();
   Update();
+}
+
+void MonitorWindow::SetPersistant(const TObject* obj, bool pers){
+  for (auto& o : m_objects)
+    if (o.second.object == obj) {
+      o.second.persist = pers;
+      break;
+    }
+}
+
+void MonitorWindow::SetDrawOptions(const TObject* obj, Option_t* opt){
+  for (auto& o : m_objects)
+    if (o.second.object == obj) {
+      o.second.draw_opt = opt;
+      break;
+    }
 }
 
 TGListTreeItem* MonitorWindow::BookStructure(const std::string& path, TGListTreeItem* par){
