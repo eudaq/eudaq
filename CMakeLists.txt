@@ -78,7 +78,8 @@ ENDIF()
 
 # include directories
 #INCLUDE_DIRECTORIES( ./main/include )
-INCLUDE_DIRECTORIES( ./extern/jsoncons-0.110.0/include)
+# last VS2013 compatible jsoncons was 0.99.7.3
+INCLUDE_DIRECTORIES( ./extern/jsoncons-0.132.1/include)
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )

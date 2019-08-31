@@ -57,14 +57,16 @@ environment:
       compiler_version: VS2015
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       platform: x86      
-    - build_type: library_only
-      compiler_version: VS2013
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
-      platform: x64
-    - build_type: library_only
-      compiler_version: VS2013
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
-      platform: x86      
+      
+# No longer VS2013 compatible      
+#     - build_type: library_only
+#       compiler_version: VS2013
+#       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
+#       platform: x64
+#     - build_type: library_only
+#       compiler_version: VS2013
+#       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
+#       platform: x86      
       
 
   # matrix:
