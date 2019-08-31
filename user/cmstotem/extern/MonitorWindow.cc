@@ -144,8 +144,21 @@ void MonitorWindow::SaveFile(){
   }
   // then save all collections
   auto file = std::make_unique<TFile>(fi.fFilename, "recreate");
-  for (auto& obj : m_objects)
-    obj.second.object->Write();
+  for (auto& obj : m_objects) {
+    TString s_file(obj.first);
+    auto pos = s_file.Last('/');
+    TString s_path;
+    if (pos != kNPOS) { // substructure found
+      s_path = s_file;
+      s_path.Remove(pos);
+      s_file.Remove(0, pos+1);
+      if (!file->GetDirectory(s_path))
+        file->mkdir(s_path);
+    }
+    file->cd(s_path);
+    if (obj.second.object->Write(s_file) == 0)
+      std::cerr << "Error writing \"" << obj.first << "\" into the output file!" << std::endl;
+  }
   file->Close();
 }
 
@@ -212,7 +225,7 @@ void MonitorWindow::SetPersistant(const TObject* obj, bool pers){
   for (auto& o : m_objects)
     if (o.second.object == obj) {
       o.second.persist = pers;
-      break;
+      return;
     }
 }
 
@@ -220,7 +233,7 @@ void MonitorWindow::SetDrawOptions(const TObject* obj, Option_t* opt){
   for (auto& o : m_objects)
     if (o.second.object == obj) {
       o.second.draw_opt = opt;
-      break;
+      return;
     }
 }
 
