@@ -20,6 +20,12 @@ IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   SET(SOURCE_PACKAGE 1)
 ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 
+# Incliude VS libraries for VS installation
+# https://blog.nathanosman.com/2017/11/24/using-windeployqt-with-cpack.html
+# https://cmake.org/cmake/help/latest/module/InstallRequiredSystemLibraries.html
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+include(InstallRequiredSystemLibraries)
+
 # Set package version
 IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
@@ -270,7 +276,9 @@ MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
 MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )
 MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )
 
+################################################
 # Set everything for packaging with CPACK
+################################################
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   include (CMakeCPackWindows.cmake)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
