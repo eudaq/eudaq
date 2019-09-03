@@ -3,6 +3,7 @@
 # Mengqing Wu <mengqing.wu@desy.de>
 # created @ Jun
 # 1st stable version out on July 20, 2019
+# update on Sep 3, 2019 - stable MultiRun.py with Rogue-KPiX DAQ
 
 import os, sys, datetime, time
 
@@ -95,9 +96,8 @@ class kpixPyProducer(pyeudaq.Producer):
     def DoStopRun(self):        
         print ('DoStopRun')
         if self.root:
-            self.root.DataWriter.open.set(False)
-            #self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
-            self.root.__exit__()
+            self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+            self.root.DataWriter.close()
             print(f'DoStopRun: Ending Run')
         #endif
 
@@ -106,9 +106,8 @@ class kpixPyProducer(pyeudaq.Producer):
     def DoReset(self):        
         print ('DoReset')
         if self.root:
-            self.root.DataWriter.open.set(False)
-            #self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
-            self.root.stop()
+            self.root.DesyTrackerRunControl.runState.setDisp('Stopped')
+            self.root.DataWriter.close()
             print(f'DoReset: Ending Run')
         #endif
             
@@ -118,7 +117,6 @@ class kpixPyProducer(pyeudaq.Producer):
         print ("Start of RunLoop in kpixPyProducer")
 
         with KpixDaq.DesyTrackerRoot(pollEn=False, ip=self.ip, debug=self.debug) as root:
-            #print (root)
             self.root = root
             
             if self.root:
@@ -134,9 +132,9 @@ class kpixPyProducer(pyeudaq.Producer):
             # Print the version info
             root.DesyTracker.AxiVersion.printStatus()
 
-            root.DataWriter.dataFile.setDisp(self.outfile)
-            root.DataWriter.open.set(True)
             print(f'Opening data file: {self.outfile}')
+            root.DataWriter.dataFile.setDisp(self.outfile)
+            root.DataWriter.open()
             
             print("Hard Reset")
             root.HardReset()
@@ -161,15 +159,15 @@ class kpixPyProducer(pyeudaq.Producer):
             
             root.DesyTrackerRunControl.runState.setDisp('Running')
             root.DesyTrackerRunControl.waitStopped()
-            root.DataWriter.open.set(False)
+            root.DataWriter.close()
             self.is_running=0
             print(f'runloop: Ending Run')
       
 
             print ("Ended: kpixDAQ root is going to be killed.")
 
-            print ("self.root will be None.")
-            self.root = None
+            #print ("self.root will be None.")
+            #self.root = None
             
         # fi- with statement
             
