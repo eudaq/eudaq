@@ -85,4 +85,3 @@ A scan can be defined to be `nested`. If so, all previous configurations are rep
  - `nested`: Repeat all scan sections with [i<iScan] for each step if set to `1`, no effect otherwise. Default:`0`
  - `eventCounter`: Required if [global.timeBasedScan!=1]. 
  Defines the component that triggers the next step, if it has seen [gloabl.neventsPerStep] events.
- 
