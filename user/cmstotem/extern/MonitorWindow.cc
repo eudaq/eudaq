@@ -13,7 +13,6 @@
 
 MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
   :TGMainFrame(gClient->GetRoot(), 800, 600, kVerticalFrame), m_parent(par),
-   m_icon_db(gClient->GetPicture("rootdb_t.xpm")),
    m_icon_save(gClient->GetPicture("bld_save.xpm")),
    m_icon_del(gClient->GetPicture("bld_delete.xpm")),
    m_icon_th1(gClient->GetPicture("h1_t.xpm")),
@@ -85,7 +84,6 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
 }
 
 MonitorWindow::~MonitorWindow(){
-  gClient->FreePicture(m_icon_db);
   gClient->FreePicture(m_icon_save);
   gClient->FreePicture(m_icon_del);
   gClient->FreePicture(m_icon_th1);

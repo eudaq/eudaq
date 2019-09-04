@@ -51,6 +51,7 @@ private:
   //TMultiGraph* m_mg_last_sample[32];
   TGraph* m_g_last_sample[32];
   TH1D* m_h_occup_allchan;
+  TMultiGraph* m_mg_last_sample_allchan;
 };
 
 namespace{
@@ -97,15 +98,20 @@ void SampicMonitor::DoConfigure(){
   m_g_evt_time->SetTitle("Event time;Time (?s?);Event number");
   m_h_occup_allchan = m_main->Book<TH1D>("channels_occup", "Occupancy, all channels", "ch_occup", "Channels occupancy;Channel number;Entries", 32, 0., 32.);
   m_main->SetDrawOptions(m_h_occup_allchan, "hist text0");
+  if (m_sampic_num_last_samples > 0) {
+    m_mg_last_sample_allchan = m_main->Book<TMultiGraph>("last_samples", "Last samples");
+    m_main->SetPersistant(m_mg_last_sample_allchan, false);
+    m_mg_last_sample_allchan->SetTitle("All channels;Time (ns);Amplitude (V)");
+  }
   for (size_t i = 0; i < 32; ++i) {
-    m_h_maxamp_per_chan[i] = m_main->Book<TH1D>(Form("ch%d/max_ampl", i), "Max amplitude", Form("max_ampl_ch%d", i), Form("Channel %d;Maximum amplitude (V);Entries", i), 100, -1., 1.);
-    m_h_occup_per_chan[i] = m_main->Book<TH1D>(Form("ch%d/occupancy", i), "Occupancy", Form("occup_ch%d", i), Form("Channel %d;Samples multiplicity;Entries", i), 20, 0., 20.);
+    m_h_maxamp_per_chan[i] = m_main->Book<TH1D>(Form("Channel %d/max_ampl", i), "Max amplitude", Form("max_ampl_ch%d", i), Form("Channel %d;Maximum amplitude (V);Entries", i), 100, -1., 1.);
+    m_h_occup_per_chan[i] = m_main->Book<TH1D>(Form("Channel %d/occupancy", i), "Occupancy", Form("occup_ch%d", i), Form("Channel %d;Samples multiplicity;Entries", i), 20, 0., 20.);
     if (m_sampic_num_last_samples > 0) {
-      /*m_mg_last_sample[i] = m_main->Book<TMultiGraph>(Form("ch%d/last_samples", i), "Last samples");
+      /*m_mg_last_sample[i] = m_main->Book<TMultiGraph>(Form("Channel %d/last_samples", i), "Last samples");
       m_main->SetPersistant(m_mg_last_sample[i], false);
       m_main->SetDrawOptions(m_mg_last_sample[i], "alp");
       m_mg_last_sample[i]->SetTitle(Form("Channel %d;Time (ns);Amplitude (V)", i));*/
-      m_g_last_sample[i] = m_main->Book<TGraph>(Form("ch%d/last_sample", i), "Last sample");
+      m_g_last_sample[i] = m_main->Book<TGraph>(Form("Channel %d/last_sample", i), "Last sample");
       m_main->SetDrawOptions(m_g_last_sample[i], "alp");
       m_g_last_sample[i]->SetTitle(Form("Channel %d;Time (ns);Amplitude (V)", i));
     }
@@ -161,6 +167,8 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
       if (s_val > max_ampl)
         max_ampl = s_val;
     }
+    if (m_g_last_sample[ch_id])
+      m_mg_last_sample_allchan->Add(m_g_last_sample[ch_id]);
     /*if (g_sample)
       m_mg_last_sample[ch_id]->Add(g_sample);*/
     m_h_maxamp_per_chan[ch_id]->Fill(max_ampl-baseline);

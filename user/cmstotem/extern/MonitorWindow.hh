@@ -84,7 +84,7 @@ private:
   TGListTree* m_tree_list;
   TContextMenu* m_context_menu;
 
-  const TGPicture* m_icon_db, *m_icon_save, *m_icon_del;
+  const TGPicture* m_icon_save, *m_icon_del;
   const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tgraph, *m_icon_track;
 
   /// Timer for auto-refresh loop
