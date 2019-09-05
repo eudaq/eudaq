@@ -176,5 +176,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   d2->SetTimeBegin(event_begin);
   d2->SetTimeEnd(event_end);
 
+  // Identify the detetor type
+  d2->SetDetectorType("Timepix3");
+
   return data_found;
 }
