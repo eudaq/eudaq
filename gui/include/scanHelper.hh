@@ -144,12 +144,6 @@ private:
     std::vector<std::string> m_events_counting_component;
     std::string m_config_file_prefix;
     int m_current_step = 0;
-
-
-
 };
-
-
-
 
 #endif // EUDAQ_INCLUDED_GUI_ScanHelper
