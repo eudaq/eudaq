@@ -28,7 +28,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     return false;
 
     // Identify the detetor type
-  d2->SetDetectorType("MIMIOSA26");
+  d2->SetDetectorType("MIMOSA26");
 
   if(!d2->IsFlagPacket()){
     d2->SetFlag(d1->GetFlag());
