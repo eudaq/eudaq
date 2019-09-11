@@ -8,6 +8,15 @@
  */
 namespace eudaq {
 
+  class CLICTDEvent2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouCLICTDEvent");
+  private:
+    static bool t0_seen_;
+    static uint64_t last_shutter_open_;
+  };
+
   class CLICpix2Event2StdEventConverter: public eudaq::StdEventConverter{
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
