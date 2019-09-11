@@ -85,6 +85,17 @@ public:
      * @return the connection which provides the number of events required in a scan step
      */
     std::string currentCountingComponent() const;
+    /**
+     * @brief scanHasbeenStarted
+     * @return true if the scan has been started already
+     */
+    bool scanHasbeenStarted() const {return m_first_step_done;}
+    /**
+     * @brief scanStarted
+     */
+    void scanStarted() {m_first_step_done = true;}
+
+
 private:
 
     /**
@@ -123,6 +134,7 @@ private:
     bool m_allow_nested_scan = false;
     bool m_scan_is_time_based = true;
     bool m_repeatScans = false;
+    bool m_first_step_done = false;
     int m_time_per_step = 0;
     int m_events_per_step = 0;
     std::vector<int> m_steps_per_scan;
@@ -132,11 +144,6 @@ private:
     std::vector<std::string> m_events_counting_component;
     std::string m_config_file_prefix;
     int m_current_step = 0;
-
-
 };
-
-
-
 
 #endif // EUDAQ_INCLUDED_GUI_ScanHelper

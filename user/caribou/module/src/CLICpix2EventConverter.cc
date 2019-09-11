@@ -206,6 +206,8 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   d2->SetTimeBegin(shutter_open * 1000);
   d2->SetTimeEnd(shutter_close * 1000);
 
+  // Identify the detetor type
+  d2->SetDetectorType("CLICpix2");
   // Indicate that data was successfully converted
   return true;
 }

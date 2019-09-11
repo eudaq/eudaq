@@ -18,7 +18,7 @@ namespace eudaq {
   using StandardEventSPC = StdEventSPC;
 
   class DLLEXPORT StandardEvent : public Event {
-    public:
+  public:
     StandardEvent();
     StandardEvent(Deserializer &);
 
@@ -56,9 +56,24 @@ namespace eudaq {
     static StdEventSP MakeShared();
     static const uint32_t m_id_factory = cstr2hash("StandardEvent");
 
+    /**
+     * @brief Get detectpr type for this event
+     * @return Human-readable detector type as string
+     */
+    std::string GetDetectorType() {
+      return detector_type;
+    }
+
+    /**
+     * @brief Set detector type for this event
+     * @param type Human-readable detector type
+     */
+    void SetDetectorType(std::string type) { detector_type = type; }
+
   private:
     std::vector<StandardPlane> m_planes;
     uint64_t time_begin{0}, time_end{0};
+    std::string detector_type;
   };
 
   inline std::ostream &operator<<(std::ostream &os, const StandardPlane &pl) {

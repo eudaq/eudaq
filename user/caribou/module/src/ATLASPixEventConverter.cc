@@ -101,7 +101,8 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     d2->SetTimeBegin(timestamp * 1000);
     d2->SetTimeEnd(timestamp * 1000);
 
-
+    // Identify the detetor type
+    d2->SetDetectorType("ATLASPix");
     return true;
   } else {
     // data is not hit information
