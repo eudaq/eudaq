@@ -133,15 +133,14 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   // Decode the data:
-  decoder.decode(rawdata);
-  auto data = decoder.getZerosuppressedFrame();
+  auto data = decoder.decodeFrame(rawdata);
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "Caribou", "CLICTD");
 
   plane.SetSizeZS(128, 128, 0);
   for(const auto& px : data) {
-    auto pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
+    auto pixel = dynamic_cast<caribou::CLICTDPixelReadout*>(px.second.get());
     int col = px.first.first;
     int row = px.first.second;
 
