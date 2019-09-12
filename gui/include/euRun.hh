@@ -27,6 +27,9 @@ public:
   RunControlGUI();
   void SetInstance(eudaq::RunControlUP rc);
   void Exec();
+private slots:
+  void on_checkBox_stateChanged(int arg1);
+
 private:
   void closeEvent(QCloseEvent *event) override;
 			
@@ -62,7 +65,7 @@ private:
   bool allConnectionsInState(eudaq::Status::State state);
   bool checkEventsInStep();
   int getEventsCurrent();
-
+  void store_config();
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
   eudaq::RunControlUP m_rc;
@@ -78,10 +81,11 @@ private:
   eudaq::LogSender m_log;
   bool m_scan_active;
   bool m_scan_interrupt_received;
+  bool m_save_config_at_run_start;
   QTimer m_scanningTimer;
   std::shared_ptr<eudaq::Configuration> m_scan_config;
   Scan m_scan;
-
+  std::string m_config_at_run_path;
 
   void updateProgressBar();
 };
