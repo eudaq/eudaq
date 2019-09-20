@@ -132,10 +132,16 @@ if(DEFINED EUDAQ_LCIO_LIBRARY)
 endif()
 
 set(CONF_INCLUDE_DIRS "\${EUDAQ_INSTALL_DIR}/include")
-configure_file("${PROJECT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in"
-  "${PROJECT_BINARY_DIR}/eudaqConfig.cmake" @ONLY)
+SET(EUDAQ_INCLUDE_DIRS "include")
+SET(EUDAQ_LIBRARIES_DIRS "lib")
+SET(EUDAQ_CMAKE_DIR "cmake")
 
 INCLUDE(CMakePackageConfigHelpers)
+CONFIGURE_PACKAGE_CONFIG_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in
+                              ${CMAKE_CURRENT_BINARY_DIR}/eudaqConfig.cmake
+                              INSTALL_DESTINATION ${EUDAQ_CMAKE_DIR}
+                              PATH_VARS EUDAQ_INCLUDE_DIRS EUDAQ_LIBRARIES_DIRS)
+
 WRITE_BASIC_PACKAGE_VERSION_FILE(eudaqConfigVersion.cmake
                                  VERSION ${PROJECT_VERSION}
                                  COMPATIBILITY AnyNewerVersion)
@@ -143,13 +149,13 @@ WRITE_BASIC_PACKAGE_VERSION_FILE(eudaqConfigVersion.cmake
 install(FILES
   "${PROJECT_BINARY_DIR}/eudaqConfig.cmake"
   "${PROJECT_BINARY_DIR}/eudaqConfigVersion.cmake"
-  DESTINATION cmake
+  DESTINATION ${EUDAQ_CMAKE_DIR}
   COMPONENT dev)
 
 # Install the export set for use with the install-tree
 install(EXPORT eudaqTargets
   NAMESPACE eudaq::
-  DESTINATION cmake
+  DESTINATION ${EUDAQ_CMAKE_DIR}
   COMPONENT dev)
 
 MESSAGE(STATUS "Check your configuration/flags with: cmake -L")
