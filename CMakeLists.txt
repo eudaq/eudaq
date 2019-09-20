@@ -49,6 +49,10 @@ if(GIT_FOUND AND (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git))
 endif()
 message(STATUS "Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
+# Define the project with the simple version
+STRING(REGEX MATCH "([0-9.]+)+" SIMPLE_VERSION "${EUDAQ_LIB_VERSION}")
+PROJECT(eudaq VERSION ${SIMPLE_VERSION} LANGUAGES CXX)
+
 configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/Config.hh" @ONLY)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 file(GLOB INC_FILES "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/*.hh")
@@ -131,8 +135,10 @@ set(CONF_INCLUDE_DIRS "\${EUDAQ_INSTALL_DIR}/include")
 configure_file("${PROJECT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in"
   "${PROJECT_BINARY_DIR}/eudaqConfig.cmake" @ONLY)
 
-configure_file("${PROJECT_SOURCE_DIR}/cmake/eudaqConfigVersion.cmake.in"
-  "${PROJECT_BINARY_DIR}/eudaqConfigVersion.cmake" @ONLY)
+INCLUDE(CMakePackageConfigHelpers)
+WRITE_BASIC_PACKAGE_VERSION_FILE(eudaqConfigVersion.cmake
+                                 VERSION ${PROJECT_VERSION}
+                                 COMPATIBILITY AnyNewerVersion)
 
 install(FILES
   "${PROJECT_BINARY_DIR}/eudaqConfig.cmake"
