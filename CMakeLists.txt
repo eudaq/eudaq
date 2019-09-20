@@ -6,6 +6,10 @@ set(${PROJECT_NAME}_VERSION_PATCH 0 )
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
+IF(COMMAND CMAKE_POLICY)
+  CMAKE_POLICY(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
+ENDIF(COMMAND CMAKE_POLICY)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
