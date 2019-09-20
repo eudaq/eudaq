@@ -5,7 +5,7 @@
 #  Peary_LIBRARIES - The libraries for Peary and the required components
 
 MESSAGE(STATUS "Looking for Peary...")
-FIND_PATH(Peary_INCLUDE_DIR NAMES "peary/device/Device.hpp" PATHS "/usr/lib" "${PEARYINCLUDE}" "$ENV{PEARYPATH}")
+FIND_PATH(Peary_INCLUDE_DIR NAMES "peary/device/Device.hpp" PATHS "/usr/lib" "${PEARYINCLUDE}" "$ENV{PEARYPATH}/include")
 FIND_LIBRARY(Peary_LIBRARIES NAMES "peary" HINTS "${PEARYLIBS}" "$ENV{PEARYPATH}/lib")
 
 LIST(APPEND Peary_INCLUDE_DIRS "${Peary_INCLUDE_DIR}/peary")
@@ -15,7 +15,7 @@ IF(Peary_FIND_COMPONENTS)
    FOREACH(component ${Peary_FIND_COMPONENTS})
       SET(Peary_COMP_INCLUDE "INC_${component}")
       SET(Peary_COMP_LIB "LIB_${component}")
-      FIND_PATH(${Peary_COMP_INCLUDE} NAMES "devices/${component}/${component}Device.hpp" PATHS "${PEARYINCLUDE}" "$ENV{PEARYPATH}")
+      FIND_PATH(${Peary_COMP_INCLUDE} NAMES "devices/${component}/${component}Device.hpp" PATHS "${PEARYINCLUDE}" "$ENV{PEARYPATH}/include")
       FIND_LIBRARY(${Peary_COMP_LIB} NAMES "PearyDevice${component}" HINTS "${PEARYLIBS}" "$ENV{PEARYPATH}/lib")
       IF(${Peary_COMP_INCLUDE} AND ${Peary_COMP_LIB})
          LIST(APPEND Peary_LIBRARIES "${${Peary_COMP_LIB}}")
