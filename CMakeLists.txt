@@ -142,7 +142,7 @@ install(FILES
 
 # Install the export set for use with the install-tree
 install(EXPORT eudaqTargets
-  NAMESPACE eudaq_
+  NAMESPACE eudaq::
   DESTINATION cmake
   COMPONENT dev)
 
