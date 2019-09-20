@@ -2,7 +2,7 @@ aux_source_directory(src MODULE_SRC)
 INCLUDE_DIRECTORIES(include)
 
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${Peary_LIBRARIES})
+target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} Caribou::peary Caribou::PearyDeviceCLICTD Caribou::PearyDeviceCLICpix2 Caribou::PearyDeviceATLASPix)
 TARGET_INCLUDE_DIRECTORIES(${EUDAQ_MODULE} SYSTEM PRIVATE ${Peary_INCLUDE_DIRS})
 
 install(TARGETS
