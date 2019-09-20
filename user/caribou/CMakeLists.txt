@@ -13,7 +13,6 @@ endif()
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
-# Peary and its CLICpix2 component
-FIND_PACKAGE(Peary REQUIRED COMPONENTS PearyDeviceCLICTD PearyDeviceCLICpix2 PearyDeviceATLASPix)
+FIND_PACKAGE(Peary REQUIRED)
 
 add_subdirectory(module)
