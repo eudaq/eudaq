@@ -6,6 +6,13 @@ set(${PROJECT_NAME}_VERSION_PATCH 0 )
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
+
+IF(COMMAND CMAKE_POLICY)
+  IF(${CMAKE_VERSION} VERSION_GREATER "3.13")
+    CMAKE_POLICY(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
+  ENDIF()
+ENDIF(COMMAND CMAKE_POLICY)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
@@ -135,7 +142,7 @@ install(FILES
 
 # Install the export set for use with the install-tree
 install(EXPORT eudaqTargets
-  NAMESPACE eudaq_
+  NAMESPACE eudaq::
   DESTINATION cmake
   COMPONENT dev)
 
