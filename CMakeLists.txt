@@ -7,11 +7,11 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
 
-IF(COMMAND CMAKE_POLICY)
-  IF(${CMAKE_VERSION} VERSION_GREATER "3.13")
-    CMAKE_POLICY(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
-  ENDIF()
-ENDIF(COMMAND CMAKE_POLICY)
+if(COMMAND CMAKE_POLICY)
+  if(${CMAKE_VERSION} VERSION_GREATER "3.13")
+    cmake_policy(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
+  endif()
+endif(COMMAND CMAKE_POLICY)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
@@ -50,8 +50,8 @@ endif()
 message(STATUS "Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
 # Define the project with the simple version
-STRING(REGEX MATCH "([0-9.]+)+" SIMPLE_VERSION "${EUDAQ_LIB_VERSION}")
-PROJECT(eudaq VERSION ${SIMPLE_VERSION} LANGUAGES CXX)
+string(REGEX MATCH "([0-9.]+)+" SIMPLE_VERSION "${EUDAQ_LIB_VERSION}")
+project(eudaq VERSION ${SIMPLE_VERSION} LANGUAGES CXX)
 
 configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/Config.hh" @ONLY)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -132,17 +132,17 @@ if(DEFINED EUDAQ_LCIO_LIBRARY)
 endif()
 
 set(CONF_INCLUDE_DIRS "\${EUDAQ_INSTALL_DIR}/include")
-SET(EUDAQ_INCLUDE_DIRS "include")
-SET(EUDAQ_LIBRARIES_DIRS "lib")
-SET(EUDAQ_CMAKE_DIR "cmake")
+set(EUDAQ_INCLUDE_DIRS "include")
+set(EUDAQ_LIBRARIES_DIRS "lib")
+set(EUDAQ_CMAKE_DIR "cmake")
 
-INCLUDE(CMakePackageConfigHelpers)
-CONFIGURE_PACKAGE_CONFIG_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in
                               ${CMAKE_CURRENT_BINARY_DIR}/eudaqConfig.cmake
                               INSTALL_DESTINATION ${EUDAQ_CMAKE_DIR}
                               PATH_VARS EUDAQ_INCLUDE_DIRS EUDAQ_LIBRARIES_DIRS)
 
-WRITE_BASIC_PACKAGE_VERSION_FILE(eudaqConfigVersion.cmake
+write_basic_package_version_file(eudaqConfigVersion.cmake
                                  VERSION ${PROJECT_VERSION}
                                  COMPATIBILITY AnyNewerVersion)
 
@@ -158,4 +158,4 @@ install(EXPORT eudaqTargets
   DESTINATION ${EUDAQ_CMAKE_DIR}
   COMPONENT dev)
 
-MESSAGE(STATUS "Check your configuration/flags with: cmake -L")
+message(STATUS "Check your configuration/flags with: cmake -L")
