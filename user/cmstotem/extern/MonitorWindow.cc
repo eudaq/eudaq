@@ -7,6 +7,8 @@
 #include "TGFileDialog.h"
 #include "TCanvas.h"
 
+#include "TMultiGraph.h" // required for object-specific "clear"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -90,35 +92,35 @@ MonitorWindow::~MonitorWindow(){
   gClient->FreePicture(m_icon_th2);
   gClient->FreePicture(m_icon_tgraph);
   gClient->FreePicture(m_icon_track);
-  m_parent->Terminate(1);
+  if (m_parent)
+    m_parent->Terminate(1);
 }
 
 void MonitorWindow::ResetCounters(){
-  if (m_status_bar)
-    return;
-  m_status_bar->SetText("Run: N/A", (int)StatusBarPos::run_number);
-  m_status_bar->SetText("Curr. event: N/A", (int)StatusBarPos::tot_events);
-  m_status_bar->SetText("Analysed events: N/A", (int)StatusBarPos::an_events);
+  if (m_status_bar) {
+    m_status_bar->SetText("Run: N/A", (int)StatusBarPos::run_number);
+    m_status_bar->SetText("Curr. event: N/A", (int)StatusBarPos::tot_events);
+    m_status_bar->SetText("Analysed events: N/A", (int)StatusBarPos::an_events);
+  }
   m_button_save->SetEnabled(false);
   m_button_clean->SetEnabled(false);
 }
 
 void MonitorWindow::SetRunNumber(int run){
-  m_status_bar->SetText(Form("Run: %u", run), 1);
+  if (m_status_bar)
+    m_status_bar->SetText(Form("Run: %u", run), 1);
   m_button_save->SetEnabled(true);
   m_button_clean->SetEnabled(true);
 }
 
 void MonitorWindow::SetLastEventNum(int num){
-  if (m_status != Status::running)
-    return;
-  m_status_bar->SetText(Form("Curr. event: %d", num), (int)StatusBarPos::tot_events);
+  if (m_status_bar && m_status == Status::running)
+    m_status_bar->SetText(Form("Curr. event: %d", num), (int)StatusBarPos::tot_events);
 }
 
 void MonitorWindow::SetMonitoredEventsNum(int num){
-  if (m_status != Status::running)
-    return;
-  m_status_bar->SetText(Form("Analysed events: %d", num), (int)StatusBarPos::an_events);
+  if (m_status_bar && m_status == Status::running)
+    m_status_bar->SetText(Form("Analysed events: %d", num), (int)StatusBarPos::an_events);
 }
 
 void MonitorWindow::SetStatus(Status st){
@@ -128,8 +130,6 @@ void MonitorWindow::SetStatus(Status st){
 }
 
 void MonitorWindow::SaveFile(){
-  if (!m_button_save)
-    return;
   TGFileInfo fi;
   { // first define the output file
     static TString dir(".");
@@ -164,29 +164,34 @@ void MonitorWindow::SwitchUpdate(bool up){
   if (!up)
     m_timer->Stop();
   else if (up)
-    m_timer->Start(1000, kFALSE); // update automatically every second
+    m_timer->Start(1000, kFALSE); // update automatically every 1000 ms
 }
 
 void MonitorWindow::Update(){
-  if (!m_drawable.empty()) {
-    TCanvas* canv = m_main_canvas->GetCanvas();
-    canv->cd();
-    canv->Clear();
-    if (m_drawable.size() > 1) {
-      int ncol = ceil(sqrt(m_drawable.size()));
-      int nrow = ceil(m_drawable.size()*1./ncol);
-      canv->Divide(ncol, nrow);
-    }
-    for (size_t i = 0; i < m_drawable.size(); ++i) {
-      canv->cd(i+1);
-      auto& dr = m_drawable.at(i);
-      dr->object->Draw(dr->draw_opt);
-    }
-    canv->Update();
-    for (auto& dr : m_drawable)
-      if (!dr->persist)
-        dr->object->Clear();
+  if (m_drawable.empty()) // nothing to draw
+    return;
+  TCanvas* canv = m_main_canvas->GetCanvas();
+  canv->cd();
+  canv->Clear();
+  if (m_drawable.size() > 1) {
+    int ncol = ceil(sqrt(m_drawable.size()));
+    int nrow = ceil(m_drawable.size()*1./ncol);
+    canv->Divide(ncol, nrow);
   }
+  for (size_t i = 0; i < m_drawable.size(); ++i) {
+    canv->cd(i+1);
+    auto& dr = m_drawable.at(i);
+    dr->object->Draw(dr->draw_opt);
+  }
+  canv->Update();
+  // last loop to clear non-persistent objects before next refresh
+  for (auto& dr : m_drawable)
+    if (!dr->persist) {
+      if (dr->object->ClassName() == "TMultiGraph") {
+        for (auto gr : *dynamic_cast<TMultiGraph*>(dr->object))
+          delete gr;
+      }
+    }
 }
 
 TObject* MonitorWindow::Get(const std::string& name){
@@ -242,8 +247,8 @@ TGListTreeItem* MonitorWindow::BookStructure(const std::string& path, TGListTree
   TGListTreeItem* prev = nullptr;
   std::string full_path;
   for (int i = 0; i < tok->GetEntriesFast()-1; ++i) {
-    const auto iter = tok->At( i );
-    TString dir_name = dynamic_cast<TObjString*>( iter )->String();
+    const auto iter = tok->At(i);
+    TString dir_name = dynamic_cast<TObjString*>(iter)->String();
     full_path += dir_name+"/";
     if (m_dirs.count(full_path) == 0)
       m_dirs[full_path] = m_tree_list->AddItem(prev, dir_name);

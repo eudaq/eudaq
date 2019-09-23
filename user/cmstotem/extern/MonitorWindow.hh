@@ -35,7 +35,9 @@ public:
 
   /// Update the FSM
   void SetStatus(Status st);
+  /// Save all monitored objects into a ROOT file (thus launching a "Save as..." box)
   void SaveFile();
+  /// Clean all monitored objects before a new run
   void CleanMonitors();
 
   /// Add a new monitor to the stack, as a simple TObject-derivative
@@ -67,14 +69,21 @@ public:
   }
   /// Retrieve a monitored object by its path
   TObject* Get(const std::string& name);
+  /// Specify if an object is required to be cleaned at each refresh
   void SetPersistant(const TObject* obj, bool pers = true);
+  /// Specify the drawing properties of the object in the monitor
   void SetDrawOptions(const TObject* obj, Option_t* opt);
 
+  /// Action triggered when a plot/vistar is to be drawn
   void DrawElement(TGListTreeItem*, int);
+  /// Action triggered when a hierarchised plots/vistars structure is to be shown
   void DrawMenu(TGListTreeItem*, int, int, int);
 
+  /// Refresh the displayed vistar(s)
   void Update();
+  /// Turn on/off the auto-refresh
   void SwitchUpdate(bool);
+  /// Clean up everything before terminating the application
   void Quit();
 
 private:
