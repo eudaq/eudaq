@@ -47,7 +47,16 @@ public:
     auto it_icon = m_obj_icon.find(obj->ClassName());
     if (it_icon != m_obj_icon.end())
       item->SetPictures(it_icon->second, it_icon->second);
+#if (__cplusplus == 201703L || __cplusplus == 201402L)
     m_objects[path] = MonitoredObject{item, obj, true, ""};
+#else
+    MonitoredObject mon;
+    mon.item = item;
+    mon.object = obj;
+    mon.persist = true;
+    mon.draw_opt = "";
+    m_objects[path] = mon;
+#endif
     m_left_canv->MapSubwindows();
     m_left_canv->MapWindow();
     return obj;

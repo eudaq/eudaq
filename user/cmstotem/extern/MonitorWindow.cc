@@ -141,7 +141,7 @@ void MonitorWindow::SaveFile(){
     dir = fi.fIniDir;
   }
   // then save all collections
-  auto file = std::make_unique<TFile>(fi.fFilename, "recreate");
+  auto file = std::unique_ptr<TFile>(TFile::Open(fi.fFilename, "recreate"));
   for (auto& obj : m_objects) {
     TString s_file(obj.first);
     auto pos = s_file.Last('/');
