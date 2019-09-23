@@ -91,7 +91,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     return false;
   }
 
-  // Calculate time stamps, CLICpix2 runs on 100MHz clock:
+  // Calculate time stamps, CLICTD runs on 100MHz clock:
   bool shutterOpen = false;
   bool full_shutter = false;
   uint64_t shutter_open = 0, shutter_close = 0;
@@ -141,8 +141,6 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   plane.SetSizeZS(128, 128, 0);
   for(const auto& px : data) {
     auto pixel = dynamic_cast<caribou::CLICTDPixelReadout*>(px.second.get());
-    int col = px.first.first;
-    int row = px.first.second;
 
     // Disentangle data types from pixel:
     int tot = -1;
@@ -178,8 +176,22 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       timestamp = shutter_close - toa * 10;
     }
 
-    // Timestamp is stored in picoseconds
-    plane.PushPixel(col, row, tot, timestamp * 1000);
+
+    // Resolve the eight sub-pixels
+    int row = px.first.second;
+    for(int sub = 0; sub < 8; sub++) {
+      // This pixel hasn't fired:
+      if(!pixel->isHit(sub)) {
+        continue;
+      }
+
+      // "column" times eight plus sub-pixel column
+      // LSB of subpixels is the left-most in the mastrix
+      int col = px.first.first*8 + sub;
+
+      // Timestamp is stored in picoseconds
+      plane.PushPixel(col, row, tot, timestamp * 1000);
+    }
   }
 
   // Add the plane to the StandardEvent
