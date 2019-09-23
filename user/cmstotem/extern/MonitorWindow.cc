@@ -21,7 +21,7 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
    m_icon_th2(gClient->GetPicture("h2_t.xpm")),
    m_icon_tgraph(gClient->GetPicture("graph.xpm")),
    m_icon_track(gClient->GetPicture("eve_track.xpm")),
-   m_timer(new TTimer){
+   m_timer(new TTimer(1000, kTRUE)){
   SetWindowName(name.c_str());
 
   m_top_win = new TGHorizontalFrame(this);
@@ -86,6 +86,7 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
 }
 
 MonitorWindow::~MonitorWindow(){
+  // unregister the icons
   gClient->FreePicture(m_icon_save);
   gClient->FreePicture(m_icon_del);
   gClient->FreePicture(m_icon_th1);
@@ -125,8 +126,10 @@ void MonitorWindow::SetMonitoredEventsNum(int num){
 
 void MonitorWindow::SetStatus(Status st){
   m_status = st;
-  std::ostringstream st_txt; st_txt << st;
-  m_status_bar->SetText(st_txt.str().c_str(), (int)StatusBarPos::status);
+  if (m_status_bar) {
+    std::ostringstream st_txt; st_txt << st;
+    m_status_bar->SetText(st_txt.str().c_str(), (int)StatusBarPos::status);
+  }
 }
 
 void MonitorWindow::SaveFile(){
@@ -155,7 +158,7 @@ void MonitorWindow::SaveFile(){
     }
     file->cd(s_path);
     if (obj.second.object->Write(s_file) == 0)
-      std::cerr << "Error writing \"" << obj.first << "\" into the output file!" << std::endl;
+      std::cerr << "[WARNING] Failed to write \"" << obj.first << "\" into the output file!" << std::endl;
   }
   file->Close();
 }
@@ -164,13 +167,17 @@ void MonitorWindow::SwitchUpdate(bool up){
   if (!up)
     m_timer->Stop();
   else if (up)
-    m_timer->Start(1000, kFALSE); // update automatically every 1000 ms
+    m_timer->Start(-1, kFALSE); // update automatically
 }
 
 void MonitorWindow::Update(){
   if (m_drawable.empty()) // nothing to draw
     return;
   TCanvas* canv = m_main_canvas->GetCanvas();
+  if (!canv) { // failed to retrieve the plotting region
+    std::cerr << "[WARNING] Failed to retrieve the main plotting canvas!" << std::endl;
+    return;
+  }
   canv->cd();
   canv->Clear();
   if (m_drawable.size() > 1) {
@@ -185,13 +192,16 @@ void MonitorWindow::Update(){
   }
   canv->Update();
   // last loop to clear non-persistent objects before next refresh
-  for (auto& dr : m_drawable)
-    if (!dr->persist) {
-      if (dr->object->ClassName() == "TMultiGraph") {
-        for (auto gr : *dynamic_cast<TMultiGraph*>(dr->object))
-          delete gr;
-      }
+  for (auto& dr : m_drawable) {
+    if (dr->persist) // skip the persistent objects
+      continue;
+    if (dr->object->ClassName() == "TMultiGraph") { // special case for this one
+      for (auto gr : *dynamic_cast<TMultiGraph*>(dr->object))
+        delete gr;
     }
+    else
+      dr->object->Clear();
+  }
 }
 
 TObject* MonitorWindow::Get(const std::string& name){
