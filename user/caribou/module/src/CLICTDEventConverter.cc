@@ -20,6 +20,8 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   auto counting = conf->Get("countingmode", true);
   auto longcnt = conf->Get("longcnt", false);
 
+  auto pxvalue = conf->Get("Pixel_value", "tot");
+
   // Integer to allow skipping pixels with certain ToT values directly when decoding
   auto discard_tot_below = conf->Get("discard_tot_below", -1);
   auto discard_toa_below = conf->Get("discard_toa_below", -1);
@@ -161,6 +163,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
     // Time defaults ot rising shutter edge:
     auto timestamp = shutter_open;
+    int rawvalue = tot;
 
     // Decide whether information is counter of ToA
     if(counting) {
@@ -173,10 +176,12 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
         continue;
       }
 
+      // Select which value to return as pixel raw value
+      rawvalue = (pxvalue != "tot" ? toa : tot);
+
       // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
       timestamp = shutter_close - toa * 10;
     }
-
 
     // Resolve the eight sub-pixels
     int row = px.first.second;
@@ -191,7 +196,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       int col = px.first.first*8 + sub;
 
       // Timestamp is stored in picoseconds
-      plane.PushPixel(col, row, tot, timestamp * 1000);
+      plane.PushPixel(col, row, rawvalue, timestamp * 1000);
     }
   }
 
