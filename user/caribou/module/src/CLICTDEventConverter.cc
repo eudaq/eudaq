@@ -20,7 +20,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   auto counting = conf->Get("countingmode", true);
   auto longcnt = conf->Get("longcnt", false);
 
-  auto pxvalue = conf->Get("Pixel_value", "tot");
+  auto pxvalue = conf->Get("pixel_value", "tot");
 
   // Integer to allow skipping pixels with certain ToT values directly when decoding
   auto discard_tot_below = conf->Get("discard_tot_below", -1);
