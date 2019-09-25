@@ -107,6 +107,12 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       shutterOpen = false;
       full_shutter = true;
     }
+
+    // Check for T0 signal:
+    if((timestamp >> 48) & 0x1) {
+        t0_seen_ = true;
+        EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+    }
   }
 
   // If we never saw a shutter open we have a problem:
@@ -125,6 +131,10 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   if(!t0_seen_) {
     // Last shutter open had higher timestamp than this one:
     t0_seen_ = (last_shutter_open_ > shutter_open);
+    // Log when we have it detector:
+    if(t0_seen_) {
+      EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
+    }
   }
   last_shutter_open_ = shutter_open;
 
@@ -178,7 +188,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
       // Select which value to return as pixel raw value
       rawvalue = (pxvalue ? toa : tot);
-    
+
       // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
       timestamp = shutter_close - toa * 10;
     }
