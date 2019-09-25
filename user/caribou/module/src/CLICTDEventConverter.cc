@@ -20,7 +20,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   auto counting = conf->Get("countingmode", true);
   auto longcnt = conf->Get("longcnt", false);
 
-  auto pxvalue = conf->Get("pixel_value", "tot");
+  auto pxvalue = conf->Get("pixel_value_toa", false);
 
   // Integer to allow skipping pixels with certain ToT values directly when decoding
   auto discard_tot_below = conf->Get("discard_tot_below", -1);
@@ -177,8 +177,8 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       }
 
       // Select which value to return as pixel raw value
-      rawvalue = (pxvalue != "tot" ? toa : tot);
-
+      rawvalue = (pxvalue ? toa : tot);
+    
       // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
       timestamp = shutter_close - toa * 10;
     }
