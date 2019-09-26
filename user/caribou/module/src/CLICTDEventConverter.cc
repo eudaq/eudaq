@@ -94,16 +94,18 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     return false;
   }
 
+  // Print all timestamps for first event:
+  if(ev->GetEventNumber() == 1 || ev->GetEventNumber() == 33583) {
+    for(auto& timestamp : timestamps) {
+      EUDAQ_INFO("TS " + eudaq::to_bit_string((timestamp >> 48), 16, true) + " " + std::to_string(timestamp & 0xffffffffffff));
+    }
+  }
+  
   // Calculate time stamps, CLICTD runs on 100MHz clock:
   bool shutterOpen = false;
   bool full_shutter = false;
   uint64_t shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
-
-    // PRint all timestamps for first event:
-    if(ev->GetEventNumber() == 1) {
-      EUDAQ_INFO("TS " + eudaq::to_bit_string((timestamp >> 48), 16, true) + " " + std::to_string(timestamp & 0xffffffffffff));
-    }
 
     // Find first appearance and first disappearance of SHUTTER signal
     if((timestamp >> 48) & 0x4) {
@@ -129,6 +131,8 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
         return false;
     }
   }
+
+
 
   // If we never saw a shutter open we have a problem:
   if(!full_shutter) {
