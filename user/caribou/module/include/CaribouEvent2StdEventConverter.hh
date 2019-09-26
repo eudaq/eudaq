@@ -14,6 +14,7 @@ namespace eudaq {
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouCLICTDEvent");
   private:
     static bool t0_seen_;
+    static bool t0_is_high_;
     static uint64_t last_shutter_open_;
   };
 

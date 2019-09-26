@@ -11,6 +11,7 @@ namespace{
   Register<CLICTDEvent2StdEventConverter>(CLICTDEvent2StdEventConverter::m_id_factory);
 }
 
+bool CLICTDEvent2StdEventConverter::t0_is_high_(false);
 bool CLICTDEvent2StdEventConverter::t0_seen_(false);
 uint64_t CLICTDEvent2StdEventConverter::last_shutter_open_(0);
 bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
@@ -108,10 +109,18 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       full_shutter = true;
     }
 
-    // Check for T0 signal:
+    // Check for T0 signal going high:
     if((timestamp >> 48) & 0x1) {
+        t0_is_high_ = true;
+    }
+
+    // Check for T0 signal going from high to low
+    if(!((timestamp >> 48) & 0x1) && t0_is_high_) {
         t0_seen_ = true;
+        t0_is_high_ = false;
         EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+        // Discard this event:
+        return false;
     }
   }
 
@@ -134,6 +143,8 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     // Log when we have it detector:
     if(t0_seen_) {
       EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
+      // Discard this event:
+      return false;
     }
   }
   last_shutter_open_ = shutter_open;
