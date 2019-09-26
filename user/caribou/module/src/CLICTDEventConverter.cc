@@ -95,44 +95,75 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   // Print all timestamps for first event:
-  if(ev->GetEventNumber() == 1 || ev->GetEventNumber() == 33583) {
+  if(ev->GetEventNumber() == 1) {
     for(auto& timestamp : timestamps) {
       EUDAQ_INFO("TS " + eudaq::to_bit_string((timestamp >> 48), 16, true) + " " + std::to_string(timestamp & 0xffffffffffff));
     }
   }
-  
+
   // Calculate time stamps, CLICTD runs on 100MHz clock:
-  bool shutterOpen = false;
+  bool shutterIsOpen = false;
   bool full_shutter = false;
   uint64_t shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
+    // LSB 8bit: signal status after the trigger
+    // MSB 8bit: which signals triggered
+    uint8_t signals = (timestamp >> 48) & 0xff;
+    uint8_t triggers = (timestamp >> 56) & 0xff;
+    // 48bit of timestamp in 10ns clk
+    uint64_t time = (timestamp & 0xffffffffffff) * 10;
 
-    // Find first appearance and first disappearance of SHUTTER signal
-    if((timestamp >> 48) & 0x4) {
-      shutter_open = (timestamp & 0xffffffffffff) * 10.;
-      shutterOpen = true;
-    } else if(!((timestamp >> 48) & 4) && shutterOpen == true) {
-      shutter_close = (timestamp & 0xffffffffffff) * 10.;
-      shutterOpen = false;
-      full_shutter = true;
-    }
+    // Old format: MSB all zero
+    bool legacy_format = (triggers == 0);
 
-    // Check for T0 signal going high:
-    if((timestamp >> 48) & 0x1) {
+    if(legacy_format) {
+      // Find first appearance and first disappearance of SHUTTER signal
+      if(signals & 0x4) {
+        shutter_open = time;
+        shutterIsOpen = true;
+      } else if(!(signals & 0x4) && shutterIsOpen == true) {
+        shutter_close = time;
+        shutterIsOpen = false;
+        full_shutter = true;
+      }
+
+      // Check for T0 signal going high:
+      if(signals & 0x1) {
         t0_is_high_ = true;
-    }
+      }
 
-    // Check for T0 signal going from high to low
-    if(!((timestamp >> 48) & 0x1) && t0_is_high_) {
+      // Check for T0 signal going from high to low
+      if(!(signals & 0x1) && t0_is_high_) {
         t0_seen_ = true;
         t0_is_high_ = false;
         EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
         // Discard this event:
         return false;
+      }
+    } else {
+      // New format:
+
+      // Find shutter
+      if((triggers & 0x4) && (signals & 0x4)) {
+        // Trigger plus signal is there: shutter opened
+        shutter_open = time;
+        shutterIsOpen = true;
+      } else if((triggers & 0x4) && !(signals & 0x4) && shutterIsOpen) {
+        // Trigger and no signal: shutter closed
+        shutter_close = time;
+        shutterIsOpen = false;
+        full_shutter = true;
+      }
+
+      // Check for T0 signal going from high to low
+      if((triggers & 0x1) && !(signals & 0x1)) {
+        t0_seen_ = true;
+        EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+        // Discard this event:
+        return false;
+      }
     }
   }
-
-
 
   // If we never saw a shutter open we have a problem:
   if(!full_shutter) {
