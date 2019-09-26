@@ -102,11 +102,9 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
     // PRint all timestamps for first event:
     if(ev->GetEventNumber() == 1) {
-      std::stringstream s;
-      s << std::hex << timestamp << std::dec << std::endl;
-      EUDAQ_INFO("TS " + s.str());
+      EUDAQ_INFO("TS " + eudaq::to_bit_string((timestamp >> 48), 16, true) + " " + std::to_string(timestamp & 0xffffffffffff));
     }
-    
+
     // Find first appearance and first disappearance of SHUTTER signal
     if((timestamp >> 48) & 0x4) {
       shutter_open = (timestamp & 0xffffffffffff) * 10.;
