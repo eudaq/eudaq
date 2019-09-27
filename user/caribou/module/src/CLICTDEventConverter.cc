@@ -65,7 +65,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     uint64_t ts64;
     for(const auto& ts : ts_tmp) {
       if(msb) {
-        ts64 = (static_cast<uint64_t>(ts & 0x7ffff) << 32);
+        ts64 = (static_cast<uint64_t>(ts) << 32);
       } else {
         timestamps.push_back(ts64 | ts);
       }
