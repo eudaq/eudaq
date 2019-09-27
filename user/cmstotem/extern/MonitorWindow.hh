@@ -27,18 +27,20 @@ public:
   enum class Status { idle, configured, running, error };
   friend std::ostream& operator<<(std::ostream&, const Status&);
 
+  void SetCounters(unsigned long long evt_recv, unsigned long long evt_mon);
   /// Reset the status bar events counters
   void ResetCounters();
   void SetRunNumber(int run);
   void SetLastEventNum(int num);
   void SetMonitoredEventsNum(int num);
+  void AddSummary(const std::string& path, const TObject* obj);
 
   /// Update the FSM
   void SetStatus(Status st);
   /// Save all monitored objects into a ROOT file (thus launching a "Save as..." box)
   void SaveFile();
   /// Clean all monitored objects before a new run
-  void CleanMonitors();
+  void ClearMonitors();
 
   /// Add a new monitor to the stack, as a simple TObject-derivative
   template<typename T, typename... Args> T* Book(const std::string& path, const std::string& name, Args&&... args) {
@@ -50,7 +52,7 @@ public:
     if (it_icon != m_obj_icon.end())
       item->SetPictures(it_icon->second, it_icon->second);
 #if (__cplusplus == 201703L || __cplusplus == 201402L)
-    m_objects[path] = MonitoredObject{item, obj, true, ""};
+    m_objects[path] = MonitoredObject{item, obj, true, "", kInvalidValue, kInvalidValue};
 #else
     MonitoredObject mon;
     mon.item = item;
@@ -73,6 +75,8 @@ public:
   void SetPersistant(const TObject* obj, bool pers = true);
   /// Specify the drawing properties of the object in the monitor
   void SetDrawOptions(const TObject* obj, Option_t* opt);
+  /// Specify the y axis range for a monitored object
+  void SetRangeY(const TObject* obj, double min, double max);
 
   /// Action triggered when a plot/vistar is to be drawn
   void DrawElement(TGListTreeItem*, int);
@@ -90,6 +94,7 @@ private:
   /// List of status bar attributes
   enum class StatusBarPos { status = 0, run_number, tot_events, an_events, num_parts };
   TGListTreeItem* BookStructure(const std::string& path, TGListTreeItem* par = nullptr);
+  void CleanObject(TObject*);
 
   // ROOT GUI objects handled
   TGHorizontalFrame* m_top_win;
@@ -102,22 +107,26 @@ private:
   TGListTree* m_tree_list;
   TContextMenu* m_context_menu;
 
+  const TGPicture* m_icon_summ;
   const TGPicture* m_icon_save, *m_icon_del;
   const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tgraph, *m_icon_track;
 
   /// Timer for auto-refresh loop
   std::unique_ptr<TTimer> m_timer;
+  static constexpr double kInvalidValue = 42.4242;
   struct MonitoredObject {
     TGListTreeItem* item = nullptr;
     TObject* object = nullptr;
     bool persist = true;
     Option_t* draw_opt = "";
+    double min_y = kInvalidValue, max_y = kInvalidValue;
   };
   /// List of all objects handled and monitored
   std::map<std::string, MonitoredObject> m_objects;
   std::map<std::string, TGListTreeItem*> m_dirs;
   /// List of all summary plots sharing one canvas
   std::map<std::string, std::vector<std::string> > m_summaries;
+  std::map<TGListTreeItem*, std::vector<MonitoredObject*> > m_summ_objects;
   std::map<std::string, const TGPicture*> m_obj_icon = {
     {"TH1", m_icon_th1}, {"TH1F", m_icon_th1}, {"TH1D", m_icon_th1}, {"TH1I", m_icon_th1},
     {"TH2", m_icon_th2}, {"TH2F", m_icon_th2}, {"TH2D", m_icon_th2}, {"TH2I", m_icon_th2},
@@ -130,6 +139,9 @@ private:
   TApplication* m_parent = nullptr;
   /// Current "FSM" status
   Status m_status = Status::idle;
+  int m_run_number = -1;
+  unsigned long long m_last_event = 0;
+  unsigned long long m_last_event_mon = 0;
 
   ClassDef(MonitorWindow, 0);
 };

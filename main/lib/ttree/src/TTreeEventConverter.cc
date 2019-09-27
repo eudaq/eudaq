@@ -69,7 +69,8 @@ namespace eudaq{
     uint32_t id = d1->GetType();
     auto cvt = Factory<TTreeEventConverter>::MakeUnique(id);
     if(cvt){
-      return cvt->Converting(d1, d2, conf);
+      cvt->Converting(d1, d2, conf);
+      d2->Fill();
     }
     else{
       std::cerr<<"TTreeEventConverter: WARNING, no converter for EventID = "<<d1<<"\n";

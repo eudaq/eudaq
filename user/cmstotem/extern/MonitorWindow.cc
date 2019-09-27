@@ -7,7 +7,10 @@
 #include "TGFileDialog.h"
 #include "TCanvas.h"
 
-#include "TMultiGraph.h" // required for object-specific "clear"
+// required for object-specific "clear"
+#include "TGraph.h"
+#include "TH1.h"
+#include "TMultiGraph.h"
 
 #include <iostream>
 #include <fstream>
@@ -21,6 +24,7 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
    m_icon_th2(gClient->GetPicture("h2_t.xpm")),
    m_icon_tgraph(gClient->GetPicture("graph.xpm")),
    m_icon_track(gClient->GetPicture("eve_track.xpm")),
+   m_icon_summ(gClient->GetPicture("draw_t.xpm")),
    m_timer(new TTimer(1000, kTRUE)){
   SetWindowName(name.c_str());
 
@@ -46,17 +50,20 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
   m_toolbar = new TGToolBar(right_frame, 180, 80);
   right_frame->AddFrame(m_toolbar, new TGLayoutHints(kLHintsExpandX, 2, 2, 2, 2));
   m_button_save = new TGPictureButton(m_toolbar, m_icon_save);
+  m_button_save->SetToolTipText("Save all monitors");
   m_button_save->SetEnabled(false);
   m_button_save->Connect("Clicked()", NAME, this, "SaveFile()");
   m_toolbar->AddFrame(m_button_save, new TGLayoutHints(kLHintsLeft, 2, 1, 0, 0));
 
   m_button_clean = new TGPictureButton(m_toolbar, m_icon_del);
+  m_button_clean->SetToolTipText("Clean all monitors");
   m_button_clean->SetEnabled(false);
-  m_button_clean->Connect("Clicked()", NAME, this, "CleanMonitors()");
+  m_button_clean->Connect("Clicked()", NAME, this, "ClearMonitors()");
   m_toolbar->AddFrame(m_button_clean, new TGLayoutHints(kLHintsLeft, 1, 2, 0, 0));
 
   auto update_toggle = new TGCheckButton(m_toolbar, "&Update", 1);
   m_toolbar->AddFrame(update_toggle, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  update_toggle->SetToolTipText("Switch on/off the auto refresh of all monitors");
   update_toggle->Connect("Toggled(Bool_t)", NAME, this, "SwitchUpdate(Bool_t)");
 
   // main canvas
@@ -97,6 +104,11 @@ MonitorWindow::~MonitorWindow(){
     m_parent->Terminate(1);
 }
 
+void MonitorWindow::SetCounters(unsigned long long evt_recv, unsigned long long evt_mon){
+  m_last_event = evt_recv;
+  m_last_event_mon = evt_mon;
+}
+
 void MonitorWindow::ResetCounters(){
   if (m_status_bar) {
     m_status_bar->SetText("Run: N/A", (int)StatusBarPos::run_number);
@@ -105,11 +117,13 @@ void MonitorWindow::ResetCounters(){
   }
   m_button_save->SetEnabled(false);
   m_button_clean->SetEnabled(false);
+  ClearMonitors();
 }
 
 void MonitorWindow::SetRunNumber(int run){
+  m_run_number = run;
   if (m_status_bar)
-    m_status_bar->SetText(Form("Run: %u", run), 1);
+    m_status_bar->SetText(Form("Run: %u", m_run_number), (int)StatusBarPos::run_number);
   m_button_save->SetEnabled(true);
   m_button_clean->SetEnabled(true);
 }
@@ -171,6 +185,9 @@ void MonitorWindow::SwitchUpdate(bool up){
 }
 
 void MonitorWindow::Update(){
+  SetLastEventNum(m_last_event);
+  SetMonitoredEventsNum(m_last_event_mon);
+
   if (m_drawable.empty()) // nothing to draw
     return;
   TCanvas* canv = m_main_canvas->GetCanvas();
@@ -189,19 +206,18 @@ void MonitorWindow::Update(){
     canv->cd(i+1);
     auto& dr = m_drawable.at(i);
     dr->object->Draw(dr->draw_opt);
+    if (dr->object->InheritsFrom("TH1")
+	&& dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
+      dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
+    else if (dr->object->InheritsFrom("TGraph")
+	&& dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
+      dynamic_cast<TGraph*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
   }
   canv->Update();
-  // last loop to clear non-persistent objects before next refresh
-  for (auto& dr : m_drawable) {
-    if (dr->persist) // skip the persistent objects
-      continue;
-    if (dr->object->ClassName() == "TMultiGraph") { // special case for this one
-      for (auto gr : *dynamic_cast<TMultiGraph*>(dr->object))
-        delete gr;
-    }
-    else
-      dr->object->Clear();
-  }
+  // clean all non-persistent objects
+  for (auto& dr : m_drawable)
+    if (!dr->persist)
+      CleanObject(dr->object);
 }
 
 TObject* MonitorWindow::Get(const std::string& name){
@@ -220,18 +236,16 @@ void MonitorWindow::DrawElement(TGListTreeItem* it, int val){
     for (auto& obj : m_objects)
       if (obj.second.item->GetParent() == it)
         m_drawable.emplace_back(&obj.second);
+  if (m_drawable.empty()) // did not find in directories either, must be a summary
+    if (m_summ_objects.count(it) > 0)
+      for (auto& obj : m_summ_objects[it])
+	m_drawable.emplace_back(obj);
   Update();
 }
 
 void MonitorWindow::DrawMenu(TGListTreeItem* it, int but, int x, int y){
   if (but == 3)
     m_context_menu->Popup(x, y, this);
-}
-
-void MonitorWindow::CleanMonitors(){
-  for (auto& mon : m_objects)
-    mon.second.object->Clear();
-  Update();
 }
 
 void MonitorWindow::SetPersistant(const TObject* obj, bool pers){
@@ -246,6 +260,15 @@ void MonitorWindow::SetDrawOptions(const TObject* obj, Option_t* opt){
   for (auto& o : m_objects)
     if (o.second.object == obj) {
       o.second.draw_opt = opt;
+      return;
+    }
+}
+
+void MonitorWindow::SetRangeY(const TObject* obj, double min, double max){
+  for (auto& o : m_objects)
+    if (o.second.object == obj) {
+      o.second.min_y = min;
+      o.second.max_y = max;
       return;
     }
 }
@@ -265,6 +288,47 @@ TGListTreeItem* MonitorWindow::BookStructure(const std::string& path, TGListTree
     prev = m_dirs[full_path];
   }
   return prev;
+}
+
+void MonitorWindow::AddSummary(const std::string& path, const TObject* obj){
+  for (auto& o : m_objects) {
+    if (o.second.object != obj)
+      continue;
+    if (m_dirs.count(path) == 0) {
+      auto obj_name = path;
+      obj_name.erase(0, obj_name.rfind('/')+1);
+      m_dirs[path] = m_tree_list->AddItem(BookStructure(path), obj_name.c_str());
+      m_dirs[path]->SetPictures(m_icon_summ, m_icon_summ);
+    }
+    m_summ_objects[m_dirs[path]].emplace_back(&o.second);
+    m_left_canv->MapSubwindows();
+    m_left_canv->MapWindow();
+    return;
+  }
+  throw std::runtime_error("Failed to retrieve an object for summary \""+path+"\"");
+}
+
+void MonitorWindow::ClearMonitors(){
+  std::cout << "Clearing of all monitors requested" << std::endl;
+  // last loop to clear non-persistent objects before next refresh
+  for (auto& dr : m_objects)
+    CleanObject(dr.second.object);
+}
+
+void MonitorWindow::CleanObject(TObject* obj){
+  if (obj->InheritsFrom("TMultiGraph")) { // special case for this one
+    for (auto gr : *dynamic_cast<TMultiGraph*>(obj))
+      delete gr;
+  }
+  else if (obj->InheritsFrom("TGraph"))
+    dynamic_cast<TGraph*>(obj)->Set(0);
+  else if (obj->InheritsFrom("TH1"))
+    dynamic_cast<TH1*>(obj)->Reset();
+  else
+    std::cerr
+      << "[WARNING] monitoring object with class name "
+      << "\"" << obj->ClassName() << "\" cannot be cleared"
+      << std::endl;
 }
 
 std::ostream& operator<<(std::ostream& os, const MonitorWindow::Status& stat){
