@@ -62,6 +62,7 @@ private:
   TGraph* m_g_freq_vs_time[kNumCh];
   TH2D* m_h2_tel_tomo[kNumCh];
 
+  unsigned short m_plane_tel_tomo = 0;
   unsigned long m_last_trg_num = 0;
   float m_last_trg_time = 0.;
   unsigned long m_num_smp_last_trg[kNumCh] = {0ul};
@@ -173,10 +174,10 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
       auto tel_event = eudaq::StandardEvent::MakeShared();
       eudaq::StdEventConverter::Convert(sub_evt, tel_event, nullptr); // no configuration word
       if (tel_event->NumPlanes() > 0) {
-	const auto& plane = tel_event->GetPlane(0);
-	for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); ++lvl1)
-	  for (unsigned int i = 0; i < plane.HitPixels(lvl1); ++i)
-	    tel_hits.emplace_back(std::make_pair(plane.GetX(i, lvl1), plane.GetY(i, lvl1)));
+        const auto& plane = tel_event->GetPlane(m_plane_tel_tomo);
+        for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); ++lvl1)
+          for (unsigned int i = 0; i < plane.HitPixels(lvl1); ++i)
+            tel_hits.emplace_back(std::make_pair(plane.GetX(i, lvl1), plane.GetY(i, lvl1)));
       }
     }
   }
