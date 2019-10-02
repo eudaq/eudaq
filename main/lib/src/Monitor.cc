@@ -10,7 +10,25 @@ namespace eudaq {
                    const unsigned lim, const unsigned skip_,
                    const unsigned int skip_evts, const std::string &datafile)
       : CommandReceiver("Monitor", name, runcontrol, false), m_run(0),
-        m_callstart(false), m_reader(0), limit(lim), skip(100 - skip_),
+        m_callstart(false), m_reader(0), upper_limit(lim), skip(100 - skip_),
+        skip_events_with_counter(skip_evts) {
+    if (datafile != "") {
+      // set offline
+      m_reader = std::shared_ptr<FileReader>(new FileReader(datafile));
+      PluginManager::Initialize(m_reader->GetDetectorEvent()); // process BORE
+      // m_callstart = true;
+      std::cout << "DEBUG: Reading file " << datafile << " -> "
+                << m_reader->Filename() << std::endl;
+      // OnStartRun(m_run);
+    }
+    StartThread();
+  }
+
+  Monitor::Monitor(const std::string &name, const std::string &runcontrol,
+                   const unsigned lower_lim, const unsigned upper_lim, const unsigned skip_,
+                   const unsigned int skip_evts, const std::string &datafile)
+      : CommandReceiver("Monitor", name, runcontrol, false), m_run(0),
+        m_callstart(false), m_reader(0), lower_limit(lower_lim), upper_limit(upper_lim), skip(100 - skip_),
         skip_events_with_counter(skip_evts) {
     if (datafile != "") {
       // set offline
@@ -32,7 +50,10 @@ namespace eudaq {
       return false;
 
     unsigned evt_number = m_reader->GetDetectorEvent().GetEventNumber();
-    if (limit > 0 && evt_number > limit)
+    if (upper_limit > 0 && evt_number > upper_limit)
+      return true;
+
+    if (lower_limit > 0 && evt_number < lower_limit)
       return true;
 
     if (evt_number % 1000 == 0) {

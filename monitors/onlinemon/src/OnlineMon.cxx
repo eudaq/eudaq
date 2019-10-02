@@ -50,9 +50,9 @@
 using namespace std;
 
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
-			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
+			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter, const unsigned int first_event,
 			 const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
+  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, first_event, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
 
   if (_offline <= 0)
   {
@@ -148,6 +148,9 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
       _checkEOF.setCollections(_colls);
       _checkEOF.setRootFileName(out);
       _checkEOF.startChecking(10000);
+    }
+    if (first_event > 0) {
+      std::cout << "Start with event " << first_event << std::endl;
     }
   }
 
@@ -538,6 +541,7 @@ int main(int argc, const char ** argv) {
   eudaq::Option<unsigned>        corr_width(op, "cw", "corr_width",500, "Width of the track correlation window");
   eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
   eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", false, "Using (EXPERIMENTAL) track correlation(true) or cluster correlation(false)");
+  eudaq::Option<unsigned>        first_event_to_be_processed(op, "fe", "first_event", 0, "First event to be processed");
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
   eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
@@ -576,7 +580,7 @@ int main(int argc, const char ** argv) {
     TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
     RootMonitor mon(rctrl.Value(), file.Value(), x.Value(), y.Value(),
         w.Value(), h.Value(), argc, offline.Value(), limit.Value(),
-        skipping.Value(), skip_counter.Value(), configfile.Value());
+        skipping.Value(), skip_counter.Value(), first_event_to_be_processed.Value(), configfile.Value());
     mon.setWriteRoot(do_rootatend.IsSet());
     mon.autoReset(do_resetatend.IsSet());
     mon.setReduce(reduce.Value());

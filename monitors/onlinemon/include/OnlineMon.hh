@@ -75,7 +75,7 @@ protected:
 public:
   RootMonitor(const std::string &runcontrol, const std::string &datafile, int x,
               int y, int w, int h, int argc, int offline, const unsigned lim,
-              const unsigned skip_, const unsigned int skip_with_counter,
+              const unsigned skip_, const unsigned int skip_with_counter, const unsigned int first_event, 
               const std::string &conffile = "");
   ~RootMonitor() { gApplication->Terminate(); }
   void registerSensorInGUI(std::string name, int id);

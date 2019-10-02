@@ -22,6 +22,9 @@ namespace eudaq {
     Monitor(const std::string &name, const std::string &runcontrol,
             const unsigned lim, const unsigned skip_,
             const unsigned int skip_evts, const std::string &datafile = "");
+    Monitor(const std::string &name, const std::string &runcontrol,
+            const unsigned lower_lim, const unsigned upper_lim, const unsigned skip_,
+            const unsigned int skip_evts, const std::string &datafile = "");
     virtual ~Monitor() {}
 
     bool ProcessEvent();
@@ -39,7 +42,8 @@ namespace eudaq {
     bool m_callstart;
     shared_ptr<FileReader> m_reader;
     shared_ptr<DetectorEvent> m_lastbore;
-    unsigned limit;
+    unsigned upper_limit;
+    unsigned lower_limit;
     unsigned skip;
     unsigned int skip_events_with_counter;
     unsigned int counter_for_skipping;
