@@ -16,6 +16,7 @@ class TApplication;
 class TTree;
 namespace eudaq{ class Event; }
 
+/// A placeholder for ROOT monitoring
 class MonitorWindow : public TGMainFrame {
   static constexpr const char* NAME = "MonitorWindow";
   RQ_OBJECT(NAME)
@@ -30,15 +31,21 @@ public:
   void SetCounters(unsigned long long evt_recv, unsigned long long evt_mon);
   /// Reset the status bar events counters
   void ResetCounters();
+  /// Specify the run number retrueved from run control
   void SetRunNumber(int run);
+  /// Specify the number of events collected
   void SetLastEventNum(int num);
+  /// Specify the number of events already processed
   void SetMonitoredEventsNum(int num);
+  /// Add a summary page including several monitors
   void AddSummary(const std::string& path, const TObject* obj);
 
   /// Update the FSM
   void SetStatus(Status st);
-  /// Save all monitored objects into a ROOT file (thus launching a "Save as..." box)
-  void SaveFile();
+  /// Launch a "Save as..." dialog to save all monitored objects into a ROOT file
+  void SaveFileDialog();
+  /// Save all monitored objects into a ROOT file
+  void SaveFile(const char* filename);
   /// Clean all monitored objects before a new run
   void ClearMonitors();
 
@@ -78,15 +85,17 @@ public:
   /// Specify the y axis range for a monitored object
   void SetRangeY(const TObject* obj, double min, double max);
 
-  /// Action triggered when a plot/vistar is to be drawn
+  /// Action triggered when a monitor is to be drawn
   void DrawElement(TGListTreeItem*, int);
-  /// Action triggered when a hierarchised plots/vistars structure is to be shown
+  /// Action triggered when a hierarchised monitor structure is to be shown
   void DrawMenu(TGListTreeItem*, int, int, int);
 
-  /// Refresh the displayed vistar(s)
+  /// Refresh the displayed monitor(s)
   void Update();
   /// Turn on/off the auto-refresh
   void SwitchUpdate(bool);
+  /// Enable/disable monitors cleaning between runs
+  void SwitchClearRuns(bool);
   /// Clean up everything before terminating the application
   void Quit();
 
@@ -113,7 +122,7 @@ private:
 
   /// Timer for auto-refresh loop
   std::unique_ptr<TTimer> m_timer;
-  static constexpr double kInvalidValue = 42.4242;
+  static constexpr double kInvalidValue = 42.424242;
   struct MonitoredObject {
     TGListTreeItem* item = nullptr;
     TObject* object = nullptr;
@@ -134,6 +143,8 @@ private:
   };
   /// List of all objects to be drawn on main canvas
   std::vector<MonitoredObject*> m_drawable;
+  bool m_canv_needs_refresh = true;
+  bool m_clear_between_runs = true;
 
   /// Parent owning application
   TApplication* m_parent = nullptr;

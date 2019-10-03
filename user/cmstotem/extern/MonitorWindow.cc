@@ -52,7 +52,7 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
   m_button_save = new TGPictureButton(m_toolbar, m_icon_save);
   m_button_save->SetToolTipText("Save all monitors");
   m_button_save->SetEnabled(false);
-  m_button_save->Connect("Clicked()", NAME, this, "SaveFile()");
+  m_button_save->Connect("Clicked()", NAME, this, "SaveFileDialog()");
   m_toolbar->AddFrame(m_button_save, new TGLayoutHints(kLHintsLeft, 2, 1, 0, 0));
 
   m_button_clean = new TGPictureButton(m_toolbar, m_icon_del);
@@ -65,6 +65,11 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
   m_toolbar->AddFrame(update_toggle, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
   update_toggle->SetToolTipText("Switch on/off the auto refresh of all monitors");
   update_toggle->Connect("Toggled(Bool_t)", NAME, this, "SwitchUpdate(Bool_t)");
+
+  auto refresh_toggle = new TGCheckButton(m_toolbar, "&Clear between runs", 1);
+  m_toolbar->AddFrame(refresh_toggle, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  refresh_toggle->SetToolTipText("Clear all monitors between two runs");
+  refresh_toggle->Connect("Toggled(Bool_t)", NAME, this, "SwitchClearRuns(Bool_t)");
 
   // main canvas
   m_main_canvas = new TRootEmbeddedCanvas("Canvas", right_frame);
@@ -83,6 +88,7 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
 
   m_timer->Connect("Timeout()", NAME, this, "Update()");
   update_toggle->SetOn();
+  refresh_toggle->SetOn();
   SwitchUpdate(true);
 
   this->MapSubwindows();
@@ -100,6 +106,7 @@ MonitorWindow::~MonitorWindow(){
   gClient->FreePicture(m_icon_th2);
   gClient->FreePicture(m_icon_tgraph);
   gClient->FreePicture(m_icon_track);
+  gClient->FreePicture(m_icon_summ);
   if (m_parent)
     m_parent->Terminate(1);
 }
@@ -117,7 +124,8 @@ void MonitorWindow::ResetCounters(){
   }
   m_button_save->SetEnabled(false);
   m_button_clean->SetEnabled(false);
-  ClearMonitors();
+  if (m_clear_between_runs)
+    ClearMonitors();
 }
 
 void MonitorWindow::SetRunNumber(int run){
@@ -146,7 +154,7 @@ void MonitorWindow::SetStatus(Status st){
   }
 }
 
-void MonitorWindow::SaveFile(){
+void MonitorWindow::SaveFileDialog(){
   TGFileInfo fi;
   { // first define the output file
     static TString dir(".");
@@ -157,8 +165,12 @@ void MonitorWindow::SaveFile(){
     new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fi);
     dir = fi.fIniDir;
   }
-  // then save all collections
-  auto file = std::unique_ptr<TFile>(TFile::Open(fi.fFilename, "recreate"));
+  SaveFile(fi.fFilename);
+}
+
+void MonitorWindow::SaveFile(const char* filename){
+  // save all collections
+  auto file = std::unique_ptr<TFile>(TFile::Open(filename, "recreate"));
   for (auto& obj : m_objects) {
     TString s_file(obj.first);
     auto pos = s_file.Last('/');
@@ -182,42 +194,62 @@ void MonitorWindow::SwitchUpdate(bool up){
     m_timer->Stop();
   else if (up)
     m_timer->Start(-1, kFALSE); // update automatically
+  m_canv_needs_refresh = true;
+}
+
+void MonitorWindow::SwitchClearRuns(bool clear){
+  m_clear_between_runs = clear;
 }
 
 void MonitorWindow::Update(){
   SetLastEventNum(m_last_event);
   SetMonitoredEventsNum(m_last_event_mon);
 
-  if (m_drawable.empty()) // nothing to draw
+  // check if we have something to draw
+  if (m_drawable.empty())
     return;
   TCanvas* canv = m_main_canvas->GetCanvas();
   if (!canv) { // failed to retrieve the plotting region
     std::cerr << "[WARNING] Failed to retrieve the main plotting canvas!" << std::endl;
     return;
   }
+  // book the pads and monitors placeholders
   canv->cd();
-  canv->Clear();
-  if (m_drawable.size() > 1) {
-    int ncol = ceil(sqrt(m_drawable.size()));
-    int nrow = ceil(m_drawable.size()*1./ncol);
-    canv->Divide(ncol, nrow);
+  if (m_canv_needs_refresh) {
+    canv->Clear();
+    if (m_drawable.size() > 1) {
+      int ncol = ceil(sqrt(m_drawable.size()));
+      int nrow = ceil(m_drawable.size()*1./ncol);
+      canv->Divide(ncol, nrow);
+    }
+    for (size_t i = 0; i < m_drawable.size(); ++i) {
+      canv->cd(i+1);
+      auto& dr = m_drawable.at(i);
+      dr->object->Draw(dr->draw_opt);
+    }
+    m_canv_needs_refresh = false;
   }
-  for (size_t i = 0; i < m_drawable.size(); ++i) {
-    canv->cd(i+1);
-    auto& dr = m_drawable.at(i);
-    dr->object->Draw(dr->draw_opt);
+  // canvas(es) flushing procedure
+  canv->Modified();
+  canv->Update();
+  size_t i = 0;
+  for (auto& dr : m_drawable) {
+    // clean all non-persistent objects
+    if (!dr->persist)
+      CleanObject(dr->object);
+    // monitor vertical range to be set at the end
     if (dr->object->InheritsFrom("TH1")
 	&& dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
       dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
     else if (dr->object->InheritsFrom("TGraph")
-	&& dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
+             && dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
       dynamic_cast<TGraph*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
+    auto pad = canv->GetPad(++i);
+    if (!pad)
+      continue;
+    pad->Modified();
+    pad->Update();
   }
-  canv->Update();
-  // clean all non-persistent objects
-  for (auto& dr : m_drawable)
-    if (!dr->persist)
-      CleanObject(dr->object);
 }
 
 TObject* MonitorWindow::Get(const std::string& name){
@@ -240,7 +272,7 @@ void MonitorWindow::DrawElement(TGListTreeItem* it, int val){
     if (m_summ_objects.count(it) > 0)
       for (auto& obj : m_summ_objects[it])
 	m_drawable.emplace_back(obj);
-  Update();
+  m_canv_needs_refresh = true;
 }
 
 void MonitorWindow::DrawMenu(TGListTreeItem* it, int but, int x, int y){
@@ -296,11 +328,14 @@ void MonitorWindow::AddSummary(const std::string& path, const TObject* obj){
       continue;
     if (m_dirs.count(path) == 0) {
       auto obj_name = path;
+      // keep only the last part
       obj_name.erase(0, obj_name.rfind('/')+1);
       m_dirs[path] = m_tree_list->AddItem(BookStructure(path), obj_name.c_str());
       m_dirs[path]->SetPictures(m_icon_summ, m_icon_summ);
     }
-    m_summ_objects[m_dirs[path]].emplace_back(&o.second);
+    auto& objs = m_summ_objects[m_dirs[path]];
+    if (std::find(objs.begin(), objs.end(), &o.second) == objs.end())
+      objs.emplace_back(&o.second);
     m_left_canv->MapSubwindows();
     m_left_canv->MapWindow();
     return;
@@ -309,8 +344,7 @@ void MonitorWindow::AddSummary(const std::string& path, const TObject* obj){
 }
 
 void MonitorWindow::ClearMonitors(){
-  std::cout << "Clearing of all monitors requested" << std::endl;
-  // last loop to clear non-persistent objects before next refresh
+  // clear non-persistent objects before next refresh
   for (auto& dr : m_objects)
     CleanObject(dr.second.object);
 }
