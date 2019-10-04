@@ -71,6 +71,7 @@ namespace eudaq{
     if(cvt){
       cvt->Converting(d1, d2, conf);
       d2->Fill();
+      return true;
     }
     else{
       std::cerr<<"TTreeEventConverter: WARNING, no converter for EventID = "<<d1<<"\n";
