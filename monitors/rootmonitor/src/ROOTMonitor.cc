@@ -1,4 +1,4 @@
-#include "MonitorWindow.hh"
+#include "eudaq/ROOTMonitor.hh"
 
 #include "TApplication.h"
 #include "TTimer.h"
@@ -16,7 +16,7 @@
 #include <fstream>
 #include <sstream>
 
-MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
+ROOTMonitor::ROOTMonitor(TApplication* par, const std::string& name)
   :TGMainFrame(gClient->GetRoot(), 800, 600, kVerticalFrame), m_parent(par),
    m_icon_save(gClient->GetPicture("bld_save.xpm")),
    m_icon_del(gClient->GetPicture("bld_delete.xpm")),
@@ -98,7 +98,7 @@ MonitorWindow::MonitorWindow(TApplication* par, const std::string& name)
   m_context_menu = new TContextMenu("", "");
 }
 
-MonitorWindow::~MonitorWindow(){
+ROOTMonitor::~ROOTMonitor(){
   // unregister the icons
   gClient->FreePicture(m_icon_save);
   gClient->FreePicture(m_icon_del);
@@ -111,12 +111,12 @@ MonitorWindow::~MonitorWindow(){
     m_parent->Terminate(1);
 }
 
-void MonitorWindow::SetCounters(unsigned long long evt_recv, unsigned long long evt_mon){
+void ROOTMonitor::SetCounters(unsigned long long evt_recv, unsigned long long evt_mon){
   m_last_event = evt_recv;
   m_last_event_mon = evt_mon;
 }
 
-void MonitorWindow::ResetCounters(){
+void ROOTMonitor::ResetCounters(){
   if (m_status_bar) {
     m_status_bar->SetText("Run: N/A", (int)StatusBarPos::run_number);
     m_status_bar->SetText("Curr. event: N/A", (int)StatusBarPos::tot_events);
@@ -128,7 +128,7 @@ void MonitorWindow::ResetCounters(){
     ClearMonitors();
 }
 
-void MonitorWindow::SetRunNumber(int run){
+void ROOTMonitor::SetRunNumber(int run){
   m_run_number = run;
   if (m_status_bar)
     m_status_bar->SetText(Form("Run: %u", m_run_number), (int)StatusBarPos::run_number);
@@ -136,17 +136,17 @@ void MonitorWindow::SetRunNumber(int run){
   m_button_clean->SetEnabled(true);
 }
 
-void MonitorWindow::SetLastEventNum(int num){
+void ROOTMonitor::SetLastEventNum(int num){
   if (m_status_bar && m_status == Status::running)
     m_status_bar->SetText(Form("Curr. event: %d", num), (int)StatusBarPos::tot_events);
 }
 
-void MonitorWindow::SetMonitoredEventsNum(int num){
+void ROOTMonitor::SetMonitoredEventsNum(int num){
   if (m_status_bar && m_status == Status::running)
     m_status_bar->SetText(Form("Analysed events: %d", num), (int)StatusBarPos::an_events);
 }
 
-void MonitorWindow::SetStatus(Status st){
+void ROOTMonitor::SetStatus(Status st){
   m_status = st;
   if (m_status_bar) {
     std::ostringstream st_txt; st_txt << st;
@@ -154,7 +154,7 @@ void MonitorWindow::SetStatus(Status st){
   }
 }
 
-void MonitorWindow::SaveFileDialog(){
+void ROOTMonitor::SaveFileDialog(){
   TGFileInfo fi;
   { // first define the output file
     static TString dir(".");
@@ -168,7 +168,7 @@ void MonitorWindow::SaveFileDialog(){
   SaveFile(fi.fFilename);
 }
 
-void MonitorWindow::SaveFile(const char* filename){
+void ROOTMonitor::SaveFile(const char* filename){
   // save all collections
   auto file = std::unique_ptr<TFile>(TFile::Open(filename, "recreate"));
   for (auto& obj : m_objects) {
@@ -189,7 +189,7 @@ void MonitorWindow::SaveFile(const char* filename){
   file->Close();
 }
 
-void MonitorWindow::SwitchUpdate(bool up){
+void ROOTMonitor::SwitchUpdate(bool up){
   if (!up)
     m_timer->Stop();
   else if (up)
@@ -197,11 +197,11 @@ void MonitorWindow::SwitchUpdate(bool up){
   m_canv_needs_refresh = true;
 }
 
-void MonitorWindow::SwitchClearRuns(bool clear){
+void ROOTMonitor::SwitchClearRuns(bool clear){
   m_clear_between_runs = clear;
 }
 
-void MonitorWindow::Update(){
+void ROOTMonitor::Update(){
   SetLastEventNum(m_last_event);
   SetMonitoredEventsNum(m_last_event_mon);
 
@@ -252,14 +252,14 @@ void MonitorWindow::Update(){
   }
 }
 
-TObject* MonitorWindow::Get(const std::string& name){
+TObject* ROOTMonitor::Get(const std::string& name){
   auto it = m_objects.find(name);
   if (it == m_objects.end())
     throw std::runtime_error("Failed to retrieve object with path \""+std::string(name)+"\"!");
   return it->second.object;
 }
 
-void MonitorWindow::DrawElement(TGListTreeItem* it, int val){
+void ROOTMonitor::DrawElement(TGListTreeItem* it, int val){
   m_drawable.clear();
   for (auto& obj : m_objects)
     if (obj.second.item == it)
@@ -275,12 +275,12 @@ void MonitorWindow::DrawElement(TGListTreeItem* it, int val){
   m_canv_needs_refresh = true;
 }
 
-void MonitorWindow::DrawMenu(TGListTreeItem* it, int but, int x, int y){
+void ROOTMonitor::DrawMenu(TGListTreeItem* it, int but, int x, int y){
   if (but == 3)
     m_context_menu->Popup(x, y, this);
 }
 
-void MonitorWindow::SetPersistant(const TObject* obj, bool pers){
+void ROOTMonitor::SetPersistant(const TObject* obj, bool pers){
   for (auto& o : m_objects)
     if (o.second.object == obj) {
       o.second.persist = pers;
@@ -288,7 +288,7 @@ void MonitorWindow::SetPersistant(const TObject* obj, bool pers){
     }
 }
 
-void MonitorWindow::SetDrawOptions(const TObject* obj, Option_t* opt){
+void ROOTMonitor::SetDrawOptions(const TObject* obj, Option_t* opt){
   for (auto& o : m_objects)
     if (o.second.object == obj) {
       o.second.draw_opt = opt;
@@ -296,7 +296,7 @@ void MonitorWindow::SetDrawOptions(const TObject* obj, Option_t* opt){
     }
 }
 
-void MonitorWindow::SetRangeY(const TObject* obj, double min, double max){
+void ROOTMonitor::SetRangeY(const TObject* obj, double min, double max){
   for (auto& o : m_objects)
     if (o.second.object == obj) {
       o.second.min_y = min;
@@ -305,7 +305,7 @@ void MonitorWindow::SetRangeY(const TObject* obj, double min, double max){
     }
 }
 
-TGListTreeItem* MonitorWindow::BookStructure(const std::string& path, TGListTreeItem* par){
+TGListTreeItem* ROOTMonitor::BookStructure(const std::string& path, TGListTreeItem* par){
   auto tok = TString(path).Tokenize("/");
   if (tok->IsEmpty())
     return par;
@@ -322,7 +322,7 @@ TGListTreeItem* MonitorWindow::BookStructure(const std::string& path, TGListTree
   return prev;
 }
 
-void MonitorWindow::AddSummary(const std::string& path, const TObject* obj){
+void ROOTMonitor::AddSummary(const std::string& path, const TObject* obj){
   for (auto& o : m_objects) {
     if (o.second.object != obj)
       continue;
@@ -343,13 +343,13 @@ void MonitorWindow::AddSummary(const std::string& path, const TObject* obj){
   throw std::runtime_error("Failed to retrieve an object for summary \""+path+"\"");
 }
 
-void MonitorWindow::ClearMonitors(){
+void ROOTMonitor::ClearMonitors(){
   // clear non-persistent objects before next refresh
   for (auto& dr : m_objects)
     CleanObject(dr.second.object);
 }
 
-void MonitorWindow::CleanObject(TObject* obj){
+void ROOTMonitor::CleanObject(TObject* obj){
   if (obj->InheritsFrom("TMultiGraph")) { // special case for this one
     for (auto gr : *dynamic_cast<TMultiGraph*>(obj))
       delete gr;
@@ -365,12 +365,12 @@ void MonitorWindow::CleanObject(TObject* obj){
       << std::endl;
 }
 
-std::ostream& operator<<(std::ostream& os, const MonitorWindow::Status& stat){
+std::ostream& operator<<(std::ostream& os, const ROOTMonitor::Status& stat){
   switch (stat) {
-    case MonitorWindow::Status::idle: return os << "IDLE";
-    case MonitorWindow::Status::configured: return os << "CONFIGURED";
-    case MonitorWindow::Status::running: return os << "RUNNING";
-    case MonitorWindow::Status::error: return os << "ERROR";
+    case ROOTMonitor::Status::idle: return os << "IDLE";
+    case ROOTMonitor::Status::configured: return os << "CONFIGURED";
+    case ROOTMonitor::Status::running: return os << "RUNNING";
+    case ROOTMonitor::Status::error: return os << "ERROR";
   }
   return os << "UNKNOWN";
 }

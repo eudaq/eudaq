@@ -1,5 +1,5 @@
-#ifndef MonitorWindow_hh
-#define MonitorWindow_hh
+#ifndef EUDAQ_INCLUDED_ROOTMonitor
+#define EUDAQ_INCLUDED_ROOTMonitor
 
 #ifndef __CINT__
 # include "TGFrame.h"
@@ -17,12 +17,12 @@ class TTree;
 namespace eudaq{ class Event; }
 
 /// A placeholder for ROOT monitoring
-class MonitorWindow : public TGMainFrame {
-  static constexpr const char* NAME = "MonitorWindow";
+class ROOTMonitor : public TGMainFrame {
+  static constexpr const char* NAME = "ROOTMonitor";
   RQ_OBJECT(NAME)
 public:
-  MonitorWindow(TApplication*, const std::string& name);
-  ~MonitorWindow();
+  ROOTMonitor(TApplication*, const std::string& name);
+  ~ROOTMonitor();
 
   /// List of FSM states
   enum class Status { idle, configured, running, error };
@@ -154,7 +154,7 @@ private:
   unsigned long long m_last_event = 0;
   unsigned long long m_last_event_mon = 0;
 
-  ClassDef(MonitorWindow, 0);
+  ClassDef(ROOTMonitor, 0);
 };
 
 #endif

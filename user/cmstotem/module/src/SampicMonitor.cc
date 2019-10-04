@@ -1,4 +1,5 @@
 #include "eudaq/Monitor.hh"
+#include "eudaq/ROOTMonitor.hh"
 #include "eudaq/StdEventConverter.hh"
 
 #include "TFile.h"
@@ -8,7 +9,6 @@
 #include "TGraph.h"
 #include "TMultiGraph.h"
 
-#include "MonitorWindow.hh"
 #include "SampicEvent.hh"
 
 #include "TApplication.h"
@@ -42,7 +42,7 @@ private:
   int m_sampic_num_baseline;
   double m_sampic_sampling_period;
 
-  std::unique_ptr<MonitorWindow> m_monitor;
+  std::unique_ptr<ROOTMonitor> m_monitor;
   std::future<void> m_daemon;
   std::future<void> m_test_daemon;
 
@@ -79,11 +79,11 @@ namespace{
 SampicMonitor::SampicMonitor(const std::string & name, const std::string & runcontrol)
   :eudaq::Monitor(name, runcontrol),
    TApplication(name.c_str(), nullptr, nullptr),
-   m_monitor(new MonitorWindow(this, "Sampic monitor")){
+   m_monitor(new ROOTMonitor(this, "Sampic monitor")){
   if (!m_monitor)
     EUDAQ_THROW("Error Allocationg main window");
 
-  m_monitor->SetStatus(MonitorWindow::Status::idle);
+  m_monitor->SetStatus(ROOTMonitor::Status::idle);
 
   // launch the run loop
   TApplication::SetReturnFromRun(true);
@@ -144,13 +144,13 @@ void SampicMonitor::DoConfigure(){
     m_monitor->AddSummary(Form("Summary/Board %u/Last sample", board_id), m_g_last_sample[i]);
   }
 
-  m_monitor->SetStatus(MonitorWindow::Status::configured);
+  m_monitor->SetStatus(ROOTMonitor::Status::configured);
   m_monitor->ResetCounters();
 }
 
 void SampicMonitor::DoStartRun(){
   m_monitor->ResetCounters();
-  m_monitor->SetStatus(MonitorWindow::Status::running);
+  m_monitor->SetStatus(ROOTMonitor::Status::running);
   m_monitor->SetRunNumber(GetRunNumber());
 }
 
@@ -175,10 +175,10 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
       auto tel_event = eudaq::StandardEvent::MakeShared();
       eudaq::StdEventConverter::Convert(sub_evt, tel_event, nullptr); // no configuration word
       if (tel_event->NumPlanes() > 0) {
-	const auto& plane = tel_event->GetPlane(m_plane_tel_tomo);
-	for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); ++lvl1)
-	  for (unsigned int i = 0; i < plane.HitPixels(lvl1); ++i)
-	    tel_hits.emplace_back(std::make_pair(plane.GetX(i, lvl1), plane.GetY(i, lvl1)));
+        const auto& plane = tel_event->GetPlane(m_plane_tel_tomo);
+        for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); ++lvl1)
+          for (unsigned int i = 0; i < plane.HitPixels(lvl1); ++i)
+            tel_hits.emplace_back(std::make_pair(plane.GetX(i, lvl1), plane.GetY(i, lvl1)));
       }
     }
   }
@@ -210,7 +210,7 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
     for (size_t i = 0; i < samples.size(); ++i) {
       const auto& s_val = samples.at(i);
       if (i < m_sampic_num_baseline)
-	noise_rms += pow(s_val-baseline, 2);
+        noise_rms += pow(s_val-baseline, 2);
       if (m_g_last_sample[ch_id])
         m_g_last_sample[ch_id]->SetPoint(i, eudaq::SampicEvent::TIME_SAMPLES()[i], s_val);
     }
@@ -238,12 +238,12 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
 }
 
 void SampicMonitor::DoStopRun(){
-  m_monitor->SetStatus(MonitorWindow::Status::configured);
+  m_monitor->SetStatus(ROOTMonitor::Status::configured);
   m_monitor->SaveFile(Form("/tmp/sampic_monitor_run%u.root", GetRunNumber()));
 }
 
 void SampicMonitor::DoReset(){
-  m_monitor->SetStatus(MonitorWindow::Status::idle);
+  m_monitor->SetStatus(ROOTMonitor::Status::idle);
   m_monitor->ResetCounters();
 }
 
