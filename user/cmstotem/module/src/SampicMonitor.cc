@@ -1,72 +1,50 @@
-#include "eudaq/Monitor.hh"
 #include "eudaq/ROOTMonitor.hh"
 #include "eudaq/StdEventConverter.hh"
 
-#include "TFile.h"
-#include "TTree.h"
+#include "SampicEvent.hh"
+
 #include "TH1.h"
 #include "TH2.h"
 #include "TGraph.h"
-#include "TMultiGraph.h"
 
-#include "SampicEvent.hh"
+#include <random> // for std::accumulate
 
-#include "TApplication.h"
-
-#include <iostream>
-#include <fstream>
-#include <ratio>
-#include <chrono>
-#include <thread>
-#include <random>
-#include <unordered_map>
-
-class SampicMonitor : public eudaq::Monitor, public TApplication {
+class SampicMonitor : public eudaq::ROOTMonitor {
 public:
   SampicMonitor(const std::string & name, const std::string & runcontrol);
-  void DoInitialise() override;
-  void DoConfigure() override;
-  void DoStartRun() override;
-  void DoStopRun() override;
-  void DoTerminate() override;
-  void DoReset() override;
-  void DoReceive(eudaq::EventSP ev) override;
+  void AtConfiguration() override;
+  void AtRunStop() override;
+  void AtEventReception(eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("SampicMonitor");
 
 private:
   static const uint32_t m_sampic_hash = eudaq::cstr2hash("SampicRaw");
 
-  bool m_en_print;
-  int m_sampic_num_last_samples;
-  int m_sampic_num_baseline;
-  double m_sampic_sampling_period;
+  // configuration flags
+  bool m_en_print = false;
+  int m_sampic_num_baseline = 10;
+  double m_sampic_sampling_period = 0.;
+  unsigned short m_plane_tel_tomo = 0;
 
-  std::unique_ptr<ROOTMonitor> m_monitor;
-  std::future<void> m_daemon;
-  std::future<void> m_test_daemon;
-
-  unsigned long long m_num_evt_mon = 0ull;
-  const size_t MAX_SAMPLES_DISP = 20;
-
+  // some board constants
   static constexpr unsigned short kNumCh = 32;
   static constexpr unsigned short kTrigSep = 2; // in s
 
+  // monitored variables
   TGraph* m_g_trg_time, *m_g_evt_time, *m_g_trg_evt;
   TH1D* m_h_maxamp_per_chan[kNumCh];
   TH1D* m_h_noise_rms[kNumCh];
   TH1D* m_h_snratio[kNumCh];
-  //TMultiGraph* m_mg_last_sample[kNumCh];
   TGraph* m_g_last_sample[kNumCh];
   TH1D* m_h_occup_allchan;
   TGraph* m_g_freq_vs_time[kNumCh];
   TH2D* m_h2_tel_tomo[kNumCh];
 
-  unsigned short m_plane_tel_tomo = 0;
+  // trigger timing calculation helper
   unsigned long m_last_trg_num = 0;
   float m_last_trg_time = 0.;
   unsigned long m_num_smp_last_trg[kNumCh] = {0ul};
-  //TMultiGraph* m_mg_last_sample_allchan;
   size_t m_num_ts_overfl = 0;
   uint64_t m_last_ts = 0ull;
 };
@@ -77,35 +55,13 @@ namespace{
 }
 
 SampicMonitor::SampicMonitor(const std::string & name, const std::string & runcontrol)
-  :eudaq::Monitor(name, runcontrol),
-   TApplication(name.c_str(), nullptr, nullptr),
-   m_monitor(new ROOTMonitor(this, "Sampic monitor")){
-  if (!m_monitor)
-    EUDAQ_THROW("Error Allocationg main window");
-
-  m_monitor->SetStatus(ROOTMonitor::Status::idle);
-
-  // launch the run loop
-  TApplication::SetReturnFromRun(true);
-  if (!m_daemon.valid())
-    m_daemon = std::async(std::launch::async, &TApplication::Run, this, 0);
+  :ROOTMonitor(name, "Sampic monitor", runcontrol){
 }
 
-void SampicMonitor::DoInitialise(){
-  auto ini = GetInitConfiguration();
-  ini->Print(std::cout);
-  m_monitor->ResetCounters();
-}
-
-void SampicMonitor::DoConfigure(){
+void SampicMonitor::AtConfiguration(){
   auto conf = GetConfiguration();
   m_en_print = conf->Get("SAMPIC_ENABLE_PRINT", 1);
-  m_sampic_num_last_samples = conf->Get("SAMPIC_SHOW_LAST_SAMPLE", 0);
   m_plane_tel_tomo = conf->Get("EUTEL_PLANE_TOMO", 0);
-  if (m_sampic_num_last_samples > MAX_SAMPLES_DISP)
-    EUDAQ_THROW("Too many samples ("+std::to_string(m_sampic_num_last_samples)
-               +") requested at each readout! maximum is "
-               +std::to_string(MAX_SAMPLES_DISP));
   m_sampic_num_baseline = conf->Get("SAMPIC_NUM_BASELINE", 10);
   m_sampic_sampling_period = conf->Get("SAMPIC_SAMPLING_PERIOD", 1./120.e6);
 
@@ -119,47 +75,38 @@ void SampicMonitor::DoConfigure(){
   m_h_occup_allchan = m_monitor->Book<TH1D>("channels_occup", "Occupancy, all channels", "ch_occup", "Channels occupancy;Channel number;Entries", kNumCh, 0., kNumCh);
   m_monitor->SetDrawOptions(m_h_occup_allchan, "hist text0");
   for (size_t i = 0; i < kNumCh; ++i) {
+    // signal amplitude analysis
     m_h_maxamp_per_chan[i] = m_monitor->Book<TH1D>(Form("Channel %zu/max_ampl", i), "Max amplitude", Form("max_ampl_ch%zu", i), Form("Channel %zu;Maximum amplitude (V);Entries", i), 110, -0.1, 1.);
     m_h_noise_rms[i] = m_monitor->Book<TH1D>(Form("Channel %zu/noise_rms", i), "Noise RMS", Form("noise_rms_ch%zu", i), Form("Channel %zu;Noise RMS;Entries", i), 100, 0., 1.);
     m_h_snratio[i] = m_monitor->Book<TH1D>(Form("Channel %zu/sn_ratio", i), "S/N ratio", Form("snratio_ch%zu", i), Form("Channel %zu;S/N;Entries", i), 200, 0., 100.);
+    // tomography with telescope
     m_h2_tel_tomo[i] = m_monitor->Book<TH2D>(Form("Channel %zu/tel_tomogr", i), "Tomography", Form("tel_tomo_ch%zu", i), Form("Channel %zu tomography;Pixel column (plane %u);Pixel row (plane %d)", i, m_plane_tel_tomo, m_plane_tel_tomo), 144, 0., 1152., 72, 0., 576.);
     m_monitor->SetDrawOptions(m_h2_tel_tomo[i], "colz");
+    // channel rate vs time
     m_g_freq_vs_time[i] = m_monitor->Book<TGraph>(Form("Channel %zu/scaler_vs_time", i), "Scaler vs time");
     m_g_freq_vs_time[i]->SetTitle(Form("Channel %zu;Time (s);Rate (Hz)", i));
     m_g_freq_vs_time[i]->SetFillColor(kBlue);
     m_monitor->SetDrawOptions(m_g_freq_vs_time[i], "ab");
-    if (m_sampic_num_last_samples > 0) {
-      m_g_last_sample[i] = m_monitor->Book<TGraph>(Form("Channel %zu/last_sample", i), "Last sample");
-      m_monitor->SetDrawOptions(m_g_last_sample[i], "alp");
-      m_monitor->SetRangeY(m_g_last_sample[i], 0., 1.1);
-      m_g_last_sample[i]->SetTitle(Form("Channel %zu, last sample;Time (ns);Amplitude (V)", i));
-    }
+    // last sample collected
+    m_g_last_sample[i] = m_monitor->Book<TGraph>(Form("Channel %zu/last_sample", i), "Last sample");
+    m_monitor->SetDrawOptions(m_g_last_sample[i], "alp");
+    m_monitor->SetRangeY(m_g_last_sample[i], 0., 1.1);
+    m_g_last_sample[i]->SetTitle(Form("Channel %zu, last sample;Time (ns);Amplitude (V)", i));
   }
   for (size_t i = 0; i < kNumCh; ++i) {
     const unsigned short board_id = i/16; // 16 channels per board
+    std::cout << "--> " << board_id << "/" << i << std::endl;
     m_monitor->AddSummary(Form("Summary/Board %u/Maximum amplitude", board_id), m_h_maxamp_per_chan[i]);
     m_monitor->AddSummary(Form("Summary/Board %u/SN ratio", board_id), m_h_snratio[i]);
     m_monitor->AddSummary(Form("Summary/Board %u/Tomography", board_id), m_h2_tel_tomo[i]);
     m_monitor->AddSummary(Form("Summary/Board %u/Rate", board_id), m_g_freq_vs_time[i]);
     m_monitor->AddSummary(Form("Summary/Board %u/Last sample", board_id), m_g_last_sample[i]);
   }
-
-  m_monitor->SetStatus(ROOTMonitor::Status::configured);
-  m_monitor->ResetCounters();
 }
 
-void SampicMonitor::DoStartRun(){
-  m_monitor->ResetCounters();
-  m_monitor->SetStatus(ROOTMonitor::Status::running);
-  m_monitor->SetRunNumber(GetRunNumber());
-}
-
-void SampicMonitor::DoReceive(eudaq::EventSP ev){
-  if(m_en_print)
+void SampicMonitor::AtEventReception(eudaq::EventSP ev){
+  if (m_en_print)
     ev->Print(std::cout);
-
-  // update the counters
-  m_monitor->SetCounters(ev->GetEventN(), ++m_num_evt_mon);
 
   std::shared_ptr<eudaq::SampicEvent> event;
   std::vector<std::pair<int,int> > tel_hits;
@@ -237,16 +184,7 @@ void SampicMonitor::DoReceive(eudaq::EventSP ev){
   }
 }
 
-void SampicMonitor::DoStopRun(){
-  m_monitor->SetStatus(ROOTMonitor::Status::configured);
+void SampicMonitor::AtRunStop(){
   m_monitor->SaveFile(Form("/tmp/sampic_monitor_run%u.root", GetRunNumber()));
 }
 
-void SampicMonitor::DoReset(){
-  m_monitor->SetStatus(ROOTMonitor::Status::idle);
-  m_monitor->ResetCounters();
-}
-
-void SampicMonitor::DoTerminate(){
-  TApplication::Terminate(1);
-}

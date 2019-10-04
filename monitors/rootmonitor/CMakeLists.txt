@@ -44,7 +44,7 @@ include_directories(${CMAKE_BINARY_DIR})
 
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
-root_generate_dictionary(ROOTMonitor_ROOT eudaq/ROOTMonitor.hh)
+root_generate_dictionary(ROOTMonitor_ROOT eudaq/ROOTMonitorWindow.hh)
 list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/ROOTMonitor_ROOT.cxx)
 add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
 
