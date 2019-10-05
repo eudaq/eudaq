@@ -2,7 +2,7 @@ language: cpp
 
 sudo: required
 
-dist: trusty
+dist: bionic
 
 # removed due to bug https://github.com/travis-ci/travis-ci/issues/2111 https://github.com/18F/cg-style/pull/32/files
 # conflict between branch whitelist and tags
@@ -14,10 +14,8 @@ dist: trusty
 # set here versions / file paths
 env:
    global:
-      - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.11-clang70.tar.gz
-      - ROOT6_FILENAME_LINUX=root_v6.10.04.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT6_FILENAME_MAC=root_v6.10.04.macosx64-10.10-clang70.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.18.04.Linux-ubuntu18-x86_64-gcc7.4.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.18.04.macosx64-10.13-clang100.tar.gz
       
       - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.11
       - CMAKE_FILENAME_LINUX=cmake-3.11.1-Linux-x86_64.tar.gz
@@ -77,38 +75,26 @@ before_cache:
 matrix:      
    include:   
       - os: linux    
-        env: OPTION=modern LLVM_VERSION=6.0 COMPILER=clang  
-      - os: linux  
-        env: OPTION=old  LLVM_VERSION=6.0 COMPILER=clang 
+        env: OPTION=modern 
+        compiler: clang  
       - os: linux
-        env: OPTION=modern EUDAQ_BUILD_MANUAL=ON GCC_VERSION=7 COMPILER=gcc
-      - os: linux            
-        env: OPTION=old GCC_VERSION=7 COMPILER=gcc
+        env: OPTION=modern EUDAQ_BUILD_MANUAL=ON 
+        compiler: gcc
       - os: osx
         compiler: clang
-        osx_image: xcode8.3
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
-      - os: osx           
-        compiler: clang
-        osx_image: xcode8.3
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF
       - os: osx          
-        osx_image: xcode8.3
         compiler: gcc
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc        
-      - os: osx
-        osx_image: xcode8.3
-        compiler: gcc
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc     
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF
 
 before_install:
       
 install:
   - source .travis/update_repositories.sh  
-  - source .travis/install_cmake.sh  
-  - source .travis/set_compilers.sh  
+#   - source .travis/install_cmake.sh  
+#   - source .travis/set_compilers.sh  
   - source .travis/install_afs.sh  
-  - source .travis/install_python.sh  
+#   - source .travis/install_python.sh  
   - source .travis/install_libusb_0_1.sh  
   - source .travis/install_libusb_1_0.sh  
   - source .travis/install_qt.sh  
