@@ -8,6 +8,7 @@
 # include "TGToolBar.h"
 # include "TContextMenu.h"
 # include "TRootEmbeddedCanvas.h"
+# include "TGButton.h"
 # include "RQ_OBJECT.h"
 #endif
 #include <functional>
@@ -42,6 +43,10 @@ public:
 
   /// Update the FSM
   void SetStatus(Status st);
+  /// Launch a "Open file" dialog to load a RAW/ROOT file and reproduce its monitoring
+  void OpenFileDialog();
+  /// Load all monitored object from a RAW/ROOT file
+  void LoadFile(const char* filename);
   /// Launch a "Save as..." dialog to save all monitored objects into a ROOT file
   void SaveFileDialog();
   /// Save all monitored objects into a ROOT file
@@ -105,6 +110,7 @@ private:
   enum class StatusBarPos { status = 0, run_number, tot_events, an_events, num_parts };
   TGListTreeItem* BookStructure(const std::string& path, TGListTreeItem* par = nullptr);
   void CleanObject(TObject*);
+  void FillFileObject(const std::string& path, TObject* obj, const std::string& path_par = "");
 
   // ROOT GUI objects handled
   TGHorizontalFrame* m_top_win;
@@ -112,13 +118,14 @@ private:
   TGStatusBar* m_status_bar;
   TGCanvas* m_left_canv;
   TGToolBar* m_toolbar;
-  TGButton* m_button_save, *m_button_clean;
+  TGButton* m_button_open, *m_button_save, *m_button_clean;
   TRootEmbeddedCanvas* m_main_canvas;
+  TGCheckButton* m_update_toggle, *m_refresh_toggle;
   TGListTree* m_tree_list;
   TContextMenu* m_context_menu;
 
   const TGPicture* m_icon_summ;
-  const TGPicture* m_icon_save, *m_icon_del;
+  const TGPicture* m_icon_save, *m_icon_del, *m_icon_open;
   const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tgraph, *m_icon_track;
 
   /// Timer for auto-refresh loop

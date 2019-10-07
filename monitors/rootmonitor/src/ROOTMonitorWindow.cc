@@ -2,14 +2,15 @@
 
 #include "TApplication.h"
 #include "TTimer.h"
-#include "TGButton.h"
 #include "TFile.h"
 #include "TGFileDialog.h"
 #include "TCanvas.h"
+#include "TKey.h"
 
 // required for object-specific "clear"
 #include "TGraph.h"
 #include "TH1.h"
+#include "TH2.h"
 #include "TMultiGraph.h"
 
 #include <iostream>
@@ -20,6 +21,7 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   :TGMainFrame(gClient->GetRoot(), 800, 600, kVerticalFrame), m_parent(par),
    m_icon_save(gClient->GetPicture("bld_save.xpm")),
    m_icon_del(gClient->GetPicture("bld_delete.xpm")),
+   m_icon_open(gClient->GetPicture("bld_open.xpm")),
    m_icon_th1(gClient->GetPicture("h1_t.xpm")),
    m_icon_th2(gClient->GetPicture("h2_t.xpm")),
    m_icon_tgraph(gClient->GetPicture("graph.xpm")),
@@ -49,6 +51,13 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   // toolbar
   m_toolbar = new TGToolBar(right_frame, 180, 80);
   right_frame->AddFrame(m_toolbar, new TGLayoutHints(kLHintsExpandX, 2, 2, 2, 2));
+
+  m_button_open = new TGPictureButton(m_toolbar, m_icon_open);
+  m_button_open->SetToolTipText("Open a RAW file");
+  m_button_open->SetEnabled(true);
+  m_button_open->Connect("Clicked()", NAME, this, "OpenFileDialog()");
+  m_toolbar->AddFrame(m_button_open, new TGLayoutHints(kLHintsLeft, 2, 1, 0, 0));
+
   m_button_save = new TGPictureButton(m_toolbar, m_icon_save);
   m_button_save->SetToolTipText("Save all monitors");
   m_button_save->SetEnabled(false);
@@ -61,15 +70,15 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   m_button_clean->Connect("Clicked()", NAME, this, "ClearMonitors()");
   m_toolbar->AddFrame(m_button_clean, new TGLayoutHints(kLHintsLeft, 1, 2, 0, 0));
 
-  auto update_toggle = new TGCheckButton(m_toolbar, "&Update", 1);
-  m_toolbar->AddFrame(update_toggle, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
-  update_toggle->SetToolTipText("Switch on/off the auto refresh of all monitors");
-  update_toggle->Connect("Toggled(Bool_t)", NAME, this, "SwitchUpdate(Bool_t)");
+  m_update_toggle = new TGCheckButton(m_toolbar, "&Update", 1);
+  m_toolbar->AddFrame(m_update_toggle, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  m_update_toggle->SetToolTipText("Switch on/off the auto refresh of all monitors");
+  m_update_toggle->Connect("Toggled(Bool_t)", NAME, this, "SwitchUpdate(Bool_t)");
 
-  auto refresh_toggle = new TGCheckButton(m_toolbar, "&Clear between runs", 1);
-  m_toolbar->AddFrame(refresh_toggle, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
-  refresh_toggle->SetToolTipText("Clear all monitors between two runs");
-  refresh_toggle->Connect("Toggled(Bool_t)", NAME, this, "SwitchClearRuns(Bool_t)");
+  m_refresh_toggle = new TGCheckButton(m_toolbar, "&Clear between runs", 1);
+  m_toolbar->AddFrame(m_refresh_toggle, new TGLayoutHints(kLHintsLeft, 2, 2, 2, 2));
+  m_refresh_toggle->SetToolTipText("Clear all monitors between two runs");
+  m_refresh_toggle->Connect("Toggled(Bool_t)", NAME, this, "SwitchClearRuns(Bool_t)");
 
   // main canvas
   m_main_canvas = new TRootEmbeddedCanvas("Canvas", right_frame);
@@ -87,8 +96,8 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   //left_bar->MapSubwindows();
 
   m_timer->Connect("Timeout()", NAME, this, "Update()");
-  update_toggle->SetOn();
-  refresh_toggle->SetOn();
+  m_update_toggle->SetOn();
+  m_refresh_toggle->SetOn();
   SwitchUpdate(true);
 
   this->MapSubwindows();
@@ -290,7 +299,7 @@ void ROOTMonitorWindow::Update(){
       CleanObject(dr->object);
     // monitor vertical range to be set at the end
     if (dr->object->InheritsFrom("TH1")
-	&& dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
+        && dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
       dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
     else if (dr->object->InheritsFrom("TGraph")
              && dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
@@ -322,7 +331,7 @@ void ROOTMonitorWindow::DrawElement(TGListTreeItem* it, int val){
   if (m_drawable.empty()) // did not find in directories either, must be a summary
     if (m_summ_objects.count(it) > 0)
       for (auto& obj : m_summ_objects[it])
-	m_drawable.emplace_back(obj);
+  m_drawable.emplace_back(obj);
   m_canv_needs_refresh = true;
 }
 
