@@ -156,17 +156,17 @@ void ROOTMonitorWindow::SetStatus(Status st){
 
 void ROOTMonitorWindow::OpenFileDialog(){
   TGFileInfo fi;
-  {
-    static TString dir(".");
-    const char* filetypes[] = {"RAW files",  "*.raw",
-                               "ROOT files", "*.root",
-                               0,            0};
-    fi.fFileTypes = filetypes;
-    fi.fIniDir = StrDup(dir);
-    new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fi);
-    dir = fi.fIniDir;
-  }
-  LoadFile(fi.fFilename);
+  static TString dir(".");
+  const char* filetypes[] = {"RAW files",  "*.raw",
+                             "ROOT files", "*.root",
+                             0,            0};
+  fi.fFileTypes = filetypes;
+  fi.fIniDir = StrDup(dir);
+  new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fi);
+  if (fi.fMultipleSelection && fi.fFileNamesList)
+    LoadFile(dynamic_cast<TObjString*>(fi.fFileNamesList->First())->GetString().Data());
+  else if (fi.fFilename != nullptr)
+    LoadFile(fi.fFilename);
 }
 
 void ROOTMonitorWindow::LoadFile(const char* filename){
@@ -175,10 +175,14 @@ void ROOTMonitorWindow::LoadFile(const char* filename){
   TString s_ext(filename);
   s_ext.Remove(0, s_ext.Last('.')+1);
   s_ext.ToLower();
-  if (s_ext == "root")
+  if (s_ext == "root") {
     FillFileObject("", TFile::Open(filename, "read"), "");
-  else if (s_ext == "raw")
+    m_button_save->SetEnabled(false);
+  }
+  else if (s_ext == "raw") {
     FillFromRAWFile(filename);
+    m_button_save->SetEnabled(true);
+  }
   Update();
 }
 
@@ -204,16 +208,15 @@ void ROOTMonitorWindow::FillFromRAWFile(const char* path){
 
 void ROOTMonitorWindow::SaveFileDialog(){
   TGFileInfo fi;
-  { // first define the output file
-    static TString dir(".");
-    const char *filetypes[] = {"ROOT files", "*.root",
-                               0,            0 };
-    fi.fFileTypes = filetypes;
-    fi.fIniDir = StrDup(dir);
-    new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fi);
-    dir = fi.fIniDir;
-  }
-  SaveFile(fi.fFilename);
+  // first define the output file
+  static TString dir(".");
+  const char *filetypes[] = {"ROOT files", "*.root",
+                             0,            0};
+  fi.fFileTypes = filetypes;
+  fi.fIniDir = StrDup(dir);
+  new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fi);
+  if (fi.fFilename != nullptr)
+    SaveFile(fi.fFilename);
 }
 
 void ROOTMonitorWindow::SaveFile(const char* filename){
