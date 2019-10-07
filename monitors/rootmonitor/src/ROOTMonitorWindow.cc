@@ -154,6 +154,54 @@ void ROOTMonitorWindow::SetStatus(Status st){
   }
 }
 
+void ROOTMonitorWindow::OpenFileDialog(){
+  TGFileInfo fi;
+  {
+    static TString dir(".");
+    const char* filetypes[] = {"RAW files",  "*.raw",
+                               "ROOT files", "*.root",
+                               0,            0};
+    fi.fFileTypes = filetypes;
+    fi.fIniDir = StrDup(dir);
+    new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fi);
+    dir = fi.fIniDir;
+  }
+  LoadFile(fi.fFilename);
+}
+
+void ROOTMonitorWindow::LoadFile(const char* filename){
+  m_update_toggle->SetEnabled(false);
+  m_refresh_toggle->SetEnabled(false);
+  TString s_ext(filename);
+  s_ext.Remove(0, s_ext.Last('.')+1);
+  s_ext.ToLower();
+  if (s_ext == "root")
+    FillFileObject("", TFile::Open(filename, "read"), "");
+  else if (s_ext == "raw")
+    FillFromRAWFile(filename);
+  Update();
+}
+
+void ROOTMonitorWindow::FillFileObject(const std::string& path, TObject* obj, const std::string& path_par){
+  const std::string full_path = path_par.empty() ? path : path_par+"/"+path;
+  if (obj->IsFolder())
+    for (const auto&& key : *((TDirectory*)obj)->GetListOfKeys())
+      FillFileObject(key->GetName(), ((TKey*)key)->ReadObj(), path);
+  if (obj->InheritsFrom("TH2"))
+    Book<TH2D>(full_path, path, *(TH2D*)obj);
+  else if (obj->InheritsFrom("TH1"))
+    Book<TH1D>(full_path, path, *(TH1D*)obj);
+  else if (obj->InheritsFrom("TGraph"))
+    Book<TGraph>(full_path, path, *(TGraph*)obj);
+  else if (!path.empty())
+    std::cerr << "Failed to load a specific object: " << path << std::endl;
+}
+
+void ROOTMonitorWindow::FillFromRAWFile(const char* path){
+  std::cout << "Will load \"" << path << "\"." << std::endl;
+  Emit("FillFromRAWFile(const char*)", path);
+}
+
 void ROOTMonitorWindow::SaveFileDialog(){
   TGFileInfo fi;
   { // first define the output file

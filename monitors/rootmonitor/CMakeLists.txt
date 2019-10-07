@@ -44,8 +44,8 @@ include_directories(${CMAKE_BINARY_DIR})
 
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
-root_generate_dictionary(ROOTMonitor_ROOT eudaq/ROOTMonitorWindow.hh)
-list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/ROOTMonitor_ROOT.cxx)
+root_generate_dictionary(R_ROOTMonitor eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh)
+list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/R_ROOTMonitor.cxx)
 add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -62,7 +62,7 @@ if(CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0))
   set_property(TARGET ${EUDAQ_COMPONENT} PROPERTY CXX_STANDARD 14)
 endif()
 
-target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
+target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES})
 
 install(TARGETS ${EUDAQ_COMPONENT}
   #EXPORT eudaqTargets
@@ -71,8 +71,8 @@ install(TARGETS ${EUDAQ_COMPONENT}
   ARCHIVE DESTINATION lib)
 
 if(ROOT_VERSION_MAJOR GREATER 5)
-  set(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_ROOTMonitor_ROOT_rdict.pcm)
-  set(ROOTProducer_MAP ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_ROOTMonitor_ROOT.rootmap)
+  set(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_R_ROOTMonitor_rdict.pcm)
+  set(ROOTProducer_MAP ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_R_ROOTMonitor.rootmap)
   install(FILES
     ${ROOTProducer_PCM}
     ${ROOTProducer_MAP}

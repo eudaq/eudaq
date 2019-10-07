@@ -1,12 +1,19 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/ROOTMonitorWindow.hh"
 
-#include "TApplication.h"
+#ifndef __CINT__
+# include "TApplication.h"
+# include "RQ_OBJECT.h"
+#endif
 
 namespace eudaq {
-  class ROOTMonitor : public Monitor, public TApplication {
+  class ROOTMonitor : public Monitor {
+    static constexpr const char* NAME = "eudaq::ROOTMonitor";
+    RQ_OBJECT(NAME)
   public:
     ROOTMonitor(const std::string & name, const std::string & title, const std::string & runcontrol);
+
+    void LoadRAWFile(const char* path);
 
     void DoInitialise() override;
     void DoConfigure() override;
@@ -23,11 +30,12 @@ namespace eudaq {
     virtual void AtEventReception(eudaq::EventSP ev) = 0;
     virtual void AtReset() {}
 
-  protected:
-    std::unique_ptr<ROOTMonitorWindow> m_monitor;
-
   private:
+    std::unique_ptr<TApplication> m_app;
     std::future<void> m_daemon;
     unsigned long long m_num_evt_mon = 0ull;
+
+  protected:
+    std::unique_ptr<ROOTMonitorWindow> m_monitor;
   };
 }
