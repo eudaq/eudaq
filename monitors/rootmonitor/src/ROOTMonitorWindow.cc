@@ -110,6 +110,7 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
 }
 
 ROOTMonitorWindow::~ROOTMonitorWindow(){
+  Quit();
   // unregister the icons
   gClient->FreePicture(m_icon_save);
   gClient->FreePicture(m_icon_del);
@@ -120,8 +121,19 @@ ROOTMonitorWindow::~ROOTMonitorWindow(){
   gClient->FreePicture(m_icon_summ);
   for (auto& obj : m_objects)
     delete obj.second.object;
-  Emit("WindowClosed()");
 }
+
+//--- signal handling
+
+void ROOTMonitorWindow::Quit(){
+  Emit("Quit()");
+}
+
+void ROOTMonitorWindow::FillFromRAWFile(const char* path){
+  Emit("FillFromRAWFile(const char*)", path);
+}
+
+//--- counters/status bookeeping
 
 void ROOTMonitorWindow::SetCounters(unsigned long long evt_recv, unsigned long long evt_mon){
   m_last_event = evt_recv;
@@ -169,6 +181,8 @@ void ROOTMonitorWindow::SetStatus(Status st){
     m_status_bar->SetText(st_txt.str().c_str(), (int)StatusBarPos::status);
   }
 }
+
+//--- file I/O
 
 void ROOTMonitorWindow::OpenFileDialog(){
   static TString dir(".");
@@ -219,11 +233,6 @@ void ROOTMonitorWindow::FillFileObject(const std::string& path, TObject* obj, co
     std::cerr << "Failed to load a specific object: " << path << std::endl;
 }
 
-void ROOTMonitorWindow::FillFromRAWFile(const char* path){
-  std::cout << "Will load \"" << path << "\"." << std::endl;
-  Emit("FillFromRAWFile(const char*)", path);
-}
-
 void ROOTMonitorWindow::SaveFileDialog(){
   TGFileInfo fi;
   // first define the output file
@@ -258,6 +267,8 @@ void ROOTMonitorWindow::SaveFile(const char* filename){
   file->Close();
 }
 
+//--- live monitoring switches
+
 void ROOTMonitorWindow::SwitchUpdate(bool up){
   if (!up)
     m_timer->Stop();
@@ -269,6 +280,8 @@ void ROOTMonitorWindow::SwitchUpdate(bool up){
 void ROOTMonitorWindow::SwitchClearRuns(bool clear){
   m_clear_between_runs = clear;
 }
+
+//--- graphical part
 
 void ROOTMonitorWindow::Update(){
   SetLastEventNum(m_last_event);
@@ -344,6 +357,8 @@ void ROOTMonitorWindow::PostDraw(TCanvas* canv){
   canv->Update();
 }
 
+//--- monitoring elements helpers
+
 TObject* ROOTMonitorWindow::Get(const std::string& name){
   auto it = m_objects.find(name);
   if (it == m_objects.end())
@@ -378,6 +393,30 @@ ROOTMonitorWindow::MonitoredObject& ROOTMonitorWindow::GetMonitor(const TObject*
       return o.second;
   throw std::runtime_error("Failed to retrieve an object!");
 }
+
+void ROOTMonitorWindow::ClearMonitors(){
+  // clear non-persistent objects before next refresh
+  for (auto& dr : m_objects)
+    CleanObject(dr.second.object);
+}
+
+void ROOTMonitorWindow::CleanObject(TObject* obj){
+  if (obj->InheritsFrom("TMultiGraph")) { // special case for this one
+    for (auto gr : *dynamic_cast<TMultiGraph*>(obj))
+      delete gr;
+  }
+  else if (obj->InheritsFrom("TGraph"))
+    dynamic_cast<TGraph*>(obj)->Set(0);
+  else if (obj->InheritsFrom("TH1"))
+    dynamic_cast<TH1*>(obj)->Reset();
+  else
+    std::cerr
+      << "[WARNING] monitoring object with class name "
+      << "\"" << obj->ClassName() << "\" cannot be cleared"
+      << std::endl;
+}
+
+//--- monitors hierarchy
 
 TGListTreeItem* ROOTMonitorWindow::BookStructure(const std::string& path, TGListTreeItem* par){
   auto tok = TString(path).Tokenize("/");
@@ -417,27 +456,7 @@ void ROOTMonitorWindow::AddSummary(const std::string& path, const TObject* obj){
   throw std::runtime_error("Failed to retrieve an object for summary \""+path+"\"");
 }
 
-void ROOTMonitorWindow::ClearMonitors(){
-  // clear non-persistent objects before next refresh
-  for (auto& dr : m_objects)
-    CleanObject(dr.second.object);
-}
-
-void ROOTMonitorWindow::CleanObject(TObject* obj){
-  if (obj->InheritsFrom("TMultiGraph")) { // special case for this one
-    for (auto gr : *dynamic_cast<TMultiGraph*>(obj))
-      delete gr;
-  }
-  else if (obj->InheritsFrom("TGraph"))
-    dynamic_cast<TGraph*>(obj)->Set(0);
-  else if (obj->InheritsFrom("TH1"))
-    dynamic_cast<TH1*>(obj)->Reset();
-  else
-    std::cerr
-      << "[WARNING] monitoring object with class name "
-      << "\"" << obj->ClassName() << "\" cannot be cleared"
-      << std::endl;
-}
+//--- utilitaries
 
 std::ostream& operator<<(std::ostream& os, const ROOTMonitorWindow::Status& stat){
   switch (stat) {

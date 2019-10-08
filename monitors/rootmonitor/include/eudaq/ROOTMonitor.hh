@@ -33,6 +33,7 @@ namespace eudaq {
   private:
     void LoadRAWFile(const std::string& path);
 
+    bool m_interrupt = false;
     std::unique_ptr<TApplication> m_app;
     std::future<void> m_daemon;
     std::vector<std::future<void> > m_daemon_load;

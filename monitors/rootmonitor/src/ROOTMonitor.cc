@@ -19,7 +19,7 @@ namespace eudaq {
 
     m_monitor->SetStatus(ROOTMonitorWindow::Status::idle);
     m_monitor->Connect("FillFromRAWFile(const char*)", NAME, this, "LoadRAWFileAsync(const char*)");
-    m_monitor->Connect("WindowClosed()", NAME, this, "DoTerminate()");
+    m_monitor->Connect("Quit()", NAME, this, "DoTerminate()");
 
     // launch the run loop
     m_app->SetReturnFromRun(true);
@@ -63,12 +63,14 @@ namespace eudaq {
   }
 
   void ROOTMonitor::DoTerminate(){
+    m_interrupt = true;
     if (!m_daemon_load.empty())
       m_daemon_load.clear();
     m_app->Terminate(1);
   }
 
   void ROOTMonitor::LoadRAWFileAsync(const char* path){
+    EUDAQ_INFO(GetName()+" will load \""+std::string(path)+"\".");
     if (!m_daemon_load.empty()) {
       EUDAQ_INFO(GetName()+" clearing the processing queue...");
       m_daemon_load.clear();
@@ -85,6 +87,8 @@ namespace eudaq {
     eudaq::EventUP ev;
     eudaq::FileDeserializer reader(path);
     do {
+      if (m_interrupt)
+        return;
       reader.PreRead(id);
       ev = eudaq::Factory<eudaq::Event>::Create<eudaq::Deserializer&>(id, reader);
       eudaq::EventSP evt(std::move(ev));
