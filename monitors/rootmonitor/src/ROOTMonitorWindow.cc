@@ -17,6 +17,8 @@
 #include <fstream>
 #include <sstream>
 
+const std::pair<double,double> ROOTMonitorWindow::kInvalidRange = std::make_pair(kInvalidValue, kInvalidValue);
+
 ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   :TGMainFrame(gClient->GetRoot(), 800, 600, kVerticalFrame), m_parent(par),
    m_icon_save(gClient->GetPicture("bld_save.xpm")),
@@ -24,7 +26,7 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
    m_icon_open(gClient->GetPicture("bld_open.xpm")),
    m_icon_th1(gClient->GetPicture("h1_t.xpm")),
    m_icon_th2(gClient->GetPicture("h2_t.xpm")),
-   m_icon_tgraph(gClient->GetPicture("graph.xpm")),
+   m_icon_tgraph(gClient->GetPicture("profile_t.xpm")),
    m_icon_track(gClient->GetPicture("eve_track.xpm")),
    m_icon_summ(gClient->GetPicture("draw_t.xpm")),
    m_timer(new TTimer(1000, kTRUE)){
@@ -117,8 +119,9 @@ ROOTMonitorWindow::~ROOTMonitorWindow(){
   gClient->FreePicture(m_icon_tgraph);
   gClient->FreePicture(m_icon_track);
   gClient->FreePicture(m_icon_summ);
-  if (m_parent)
-    m_parent->Terminate(1);
+  for (auto& obj : m_objects)
+    delete obj.second.object;
+  Emit("WindowClosed()");
 }
 
 void ROOTMonitorWindow::SetCounters(unsigned long long evt_recv, unsigned long long evt_mon){
@@ -280,9 +283,13 @@ void ROOTMonitorWindow::Update(){
     std::cerr << "[WARNING] Failed to retrieve the main plotting canvas!" << std::endl;
     return;
   }
-  // book the pads and monitors placeholders
+  Draw(canv);
+  PostDraw(canv);
+}
+
+void ROOTMonitorWindow::Draw(TCanvas* canv){
   canv->cd();
-  if (m_canv_needs_refresh) {
+  if (m_canv_needs_refresh) { // book the pads and monitors placeholders
     canv->Clear();
     if (m_drawable.size() > 1) {
       int ncol = ceil(sqrt(m_drawable.size()));
@@ -290,33 +297,52 @@ void ROOTMonitorWindow::Update(){
       canv->Divide(ncol, nrow);
     }
     for (size_t i = 0; i < m_drawable.size(); ++i) {
-      canv->cd(i+1);
       auto& dr = m_drawable.at(i);
+      auto pad = canv->cd(i+1);
       dr->object->Draw(dr->draw_opt);
+      pad->SetTicks();
+      pad->SetGrid();
+      if (dr->time_series) {
+        TAxis* axis = nullptr;
+        if (dr->object->InheritsFrom("TH1"))
+          axis = dynamic_cast<TH1*>(dr->object)->GetXaxis();
+        else if (dr->object->InheritsFrom("TGraph"))
+          axis = dynamic_cast<TGraph*>(dr->object)->GetXaxis();
+        if (axis) {
+          axis->SetTimeDisplay(1);
+          axis->SetTimeFormat("%M:%S");
+        }
+      }
     }
+    canv->SetTicks();
+    canv->SetGrid();
     m_canv_needs_refresh = false;
   }
-  // canvas(es) flushing procedure
-  canv->Modified();
-  canv->Update();
+}
+
+void ROOTMonitorWindow::PostDraw(TCanvas* canv){
   size_t i = 0;
-  for (auto& dr : m_drawable) {
+  for (size_t i = 0; i < m_drawable.size(); ++i) {
+    auto& dr = m_drawable.at(i);
+    auto pad = canv->GetPad(i+1);
     // clean all non-persistent objects
     if (!dr->persist)
       CleanObject(dr->object);
     // monitor vertical range to be set at the end
-    if (dr->object->InheritsFrom("TH1")
-        && dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
-      dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
-    else if (dr->object->InheritsFrom("TGraph")
-             && dr->min_y != kInvalidValue && dr->max_y != kInvalidValue)
-      dynamic_cast<TGraph*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
-    auto pad = canv->GetPad(++i);
-    if (!pad)
-      continue;
-    pad->Modified();
-    pad->Update();
+    if (dr->y_range != kInvalidRange) {
+      if (dr->object->InheritsFrom("TH1"))
+        dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->y_range.first, dr->y_range.second);
+      else if (dr->object->InheritsFrom("TGraph"))
+        dynamic_cast<TGraph*>(dr->object)->GetYaxis()->SetRangeUser(dr->y_range.first, dr->y_range.second);
+    }
+    if (pad) {
+      pad->Update();
+      pad->Modified();
+    }
   }
+  // canvas(es) flushing procedure
+  canv->Modified();
+  canv->Update();
 }
 
 TObject* ROOTMonitorWindow::Get(const std::string& name){
@@ -347,29 +373,11 @@ void ROOTMonitorWindow::DrawMenu(TGListTreeItem* it, int but, int x, int y){
     m_context_menu->Popup(x, y, this);
 }
 
-void ROOTMonitorWindow::SetPersistant(const TObject* obj, bool pers){
+ROOTMonitorWindow::MonitoredObject& ROOTMonitorWindow::GetMonitor(const TObject* obj){
   for (auto& o : m_objects)
-    if (o.second.object == obj) {
-      o.second.persist = pers;
-      return;
-    }
-}
-
-void ROOTMonitorWindow::SetDrawOptions(const TObject* obj, Option_t* opt){
-  for (auto& o : m_objects)
-    if (o.second.object == obj) {
-      o.second.draw_opt = opt;
-      return;
-    }
-}
-
-void ROOTMonitorWindow::SetRangeY(const TObject* obj, double min, double max){
-  for (auto& o : m_objects)
-    if (o.second.object == obj) {
-      o.second.min_y = min;
-      o.second.max_y = max;
-      return;
-    }
+    if (o.second.object == obj)
+      return o.second;
+  throw std::runtime_error("Failed to retrieve an object!");
 }
 
 TGListTreeItem* ROOTMonitorWindow::BookStructure(const std::string& path, TGListTreeItem* par){

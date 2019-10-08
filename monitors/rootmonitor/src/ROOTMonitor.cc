@@ -19,6 +19,7 @@ namespace eudaq {
 
     m_monitor->SetStatus(ROOTMonitorWindow::Status::idle);
     m_monitor->Connect("FillFromRAWFile(const char*)", NAME, this, "LoadRAWFileAsync(const char*)");
+    m_monitor->Connect("WindowClosed()", NAME, this, "DoTerminate()");
 
     // launch the run loop
     m_app->SetReturnFromRun(true);
@@ -62,6 +63,8 @@ namespace eudaq {
   }
 
   void ROOTMonitor::DoTerminate(){
+    if (!m_daemon_load.empty())
+      m_daemon_load.clear();
     m_app->Terminate(1);
   }
 
