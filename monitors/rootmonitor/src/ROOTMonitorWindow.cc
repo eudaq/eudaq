@@ -28,6 +28,7 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
    m_icon_track(gClient->GetPicture("eve_track.xpm")),
    m_icon_summ(gClient->GetPicture("draw_t.xpm")),
    m_timer(new TTimer(1000, kTRUE)){
+  SetName(name.c_str());
   SetWindowName(name.c_str());
 
   m_top_win = new TGHorizontalFrame(this);
@@ -53,7 +54,7 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   right_frame->AddFrame(m_toolbar, new TGLayoutHints(kLHintsExpandX, 2, 2, 2, 2));
 
   m_button_open = new TGPictureButton(m_toolbar, m_icon_open);
-  m_button_open->SetToolTipText("Open a RAW file");
+  m_button_open->SetToolTipText("Load monitoring information from a RAW/ROOT file");
   m_button_open->SetEnabled(true);
   m_button_open->Connect("Clicked()", NAME, this, "OpenFileDialog()");
   m_toolbar->AddFrame(m_button_open, new TGLayoutHints(kLHintsLeft, 2, 1, 0, 0));
@@ -146,13 +147,17 @@ void ROOTMonitorWindow::SetRunNumber(int run){
 }
 
 void ROOTMonitorWindow::SetLastEventNum(int num){
-  if (m_status_bar && m_status == Status::running)
-    m_status_bar->SetText(Form("Curr. event: %d", num), (int)StatusBarPos::tot_events);
+  if (num >= 0)
+    m_last_event = num;
+  if (m_status_bar && (num < 0 || m_status == Status::running))
+    m_status_bar->SetText(Form("Curr. event: %d", m_last_event), (int)StatusBarPos::tot_events);
 }
 
 void ROOTMonitorWindow::SetMonitoredEventsNum(int num){
-  if (m_status_bar && m_status == Status::running)
-    m_status_bar->SetText(Form("Analysed events: %d", num), (int)StatusBarPos::an_events);
+  if (num >= 0)
+    m_last_event_mon = num;
+  if (m_status_bar && (num < 0 || m_status == Status::running))
+    m_status_bar->SetText(Form("Analysed events: %d", m_last_event_mon), (int)StatusBarPos::an_events);
 }
 
 void ROOTMonitorWindow::SetStatus(Status st){
@@ -164,33 +169,35 @@ void ROOTMonitorWindow::SetStatus(Status st){
 }
 
 void ROOTMonitorWindow::OpenFileDialog(){
-  TGFileInfo fi;
   static TString dir(".");
+  // allows for both RAW and post-processed ROOT files (TBrowser-like)
   const char* filetypes[] = {"RAW files",  "*.raw",
                              "ROOT files", "*.root",
                              0,            0};
+  TGFileInfo fi;
   fi.fFileTypes = filetypes;
   fi.fIniDir = StrDup(dir);
-  new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fi);
-  if (fi.fMultipleSelection && fi.fFileNamesList)
+  new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fi); // handled by GC
+  if (fi.fMultipleSelection && fi.fFileNamesList) // only grab first file
     LoadFile(dynamic_cast<TObjString*>(fi.fFileNamesList->First())->GetString().Data());
   else if (fi.fFilename != nullptr)
     LoadFile(fi.fFilename);
 }
 
 void ROOTMonitorWindow::LoadFile(const char* filename){
+  // disable control over update
   m_update_toggle->SetEnabled(false);
   m_refresh_toggle->SetEnabled(false);
+  // filter by extension
   TString s_ext(filename);
-  s_ext.Remove(0, s_ext.Last('.')+1);
-  s_ext.ToLower();
+  s_ext.Remove(0, s_ext.Last('.')+1).ToLower();
   if (s_ext == "root") {
-    FillFileObject("", TFile::Open(filename, "read"), "");
-    m_button_save->SetEnabled(false);
+    FillFileObject("", TFile::Open(filename, "read"), ""); // handled by GC
+    m_button_save->SetEnabled(false); // nothing has changed, export feature disabled
   }
   else if (s_ext == "raw") {
     FillFromRAWFile(filename);
-    m_button_save->SetEnabled(true);
+    m_button_save->SetEnabled(true); // allows for export
   }
   Update();
 }

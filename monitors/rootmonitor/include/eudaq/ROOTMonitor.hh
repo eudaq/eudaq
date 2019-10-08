@@ -13,7 +13,7 @@ namespace eudaq {
   public:
     ROOTMonitor(const std::string & name, const std::string & title, const std::string & runcontrol);
 
-    void LoadRAWFile(const char* path);
+    void LoadRAWFileAsync(const char* path);
 
     void DoInitialise() override;
     void DoConfigure() override;
@@ -31,8 +31,11 @@ namespace eudaq {
     virtual void AtReset() {}
 
   private:
+    void LoadRAWFile(const std::string& path);
+
     std::unique_ptr<TApplication> m_app;
     std::future<void> m_daemon;
+    std::vector<std::future<void> > m_daemon_load;
     unsigned long long m_num_evt_mon = 0ull;
 
   protected:

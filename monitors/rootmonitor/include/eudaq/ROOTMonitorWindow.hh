@@ -35,9 +35,9 @@ public:
   /// Specify the run number retrueved from run control
   void SetRunNumber(int run);
   /// Specify the number of events collected
-  void SetLastEventNum(int num);
+  void SetLastEventNum(int num = -1);
   /// Specify the number of events already processed
-  void SetMonitoredEventsNum(int num);
+  void SetMonitoredEventsNum(int num = -1);
   /// Add a summary page including several monitors
   void AddSummary(const std::string& path, const TObject* obj);
 
@@ -103,6 +103,7 @@ public:
   void SwitchClearRuns(bool);
   /// Clean up everything before terminating the application
   void Quit();
+  /// Reprocess monitors from a RAW file
   void FillFromRAWFile(const char* path);
 
 private:

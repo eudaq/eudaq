@@ -3,6 +3,8 @@
 #include "eudaq/FileReader.hh"
 #include "eudaq/DataConverter.hh"
 
+#include "TSysEvtHandler.h"
+
 #include <ratio>
 #include <chrono>
 #include <thread>
@@ -16,7 +18,7 @@ namespace eudaq {
       EUDAQ_THROW("Error allocating main window");
 
     m_monitor->SetStatus(ROOTMonitorWindow::Status::idle);
-    m_monitor->Connect("FillFromRAWFile(const char*)", NAME, this, "LoadRAWFile(const char*)");
+    m_monitor->Connect("FillFromRAWFile(const char*)", NAME, this, "LoadRAWFileAsync(const char*)");
 
     // launch the run loop
     m_app->SetReturnFromRun(true);
@@ -63,20 +65,38 @@ namespace eudaq {
     m_app->Terminate(1);
   }
 
-  void ROOTMonitor::LoadRAWFile(const char* path){
-    DoInitialise();
-    DoConfigure();
-    eudaq::FileDeserializer reader(path);
-    eudaq::EventUP ev;
+  void ROOTMonitor::LoadRAWFileAsync(const char* path){
+    if (!m_daemon_load.empty()) {
+      EUDAQ_INFO(GetName()+" clearing the processing queue...");
+      m_daemon_load.clear();
+    }
+    m_daemon_load.emplace_back(std::async(std::launch::async, &ROOTMonitor::LoadRAWFile, this, std::string(path)));
+  }
+
+  void ROOTMonitor::LoadRAWFile(const std::string& path){
     uint32_t id;
     unsigned long long num_evts = 0;
-    while (reader.HasData()) {
+    bool first_evt = true;
+    DoInitialise();
+    DoConfigure();
+    eudaq::EventUP ev;
+    eudaq::FileDeserializer reader(path);
+    do {
       reader.PreRead(id);
       ev = eudaq::Factory<eudaq::Event>::Create<eudaq::Deserializer&>(id, reader);
-      if (num_evts > 0 && num_evts % 10000 == 0)
-        std::cout << "Processed " << num_evts << " events" << std::endl;
-      DoReceive(std::make_shared<eudaq::Event>(*ev));
+      eudaq::EventSP evt(std::move(ev));
+      if (first_evt) {
+        DoStartRun();
+        m_monitor->SetRunNumber(evt->GetRunN());
+        first_evt = false;
+      }
+      DoReceive(evt);
+      if (num_evts > 0 && num_evts % 100000 == 0)
+        EUDAQ_INFO(GetName()+" processed "+std::to_string(num_evts)+" events");
       num_evts++;
-    }
+    } while (reader.HasData());
+    EUDAQ_INFO(GetName()+" processed "+std::to_string(num_evts)+" events");
+    m_monitor->Update();
+    DoStopRun();
   }
 }
