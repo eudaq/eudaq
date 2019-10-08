@@ -17,8 +17,6 @@
 #include <fstream>
 #include <sstream>
 
-const std::pair<double,double> ROOTMonitorWindow::kInvalidRange = std::make_pair(kInvalidValue, kInvalidValue);
-
 ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   :TGMainFrame(gClient->GetRoot(), 800, 600, kVerticalFrame), m_parent(par),
    m_icon_save(gClient->GetPicture("bld_save.xpm")),
@@ -341,7 +339,7 @@ void ROOTMonitorWindow::PostDraw(TCanvas* canv){
     if (!dr->persist)
       CleanObject(dr->object);
     // monitor vertical range to be set at the end
-    if (dr->y_range != kInvalidRange) {
+    if (dr->y_range.first != kInvalidValue && dr->y_range.second != kInvalidValue) {
       if (dr->object->InheritsFrom("TH1"))
         dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->y_range.first, dr->y_range.second);
       else if (dr->object->InheritsFrom("TGraph"))

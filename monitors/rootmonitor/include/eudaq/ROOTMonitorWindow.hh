@@ -29,6 +29,7 @@ public:
   enum class Status { idle, configured, running, error };
   friend std::ostream& operator<<(std::ostream&, const Status&);
 
+public:
   void SetCounters(unsigned long long evt_recv, unsigned long long evt_mon);
   /// Reset the status bar events counters
   void ResetCounters();
@@ -69,10 +70,6 @@ public:
     MonitoredObject mon;
     mon.item = item;
     mon.object = obj;
-    mon.persist = true;
-    mon.y_range = std::make_pair(kInvalidValue, kInvalidValue);
-    mon.time_series = "";
-    mon.draw_opt = "";
     m_objects[path] = mon;
 #endif
     m_left_canv->MapSubwindows();
@@ -112,12 +109,11 @@ public:
 
 private:
   static constexpr double kInvalidValue = 42.424242;
-  static const std::pair<double,double> kInvalidRange;
   struct MonitoredObject {
     TGListTreeItem* item = nullptr;
     TObject* object = nullptr;
     bool persist = true;
-    std::pair<double,double> y_range = kInvalidRange;
+    std::pair<double,double> y_range = std::make_pair(kInvalidValue, kInvalidValue);
     std::string time_series = "";
     Option_t* draw_opt = "";
   };
