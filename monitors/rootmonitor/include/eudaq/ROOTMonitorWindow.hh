@@ -64,14 +64,14 @@ public:
     if (it_icon != m_obj_icon.end())
       item->SetPictures(it_icon->second, it_icon->second);
 #if (__cplusplus == 201703L || __cplusplus == 201402L)
-    m_objects[path] = MonitoredObject{item, obj, true, false, std::make_pair(kInvalidValue, kInvalidValue), ""};
+    m_objects[path] = MonitoredObject{item, obj, true, std::make_pair(kInvalidValue, kInvalidValue), "", ""};
 #else
     MonitoredObject mon;
     mon.item = item;
     mon.object = obj;
     mon.persist = true;
-    mon.time_series = false;
     mon.y_range = std::make_pair(kInvalidValue, kInvalidValue);
+    mon.time_series = "";
     mon.draw_opt = "";
     m_objects[path] = mon;
 #endif
@@ -79,7 +79,6 @@ public:
     m_left_canv->MapWindow();
     return obj;
   }
-  //template<typename Obj1, typename Obj2> TH2* BookCorrelation(const std::string& path, const std::string& name,
   /// Retrieve a monitored object by its path and type
   template<typename T> T* Get(const std::string& name) {
     return dynamic_cast<T*>(Get(name));
@@ -93,7 +92,7 @@ public:
   /// Specify the y axis range for a monitored object
   void SetRangeY(const TObject* obj, double min, double max) { GetMonitor(obj).y_range = std::make_pair(min, max); }
   /// Specify if the x-axis should be associated with time
-  void SetTimeSeries(const TObject* obj, bool time = true) { GetMonitor(obj).time_series = time; }
+  void SetTimeSeries(const TObject* obj, const std::string& time) { GetMonitor(obj).time_series = time; }
 
   /// Action triggered when a monitor is to be drawn
   void DrawElement(TGListTreeItem*, int);
@@ -118,8 +117,8 @@ private:
     TGListTreeItem* item = nullptr;
     TObject* object = nullptr;
     bool persist = true;
-    bool time_series = false;
     std::pair<double,double> y_range = kInvalidRange;
+    std::string time_series = "";
     Option_t* draw_opt = "";
   };
 

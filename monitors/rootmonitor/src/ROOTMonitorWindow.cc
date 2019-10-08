@@ -96,7 +96,6 @@ ROOTMonitorWindow::ROOTMonitorWindow(TApplication* par, const std::string& name)
   ResetCounters();
 
   this->AddFrame(m_status_bar, new TGLayoutHints(kLHintsBottom | kLHintsExpandX, 0, 0, 2, 0));
-  //left_bar->MapSubwindows();
 
   m_timer->Connect("Timeout()", NAME, this, "Update()");
   m_update_toggle->SetOn();
@@ -302,7 +301,7 @@ void ROOTMonitorWindow::Draw(TCanvas* canv){
       dr->object->Draw(dr->draw_opt);
       pad->SetTicks();
       pad->SetGrid();
-      if (dr->time_series) {
+      if (!dr->time_series.empty()) {
         TAxis* axis = nullptr;
         if (dr->object->InheritsFrom("TH1"))
           axis = dynamic_cast<TH1*>(dr->object)->GetXaxis();
@@ -310,7 +309,7 @@ void ROOTMonitorWindow::Draw(TCanvas* canv){
           axis = dynamic_cast<TGraph*>(dr->object)->GetXaxis();
         if (axis) {
           axis->SetTimeDisplay(1);
-          axis->SetTimeFormat("%M:%S");
+          axis->SetTimeFormat(dr->time_series.c_str());
         }
       }
     }
