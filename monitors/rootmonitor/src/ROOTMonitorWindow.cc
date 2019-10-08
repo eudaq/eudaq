@@ -339,11 +339,11 @@ void ROOTMonitorWindow::PostDraw(TCanvas* canv){
     if (!dr->persist)
       CleanObject(dr->object);
     // monitor vertical range to be set at the end
-    if (dr->y_range.first != kInvalidValue && dr->y_range.second != kInvalidValue) {
+    if (dr->min_y != kInvalidValue && dr->max_y != kInvalidValue) {
       if (dr->object->InheritsFrom("TH1"))
-        dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->y_range.first, dr->y_range.second);
+        dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
       else if (dr->object->InheritsFrom("TGraph"))
-        dynamic_cast<TGraph*>(dr->object)->GetYaxis()->SetRangeUser(dr->y_range.first, dr->y_range.second);
+        dynamic_cast<TGraph*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
     }
     if (pad) {
       pad->Update();

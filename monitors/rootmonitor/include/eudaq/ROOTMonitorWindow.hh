@@ -83,7 +83,10 @@ public:
   /// Specify the drawing properties of the object in the monitor
   void SetDrawOptions(const TObject* obj, Option_t* opt) { GetMonitor(obj).draw_opt = opt; }
   /// Specify the y axis range for a monitored object
-  void SetRangeY(const TObject* obj, double min, double max) { GetMonitor(obj).y_range = std::make_pair(min, max); }
+  void SetRangeY(const TObject* obj, double min, double max) {
+    auto& mon = GetMonitor(obj);
+    mon.min_y = min, mon.max_y = max;
+  }
   /// Specify if the x-axis should be associated with time
   void SetTimeSeries(const TObject* obj, const std::string& time) { GetMonitor(obj).time_series = time; }
 
@@ -135,7 +138,7 @@ private:
     TGListTreeItem* item = nullptr;
     TObject* object = nullptr;
     bool persist = true;
-    std::pair<double,double> y_range = std::make_pair(kInvalidValue, kInvalidValue);
+    double min_y = kInvalidValue, max_y = kInvalidValue;
     std::string time_series = "";
     Option_t* draw_opt = "";
   };
