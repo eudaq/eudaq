@@ -6,6 +6,9 @@
 # include "RQ_OBJECT.h"
 #endif
 
+class TH1D;
+class TGraph;
+
 namespace eudaq {
   class ROOTMonitor : public Monitor {
     static constexpr const char* NAME = "eudaq::ROOTMonitor";
@@ -38,6 +41,11 @@ namespace eudaq {
     std::future<void> m_daemon;
     std::vector<std::future<void> > m_daemon_load;
     unsigned long long m_num_evt_mon = 0ull;
+
+    // global monitoring plots
+    TH1D* m_glob_evt_reco_time, *m_glob_evt_num_subevt;
+    TGraph* m_glob_evt_vs_ts, *m_glob_rate_vs_ts;
+    unsigned long long m_glob_last_evt_ts = 0ull;
 
   protected:
     std::unique_ptr<ROOTMonitorWindow> m_monitor;

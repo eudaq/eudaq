@@ -212,6 +212,7 @@ void ROOTMonitorWindow::LoadFile(const char* filename){
   else if (s_ext == "raw") {
     FillFromRAWFile(filename);
     m_button_save->SetEnabled(true); // allows for export
+    m_button_clean->SetEnabled(false);
   }
   Update();
 }
@@ -331,6 +332,9 @@ void ROOTMonitorWindow::Draw(TCanvas* canv){
 }
 
 void ROOTMonitorWindow::PostDraw(TCanvas* canv){
+  // canvas(es) flushing procedure
+  canv->Modified();
+  canv->Update();
   size_t i = 0;
   for (size_t i = 0; i < m_drawable.size(); ++i) {
     auto& dr = m_drawable.at(i);
@@ -342,17 +346,17 @@ void ROOTMonitorWindow::PostDraw(TCanvas* canv){
     if (dr->min_y != kInvalidValue && dr->max_y != kInvalidValue) {
       if (dr->object->InheritsFrom("TH1"))
         dynamic_cast<TH1*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
-      else if (dr->object->InheritsFrom("TGraph"))
-        dynamic_cast<TGraph*>(dr->object)->GetYaxis()->SetRangeUser(dr->min_y, dr->max_y);
+      else if (dr->object->InheritsFrom("TGraph")) {
+        auto gr = dynamic_cast<TGraph*>(dr->object);
+        gr->SetMaximum(dr->max_y);
+        gr->SetMinimum(dr->min_y);
+      }
     }
     if (pad) {
       pad->Update();
       pad->Modified();
     }
   }
-  // canvas(es) flushing procedure
-  canv->Modified();
-  canv->Update();
 }
 
 //--- monitoring elements helpers

@@ -3,7 +3,8 @@
 #include "eudaq/FileReader.hh"
 #include "eudaq/DataConverter.hh"
 
-#include "TSysEvtHandler.h"
+#include "TH1.h"
+#include "TGraph.h"
 
 #include <ratio>
 #include <chrono>
@@ -30,6 +31,15 @@ namespace eudaq {
   void ROOTMonitor::DoInitialise(){
     m_monitor->ResetCounters();
     AtInitialisation();
+    m_glob_evt_reco_time = m_monitor->Book<TH1D>("Global/event_reco_time", "Event reconstruction time",
+                                                 "event_reco_time", ";Event reconstruction time (ms)", 100, 0., 2.5);
+    m_glob_evt_num_subevt = m_monitor->Book<TH1D>("Global/num_subevts", "Number of sub-events",
+                                                  "num_subevts", ";Number of sub-events", 10, 0., 10.);
+    m_monitor->SetDrawOptions(m_glob_evt_num_subevt, "hist text0");
+    m_glob_evt_vs_ts = m_monitor->Book<TGraph>("Global/evt_vs_ts", "Event timestamp");
+    m_glob_evt_vs_ts->SetTitle(";Time (s);Event ID");
+    m_glob_rate_vs_ts = m_monitor->Book<TGraph>("Global/rate_vs_ts", "Rate evolution");
+    m_glob_rate_vs_ts->SetTitle(";Time (s);Event rate (Hz)");
   }
 
   void ROOTMonitor::DoConfigure(){
@@ -46,9 +56,22 @@ namespace eudaq {
   }
 
   void ROOTMonitor::DoReceive(eudaq::EventSP ev){
+    auto start = std::chrono::system_clock::now();
     // update the counters
     m_monitor->SetCounters(ev->GetEventN(), ++m_num_evt_mon);
+    // user-specific filling part
     AtEventReception(ev);
+    // global event information
+    std::chrono::duration<double> elapsed_sec = std::chrono::system_clock::now()-start;
+    m_glob_evt_reco_time->Fill(elapsed_sec.count()*1.e3);
+    m_glob_evt_num_subevt->Fill(ev->GetNumSubEvent());
+    if (ev->GetTimestampBegin() != 0) {
+      m_glob_evt_vs_ts->SetPoint(m_glob_evt_vs_ts->GetN(), ev->GetTimestampBegin(), ev->GetEventID());
+      const double rate = (ev->GetTimestampBegin() != m_glob_last_evt_ts)
+        ? 1./(ev->GetTimestampBegin()-m_glob_last_evt_ts) : 0.;
+      m_glob_rate_vs_ts->SetPoint(m_glob_rate_vs_ts->GetN(), ev->GetTimestampBegin(), rate);
+      m_glob_last_evt_ts = ev->GetTimestampBegin();
+    }
   }
 
   void ROOTMonitor::DoStopRun(){
