@@ -162,14 +162,14 @@ void ROOTMonitorWindow::SetLastEventNum(int num){
   if (num >= 0)
     m_last_event = num;
   if (m_status_bar && (num < 0 || m_status == Status::running))
-    m_status_bar->SetText(Form("Curr. event: %d", m_last_event), (int)StatusBarPos::tot_events);
+    m_status_bar->SetText(Form("Curr. event: %llu", m_last_event), (int)StatusBarPos::tot_events);
 }
 
 void ROOTMonitorWindow::SetMonitoredEventsNum(int num){
   if (num >= 0)
     m_last_event_mon = num;
   if (m_status_bar && (num < 0 || m_status == Status::running))
-    m_status_bar->SetText(Form("Analysed events: %d", m_last_event_mon), (int)StatusBarPos::an_events);
+    m_status_bar->SetText(Form("Analysed events: %llu", m_last_event_mon), (int)StatusBarPos::an_events);
 }
 
 void ROOTMonitorWindow::SetStatus(Status st){

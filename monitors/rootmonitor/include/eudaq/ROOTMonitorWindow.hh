@@ -29,6 +29,9 @@ public:
   enum class Status { idle, configured, running, error };
   friend std::ostream& operator<<(std::ostream&, const Status&);
 
+private:
+  static constexpr double kInvalidValue = 42.424242;
+
 public:
   void SetCounters(unsigned long long evt_recv, unsigned long long evt_mon);
   /// Reset the status bar events counters
@@ -108,7 +111,6 @@ public:
   void FillFromRAWFile(const char* path);
 
 private:
-  static constexpr double kInvalidValue = 42.424242;
   struct MonitoredObject {
     TGListTreeItem* item = nullptr;
     TObject* object = nullptr;
