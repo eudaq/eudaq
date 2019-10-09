@@ -30,6 +30,7 @@ namespace eudaq {
 
   void ROOTMonitor::DoInitialise(){
     m_monitor->ResetCounters();
+    m_monitor->SetStatus(eudaq::Status::STATE_STOPPED);
     AtInitialisation();
     m_glob_evt_reco_time = m_monitor->Book<TH1D>("Global/event_reco_time", "Event reconstruction time",
                                                  "event_reco_time", ";Event reconstruction time (ms)", 100, 0., 2.5);

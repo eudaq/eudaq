@@ -211,9 +211,9 @@ namespace eudaq {
     else if (s_ext == "raw") {
       FillFromRAWFile(filename);
       m_button_save->SetEnabled(true); // allows for export
-      m_button_clean->SetEnabled(false);
     }
     Update();
+    m_button_clean->SetEnabled(false);
   }
 
   void ROOTMonitorWindow::FillFileObject(const std::string& path, TObject* obj, const std::string& path_par){
