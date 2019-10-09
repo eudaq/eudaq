@@ -174,10 +174,8 @@ void ROOTMonitorWindow::SetMonitoredEventsNum(int num){
 
 void ROOTMonitorWindow::SetStatus(eudaq::Status::State st){
   m_status = st;
-  if (m_status_bar) {
-    std::ostringstream st_txt; st_txt << st;
-    m_status_bar->SetText(st_txt.str().c_str(), (int)StatusBarPos::status);
-  }
+  if (m_status_bar)
+    m_status_bar->SetText(eudaq::Status::State2String(st).c_str(), (int)StatusBarPos::status);
 }
 
 //--- file I/O

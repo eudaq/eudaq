@@ -17,7 +17,7 @@ namespace eudaq{
   using StatusUP = std::unique_ptr<Status>;
   using StatusSP = std::shared_ptr<Status>;
   using StatusSPC = std::shared_ptr<const Status>;
-  
+
   class DLLEXPORT Status : public Serializable {
   public:
     enum Level {
@@ -39,7 +39,7 @@ namespace eudaq{
       STATE_STOPPED,
       STATE_RUNNING
     };
-    
+
     Status(int lvl = LVL_OK, const std::string &msg = "");
     Status(Deserializer &);
     ~Status() override;
@@ -57,6 +57,7 @@ namespace eudaq{
     std::map<std::string, std::string> GetTags() const;
     static std::string Level2String(int lvl);
     static int String2Level(const std::string &str);
+    static std::string State2String(int state);
   private:
     int m_level;
     int m_state;
