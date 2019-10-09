@@ -161,18 +161,18 @@ void ROOTMonitorWindow::SetRunNumber(int run){
 void ROOTMonitorWindow::SetLastEventNum(int num){
   if (num >= 0)
     m_last_event = num;
-  if (m_status_bar && (num < 0 || m_status == Status::running))
+  if (m_status_bar && (num < 0 || m_status == eudaq::Status::STATE_RUNNING))
     m_status_bar->SetText(Form("Curr. event: %llu", m_last_event), (int)StatusBarPos::tot_events);
 }
 
 void ROOTMonitorWindow::SetMonitoredEventsNum(int num){
   if (num >= 0)
     m_last_event_mon = num;
-  if (m_status_bar && (num < 0 || m_status == Status::running))
+  if (m_status_bar && (num < 0 || m_status == eudaq::Status::STATE_RUNNING))
     m_status_bar->SetText(Form("Analysed events: %llu", m_last_event_mon), (int)StatusBarPos::an_events);
 }
 
-void ROOTMonitorWindow::SetStatus(Status st){
+void ROOTMonitorWindow::SetStatus(eudaq::Status::State st){
   m_status = st;
   if (m_status_bar) {
     std::ostringstream st_txt; st_txt << st;
@@ -456,16 +456,4 @@ void ROOTMonitorWindow::AddSummary(const std::string& path, const TObject* obj){
     return;
   }
   throw std::runtime_error("Failed to retrieve an object for summary \""+path+"\"");
-}
-
-//--- utilitaries
-
-std::ostream& operator<<(std::ostream& os, const ROOTMonitorWindow::Status& stat){
-  switch (stat) {
-    case ROOTMonitorWindow::Status::idle: return os << "IDLE";
-    case ROOTMonitorWindow::Status::configured: return os << "CONFIGURED";
-    case ROOTMonitorWindow::Status::running: return os << "RUNNING";
-    case ROOTMonitorWindow::Status::error: return os << "ERROR";
-  }
-  return os << "UNKNOWN";
 }

@@ -1,6 +1,8 @@
 #ifndef EUDAQ_INCLUDED_ROOTMonitorWindow
 #define EUDAQ_INCLUDED_ROOTMonitorWindow
 
+#include "eudaq/Status.hh"
+
 #ifndef __CINT__
 # include "TGFrame.h"
 # include "TGStatusBar.h"
@@ -25,11 +27,6 @@ public:
   ROOTMonitorWindow(TApplication*, const std::string& name);
   ~ROOTMonitorWindow();
 
-  /// List of FSM states
-  enum class Status { idle, configured, running, error };
-  friend std::ostream& operator<<(std::ostream&, const Status&);
-
-public:
   void SetCounters(unsigned long long evt_recv, unsigned long long evt_mon);
   /// Reset the status bar events counters
   void ResetCounters();
@@ -43,7 +40,7 @@ public:
   void AddSummary(const std::string& path, const TObject* obj);
 
   /// Update the FSM
-  void SetStatus(Status st);
+  void SetStatus(eudaq::Status::State st);
   /// Launch a "Open file" dialog to load a RAW/ROOT file and reproduce its monitoring
   void OpenFileDialog();
   /// Load all monitored object from a RAW/ROOT file
@@ -164,7 +161,7 @@ private:
   /// Parent owning application
   TApplication* m_parent = nullptr;
   /// Current "FSM" status
-  Status m_status = Status::idle;
+  eudaq::Status::State m_status = eudaq::Status::STATE_UNINIT;
   int m_run_number = -1;
   unsigned long long m_last_event = 0;
   unsigned long long m_last_event_mon = 0;

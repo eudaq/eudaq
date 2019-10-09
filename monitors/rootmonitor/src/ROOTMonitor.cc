@@ -18,7 +18,7 @@ namespace eudaq {
     if (!m_monitor)
       EUDAQ_THROW("Error allocating main window");
 
-    m_monitor->SetStatus(ROOTMonitorWindow::Status::idle);
+    m_monitor->SetStatus(eudaq::Status::STATE_UNINIT);
     m_monitor->Connect("FillFromRAWFile(const char*)", NAME, this, "LoadRAWFileAsync(const char*)");
     m_monitor->Connect("Quit()", NAME, this, "DoTerminate()");
 
@@ -43,14 +43,14 @@ namespace eudaq {
   }
 
   void ROOTMonitor::DoConfigure(){
-    m_monitor->SetStatus(ROOTMonitorWindow::Status::configured);
+    m_monitor->SetStatus(eudaq::Status::STATE_CONF);
     m_monitor->ResetCounters();
     AtConfiguration();
   }
 
   void ROOTMonitor::DoStartRun(){
     m_monitor->ResetCounters();
-    m_monitor->SetStatus(ROOTMonitorWindow::Status::running);
+    m_monitor->SetStatus(eudaq::Status::STATE_RUNNING);
     m_monitor->SetRunNumber(GetRunNumber());
     AtRunStart();
   }
@@ -75,12 +75,12 @@ namespace eudaq {
   }
 
   void ROOTMonitor::DoStopRun(){
-    m_monitor->SetStatus(ROOTMonitorWindow::Status::configured);
+    m_monitor->SetStatus(eudaq::Status::STATE_STOPPED);
     AtRunStop();
   }
 
   void ROOTMonitor::DoReset(){
-    m_monitor->SetStatus(ROOTMonitorWindow::Status::idle);
+    m_monitor->SetStatus(eudaq::Status::STATE_UNINIT);
     m_monitor->ResetCounters();
     AtReset();
   }
