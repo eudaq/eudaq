@@ -1,8 +1,3 @@
-if(WIN32)
-  message(STATUS "Online ROOT monitor is not to be built on windows")
-  return()
-endif()
-
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 if(WIN32)
   find_package(ROOT REQUIRED COMPONENTS libGui libCore libHist libRIO)
