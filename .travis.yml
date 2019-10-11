@@ -8,7 +8,7 @@ branches:
   only:
     - master
     - v1.x-dev
-#     - feature-CI-v1.x-dev
+    - feature-CI-v1.x-dev
 
 # set here versions / file paths
 env:
