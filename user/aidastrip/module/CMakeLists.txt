@@ -24,10 +24,13 @@ target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
 set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
   ${EUDAQ_INSTALL_RPATH}:/usr/local/lib/kpix/)
 
+# Add to modules library:
+target_link_libraries(modules INTERFACE ${EUDAQ_MODULE})
+
 
 install(TARGETS
   ${EUDAQ_MODULE}
+  EXPORT eudaqTargets
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
-
