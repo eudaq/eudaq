@@ -92,10 +92,7 @@ before_install:
       
 install:
   - source .travis/update_repositories.sh  
-#   - source .travis/install_cmake.sh  
-#   - source .travis/set_compilers.sh  
   - source .travis/install_afs.sh  
-#   - source .travis/install_python.sh  
   - source .travis/install_libusb_0_1.sh  
   - source .travis/install_libusb_1_0.sh  
   - source .travis/install_qt.sh  
