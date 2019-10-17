@@ -25,7 +25,7 @@ set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
   ${EUDAQ_INSTALL_RPATH}:/usr/local/lib/kpix/)
 
 # Add to modules library:
-TARGET_LINK_LIBRARIES(modules INTERFACE ${EUDAQ_MODULE})
+target_link_libraries(modules INTERFACE ${EUDAQ_MODULE})
 
 
 install(TARGETS

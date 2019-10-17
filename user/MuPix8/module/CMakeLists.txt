@@ -22,7 +22,7 @@ target_link_libraries(${EUDAQ_MODULE} ${ROOT_LIBRARIES} ${MUPIX8DAQ_LIBRARY} ${E
   ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} )
 
 # Add to modules library:
-TARGET_LINK_LIBRARIES(modules INTERFACE ${EUDAQ_MODULE})
+target_link_libraries(modules INTERFACE ${EUDAQ_MODULE})
 
 install(TARGETS
   ${EUDAQ_MODULE}

@@ -16,7 +16,7 @@ target_link_libraries(${EUDAQ_MODULE}
   ${EUDAQ_CORE_LIBRARY} ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES})
 
 # Add to modules library:
-TARGET_LINK_LIBRARIES(modules INTERFACE ${EUDAQ_MODULE})
+tagret_link_libraries(modules INTERFACE ${EUDAQ_MODULE})
 
 install(TARGETS
   ${EUDAQ_MODULE}

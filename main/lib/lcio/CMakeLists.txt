@@ -44,7 +44,7 @@ else()
     PATCH_COMMAND patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/extern/LCIO-02-07-rpath.patch
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${EUDAQ_INSTALL_PREFIX}/extern -DBUILD_TESTING:BOOL=OFF -DBUILD_LCIO_EXAMPLES:BOOL=OFF -DCMAKE_INSTALL_RPATH:PATH=${EUDAQ_INSTALL_RPATH} -DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON -DCMAKE_MACOSX_RPATH=ON
     )
-  
+
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(LCIO_LIBRARIES
       ${EUDAQ_INSTALL_PREFIX}/extern/lib/liblcio.dylib
@@ -56,7 +56,7 @@ else()
       ${EUDAQ_INSTALL_PREFIX}/extern/lib/libsio.so
       CACHE INTERNAL "external lcio library")
   endif()
-  
+
   set(EUDAQ_INCLUDE_DIRS
     ${EUDAQ_INCLUDE_DIRS}
     ${CMAKE_CURRENT_LIST_DIR}/include
@@ -68,7 +68,9 @@ else()
   add_dependencies(${EUDAQ_COMPONENT} extern_lcio)
 endif()
 
-target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${LCIO_LIBRARIES})
+target_link_libraries(${EUDAQ_COMPONENT} PUBLIC ${EUDAQ_CORE_LIBRARY})
+target_link_libraries(${EUDAQ_COMPONENT} PRIVATE ${LCIO_LIBRARIES})
+target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
 
 install(TARGETS ${EUDAQ_COMPONENT}
   EXPORT eudaqTargets
