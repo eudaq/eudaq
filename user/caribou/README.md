@@ -35,6 +35,16 @@ Since the Peary device libraries are not thread-safe, all access to Peary librar
 
 ## Data Converters to StandardEvent
 
+### CLICTDEvent2StdEventConverter
+
+The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
+
+* `countingmode`: Boolean for configuring the frame decoder to indicate counting mode data. Defaults to `true`.
+* `longcnt`: Boolean for configuring the frame decoder to interpret the pixel value as single long 13-bit counter. Defaults to `false`.
+* `discard_tot_below`: Integer value to discard pixels with certain ToT values. All pixels with a ToT below this value will be discarded immediately and not returned by the decoder. This only works when a ToT value is available, i.e. not when `longcnt` is enabled. If a pixel has a ToT value of 0 and this setting is `1`, the hit will be discarded - if it is set to `0`, the hit is kept. Defaults to `-1`, i.e. no pixels are discarded.
+* `discard_toa_below`: Integer value to discard pixels with certain ToA values. All pixels with a ToA below this value will be discarded immediately and not returned by the decoder. This only works when a ToA value is available, i.e. not with `countingmode` enabled. If a pixel has a ToA value of 0 and this setting is `1`, the hit will be discarded - if it is set to `0`, the hit is kept. Defaults to `-1`, i.e. no pixels are discarded.
+* `pixel_value_toa`: Boolean to select which value to return as pixel raw value. Can bei either `0` for ToT or `1` for ToA, defaults to `0`.
+
 ### CLICpix2Event2StdEventConverter
 
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:

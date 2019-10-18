@@ -1,45 +1,33 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
-#include "framedecoder/clicpix2_frameDecoder.hpp"
+#include "CLICTDFrameDecoder.hpp"
 #include "utils/log.hpp"
-#include "clicpix2_pixels.hpp"
+#include "CLICTDPixels.hpp"
 
 using namespace eudaq;
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
-  Register<CLICpix2Event2StdEventConverter>(CLICpix2Event2StdEventConverter::m_id_factory);
+  Register<CLICTDEvent2StdEventConverter>(CLICTDEvent2StdEventConverter::m_id_factory);
 }
 
-size_t CLICpix2Event2StdEventConverter::t0_seen_(0);
-uint64_t CLICpix2Event2StdEventConverter::last_shutter_open_(0);
-bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
+bool CLICTDEvent2StdEventConverter::t0_is_high_(false);
+bool CLICTDEvent2StdEventConverter::t0_seen_(false);
+uint64_t CLICTDEvent2StdEventConverter::last_shutter_open_(0);
+bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
-  // Retrieve matrix configuration and compression status from config:
+  // Retrieve matrix configuration from config:
   auto counting = conf->Get("countingmode", true);
   auto longcnt = conf->Get("longcnt", false);
-  auto comp = conf->Get("comp", true);
-  auto sp_comp = conf->Get("sp_comp", true);
+
+  auto pxvalue = conf->Get("pixel_value_toa", false);
 
   // Integer to allow skipping pixels with certain ToT values directly when decoding
   auto discard_tot_below = conf->Get("discard_tot_below", -1);
   auto discard_toa_below = conf->Get("discard_toa_below", -1);
 
-  // Prepare matrix decoder:
-  static auto matrix_config = [counting, longcnt]() {
-    std::map<std::pair<uint8_t, uint8_t>, caribou::pixelConfig> matrix;
-    for(uint8_t x = 0; x < 128; x++) {
-      for(uint8_t y = 0; y < 128; y++) {
-        // FIXME hard-coded matrix configuration for CLICpix2 - needs to be read from a configuration!
-        matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, counting, false, longcnt);
-      }
-    }
-    return matrix;
-  };
-
-  static auto matrix = matrix_config();
-  static caribou::clicpix2_frameDecoder decoder(comp, sp_comp, matrix);
+  static caribou::CLICTDFrameDecoder decoder(longcnt);
   // No event
   if(!ev) {
     return false;
@@ -55,7 +43,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     // Block 0 contains all data, split it into timestamps and pixel data, returned as std::vector<uint8_t>
     auto datablock = ev->GetBlock(0);
-    LOG(DEBUG) << "CLICpix2 frame with";
+    LOG(DEBUG) << "CLICTD frame with";
 
     // Number of timestamps: first word of data
     uint32_t timestamp_words;
@@ -77,7 +65,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     uint64_t ts64;
     for(const auto& ts : ts_tmp) {
       if(msb) {
-        ts64 = (static_cast<uint64_t>(ts & 0x7ffff) << 32);
+        ts64 = (static_cast<uint64_t>(ts) << 32);
       } else {
         timestamps.push_back(ts64 | ts);
       }
@@ -106,18 +94,74 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
-  // Calculate time stamps, CLICpix2 runs on 100MHz clock:
-  bool shutterOpen = false;
+  // Print all timestamps for first event:
+  if(ev->GetEventNumber() == 1) {
+    for(auto& timestamp : timestamps) {
+      EUDAQ_INFO("TS " + eudaq::to_bit_string((timestamp >> 48), 16, true) + " " + std::to_string(timestamp & 0xffffffffffff));
+    }
+  }
+
+  // Calculate time stamps, CLICTD runs on 100MHz clock:
+  bool shutterIsOpen = false;
   bool full_shutter = false;
   uint64_t shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
-    if((timestamp >> 48) == 3) {
-      shutter_open = (timestamp & 0xffffffffffff) * 10.;
-      shutterOpen = true;
-    } else if((timestamp >> 48) == 1 && shutterOpen == true) {
-      shutter_close = (timestamp & 0xffffffffffff) * 10.;
-      shutterOpen = false;
-      full_shutter = true;
+    // LSB 8bit: signal status after the trigger
+    // MSB 8bit: which signals triggered
+    uint8_t signals = (timestamp >> 48) & 0xff;
+    uint8_t triggers = (timestamp >> 56) & 0xff;
+    // 48bit of timestamp in 10ns clk
+    uint64_t time = (timestamp & 0xffffffffffff) * 10;
+
+    // Old format: MSB all zero
+    bool legacy_format = (triggers == 0);
+
+    if(legacy_format) {
+      // Find first appearance and first disappearance of SHUTTER signal
+      if(signals & 0x4) {
+        shutter_open = time;
+        shutterIsOpen = true;
+      } else if(!(signals & 0x4) && shutterIsOpen == true) {
+        shutter_close = time;
+        shutterIsOpen = false;
+        full_shutter = true;
+      }
+
+      // Check for T0 signal going high:
+      if(signals & 0x1) {
+        t0_is_high_ = true;
+      }
+
+      // Check for T0 signal going from high to low
+      if(!(signals & 0x1) && t0_is_high_) {
+        t0_seen_ = true;
+        t0_is_high_ = false;
+        EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+        // Discard this event:
+        return false;
+      }
+    } else {
+      // New format:
+
+      // Find shutter
+      if((triggers & 0x4) && (signals & 0x4)) {
+        // Trigger plus signal is there: shutter opened
+        shutter_open = time;
+        shutterIsOpen = true;
+      } else if((triggers & 0x4) && !(signals & 0x4) && shutterIsOpen) {
+        // Trigger and no signal: shutter closed
+        shutter_close = time;
+        shutterIsOpen = false;
+        full_shutter = true;
+      }
+
+      // Check for T0 signal going from high to low
+      if((triggers & 0x1) && !(signals & 0x1)) {
+        t0_seen_ = true;
+        EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+        // Discard this event:
+        return false;
+      }
     }
   }
 
@@ -134,42 +178,41 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   }
 
   // Check if there was a T0:
-  if(last_shutter_open_ > shutter_open) {
-      t0_seen_++;
+  if(!t0_seen_) {
+    // Last shutter open had higher timestamp than this one:
+    t0_seen_ = (last_shutter_open_ > shutter_open);
+    // Log when we have it detector:
+    if(t0_seen_) {
+      EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
+      // Discard this event:
+      return false;
+    }
   }
   last_shutter_open_ = shutter_open;
 
   // FIXME - hardcoded configuration:
   bool drop_before_t0 = true;
   // No T0 signal seen yet, dropping frame:
-  if(drop_before_t0 && (t0_seen_==0)) {
+  if(drop_before_t0 && !t0_seen_) {
     return false;
-  }
-  // drop everything after second t0 has been seen:
-  if(t0_seen_>1) {
-      EUDAQ_WARN("Detected T0 " + std::to_string(t0_seen_) + " times.");
-      return false;
   }
 
   // Decode the data:
-  decoder.decode(rawdata);
-  auto data = decoder.getZerosuppressedFrame();
+  auto data = decoder.decodeFrame(rawdata);
 
   // Create a StandardPlane representing one sensor plane
-  eudaq::StandardPlane plane(0, "Caribou", "CLICpix2");
+  eudaq::StandardPlane plane(0, "Caribou", "CLICTD");
 
   plane.SetSizeZS(128, 128, 0);
   for(const auto& px : data) {
-    auto cp2_pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
-    int col = px.first.first;
-    int row = px.first.second;
+    auto pixel = dynamic_cast<caribou::CLICTDPixelReadout*>(px.second.get());
 
     // Disentangle data types from pixel:
     int tot = -1;
 
     // ToT will throw if longcounter is enabled:
     try {
-      tot = cp2_pixel->GetTOT();
+      tot = pixel->GetTOT();
 
       // Check if we want to skip low ToT values. Only skip if we actually read a ToT value
       if(tot < discard_tot_below) {
@@ -182,25 +225,41 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     // Time defaults ot rising shutter edge:
     auto timestamp = shutter_open;
+    int rawvalue = tot;
 
     // Decide whether information is counter of ToA
-    if(matrix[std::make_pair(row, col)].GetCountingMode()) {
+    if(counting) {
       // FIXME currently we don't use counting mode at all
-      // cnt = cp2_pixel->GetCounter();
     } else {
-      auto toa = cp2_pixel->GetTOA();
+      auto toa = pixel->GetTOA();
 
       // Check if we want to skip low ToA values. Only skip if we actually read a ToA value and are not on counting mode
       if(toa < discard_toa_below) {
         continue;
       }
 
+      // Select which value to return as pixel raw value
+      rawvalue = (pxvalue ? toa : tot);
+
       // Convert ToA form 100MHz clk into ns and sutract from shutterStopTime
       timestamp = shutter_close - toa * 10;
     }
 
-    // Timestamp is stored in picoseconds
-    plane.PushPixel(col, row, tot, timestamp * 1000);
+    // Resolve the eight sub-pixels
+    int row = px.first.second;
+    for(int sub = 0; sub < 8; sub++) {
+      // This pixel hasn't fired:
+      if(!pixel->isHit(sub)) {
+        continue;
+      }
+
+      // "column" times eight plus sub-pixel column
+      // LSB of subpixels is the left-most in the mastrix
+      int col = px.first.first*8 + sub;
+
+      // Timestamp is stored in picoseconds
+      plane.PushPixel(col, row, rawvalue, timestamp * 1000);
+    }
   }
 
   // Add the plane to the StandardEvent
@@ -211,7 +270,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   d2->SetTimeEnd(shutter_close * 1000);
 
   // Identify the detetor type
-  d2->SetDetectorType("CLICpix2");
+  d2->SetDetectorType("CLICTD");
   // Indicate that data was successfully converted
   return true;
 }

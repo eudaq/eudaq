@@ -381,6 +381,9 @@ void Timepix3Producer::DoConfigure() {
   EUDAQ_USER("Timepix3Producer configuring: " + config->Name());
   // Configuration file values are accessible as config->Get(name, default)
 
+  // sleep for 1 second, to make sure the TLU clock is already present
+  sleep (1);
+
   // set whether external clock (TLU) is used or device runs standalone
   m_extRefClk = config->Get("external_clock", false);
   if (!spidrctrl->setExtRefClk(m_extRefClk)) {
