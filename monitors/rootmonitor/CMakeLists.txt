@@ -4,30 +4,26 @@ if(WIN32)
 else()
   find_package(ROOT REQUIRED COMPONENTS Gui)
 endif()
-if(ROOT_VERSION_MAJOR GREATER 5)
-  add_definitions(-DEUDAQ_LIB_ROOT6)
-endif()
 
 cmake_dependent_option(EUDAQ_BUILD_ONLINE_ROOT_MONITOR "monitor/ROOTMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
 if(NOT EUDAQ_BUILD_ONLINE_ROOT_MONITOR)
   message(STATUS "monitor/ROOTMonitor is NOT to be built (EUDAQ_BUILD_ONLINE_ROOT_MONITOR=OFF)")
-  unset(EUDAQ_ROOT_MONITOR CACHE)
-  unset(ROOT_MONITOR_LIBRARIES CACHE)
+  unset(EUDAQ_ROOT_MONITOR_LIBRARY CACHE)
   return()
 endif()
 message(STATUS "monitor/ROOTMonitor is to be built (EUDAQ_BUILD_ONLINE_ROOT_MONITOR=ON)")
 
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
-set(EUDAQ_ROOT_MONITOR ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq root monitoring library")
+set(EUDAQ_ROOT_MONITOR_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq root monitoring library")
 
-set(ROOT_MONITOR_LIBRARIES ${ROOT_MONITOR_LIBRARIES} CACHE INTERNAL "eudaq root monitoring library")
 set(EUDAQ_INCLUDE_DIRS
     ${EUDAQ_INCLUDE_DIRS}
     ${CMAKE_CURRENT_LIST_DIR}/include
     ${ROOT_INCLUDE_DIRS}
     CACHE INTERNAL "directory of eudaq include")
+
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
 if(ROOT_USE_FILE)
@@ -43,16 +39,6 @@ root_generate_dictionary(R_ROOTMonitor eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWin
 list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/R_ROOTMonitor.cxx)
 add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(ROOT_MONITOR_LIBRARIES
-      ${EUDAQ_INSTALL_PREFIX}/extern/lib/librootmonitor.dylib
-      CACHE INTERNAL "eudaq root monitoring library")
-else()
-  set(ROOT_MONITOR_LIBRARIES
-      ${EUDAQ_INSTALL_PREFIX}/extern/lib/librootmonitor.so
-      CACHE INTERNAL "eudaq root monitoring library")
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0))
   set_property(TARGET ${EUDAQ_COMPONENT} PROPERTY CXX_STANDARD 14)
 endif()
@@ -60,7 +46,7 @@ endif()
 target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES})
 
 install(TARGETS ${EUDAQ_COMPONENT}
-  #EXPORT eudaqTargets
+  EXPORT eudaqTargets
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
@@ -76,3 +62,4 @@ endif()
 
 file(GLOB INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/eudaq/*.hh")
 install(FILES ${INC_FILES} DESTINATION include/eudaq)
+
