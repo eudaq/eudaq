@@ -11,7 +11,7 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<std::string> listen(op, "a", "listen-port", "", "address",
 				  "The port on which the data monitor is going to listen on");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
-  				   "The address of the RunControl to connect to");
+  				   "The address of the RunControl to connect to (using null://null to run it standalone without RunControl)");
 
 
   try{

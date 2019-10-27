@@ -8,7 +8,7 @@ namespace eudaq {
   Status::Status(int level, const std::string &msg )
     :m_level(level), m_state(STATE_UNINIT), m_msg(msg){
   }
-  
+
   Status::Status(Deserializer &ds) {
     ds.read(m_level);
     ds.read(m_state);
@@ -19,14 +19,14 @@ namespace eudaq {
   Status::~Status(){
 
   }
-  
+
   void Status::Serialize(Serializer &ser) const {
     ser.write(m_level);
     ser.write(m_state);
     ser.write(m_msg);
     ser.write(m_tags);
   }
-  
+
   void Status::ResetStatus(State st, Level lvl, const std::string &msg){
     m_state = st;
     m_level = lvl;
@@ -36,7 +36,7 @@ namespace eudaq {
   std::string Status::GetStateString() const{
     return m_map_state_str.at(m_state);
   }
-  
+
   std::string Status::Level2String(int level) {
     if(m_map_level_str.count(level))
       return m_map_level_str.at(level);
@@ -55,6 +55,12 @@ namespace eudaq {
     EUDAQ_THROW("Unrecognised level: " + str);
   }
 
+  std::string Status::State2String(int state) {
+    if(m_map_state_str.count(state))
+      return m_map_state_str.at(state);
+    return "";
+  }
+
   void Status::SetMessage(const std::string &msg){
     m_msg = msg;
   }
@@ -66,7 +72,7 @@ namespace eudaq {
   int Status::GetLevel() const{
     return m_level;
   }
-  
+
   int Status::GetState() const {
     return m_state;
   }
@@ -101,7 +107,7 @@ namespace eudaq {
     }
     os << std::string(offset, ' ') << "</Status>\n";
   }
-  
+
   std::map<uint32_t, std::string> Status::m_map_state_str = {
     {STATE_ERROR, "ERROR"},
     {STATE_UNINIT, "UNINIT"},
