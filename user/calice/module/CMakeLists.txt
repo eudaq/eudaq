@@ -15,12 +15,9 @@ add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE}
   ${EUDAQ_CORE_LIBRARY} ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES})
 
-# Add to modules library:
-tagret_link_libraries(modules INTERFACE ${EUDAQ_MODULE})
 
 install(TARGETS
   ${EUDAQ_MODULE}
-  EXPORT eudaqTargets
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

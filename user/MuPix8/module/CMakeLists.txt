@@ -21,9 +21,6 @@ add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${ROOT_LIBRARIES} ${MUPIX8DAQ_LIBRARY} ${EUDAQ_CORE_LIBRARY}
   ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} )
 
-# Add to modules library:
-target_link_libraries(modules INTERFACE ${EUDAQ_MODULE})
-
 install(TARGETS
   ${EUDAQ_MODULE}
   EXPORT eudaqTargets
