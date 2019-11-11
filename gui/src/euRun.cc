@@ -611,7 +611,9 @@ void RunControlGUI::nextStep()
         btnStartScan->setText("Start scan");
         std::cout << "Stopping scan" << std::endl;
         m_scan_interrupt_received = false;
-        on_btnStop_clicked();
+        m_scanningTimer.stop();
+        if(!allConnectionsInState(eudaq::Status::STATE_STOPPED))
+            on_btnStop_clicked();
         return;
     }
     if(m_scan.currentStep()!=0)
@@ -622,7 +624,8 @@ void RunControlGUI::nextStep()
         std::cout << "Next step" << std::endl;
         txtConfigFileName->setText(QString(conf.c_str()));
         QCoreApplication::processEvents();
-        while(!allConnectionsInState(eudaq::Status::STATE_STOPPED) && m_scan.scanHasbeenStarted()){
+        while((!allConnectionsInState(eudaq::Status::STATE_STOPPED) && m_scan.scanHasbeenStarted())
+              ||(!allConnectionsInState(eudaq::Status::STATE_CONF) && !m_scan_active)){
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
@@ -632,7 +635,7 @@ void RunControlGUI::nextStep()
         updateInfos();
         std::this_thread::sleep_for (std::chrono::seconds(3));
         on_btnConfig_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_CONF)){
+        while(!allConnectionsInState(eudaq::Status::STATE_CONF) && m_scan_active){
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
@@ -655,6 +658,8 @@ void RunControlGUI::nextStep()
         btnStartScan->setText("Start scan");
         m_scan_active = false;
         m_scan_interrupt_received = false;
+        m_scanningTimer.stop();
+
     }
     m_scan.scanStarted();
     return;
