@@ -131,9 +131,7 @@ namespace eudaq {
 	m_conf->SetString(server_name, server_addr);
       }
     }
-    if(!m_conf->HasSection("RunControl"))
-        EUDAQ_THROW("No global RunControl section given in config file");
-    m_conf->SetSection("RunControl");
+    m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
     for(auto &conn: conn_to_conf)
       SendCommand("CONFIG", to_string(*m_conf), conn);
   }
@@ -171,15 +169,11 @@ namespace eudaq {
 
   void RunControl::ReadConfigureFile(const std::string &path){
     m_conf = Configuration::MakeUniqueReadFile(path);
-    if(!m_conf->HasSection("RunControl"))
-        EUDAQ_THROW("No global RunControl section given in config file");
     m_conf->SetSection("RunControl");
   }
   
   void RunControl::ReadInitilizeFile(const std::string &path){
     m_conf_init = Configuration::MakeUniqueReadFile(path);
-    if(!m_conf->HasSection("RunControl"))
-        EUDAQ_THROW("No global RunControl section given in config file");
     m_conf_init->SetSection("RunControl");
   }
   
@@ -250,8 +244,6 @@ namespace eudaq {
     //TODO: make sure datacollector is started before producer. waiting
     std::this_thread::sleep_for(std::chrono::seconds(1));
     std::string producer_last_start;
-    if(!m_conf->HasSection("RunControl"))
-        EUDAQ_THROW("No global RunControl section given in config file");
     m_conf->SetSection("RunControl");
     producer_last_start = m_conf->Get("EUDAQ_CTRL_PRODUCER_LAST_START", producer_last_start);
     for(auto &conn :conn_to_run){
@@ -296,6 +288,7 @@ namespace eudaq {
     auto st = m_conn_status[id]->GetState();
     if(st != Status::STATE_CONF){
 	EUDAQ_ERROR(id->GetName()+" is not Status::STATE_CONF, skipped");
+	//TODO:: EUDAQ_THROW
     }
     lk.unlock();
     
@@ -312,11 +305,9 @@ namespace eudaq {
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
       if(st != Status::STATE_RUNNING){
-          if(!m_conf->HasSection("RunControl"))
-              EUDAQ_THROW("No global RunControl section given in config file");
-
-          m_conf->SetSection("RunControl");
+          m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
           EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_RUNNING, skipped");
+	//TODO:: EUDAQ_THROW
       }
       else{
 	conn_to_stop.push_back(conn);
@@ -326,8 +317,6 @@ namespace eudaq {
 
     // check which producer to stop first
     std::string producer_first_stop="";
-    if(!m_conf->HasSection("RunControl"))
-        EUDAQ_THROW("No global RunControl section given in config file");
     m_conf->SetSection("RunControl");
     producer_first_stop = m_conf->Get("EUDAQ_CTRL_PRODUCER_FIRST_STOP", producer_first_stop);
 
