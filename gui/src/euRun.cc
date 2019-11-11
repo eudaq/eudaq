@@ -749,8 +749,7 @@ int RunControlGUI::getEventsCurrent(){
 void RunControlGUI::store_config()
 {
     std::string configFile = txtConfigFileName->text().toStdString();
-    std::string command = "cp "+configFile+" "+m_config_at_run_path+"run_"+std::to_string(m_rc->GetRunN())+".txt";
-    std::cout << "fucking runnumber that we are using: " << command <<std::endl;
+    std::string command = "cp "+configFile+" "+m_config_at_run_path+"config_run_"+std::to_string(m_rc->GetRunN())+".txt";
     system(command.c_str());
 }
 
