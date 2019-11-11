@@ -131,7 +131,9 @@ namespace eudaq {
 	m_conf->SetString(server_name, server_addr);
       }
     }
-    m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
+    if(!m_conf->HasSection("RunControl"))
+           EUDAQ_THROW("No global RunControl section given in config file");
+    m_conf->SetSection("RunControl");
     for(auto &conn: conn_to_conf)
       SendCommand("CONFIG", to_string(*m_conf), conn);
   }
@@ -163,7 +165,9 @@ namespace eudaq {
 	std::string server_name = conn_type+"."+conn_name;
 	m_conf->SetString(server_name, server_addr);
     }
-    m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
+    if(!m_conf->HasSection("RunControl"))
+        EUDAQ_THROW("No global RunControl section given in config file");
+    m_conf->SetSection("RunControl");
     SendCommand("CONFIG", to_string(*m_conf), id);
   }
 
@@ -199,7 +203,6 @@ namespace eudaq {
       auto st = conn_st.second->GetState();
       if(st != Status::STATE_CONF && st!=Status::STATE_STOPPED){
 	EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_CONF, skipped");
-	//TODO:: EUDAQ_THROW
       }
       else{
 	conn_to_run.push_back(conn);
@@ -288,7 +291,6 @@ namespace eudaq {
     auto st = m_conn_status[id]->GetState();
     if(st != Status::STATE_CONF){
 	EUDAQ_ERROR(id->GetName()+" is not Status::STATE_CONF, skipped");
-	//TODO:: EUDAQ_THROW
     }
     lk.unlock();
     
@@ -305,9 +307,8 @@ namespace eudaq {
       auto &conn = conn_st.first;
       auto st = conn_st.second->GetState();
       if(st != Status::STATE_RUNNING){
-          m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
+          m_conf->SetSection("RunControl");
           EUDAQ_ERROR(conn->GetName()+" is not Status::STATE_RUNNING, skipped");
-	//TODO:: EUDAQ_THROW
       }
       else{
 	conn_to_stop.push_back(conn);
@@ -371,7 +372,6 @@ namespace eudaq {
     auto st = m_conn_status[id]->GetState();
     if(st != Status::STATE_RUNNING){
 	EUDAQ_ERROR(id->GetName()+" is not Status::STATE_RUNNING, skipped");
-	//TODO:: EUDAQ_THROW
       }
     lk.unlock();
 
