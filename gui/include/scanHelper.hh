@@ -123,7 +123,7 @@ private:
      * @param conf Default configuration
      * @param sec Scan section beeing read
      */
-    void createConfigs(int condition, eudaq::ConfigurationSP conf, std::vector<ScanSection> sec);
+    void createConfigs(unsigned condition, eudaq::ConfigurationSP conf, std::vector<ScanSection> sec);
     /**
      * @brief add additional information for each section
      * @param s Section read in
