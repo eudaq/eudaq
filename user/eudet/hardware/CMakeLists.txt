@@ -13,7 +13,6 @@ endif()
 # end library
 
 install(TARGETS ${INSTALL_TARGETS}
-  EXPORT eudaqTargets
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
