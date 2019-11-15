@@ -16,6 +16,7 @@ add_subdirectory(aidastrip)
 add_subdirectory(tbscDESY)
 add_subdirectory(MuPix8)
 add_subdirectory(piStage)
+add_subdirectory(cms-phase2)
 
 # Install modules interface library
 install(TARGETS modules
