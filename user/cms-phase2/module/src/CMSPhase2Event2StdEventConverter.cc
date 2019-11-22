@@ -7,26 +7,36 @@ namespace {
   Register<CMSPhase2RawEvent2StdEventConverter>(CMSPhase2RawEvent2StdEventConverter::m_id_factory);
 }
 
-bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const
+bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eudaq::StandardEventSP pStdEvent, eudaq::ConfigurationSPC conf) const
 {
 
   // No event
-  if(!d1 || d1->NumBlocks() < 1) {
+  if(!pEvent || pEvent->GetNumSubEvent() < 1) {
     return false;
   }
-
-  auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  auto block_n_list = ev_raw->GetBlockNumList();
-  for(auto &bn: block_n_list){
-    d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn+30));// for phase2 lets keep offset 30
+  //Create one StandardPlane for each block of data
+  auto cSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(0));
+  
+  std::vector<eudaq::StandardPlane*> cPlanes;  
+  uint32_t  cNFrames = pEvent->GetSubEvents().size();
+  for(uint32_t cBlockId = 0; cBlockId<cSubEventRaw->GetBlockNumList().size(); cBlockId++){
+    eudaq::StandardPlane *cPlane = new eudaq::StandardPlane(cBlockId+30, "CMSPhase2StdEvent", "CMSPhase2" ); 
+    cPlane->SetSizeZS(1016, 2, 0, cNFrames); // 3 values per hit, 2 uint8t words per uint16t word, 1 for header
+    cPlanes.push_back(cPlane);
   }
+  for(uint32_t cFrameId=0; cFrameId<cNFrames ; cFrameId++){
+    cSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(cFrameId)); 
+    for(uint32_t cBlockId=0; cBlockId < cSubEventRaw->GetBlockNumList().size(); cBlockId++){
+      AddFrameToPlane(cPlanes.at(cBlockId), cSubEventRaw->GetBlock(cBlockId), cFrameId, cNFrames ); 
+    }
+  }
+  for(auto cPlane : cPlanes ){
+    pStdEvent->AddPlane(*cPlane);
+  } 
   return true;
 }
 
-eudaq::StandardPlane CMSPhase2RawEvent2StdEventConverter::ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const
-{
-  // create event
-  eudaq::StandardPlane plane(id, "CMSPhase2StdEvent", "CMSPhase2");
+void CMSPhase2RawEvent2StdEventConverter::AddFrameToPlane(eudaq::StandardPlane *pPlane, const std::vector<uint8_t> &data, uint32_t pFrame, uint32_t pNFrames) const{
 
   // get width and height
   uint32_t width = (((uint32_t)data[1]) << 8) | (uint32_t)data[0];
@@ -34,16 +44,12 @@ eudaq::StandardPlane CMSPhase2RawEvent2StdEventConverter::ConvertPlane(const std
 
   // set size
   uint32_t nhits = data.size()/6 - 1;
-  plane.SetSizeZS(width, height, nhits); // 3 values per hit, 2 uint8t words per uint16t word, 1 for header
 
   // process data
   for(size_t i = 0; i < nhits; i++){    
     // column, row, tot, ?, lvl1
-    plane.PushPixel(getHitVal(data, i, 0), getHitVal(data, i, 1), getHitVal(data, i, 2), false, 0);  
+    pPlane->PushPixel(getHitVal(data, i, 0), getHitVal(data, i, 1), getHitVal(data, i, 2), false, pFrame);  
   }
-
-  // return
-  return plane;
 }
 
 uint16_t CMSPhase2RawEvent2StdEventConverter::getHitVal(const std::vector<uint8_t>& data, size_t hit_id, size_t value_id) const
