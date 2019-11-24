@@ -280,6 +280,16 @@
          </property>
         </widget>
        </item>
+       <item row="4" column="4">
+        <widget class="QCheckBox" name="checkBox">
+         <property name="text">
+          <string>LogConfigs</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -355,7 +365,7 @@
      <x>0</x>
      <y>0</y>
      <width>1033</width>
-     <height>29</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>

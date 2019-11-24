@@ -36,7 +36,9 @@ Buttons and line edits to control the DAQ. Inactive buttons are greyed out:
     - Line edit for the currently set scan configuration file, which can be changed by simply entering the desired filename (NB: has to have the end `.scan`)
     - Load-Button: Opens Dialog to browse the system searching for a `*.scan` file, which is loaded to the line-edit
     - StartScan-Button: Starts the scan and allows for an interruption at any time.
-  
+    - LogConfigs: If checked, the current configuration is copied to a file
+    called `config_run_RUNNUMBER.txt` and stored in current working directory
+    or at the path given in the config, see below   
 #### Connections 
 All connected components are shown in a table located in the bottom part. For each component, the following information is displayed:
   - type: Can be Producer, DataCollector, Monitor
@@ -48,7 +50,17 @@ All connected components are shown in a table located in the bottom part. For ea
   
 Right clicking on each component opens a dialog to set the component into a desired `state`. 
 Note that most components can only go up one state per step.
-  
+
+#### Init and Configuration parameters
+### Init
+No parameters required
+
+### Config
+    - config_log_path: Path to which the configuration is copied at
+    runstart. Defaults to an empty string
+    - EUDAQ_CTRL_PRODUCER_LAST_START: Last producer that is started
+    - EUDAQ_CTRL_PRODUCER_FIRST_STOP: First producer that is stopped
+
 ##  Log GUI
   
 Self explaining GUI to scroll through the logs.
