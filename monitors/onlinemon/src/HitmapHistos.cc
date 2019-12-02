@@ -14,7 +14,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
       _maxY(p.getMaxY()), _wait(false), _hitmap(NULL), _hitXmap(NULL),
       _hitYmap(NULL), _clusterMap(NULL), _lvl1Distr(NULL), _lvl1Width(NULL),
       _lvl1Cluster(NULL), _totSingle(NULL),
-      _lvl1VsTot(NULL), _totHeat(NULL),
+      _lvl1VsTot(NULL), _lvl1VsCol(NULL), _totHeat(NULL),
       _totCluster(NULL), _hitOcc(NULL),
       _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), 
       _clusterYWidth(NULL), _nbadHits(NULL), _nHotPixels(NULL),
@@ -97,6 +97,11 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     sprintf(out2, "h_lvl1vstot_%s_%i", _sensor.c_str(), _id);
     _lvl1VsTot = new TH2D(out2, out, 16, 0, 16, lvl1_bin, 0, lvl1_bin);
     SetHistoAxisLabels(_lvl1VsTot, "ToT [ToT code]", "Lvl1 [25 ns]");
+    //LVL1 vs Col
+    sprintf(out, "%s %i Lvl1 vs Col", _sensor.c_str(), _id);
+    sprintf(out2, "h_lvl1vscol_%s_%i", _sensor.c_str(), _id);
+    _lvl1VsCol = new TH2D(out2, out, _maxX, -0.5, _maxX-0.5, lvl1_bin, 0, lvl1_bin);
+    SetHistoAxisLabels(_lvl1VsCol, "Column", "Lvl1 [25 ns]");
 
     //ToT spatially resolved
     sprintf(out, "%s %i ToT Heatmap", _sensor.c_str(), _id);
@@ -317,6 +322,8 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
       _totSingle->Fill(hit.getTOT());
     if (_lvl1Distr != NULL)
       _lvl1Distr->Fill(hit.getLVL1());
+    if(_lvl1VsCol != NULL)
+      _lvl1VsCol->Fill(hit.getX(), hit.getLVL1());
     if(_lvl1VsTot != NULL)
       _lvl1VsTot->Fill(hit.getTOT(), hit.getLVL1());
     if(_totHeat != NULL)
@@ -411,6 +418,7 @@ void HitmapHistos::Reset() {
   _clusterXWidth->Reset();
   _hitmapSections->Reset();
   _nPivotPixel->Reset();
+  _lvl1VsCol->Reset();
   _lvl1VsTot->Reset();
   _totHeat->Reset();
 
@@ -503,6 +511,7 @@ void HitmapHistos::Write() {
   _clusterYWidth->Write();
   _hitmapSections->Write();
   _nPivotPixel->Write();
+  _lvl1VsCol->Write();
   _lvl1VsTot->Write();
   _totHeat->Write();
   for (unsigned int section = 0; section < mimosa26_max_section; section++) {

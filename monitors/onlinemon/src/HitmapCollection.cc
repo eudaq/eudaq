@@ -191,6 +191,11 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
       _mon->getOnlineMon()->registerHisto(
           tree, getHitmapHistos(p.getName(), p.getID())->getTOTHeatHisto(), "COLZ", 0);
 
+      sprintf(tree, "%s/Sensor %i/LVL1vsCol", p.getName().c_str(), p.getID());
+      _mon->getOnlineMon()->registerTreeItem(tree);
+      _mon->getOnlineMon()->registerHisto(
+          tree, getHitmapHistos(p.getName(), p.getID())->getLVL1vsColHisto(), "COLZ", 0);
+
       sprintf(tree, "%s/Sensor %i/LVL1vsTOT", p.getName().c_str(), p.getID());
       _mon->getOnlineMon()->registerTreeItem(tree);
       _mon->getOnlineMon()->registerHisto(

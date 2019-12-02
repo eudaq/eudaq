@@ -53,6 +53,7 @@ protected:
   TH1I **_nClustersize_section;
   TH1I **_nHotPixels_section;
   TH2D* _lvl1VsTot;
+  TH2D* _lvl1VsCol;
   TProfile2D* _totHeat;
 
 
@@ -68,6 +69,7 @@ public:
   void Write();
 
   TH2D* getLVL1vsTOTHisto() { return _lvl1VsTot; }
+  TH2D* getLVL1vsColHisto() { return _lvl1VsCol; }
   TProfile2D* getTOTHeatHisto() { return _totHeat; }
 
   TH2I *getHitmapHisto() { return _hitmap; }
