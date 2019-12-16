@@ -50,9 +50,10 @@ namespace eudaq{
   }
 
   void StandardPlane::Print(std::ostream &os, size_t offset) const  {
-    os << std::string(offset, ' ') << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << "x" << m_pix.size()
-       << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), pivot=" << m_pivotpixel;
-  }
+    os << std::string(offset, ' ') << m_id << ", " << m_type << ":" << m_sensor << ", "
+       << m_xsize << "x" << m_ysize << "x" << m_pix.size()
+       << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), pivot=" << m_pivotpixel
+       << " timestamps:" << m_time[0].size()<< std::endl; }
   void StandardPlane::SetSizeRaw(uint32_t w, uint32_t h, uint32_t frames,
 				 int flags) {
 
@@ -68,7 +69,7 @@ namespace eudaq{
     m_xsize = w;
     m_ysize = h;
     m_pix.resize(frames);
-    m_time.resize(frames);
+    m_time.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
     m_x.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
     m_y.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
     m_pivot.resize(GetFlags(FLAG_WITHPIVOT)
@@ -76,11 +77,11 @@ namespace eudaq{
 		   : 0);
     for (size_t i = 0; i < frames; ++i) {
       m_pix[i].resize(npix);
-      m_time[i].resize(npix);
     }
     for (size_t i = 0; i < m_x.size(); ++i) {
       m_x[i].resize(npix);
       m_y[i].resize(npix);
+      m_time[i].resize(npix);
       if (m_pivot.size())
 	m_pivot[i].resize(npix);
     }
@@ -131,7 +132,9 @@ namespace eudaq{
     return m_result_pix->at(index);
   }
   uint64_t StandardPlane::GetTimestamp(uint32_t index, uint32_t frame) const {
-    return m_time.at(frame).at(index);
+      if (!GetFlags(FLAG_DIFFCOORDS))
+        frame = 0;
+      return m_time.at(frame).at(index);
   }
   uint64_t StandardPlane::GetTimestamp(uint32_t index) const {
     SetupResult();
@@ -250,16 +253,19 @@ namespace eudaq{
       m_temp_pix.resize(0);
       m_temp_x.resize(0);
       m_temp_y.resize(0);
+      m_temp_time.resize(0);
       for (size_t f = 0; f < m_pix.size(); ++f) {
         for (size_t p = 0; p < m_pix[f].size(); ++p) {
           m_temp_x.push_back(GetX(p, f));
           m_temp_y.push_back(GetY(p, f));
           m_temp_pix.push_back(GetPixel(p, f));
+          m_temp_time.push_back(GetTimestamp(p,f));
         }
       }
       m_result_x = &m_temp_x;
       m_result_y = &m_temp_y;
       m_result_pix = &m_temp_pix;
+      m_result_time = & m_temp_time;
     } else if (m_pix.size() == 1 && !GetFlags(FLAG_NEEDCDS)) {
       m_result_pix = &m_pix[0];
     } else if (m_pix.size() == 2) {
@@ -279,6 +285,7 @@ namespace eudaq{
           m_temp_x.resize(0);
           m_temp_y.resize(0);
           m_temp_pix.resize(0);
+          m_temp_time.resize(0);
           const bool inverse = false;
           size_t i;
           for (i = 0; i < m_pix[1 - inverse].size(); ++i) {
@@ -287,6 +294,7 @@ namespace eudaq{
             m_temp_x.push_back(m_x[1 - inverse][i]);
             m_temp_y.push_back(m_y[1 - inverse][i]);
             m_temp_pix.push_back(m_pix[1 - inverse][i]);
+            m_temp_time.push_back(m_time[1-inverse][i]);
           }
           for (i = 0; i < m_pix[0 + inverse].size(); ++i) {
             if (m_pivot[0 + inverse][i])
@@ -296,9 +304,11 @@ namespace eudaq{
             m_temp_x.push_back(m_x[0 + inverse][i]);
             m_temp_y.push_back(m_y[0 + inverse][i]);
             m_temp_pix.push_back(m_pix[0 + inverse][i]);
+            m_temp_time.push_back(m_time[0 + inverse][i]);
           }
           m_result_x = &m_temp_x;
           m_result_y = &m_temp_y;
+          m_result_time = &m_temp_time;
         }
         m_result_pix = &m_temp_pix;
       }

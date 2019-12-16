@@ -160,10 +160,12 @@ install(EXPORT eudaqTargets
   DESTINATION ${PROJECT_BINARY_DIR}
   COMPONENT dev)
 
+file(GLOB TARGET_FILES "${PROJECT_BINARY_DIR}/eudaqTarget*.cmake")
+
 install(FILES
   "${PROJECT_BINARY_DIR}/eudaqConfig.cmake"
   "${PROJECT_BINARY_DIR}/eudaqConfigVersion.cmake"
-  "${PROJECT_BINARY_DIR}/eudaqTargets.cmake"
+  ${TARGET_FILES}
   DESTINATION ${EUDAQ_CMAKE_DIR}
   COMPONENT dev)
 

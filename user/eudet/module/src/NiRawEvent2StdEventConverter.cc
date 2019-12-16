@@ -148,7 +148,7 @@ void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, cons
       uint16_t column = v >> 2 & 0x7ff;
       uint16_t num = v & 3;
       for (uint16_t j = 0; j < num + 1; ++j) {
-	plane.PushPixel(column + j, row, 1, pivot, fm_n);
+        plane.PushPixel(column + j, row, 1,0, pivot, fm_n);
       }
     }
   }

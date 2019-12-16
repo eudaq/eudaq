@@ -2,7 +2,7 @@
 repeatScans = 1
 allowNested = 0 # overrides local nested arguments
 #configPrefix = "path/to/folder/scanned" // optional
-timeBasedScan = 0 # 1 = true :)
+timeBasedScan = 1 # 1 = true :)
 timePerStep = 10 #in seconds for now
 nEventsPerStep   = 200
 
@@ -12,7 +12,7 @@ start = 1
 stop = 2
 step = 1
 name = Producer.my_pd0
-eventCounter = Producer.my_pd0
+#eventCounter = Producer.my_pd0
 parameter = EX0_PLANE_ID
 
 [4]

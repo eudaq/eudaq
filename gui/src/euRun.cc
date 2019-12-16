@@ -12,7 +12,9 @@ RunControlGUI::RunControlGUI()
     m_display_col(0),
     m_scan_active(false),
     m_scan_interrupt_received(false),
-    m_display_row(0){
+    m_save_config_at_run_start(true),
+    m_display_row(0),
+    m_config_at_run_path(""){
     m_map_label_str = {{"RUN", "Run Number"}};
     qRegisterMetaType<QModelIndex>("QModelIndex");
     setupUi(this);
@@ -148,6 +150,7 @@ void RunControlGUI::on_btnConfig_clicked(){
   {
   eudaq::ConfigurationSPC conf = m_rc->GetConfiguration();
   conf->SetSection("RunControl");
+  m_config_at_run_path = conf->Get("config_log_path","");
   std::string additionalDisplays = conf->Get("ADDITIONAL_DISPLAY_NUMBERS","");
   if(additionalDisplays!="")
     addAdditionalStatus(additionalDisplays);
@@ -166,6 +169,8 @@ void RunControlGUI::on_btnStart_clicked(){
   }
   if(m_rc)
     m_rc->StartRun();
+  if(m_save_config_at_run_start)
+      store_config();
 }
 
 void RunControlGUI::on_btnStop_clicked() {
@@ -611,7 +616,9 @@ void RunControlGUI::nextStep()
         btnStartScan->setText("Start scan");
         std::cout << "Stopping scan" << std::endl;
         m_scan_interrupt_received = false;
-        on_btnStop_clicked();
+        m_scanningTimer.stop();
+        if(!allConnectionsInState(eudaq::Status::STATE_STOPPED))
+            on_btnStop_clicked();
         return;
     }
     if(m_scan.currentStep()!=0)
@@ -622,7 +629,8 @@ void RunControlGUI::nextStep()
         std::cout << "Next step" << std::endl;
         txtConfigFileName->setText(QString(conf.c_str()));
         QCoreApplication::processEvents();
-        while(!allConnectionsInState(eudaq::Status::STATE_STOPPED) && m_scan.scanHasbeenStarted()){
+        while((!allConnectionsInState(eudaq::Status::STATE_STOPPED) && m_scan.scanHasbeenStarted())
+              ||(!allConnectionsInState(eudaq::Status::STATE_CONF) && !m_scan_active)){
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
@@ -632,7 +640,7 @@ void RunControlGUI::nextStep()
         updateInfos();
         std::this_thread::sleep_for (std::chrono::seconds(3));
         on_btnConfig_clicked();
-        while(!allConnectionsInState(eudaq::Status::STATE_CONF)){
+        while(!allConnectionsInState(eudaq::Status::STATE_CONF) && m_scan_active){
             updateInfos();
             QCoreApplication::processEvents();
             std::this_thread::sleep_for (std::chrono::seconds(1));
@@ -655,6 +663,8 @@ void RunControlGUI::nextStep()
         btnStartScan->setText("Start scan");
         m_scan_active = false;
         m_scan_interrupt_received = false;
+        m_scanningTimer.stop();
+
     }
     m_scan.scanStarted();
     return;
@@ -736,6 +746,13 @@ int RunControlGUI::getEventsCurrent(){
     return -1;
 }
 
+void RunControlGUI::store_config()
+{
+    std::string configFile = txtConfigFileName->text().toStdString();
+    std::string command = "cp "+configFile+" "+m_config_at_run_path+"config_run_"+std::to_string(m_rc->GetRunN())+".txt";
+    system(command.c_str());
+}
+
 void RunControlGUI::updateProgressBar(){
     double scanProgress = 0;
     if(m_scan_active){
@@ -749,3 +766,8 @@ void RunControlGUI::updateProgressBar(){
 
 }
 
+
+void RunControlGUI::on_checkBox_stateChanged(int arg1)
+{
+m_save_config_at_run_start = arg1;
+}
