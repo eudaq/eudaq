@@ -61,6 +61,10 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   // Set timestamps for StdEvent in nanoseconds (timestamps are picoseconds):
   d2->SetTimeBegin(triggerTime);
   d2->SetTimeEnd(triggerTime);
+  
+  // Identify the detetor type
+  d2->SetDetectorType("SpidrTrigger");
+
   return true;
 }
 
