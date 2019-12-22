@@ -25,7 +25,7 @@ ADD_LATEX_DOCUMENT(
   BIBFILES src/References.bib
   USE_GLOSSARY
   IMAGE_DIRS src/images
-  DEFAULT_PDF
+  FORCE_PDF
   )
 
 # overwrite the version info tex file with information from CMake/git
