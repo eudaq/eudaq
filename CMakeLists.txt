@@ -157,10 +157,16 @@ write_basic_package_version_file(eudaqConfigVersion.cmake
 # Install the export set for use with the install-tree
 install(EXPORT eudaqTargets
   NAMESPACE eudaq::
+  DESTINATION ${EUDAQ_CMAKE_DIR}
+  COMPONENT dev)
+
+install(EXPORT eudaqTargets
+  NAMESPACE eudaq::
   DESTINATION ${PROJECT_BINARY_DIR}
   COMPONENT dev)
 
-file(GLOB TARGET_FILES "${PROJECT_BINARY_DIR}/eudaqTarget*.cmake")
+file(GLOB TARGET_FILES "${EUDAQ_CMAKE_DIR}/eudaqTarget*.cmake")
+export(PACKAGE eudaq)
 
 install(FILES
   "${PROJECT_BINARY_DIR}/eudaqConfig.cmake"
