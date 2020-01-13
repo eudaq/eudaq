@@ -81,8 +81,8 @@ int main(int /*argc*/, const char **argv) {
       auto timeStampEnd = ev->GetTimestampEnd();
       auto particles = ev->GetTag("PARTICLES", "NAN");
       auto triggersFired = ev->GetTag("TRIGGER", "NAN");
-      auto scaler0 = ev->GetTag("SCALER0", "NAN"); 
-      auto scaler1 = ev->GetTag("SCALER1", "NAN"); 
+      auto scaler0 = ev->GetTag("SCALER0", "NAN");
+      auto scaler1 = ev->GetTag("SCALER1", "NAN");
       auto scaler2 = ev->GetTag("SCALER2", "NAN");
       auto scaler3 = ev->GetTag("SCALER3", "NAN");
       auto scaler4 = ev->GetTag("SCALER4", "NAN");
@@ -93,15 +93,15 @@ int main(int /*argc*/, const char **argv) {
       auto finets3 = ev->GetTag("FINE_TS3", "NAN");
       auto finets4 = ev->GetTag("FINE_TS4", "NAN");
       auto finets5 = ev->GetTag("FINE_TS5", "NAN");
-      std::cout << runNumber << "," << 
-      		   eventNumber << "," << 
-		   triggerNumber << "," << 
-		   timeStampBegin << "," << 
-		   timeStampEnd << "," << 
+      std::cout << runNumber << "," <<
+      		   eventNumber << "," <<
+		   triggerNumber << "," <<
+		   timeStampBegin << "," <<
+		   timeStampEnd << "," <<
 		   particles << "," <<
-		   triggersFired << "," << 
-		   scaler0 << "," << scaler1 << "," << scaler2 << "," << scaler3 << "," << scaler4 << "," << scaler5 << "," << 
-		   finets0 << "," << finets1 << "," << finets2 << "," << finets3 << "," << finets4 << "," << finets5 << 
+		   triggersFired << "," <<
+		   scaler0 << "," << scaler1 << "," << scaler2 << "," << scaler3 << "," << scaler4 << "," << scaler5 << "," <<
+		   finets0 << "," << finets1 << "," << finets2 << "," << finets3 << "," << finets4 << "," << finets5 <<
 		   std::endl;
       // ev->Print(std::cout);
     }
@@ -118,27 +118,27 @@ int main(int /*argc*/, const char **argv) {
 	  auto timeStampEnd = subev->GetTimestampEnd();
           auto particles = subev->GetTag("PARTICLES", "NAN");
 	  auto triggersFired = subev->GetTag("TRIGGER" , "NAN");
-          auto scaler0 = ev->GetTag("SCALER0", "NAN"); 
-          auto scaler1 = ev->GetTag("SCALER1", "NAN"); 
-          auto scaler2 = ev->GetTag("SCALER2", "NAN");
-          auto scaler3 = ev->GetTag("SCALER3", "NAN");
-          auto scaler4 = ev->GetTag("SCALER4", "NAN");
-          auto scaler5 = ev->GetTag("SCALER5", "NAN");
-          auto finets0 = ev->GetTag("FINE_TS0", "NAN");
-          auto finets1 = ev->GetTag("FINE_TS1", "NAN");
-          auto finets2 = ev->GetTag("FINE_TS2", "NAN");
-          auto finets3 = ev->GetTag("FINE_TS3", "NAN");
-          auto finets4 = ev->GetTag("FINE_TS4", "NAN");
-          auto finets5 = ev->GetTag("FINE_TS5", "NAN");
-          std::cout << runNumber << "," << 
-      		   eventNumber << "," << 
-		   triggerNumber << "," << 
-		   timeStampBegin << "," << 
-		   timeStampEnd << "," << 
+          auto scaler0 = subev->GetTag("SCALER0", "NAN"); 
+          auto scaler1 = subev->GetTag("SCALER1", "NAN"); 
+          auto scaler2 = subev->GetTag("SCALER2", "NAN");
+          auto scaler3 = subev->GetTag("SCALER3", "NAN");
+          auto scaler4 = subev->GetTag("SCALER4", "NAN");
+          auto scaler5 = subev->GetTag("SCALER5", "NAN");
+          auto finets0 = subev->GetTag("FINE_TS0", "NAN");
+          auto finets1 = subev->GetTag("FINE_TS1", "NAN");
+          auto finets2 = subev->GetTag("FINE_TS2", "NAN");
+          auto finets3 = subev->GetTag("FINE_TS3", "NAN");
+          auto finets4 = subev->GetTag("FINE_TS4", "NAN");
+          auto finets5 = subev->GetTag("FINE_TS5", "NAN");
+          std::cout << runNumber << "," <<
+      		   eventNumber << "," <<
+		   triggerNumber << "," <<
+		   timeStampBegin << "," <<
+		   timeStampEnd << "," <<
 		   particles << "," <<
-		   triggersFired << "," << 
-		   scaler0 << "," << scaler1 << "," << scaler2 << "," << scaler3 << "," << scaler4 << "," << scaler5 << "," << 
-		   finets0 << "," << finets1 << "," << finets2 << "," << finets3 << "," << finets4 << "," << finets5 << 
+		   triggersFired << "," <<
+		   scaler0 << "," << scaler1 << "," << scaler2 << "," << scaler3 << "," << scaler4 << "," << scaler5 << "," <<
+		   finets0 << "," << finets1 << "," << finets2 << "," << finets3 << "," << finets4 << "," << finets5 <<
 		   std::endl;
           //subev->Print(std::cout);
           }
