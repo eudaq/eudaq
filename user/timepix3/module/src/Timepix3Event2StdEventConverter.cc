@@ -68,8 +68,8 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   timestamp = timestamp_raw + (static_cast<long long int>(m_TDCoverflowCounter) << 35);
 
   // Calculate timestamp in picoseconds assuming 320 MHz clock:
-  uint64_t triggerTime = (timestamp + static_cast<long long int>(stamp) / 12) * 3125;
-
+  uint64_t triggerTime = (timestamp + static_cast<long long int>(stamp) / 12.) * 3125;
+  
   // Set timestamps for StdEvent in nanoseconds (timestamps are picoseconds):
   d2->SetTimeBegin(triggerTime);
   d2->SetTimeEnd(triggerTime);
