@@ -38,6 +38,11 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
     return false;
   }
 
+  // format of TDC data from SPIDR:
+  // 63   59   55   51   47   43   39   35   31   27   23   19   15   11   7    3  0
+  // 0110 1111 EEEE EEEE EEEE TTTT TTTT TTTT TTTT TTTT TTTT TTTT TTTT TTTF FFF0 0000
+  // where: E=event_no, T=coarse_timestamp, F=fine_timestamp (0x0 to 0xc)
+
   unsigned long long int stamp = (trigdata & 0x1E0) >> 5;
   long long int timestamp_raw = static_cast<long long int>(trigdata & 0xFFFFFFFFE00) >> 9;
   long long int timestamp = 0;
