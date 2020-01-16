@@ -54,10 +54,8 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   }
   if(stamp == 0) {
       // stamp value = 0 indicates a TDC error
-      EUDAQ_WARN("Invalid TDC stamp received in packet " + std::to_string(ev->GetEventNumber()));
-  } else {
       // stamp value ranges from 1 to 12 correspond to coarse timestamp + <0-11>
-      stamp--;
+      EUDAQ_WARN("Invalid TDC stamp received in packet " + std::to_string(ev->GetEventNumber()));
   }
 
   // if jump back in time is larger than 1 sec, overflow detected...
