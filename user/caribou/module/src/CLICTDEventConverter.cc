@@ -223,8 +223,8 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       tot = 1;
     }
 
-    // Time defaults ot rising shutter edge:
-    auto timestamp = shutter_open;
+    // Time defaults to center between rising and falling shutter edge:
+    auto timestamp = (shutter_open + shutter_close) / 2;
     int rawvalue = tot;
 
     // Decide whether information is counter of ToA
