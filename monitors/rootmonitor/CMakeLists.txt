@@ -1,3 +1,5 @@
+find_package(ROOT QUIET)
+
 cmake_dependent_option(EUDAQ_BUILD_ONLINE_ROOT_MONITOR "monitor/ROOTMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
