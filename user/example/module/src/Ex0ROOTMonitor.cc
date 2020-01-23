@@ -36,12 +36,12 @@ namespace{
 }
 
 void Ex0ROOTMonitor::AtConfiguration(){
-  m_my_hist = m_monitor->Book<TH1D>("my_hist", "Example histogram",
+  m_my_hist = m_monitor->Book<TH1D>("Channel 0/my_hist", "Example histogram",
     "h_example", "A histogram;x-axis title;y-axis title", 100, 0., 1.);
-  m_my_graph = m_monitor->Book<TGraph2D>("my_graph", "Example graph");
+  m_my_graph = m_monitor->Book<TGraph2D>("Channel 0/my_graph", "Example graph");
   m_my_graph->SetTitle("A graph;x-axis title;y-axis title;z-axis title");
   m_monitor->SetDrawOptions(m_my_graph, "colz");
-  m_my_prof = m_monitor->Book<TProfile>("my_profile", "Example profile",
+  m_my_prof = m_monitor->Book<TProfile>("Channel 0/my_profile", "Example profile",
     "p_example", "A profile histogram;x-axis title;y-axis title", 100, 0., 1.);
   m_my_prof->SetTitle("A graph;x-axis title;y-axis title;z-axis title");
 }

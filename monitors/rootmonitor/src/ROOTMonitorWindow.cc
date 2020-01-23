@@ -9,6 +9,7 @@
 
 // required for object-specific "clear"
 #include "TGraph.h"
+#include "TGraph2D.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TMultiGraph.h"
@@ -25,7 +26,7 @@ namespace eudaq {
      m_icon_open(gClient->GetPicture("bld_open.xpm")),
      m_icon_th1(gClient->GetPicture("h1_t.xpm")),
      m_icon_th2(gClient->GetPicture("h2_t.xpm")),
-     m_icon_tgraph(gClient->GetPicture("profile_t.xpm")),
+     m_icon_tprofile(gClient->GetPicture("profile_t.xpm")),
      m_icon_track(gClient->GetPicture("eve_track.xpm")),
      m_icon_summ(gClient->GetPicture("draw_t.xpm")),
      m_timer(new TTimer(1000, kTRUE)){
@@ -115,7 +116,7 @@ namespace eudaq {
     gClient->FreePicture(m_icon_del);
     gClient->FreePicture(m_icon_th1);
     gClient->FreePicture(m_icon_th2);
-    gClient->FreePicture(m_icon_tgraph);
+    gClient->FreePicture(m_icon_tprofile);
     gClient->FreePicture(m_icon_track);
     gClient->FreePicture(m_icon_summ);
     for (auto& obj : m_objects)
@@ -408,6 +409,8 @@ namespace eudaq {
     }
     else if (obj->InheritsFrom("TGraph"))
       dynamic_cast<TGraph*>(obj)->Set(0);
+    else if (obj->InheritsFrom("TGraph2D"))
+      dynamic_cast<TGraph2D*>(obj)->Set(0);
     else if (obj->InheritsFrom("TH1"))
       dynamic_cast<TH1*>(obj)->Reset();
     else
