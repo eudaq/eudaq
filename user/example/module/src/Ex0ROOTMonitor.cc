@@ -43,7 +43,6 @@ void Ex0ROOTMonitor::AtConfiguration(){
   m_monitor->SetDrawOptions(m_my_graph, "colz");
   m_my_prof = m_monitor->Book<TProfile>("Channel 0/my_profile", "Example profile",
     "p_example", "A profile histogram;x-axis title;y-axis title", 100, 0., 1.);
-  m_my_prof->SetTitle("A graph;x-axis title;y-axis title;z-axis title");
 }
 
 void Ex0ROOTMonitor::AtEventReception(eudaq::EventSP ev){
