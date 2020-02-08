@@ -9,7 +9,7 @@
 #include "eudaq/Logger.hh"
 
 #include <iostream>
-#include "../inc/makeCorrelations.h"
+#include "../include/makeCorrelations.h"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/MultiFileReader.hh"
 
