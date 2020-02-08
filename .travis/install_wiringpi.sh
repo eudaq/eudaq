@@ -13,9 +13,9 @@ export temporary_path=`pwd`
 
 cd --
 
-git clone git://git.drogon.net/wiringPi
+git clone https://github.com/WiringPi/WiringPi.git
 
-cd wiringPi
+cd WiringPi
 
 sudo ./build
 

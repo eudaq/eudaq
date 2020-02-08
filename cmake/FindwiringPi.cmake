@@ -15,11 +15,11 @@ libfind_pkg_check_modules(wiringPi_PKGCONF wiringPi)
 
 find_path(wiringPi_INCLUDE_DIR 
   NAMES wiringPi.h
-  HINTS wiringPi_PKGCONF_INCLUDE_DIRS  "/usr/local/include" "/usr/include" "${PROJECT_SOURCE_DIR}/extern/wiringPi")
+  HINTS wiringPi_PKGCONF_INCLUDE_DIRS  "/usr/local/include" "/usr/include" "${PROJECT_SOURCE_DIR}/extern/WiringPi")
 
 find_library(wiringPi_LIBRARY NAMES 
   NAMES wiringPi
-  HINTS wiringPi_PKGCONF_LIBRARY_DIRS "/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/extern/wiringPi")
+  HINTS wiringPi_PKGCONF_LIBRARY_DIRS "/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/extern/WiringPi")
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
