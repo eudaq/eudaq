@@ -392,7 +392,7 @@ void CMSPixelProducer::DoStartRun() {
 }
 
 // This gets called whenever a run is stopped
-void CMSPixelProducer::OnStopRun() {
+void CMSPixelProducer::DoStopRun() {
   // Break the readout loop
   m_running = false;
   std::cout << "Stopping Run" << std::endl;
@@ -424,11 +424,11 @@ void CMSPixelProducer::OnStopRun() {
       std::cout << "CMSPixel " << m_detector << " Post run read-out, sending "
                 << daqEvents.size() << " evt." << std::endl;
       for (size_t i = 0; i < daqEvents.size(); i++) {
-        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-        ev.AddBlock(0, reinterpret_cast<const char *>(&daqEvents.at(i).data[0]),
+        auto ev = eudaq::Event::MakeUnique(m_event_type);
+        ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvents.at(i).data[0]),
                     sizeof(daqEvents.at(i).data[0]) *
                         daqEvents.at(i).data.size());
-        SendEvent(ev);
+        SendEvent(std::move(ev));
         if (daqEvents.at(i).data.size() > (4 * m_channels + m_nplanes)) {
           m_ev_filled++;
         }
@@ -439,7 +439,9 @@ void CMSPixelProducer::OnStopRun() {
     }
 
     // Sending the final end-of-run event:
-    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
+    auto eore = eudaq::Event::MakeUnique(m_event_type);
+    eore->SetEORE();
+    SendEvent(std::move(eore));
     std::cout << "CMSPixel " << m_detector << " Post run read-out finished."
               << std::endl;
     std::cout << "Stopped" << std::endl;
@@ -457,18 +459,14 @@ void CMSPixelProducer::OnStopRun() {
                (m_ev > 0 ? std::to_string(100 * m_ev_filled / m_ev) : "(inf)") +
                "% (" + std::to_string(m_ev_filled) + "/" +
                std::to_string(m_ev) + ")"));
-
-    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
   } catch (const std::exception &e) {
-    printf("While Stopping: Caught exception: %s\n", e.what());
-    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
+    EUDAQ_ERROR(string("While Stopping: Caught exception: ") + string(e.what()));
   } catch (...) {
-    printf("While Stopping: Unknown exception\n");
-    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
+    EUDAQ_ERROR("While Stopping: Unknown exception");
   }
 }
 
-void CMSPixelProducer::OnTerminate() {
+void CMSPixelProducer::DoTerminate() {
 
   std::cout << "CMSPixelProducer terminating..." << std::endl;
   // Stop the readout loop, force routine to return:
