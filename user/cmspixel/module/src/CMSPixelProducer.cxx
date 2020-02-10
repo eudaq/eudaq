@@ -29,7 +29,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string name,
                                    const std::string &runcontrol)
     : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_ev_filled(0),
       m_ev_runningavg_filled(0), m_tlu_waiting_time(4000), m_roc_resetperiod(0),
-      m_nplanes(1), m_channels(1), m_terminated(false), m_running(false),
+      m_nplanes(1), m_channels(1), m_running(false),
       m_api(NULL), m_verbosity(""), m_trimmingFromConf(false),
       m_pattern_delay(0), m_trigger_is_pg(false), m_fout(0), m_foutName(""),
       triggering(false), m_roctype(""), m_pcbtype(""), m_usbId(""),
@@ -469,8 +469,6 @@ void CMSPixelProducer::DoStopRun() {
 void CMSPixelProducer::DoTerminate() {
 
   std::cout << "CMSPixelProducer terminating..." << std::endl;
-  // Stop the readout loop, force routine to return:
-  m_terminated = true;
 
   // Acquire lock for pxarCore instance:
   std::lock_guard<std::mutex> lck(m_mutex);
@@ -486,20 +484,18 @@ void CMSPixelProducer::DoTerminate() {
 }
 
 void CMSPixelProducer::RunLoop() {
-  // Loop until Run Control tells us to terminate
-  while (!m_terminated) {
-    // No run is m_running, cycle and wait:
-    if (!m_running) {
-      // Move this thread to the end of the scheduler queue:
-      sched_yield();
-      continue;
-    } else {
-      // Acquire lock for pxarCore object access:
-      std::lock_guard<std::mutex> lck(m_mutex);
 
-      // Send periodic ROC Reset
-      if (m_roc_resetperiod > 0 &&
-        (std::chrono::steady_clock::now() - m_reset_timer) > std::chrono::seconds{m_roc_resetperiod}) {
+  std::cout << "Starting run loop..." << std::endl;
+
+  // Loop until Run Control tells us to terminate
+  while (m_running) {
+
+    // Acquire lock for pxarCore object access:
+    std::lock_guard<std::mutex> lck(m_mutex);
+
+    // Send periodic ROC Reset
+    if (m_roc_resetperiod > 0 &&
+      (std::chrono::steady_clock::now() - m_reset_timer) > std::chrono::seconds{m_roc_resetperiod}) {
         if (!m_api->daqSingleSignal("resetroc")) {
           EUDAQ_ERROR(string("Unable to send ROC reset signal!\n"));
         }
@@ -513,53 +509,52 @@ void CMSPixelProducer::RunLoop() {
 
         auto ev = eudaq::Event::MakeUnique(m_event_type);
         ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvent.data[0]),
-                    sizeof(daqEvent.data[0]) * daqEvent.data.size());
+        sizeof(daqEvent.data[0]) * daqEvent.data.size());
 
         // Compare event ID with TBM trigger counter:
         /*if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (m_ev%256)) {
-          EUDAQ_ERROR("Unexpected trigger number: " +
-          std::to_string((daqEvent.data[0] & 0xff)) + " (expecting " +
-          std::to_string(m_ev) + ")");
-          }*/
+        EUDAQ_ERROR("Unexpected trigger number: " +
+        std::to_string((daqEvent.data[0] & 0xff)) + " (expecting " +
+        std::to_string(m_ev) + ")");
+      }*/
 
-        SendEvent(std::move(ev));
-        m_ev++;
-        // Analog: Events with pixel data have more than 4 words for TBM
-        // header/trailer and 3 for each ROC header:
-        if (m_roctype == "psi46v2") {
-          if (daqEvent.data.size() > (4 * m_channels + 3 * m_nplanes)) {
-            m_ev_filled++;
-            m_ev_runningavg_filled++;
-          }
-        }
-        // Events with pixel data have more than 4 words for TBM header/trailer
-        // and 1 for each ROC header:
-        else if (daqEvent.data.size() > (4 * m_channels + m_nplanes)) {
+      SendEvent(std::move(ev));
+      m_ev++;
+      // Analog: Events with pixel data have more than 4 words for TBM
+      // header/trailer and 3 for each ROC header:
+      if (m_roctype == "psi46v2") {
+        if (daqEvent.data.size() > (4 * m_channels + 3 * m_nplanes)) {
           m_ev_filled++;
           m_ev_runningavg_filled++;
         }
-
-        // Print every 1k evt:
-        if (m_ev % 1000 == 0) {
-          uint8_t filllevel = 0;
-          m_api->daqStatus(filllevel);
-          std::cout << "CMSPixel " << m_detector << " EVT " << m_ev << " / "
-                    << m_ev_filled << " w/ px" << std::endl;
-          std::cout << "\t Total average:  \t"
-                    << (m_ev > 0 ? std::to_string(100 * m_ev_filled / m_ev)
-                                 : "(inf)") << "%" << std::endl;
-          std::cout << "\t 1k Trg average: \t"
-                    << (100 * m_ev_runningavg_filled / 1000) << "%"
-                    << std::endl;
-          std::cout << "\t RAM fill level: \t" << static_cast<int>(filllevel)
-                    << "%" << std::endl;
-          m_ev_runningavg_filled = 0;
-        }
-      } catch (pxar::DataNoEvent &) {
-        // No event available in derandomize buffers (DTB RAM), return to
-        // scheduler:
-        sched_yield();
       }
+      // Events with pixel data have more than 4 words for TBM header/trailer
+      // and 1 for each ROC header:
+      else if (daqEvent.data.size() > (4 * m_channels + m_nplanes)) {
+        m_ev_filled++;
+        m_ev_runningavg_filled++;
+      }
+
+      // Print every 1k evt:
+      if (m_ev % 1000 == 0) {
+        uint8_t filllevel = 0;
+        m_api->daqStatus(filllevel);
+        std::cout << "CMSPixel " << m_detector << " EVT " << m_ev << " / "
+        << m_ev_filled << " w/ px" << std::endl;
+        std::cout << "\t Total average:  \t"
+        << (m_ev > 0 ? std::to_string(100 * m_ev_filled / m_ev)
+        : "(inf)") << "%" << std::endl;
+        std::cout << "\t 1k Trg average: \t"
+        << (100 * m_ev_runningavg_filled / 1000) << "%"
+        << std::endl;
+        std::cout << "\t RAM fill level: \t" << static_cast<int>(filllevel)
+        << "%" << std::endl;
+        m_ev_runningavg_filled = 0;
+      }
+    } catch (pxar::DataNoEvent &) {
+      // No event available in derandomize buffers (DTB RAM), return to
+      // scheduler:
+      sched_yield();
     }
   }
 }
