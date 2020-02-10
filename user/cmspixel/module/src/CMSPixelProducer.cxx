@@ -74,9 +74,9 @@ void CMSPixelProducer::DoInitialise(){
 }
 
 void CMSPixelProducer::DoConfigure() {
-
-  std::cout << "Configuring: " << config.Name() << std::endl;
-  m_config = config;
+  auto config = GetConfiguration();
+  std::cout << "Configuring: " << config->Name() << std::endl;
+  name_ = config->Name();
   bool confTrimming(false), confDacs(false);
   // declare config vectors
   std::vector<std::pair<std::string, uint8_t>> sig_delays;
@@ -88,56 +88,56 @@ void CMSPixelProducer::DoConfigure() {
   std::vector<std::vector<pxar::pixelConfig>> rocPixels;
   std::vector<uint8_t> rocI2C;
 
-  uint8_t hubid = config.Get("hubid", 31);
+  uint8_t hubid = config->Get("hubid", 31);
 
   // Store waiting time in ms before the DAQ is stopped in OnRunStop():
-  m_tlu_waiting_time = config.Get("tlu_waiting_time", 4000);
+  m_tlu_waiting_time = config->Get("tlu_waiting_time", 4000);
   EUDAQ_INFO(string("Waiting " + std::to_string(m_tlu_waiting_time) +
                     "ms before stopping DAQ after run stop."));
 
   // DTB delays
-  sig_delays.push_back(std::make_pair("clk", config.Get("clk", 4)));
-  sig_delays.push_back(std::make_pair("ctr", config.Get("ctr", 4)));
-  sig_delays.push_back(std::make_pair("sda", config.Get("sda", 19)));
-  sig_delays.push_back(std::make_pair("tin", config.Get("tin", 9)));
+  sig_delays.push_back(std::make_pair("clk", config->Get("clk", 4)));
+  sig_delays.push_back(std::make_pair("ctr", config->Get("ctr", 4)));
+  sig_delays.push_back(std::make_pair("sda", config->Get("sda", 19)));
+  sig_delays.push_back(std::make_pair("tin", config->Get("tin", 9)));
   sig_delays.push_back(
-      std::make_pair("deser160phase", config.Get("deser160phase", 4)));
-  sig_delays.push_back(std::make_pair("level", config.Get("level", 15)));
+      std::make_pair("deser160phase", config->Get("deser160phase", 4)));
+  sig_delays.push_back(std::make_pair("level", config->Get("level", 15)));
   sig_delays.push_back(
-      std::make_pair("triggerlatency", config.Get("triggerlatency", 86)));
-  sig_delays.push_back(std::make_pair("tindelay", config.Get("tindelay", 13)));
-  sig_delays.push_back(std::make_pair("toutdelay", config.Get("toutdelay", 8)));
+      std::make_pair("triggerlatency", config->Get("triggerlatency", 86)));
+  sig_delays.push_back(std::make_pair("tindelay", config->Get("tindelay", 13)));
+  sig_delays.push_back(std::make_pair("toutdelay", config->Get("toutdelay", 8)));
   sig_delays.push_back(
-      std::make_pair("triggertimeout",config.Get("triggertimeout",3000)));
+      std::make_pair("triggertimeout",config->Get("triggertimeout",3000)));
 
   // Power settings:
-  power_settings.push_back(std::make_pair("va", config.Get("va", 1.8)));
-  power_settings.push_back(std::make_pair("vd", config.Get("vd", 2.5)));
-  power_settings.push_back(std::make_pair("ia", config.Get("ia", 1.10)));
-  power_settings.push_back(std::make_pair("id", config.Get("id", 1.10)));
+  power_settings.push_back(std::make_pair("va", config->Get("va", 1.8)));
+  power_settings.push_back(std::make_pair("vd", config->Get("vd", 2.5)));
+  power_settings.push_back(std::make_pair("ia", config->Get("ia", 1.10)));
+  power_settings.push_back(std::make_pair("id", config->Get("id", 1.10)));
 
   // Periodic ROC resets:
-  m_roc_resetperiod = config.Get("rocresetperiod", 0);
+  m_roc_resetperiod = config->Get("rocresetperiod", 0);
   if (m_roc_resetperiod > 0) {
     EUDAQ_USER("Sending periodic ROC resets every " +
                eudaq::to_string(m_roc_resetperiod) + "ms\n");
   }
 
   // Pattern Generator:
-  bool testpulses = config.Get("testpulses", false);
+  bool testpulses = config->Get("testpulses", false);
   if (testpulses) {
-    pg_setup.push_back(std::make_pair("resetroc", config.Get("resetroc", 25)));
+    pg_setup.push_back(std::make_pair("resetroc", config->Get("resetroc", 25)));
     pg_setup.push_back(
-        std::make_pair("calibrate", config.Get("calibrate", 106)));
-    pg_setup.push_back(std::make_pair("trigger", config.Get("trigger", 16)));
-    pg_setup.push_back(std::make_pair("token", config.Get("token", 0)));
-    m_pattern_delay = config.Get("patternDelay", 100) * 10;
+        std::make_pair("calibrate", config->Get("calibrate", 106)));
+    pg_setup.push_back(std::make_pair("trigger", config->Get("trigger", 16)));
+    pg_setup.push_back(std::make_pair("token", config->Get("token", 0)));
+    m_pattern_delay = config->Get("patternDelay", 100) * 10;
     EUDAQ_USER("Using testpulses, pattern delay " +
                eudaq::to_string(m_pattern_delay) + "\n");
   } else {
     pg_setup.push_back(std::make_pair("trigger", 46));
     pg_setup.push_back(std::make_pair("token", 0));
-    m_pattern_delay = config.Get("patternDelay", 100);
+    m_pattern_delay = config->Get("patternDelay", 100);
   }
 
   try {
@@ -146,13 +146,13 @@ void CMSPixelProducer::DoConfigure() {
 
     // Check for multiple ROCs using the I2C parameter:
     std::vector<int32_t> i2c_addresses =
-        split(config.Get("i2c", "i2caddresses", "-1"), ' ');
+        split(config->Get("i2c", "i2caddresses", "-1"), ' ');
     std::cout << "Found " << i2c_addresses.size()
               << " I2C addresses: " << pxar::listVector(i2c_addresses)
               << std::endl;
 
     // Set the type of the TBM and read registers if any:
-    m_tbmtype = config.Get("tbmtype", "notbm");
+    m_tbmtype = config->Get("tbmtype", "notbm");
     try {
       tbmDACs.push_back(GetConfDACs(0, true));
       tbmDACs.push_back(GetConfDACs(1, true));
@@ -161,10 +161,10 @@ void CMSPixelProducer::DoConfigure() {
     }
 
     // Set the type of the ROC correctly:
-    m_roctype = config.Get("roctype", "psi46digv21respin");
+    m_roctype = config->Get("roctype", "psi46digv21respin");
 
     // Read the type of carrier PCB used ("desytb", "desytb-rot"):
-    m_pcbtype = config.Get("pcbtype", "desytb");
+    m_pcbtype = config->Get("pcbtype", "desytb");
 
     // Read the mask file if existent:
     std::vector<pxar::pixelConfig> maskbits = GetConfMaskBits();
@@ -219,21 +219,21 @@ void CMSPixelProducer::DoConfigure() {
     // Switching to external clock if requested and check if DTB returns TRUE
     // status:
     if (!m_api->setExternalClock(
-            config.Get("external_clock", 1) != 0 ? true : false)) {
+            config->Get("external_clock", 1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " +
-                          string(config.Get("external_clock", 1) != 0
+                          string(config->Get("external_clock", 1) != 0
                                      ? "external"
                                      : "internal") +
                           " clock.");
     } else {
       EUDAQ_INFO(
-          string("Clock set to " + string(config.Get("external_clock", 1) != 0
+          string("Clock set to " + string(config->Get("external_clock", 1) != 0
                                               ? "external"
                                               : "internal")));
     }
 
     // Switching to the selected trigger source and check if DTB returns TRUE:
-    std::string triggersrc = config.Get("trigger_source", "extern");
+    std::string triggersrc = config->Get("trigger_source", "extern");
     if (!m_api->daqTriggerSource(triggersrc)) {
       throw InvalidConfig("Couldn't select trigger source " +
                           string(triggersrc));
@@ -262,10 +262,10 @@ void CMSPixelProducer::DoConfigure() {
     }
 
     // Output the configured signal to the probes:
-    std::string signal_d1 = config.Get("signalprobe_d1", "off");
-    std::string signal_d2 = config.Get("signalprobe_d2", "off");
-    std::string signal_a1 = config.Get("signalprobe_a1", "off");
-    std::string signal_a2 = config.Get("signalprobe_a2", "off");
+    std::string signal_d1 = config->Get("signalprobe_d1", "off");
+    std::string signal_d2 = config->Get("signalprobe_d2", "off");
+    std::string signal_a1 = config->Get("signalprobe_a1", "off");
+    std::string signal_a2 = config->Get("signalprobe_a2", "off");
 
     if (m_api->SignalProbe("d1", signal_d1) && signal_d1 != "off") {
       EUDAQ_USER("Setting scope output D1 to \"" + signal_d1 + "\"\n");
@@ -298,10 +298,10 @@ void CMSPixelProducer::DoConfigure() {
 
     if (!m_trimmingFromConf)
       SetConnectionState(eudaq::ConnectionState::STATE_ERROR,
-                "Couldn't read trim parameters from \"" + config.Name() +
+                "Couldn't read trim parameters from \"" + config->Name() +
                     "\".");
     else
-      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config->Name() + ")");
     std::cout << "=============================\nCONFIGURED\n=================="
                  "===========" << std::endl;
   } catch (pxar::InvalidConfig &e) {
