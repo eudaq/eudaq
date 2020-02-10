@@ -485,7 +485,7 @@ void CMSPixelProducer::DoTerminate() {
             << std::endl;
 }
 
-void CMSPixelProducer::ReadoutLoop() {
+void CMSPixelProducer::RunLoop() {
   // Loop until Run Control tells us to terminate
   while (!m_terminated) {
     // No run is m_running, cycle and wait:
@@ -499,11 +499,11 @@ void CMSPixelProducer::ReadoutLoop() {
 
       // Send periodic ROC Reset
       if (m_roc_resetperiod > 0 &&
-          std::chrono::seconds(std::chrono::steady_clock::now() - m_reset_timer) > m_roc_resetperiod) {
+        (std::chrono::steady_clock::now() - m_reset_timer) > std::chrono::seconds{m_roc_resetperiod}) {
         if (!m_api->daqSingleSignal("resetroc")) {
           EUDAQ_ERROR(string("Unable to send ROC reset signal!\n"));
         }
-        m_reset_timer - std::chrono::steady_clock::now();
+        m_reset_timer = std::chrono::steady_clock::now();
       }
 
       // Trying to get the next event, daqGetRawEvent throws exception if none
@@ -511,8 +511,8 @@ void CMSPixelProducer::ReadoutLoop() {
       try {
         pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
 
-        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-        ev.AddBlock(0, reinterpret_cast<const char *>(&daqEvent.data[0]),
+        auto ev = eudaq::Event::MakeUnique(m_event_type);
+        ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvent.data[0]),
                     sizeof(daqEvent.data[0]) * daqEvent.data.size());
 
         // Compare event ID with TBM trigger counter:
@@ -522,7 +522,7 @@ void CMSPixelProducer::ReadoutLoop() {
           std::to_string(m_ev) + ")");
           }*/
 
-        SendEvent(ev);
+        SendEvent(std::move(ev));
         m_ev++;
         // Analog: Events with pixel data have more than 4 words for TBM
         // header/trailer and 3 for each ROC header:
