@@ -9,6 +9,7 @@
 #include "api.h"
 
 // system includes:
+#include <chrono>
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -62,6 +63,8 @@ private:
 
   int m_pattern_delay;
   std::ofstream m_fout;
-  eudaq::Timer *m_reset_timer;
+
+
+  std::chrono::steady_clock::time_point m_reset_timer;
 };
 #endif /*CMSPIXELPRODUCER_HH*/

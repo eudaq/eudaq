@@ -395,7 +395,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     }
 
     // Start the timer for period ROC reset:
-    m_reset_timer = new eudaq::Timer;
+    m_reset_timer = std::chrono::steady_clock::now();
 
     SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running - HV ON!");
     m_running = true;
@@ -517,11 +517,11 @@ void CMSPixelProducer::ReadoutLoop() {
 
       // Send periodic ROC Reset
       if (m_roc_resetperiod > 0 &&
-          m_reset_timer->mSeconds() > m_roc_resetperiod) {
+          std::chrono::seconds(std::chrono::steady_clock::now() - m_reset_timer) > m_roc_resetperiod) {
         if (!m_api->daqSingleSignal("resetroc")) {
           EUDAQ_ERROR(string("Unable to send ROC reset signal!\n"));
         }
-        m_reset_timer->Restart();
+        m_reset_timer - std::chrono::steady_clock::now();
       }
 
       // Trying to get the next event, daqGetRawEvent throws exception if none
