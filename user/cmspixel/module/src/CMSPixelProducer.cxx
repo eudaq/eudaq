@@ -76,7 +76,7 @@ void CMSPixelProducer::DoInitialise(){
 void CMSPixelProducer::DoConfigure() {
   auto config = GetConfiguration();
   std::cout << "Configuring: " << config->Name() << std::endl;
-  name_ = config->Name();
+
   bool confTrimming(false), confDacs(false);
   // declare config vectors
   std::vector<std::pair<std::string, uint8_t>> sig_delays;

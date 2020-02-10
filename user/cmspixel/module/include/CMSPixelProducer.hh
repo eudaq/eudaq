@@ -56,7 +56,7 @@ private:
       m_producerName, m_detector, m_event_type, m_alldacs;
   bool m_terminated, m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
-  eudaq::Configuration m_config;
+  eudaq::ConfigurationSPC m_config;
 
   // Add one mutex to protect calls to pxarCore:
   std::mutex m_mutex;
