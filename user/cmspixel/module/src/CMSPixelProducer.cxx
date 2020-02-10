@@ -1,5 +1,6 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Config.hh"
 
 #include "api.h"
 #include "constants.h"
@@ -296,35 +297,30 @@ void CMSPixelProducer::DoConfigure() {
     std::cout << "Current DAC settings:" << std::endl;
     m_api->_dut->printDACs(0);
 
-    if (!m_trimmingFromConf)
-      SetConnectionState(eudaq::ConnectionState::STATE_ERROR,
-                "Couldn't read trim parameters from \"" + config->Name() +
-                    "\".");
-    else
-      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config->Name() + ")");
+    if (!m_trimmingFromConf) {
+      EUDAQ_ERROR(string("Couldn't read trim parameters from \"" + config->Name() + "\"."));
+    }
+
     std::cout << "=============================\nCONFIGURED\n=================="
                  "===========" << std::endl;
   } catch (pxar::InvalidConfig &e) {
     EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
-    SetConnectionState(eudaq::ConnectionState::STATE_ERROR,
-              string("Invalid configuration settings: ") + e.what());
-    delete m_api;
-    m_api = NULL;
   } catch (pxar::pxarException &e) {
     EUDAQ_ERROR(string("pxarCore Error: " + string(e.what())));
-    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, string("pxarCore Error: ") + e.what());
-    delete m_api;
-    m_api = NULL;
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
-    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
-    delete m_api;
-    m_api = NULL;
   }
 }
 
-void CMSPixelProducer::OnStartRun(unsigned runnumber) {
-  m_run = runnumber;
+void CMSPixelProducer::DoReset() {
+  // Acquire lock for pxarCore instance:
+  std::lock_guard<std::mutex> lck(m_mutex);
+
+  delete m_api;
+  m_api = NULL;
+}
+
+void CMSPixelProducer::DoStartRun() {
   m_ev = 0;
   m_ev_filled = 0;
   m_ev_runningavg_filled = 0;
@@ -336,32 +332,34 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     EUDAQ_INFO("Switching Sensor Bias HV ON.");
     m_api->HVon();
 
-    std::cout << "Start Run: " << m_run << std::endl;
+    std::cout << "Start Run" << std::endl;
 
-    eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
+    auto bore = eudaq::Event::MakeUnique(m_event_type);
+    bore->SetBORE();
+
     // Set the TBM & ROC type for decoding:
-    bore.SetTag("ROCTYPE", m_roctype);
-    bore.SetTag("TBMTYPE", m_tbmtype);
+    bore->SetTag("ROCTYPE", m_roctype);
+    bore->SetTag("TBMTYPE", m_tbmtype);
 
     // Set the number of planes (ROCs):
-    bore.SetTag("PLANES", m_nplanes);
+    bore->SetTag("PLANES", m_nplanes);
 
     // Store all DAC settings in one BORE tag:
-    bore.SetTag("DACS", m_alldacs);
+    bore->SetTag("DACS", m_alldacs);
 
     // Set the PCB mount type for correct coordinate transformation:
-    bore.SetTag("PCBTYPE", m_pcbtype);
+    bore->SetTag("PCBTYPE", m_pcbtype);
 
     // Set the detector for correct plane assignment:
-    bore.SetTag("DETECTOR", m_detector);
+    bore->SetTag("DETECTOR", m_detector);
 
     // Store the pxarCore version this has been recorded with:
-    bore.SetTag("PXARCORE", m_api->getVersion());
+    bore->SetTag("PXARCORE", m_api->getVersion());
     // Store eudaq library version:
-    bore.SetTag("EUDAQ", PACKAGE_VERSION);
+    bore->SetTag("EUDAQ", PACKAGE_VERSION);
 
     // Send the event out:
-    SendEvent(bore);
+    SendEvent(std::move(bore));
 
     std::cout << "BORE with detector " << m_detector << " (event type "
               << m_event_type << ") and ROC type " << m_roctype << std::endl;
@@ -385,11 +383,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Start the timer for period ROC reset:
     m_reset_timer = std::chrono::steady_clock::now();
 
-    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running - HV ON!");
     m_running = true;
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
-    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
     delete m_api;
     m_api = NULL;
   }
