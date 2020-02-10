@@ -53,25 +53,18 @@ void CMSPixelProducer::DoInitialise(){
   std::cout << "Initialising CMSPixelProducer" << std::endl;
   auto ini = GetInitConfiguration();
 
-  try {
-    // create api
-    if (m_api != NULL) {
-      delete m_api;
-    }
-
-    m_usbId = ini->Get("usbId", "*");
-    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
-
-    // Allow overwriting of verbosity level via command line:
-    m_verbosity = ini->Get("verbosity", m_verbosity);
-
-    // Get a new pxar instance:
-    m_api = new pxar::pxarCore(m_usbId, m_verbosity);
+  if (m_api != NULL) {
+    delete m_api;
   }
-  catch (...) {
-    std::cout << "Unknown exception" << std::endl;
-    EUDAQ_ERROR("Error occurred in initialization phase of CMSPixelProducer");
-  }
+
+  m_usbId = ini->Get("usbId", "*");
+  EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+
+  // Allow overwriting of verbosity level via command line:
+  m_verbosity = ini->Get("verbosity", m_verbosity);
+
+  // Get a new pxar instance:
+  m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 }
 
 void CMSPixelProducer::DoConfigure() {
@@ -305,10 +298,13 @@ void CMSPixelProducer::DoConfigure() {
                  "===========" << std::endl;
   } catch (pxar::InvalidConfig &e) {
     EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
+    throw;
   } catch (pxar::pxarException &e) {
     EUDAQ_ERROR(string("pxarCore Error: " + string(e.what())));
+    throw;
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
+    throw;
   }
 }
 
@@ -316,8 +312,11 @@ void CMSPixelProducer::DoReset() {
   // Acquire lock for pxarCore instance:
   std::lock_guard<std::mutex> lck(m_mutex);
 
-  delete m_api;
-  m_api = NULL;
+  // If we already have a pxarCore instance, shut it down cleanly:
+  if (m_api != NULL) {
+    delete m_api;
+    m_api = NULL;
+  }
 }
 
 void CMSPixelProducer::DoStartRun() {
@@ -386,8 +385,7 @@ void CMSPixelProducer::DoStartRun() {
     m_running = true;
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
-    delete m_api;
-    m_api = NULL;
+    throw;
   }
 }
 
@@ -461,8 +459,10 @@ void CMSPixelProducer::DoStopRun() {
                std::to_string(m_ev) + ")"));
   } catch (const std::exception &e) {
     EUDAQ_ERROR(string("While Stopping: Caught exception: ") + string(e.what()));
+    throw;
   } catch (...) {
     EUDAQ_ERROR("While Stopping: Unknown exception");
+    throw;
   }
 }
 
