@@ -19,15 +19,16 @@
 class CMSPixelProducer : public eudaq::Producer {
 
 public:
-  CMSPixelProducer(const std::string name, const std::string &runcontrol;
-  void DoInitialise(const eudaq::Configuration &init) override;
-  void DoConfigure(const eudaq::Configuration &config) override;
-  void DoStartRun(unsigned runnumber) override;
+  CMSPixelProducer(const std::string name, const std::string &runcontrol);
+  void DoInitialise() override;
+  void DoConfigure() override;
+  void DoStartRun() override;
   void DoStopRun() override;
   void DoReset() override;
   void DoTerminate() override;
   void RunLoop() override;
 
+  static const uint32_t m_id_factory = eudaq::cstr2hash("CMSPixelProducer");
 private:
   void ReadInSingleEventWriteBinary();
   void ReadInSingleEventWriteASCII();
@@ -67,4 +68,10 @@ private:
 
   std::chrono::steady_clock::time_point m_reset_timer;
 };
+
+namespace{
+  auto dummy0 = eudaq::Factory<eudaq::Producer>::
+    Register<CMSPixelProducer, const std::string&, const std::string&>(CMSPixelProducer::m_id_factory);
+}
+
 #endif /*CMSPIXELPRODUCER_HH*/
