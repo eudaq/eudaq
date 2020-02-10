@@ -53,18 +53,23 @@ void CMSPixelProducer::DoInitialise(){
   std::cout << "Initialising CMSPixelProducer" << std::endl;
   auto ini = GetInitConfiguration();
 
-  if (m_api != NULL) {
-    delete m_api;
+  try {
+    if (m_api != NULL) {
+      delete m_api;
+    }
+
+    m_usbId = ini->Get("usbId", "*");
+    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+
+    // Allow overwriting of verbosity level via command line:
+    m_verbosity = ini->Get("verbosity", m_verbosity);
+
+    // Get a new pxar instance:
+    m_api = new pxar::pxarCore(m_usbId, m_verbosity);
+  } catch (...) {
+    EUDAQ_ERROR("Error occurred in initialization phase of CMSPixelProducer");
+    throw;
   }
-
-  m_usbId = ini->Get("usbId", "*");
-  EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
-
-  // Allow overwriting of verbosity level via command line:
-  m_verbosity = ini->Get("verbosity", m_verbosity);
-
-  // Get a new pxar instance:
-  m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 }
 
 void CMSPixelProducer::DoConfigure() {
