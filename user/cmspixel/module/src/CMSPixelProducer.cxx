@@ -24,13 +24,12 @@ static const std::string EVENT_TYPE_REF = "CMSPixelREF";
 static const std::string EVENT_TYPE_TRP = "CMSPixelTRP";
 static const std::string EVENT_TYPE_QUAD = "CMSPixelQUAD";
 
-CMSPixelProducer::CMSPixelProducer(const std::string &name,
-                                   const std::string &runcontrol,
-                                   const std::string &verbosity)
+CMSPixelProducer::CMSPixelProducer(const std::string name,
+                                   const std::string &runcontrol)
     : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_ev_filled(0),
       m_ev_runningavg_filled(0), m_tlu_waiting_time(4000), m_roc_resetperiod(0),
       m_nplanes(1), m_channels(1), m_terminated(false), m_running(false),
-      m_api(NULL), m_verbosity(verbosity), m_trimmingFromConf(false),
+      m_api(NULL), m_verbosity(""), m_trimmingFromConf(false),
       m_pattern_delay(0), m_trigger_is_pg(false), m_fout(0), m_foutName(""),
       triggering(false), m_roctype(""), m_pcbtype(""), m_usbId(""),
       m_producerName(name), m_detector(""), m_event_type(""), m_alldacs("") {
@@ -49,29 +48,32 @@ CMSPixelProducer::CMSPixelProducer(const std::string &name,
   }
 }
 
-void CMSPixelProducer::OnInitialise(const eudaq::Configuration &init){
-      try {
-        std::cout << "Reading: " << init.Name() << std::endl;
+void CMSPixelProducer::DoInitialise(){
+  std::cout << "Initialising CMSPixelProducer" << std::endl;
+  auto ini = GetInitConfiguration();
 
-        // Do any initialisation of the hardware here
-        // "start-up configuration", which is usally done only once in the beginning
-        // Configuration file values are accessible as config.Get(name, default)
+  try {
+    // create api
+    if (m_api != NULL) {
+      delete m_api;
+    }
 
-        // At the end, set the ConnectionState that will be displayed in the Run Control.
-        // and set the state of the machine.
-        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
-      }
-      catch (...) {
-        // Message as cout in the terminal of your producer
-        std::cout << "Unknown exception" << std::endl;
-        // Message to the LogCollector
-        EUDAQ_ERROR("Error occurred in initialization phase of CMSPixelProducer");
-        // Otherwise, the State is set to ERROR
-        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
-      }
+    m_usbId = ini->Get("usbId", "*");
+    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+
+    // Allow overwriting of verbosity level via command line:
+    m_verbosity = ini->Get("verbosity", m_verbosity);
+
+    // Get a new pxar instance:
+    m_api = new pxar::pxarCore(m_usbId, m_verbosity);
+  }
+  catch (...) {
+    std::cout << "Unknown exception" << std::endl;
+    EUDAQ_ERROR("Error occurred in initialization phase of CMSPixelProducer");
+  }
 }
 
-void CMSPixelProducer::OnConfigure(const eudaq::Configuration &config) {
+void CMSPixelProducer::DoConfigure() {
 
   std::cout << "Configuring: " << config.Name() << std::endl;
   m_config = config;
@@ -181,20 +183,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration &config) {
         rocI2C.push_back(static_cast<uint8_t>(0));
       }
     }
-
-    // create api
-    if (m_api != NULL) {
-      delete m_api;
-    }
-
-    m_usbId = config.Get("usbId", "*");
-    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
-
-    // Allow overwriting of verbosity level via command line:
-    m_verbosity = config.Get("verbosity", m_verbosity);
-
-    // Get a new pxar instance:
-    m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
     // Initialize the testboard:
     if (!m_api->initTestboard(sig_delays, power_settings, pg_setup)) {
