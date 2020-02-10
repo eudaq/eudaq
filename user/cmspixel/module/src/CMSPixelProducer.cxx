@@ -569,36 +569,3 @@ void CMSPixelProducer::ReadoutLoop() {
     }
   }
 }
-
-// The main function that will create a Producer instance and run it
-int main(int /*argc*/, const char **argv) {
-  // You can use the OptionParser to get command-line arguments
-  // then they will automatically be described in the help (-h) option
-  eudaq::OptionParser op("CMS Pixel Producer", "0.0", "Run options");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
-                                   "tcp://localhost:44000", "address",
-                                   "The address of the RunControl.");
-  eudaq::Option<std::string> level(
-      op, "l", "log-level", "NONE", "level",
-      "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> name(op, "n", "name", "CMSPixel", "string",
-                                  "The name of this Producer");
-  eudaq::Option<std::string> verbosity(op, "v", "verbosity mode", "INFO",
-                                       "string");
-  try {
-    // This will look through the command-line arguments and set the options
-    op.Parse(argv);
-    // Set the Log level for displaying messages based on command-line
-    EUDAQ_LOG_LEVEL(level.Value());
-    // Create a producer
-    CMSPixelProducer producer(name.Value(), rctrl.Value(), verbosity.Value());
-    // And set it running...
-    producer.ReadoutLoop();
-    // When the readout loop terminates, it is time to go
-    std::cout << "Quitting" << std::endl;
-  } catch (...) {
-    // This does some basic error handling of common exceptions
-    return op.HandleMainException();
-  }
-  return 0;
-}
