@@ -30,7 +30,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string name,
     : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_ev_filled(0),
       m_ev_runningavg_filled(0), m_tlu_waiting_time(4000), m_roc_resetperiod(0),
       m_nplanes(1), m_channels(1), m_running(false),
-      m_api(NULL), m_verbosity(""), m_trimmingFromConf(false),
+      m_api(NULL), m_verbosity("WARNING"), m_trimmingFromConf(false),
       m_pattern_delay(0), m_trigger_is_pg(false), m_fout(0), m_foutName(""),
       triggering(false), m_roctype(""), m_pcbtype(""), m_usbId(""),
       m_producerName(name), m_detector(""), m_event_type(""), m_alldacs("") {
@@ -153,8 +153,8 @@ void CMSPixelProducer::DoConfigure() {
     // Set the type of the TBM and read registers if any:
     m_tbmtype = config->Get("tbmtype", "notbm");
     try {
-      tbmDACs.push_back(GetConfDACs(0, true));
-      tbmDACs.push_back(GetConfDACs(1, true));
+      tbmDACs.push_back(GetConfDACs(config, 0, true));
+      tbmDACs.push_back(GetConfDACs(config, 1, true));
       m_channels = 2;
     } catch (pxar::InvalidConfig) {
     }
@@ -166,15 +166,15 @@ void CMSPixelProducer::DoConfigure() {
     m_pcbtype = config->Get("pcbtype", "desytb");
 
     // Read the mask file if existent:
-    std::vector<pxar::pixelConfig> maskbits = GetConfMaskBits();
+    std::vector<pxar::pixelConfig> maskbits = GetConfMaskBits(config);
 
     // Read DACs and Trim settings for all ROCs, one for each I2C address:
     for (int32_t i2c : i2c_addresses) {
       // Read trim bits from config:
-      rocPixels.push_back(GetConfTrimming(maskbits, static_cast<int16_t>(i2c)));
+      rocPixels.push_back(GetConfTrimming(config, maskbits, static_cast<int16_t>(i2c)));
       // Read the DAC file and update the vector with overwrite DAC settings
       // from config:
-      rocDACs.push_back(GetConfDACs(static_cast<int16_t>(i2c)));
+      rocDACs.push_back(GetConfDACs(config, static_cast<int16_t>(i2c)));
       // Add the I2C address to the vector:
       if (i2c > -1) {
         rocI2C.push_back(static_cast<uint8_t>(i2c));
