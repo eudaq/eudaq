@@ -22,7 +22,6 @@ size_t CMSPixelBaseConverter::m_planeid;
 size_t CMSPixelBaseConverter::m_nplanes;
 std::string CMSPixelBaseConverter::m_detector;
 bool CMSPixelBaseConverter::m_rotated_pcb;
-std::string CMSPixelBaseConverter::m_event_type;
 bool CMSPixelBaseConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
 
   // If we receive the EORE print the collected statistics:
@@ -95,7 +94,7 @@ EUDAQ_THROW("Data contains invalid TBM type: " + tbmtype);
   }
 
   std::cout << "CMSPixel Converter initialized with detector " << m_detector
-            << ", Event Type " << m_event_type << ", TBM type " << tbmtype
+            << ", Event Type " << event_type() << ", TBM type " << tbmtype
             << " (" << static_cast<int>(m_tbmtype) << ")"
             << ", ROC type " << roctype << " ("
             << static_cast<int>(m_roctype) << ")" << std::endl;
@@ -160,7 +159,7 @@ std::vector<uint16_t> CMSPixelBaseConverter::TransformRawData(const std::vector<
 void CMSPixelBaseConverter::GetSinglePlane(eudaq::StandardEventSP d2, unsigned plane_id, pxar::Event *evt) const {
 
   // Create a new StandardPlane object:
-  StandardPlane plane(plane_id, m_event_type, m_detector);
+  StandardPlane plane(plane_id, event_type(), m_detector);
 
   // More than 16 ROCs on one module?! Impossible!
   if (m_nplanes > 16)
@@ -196,7 +195,7 @@ void CMSPixelBaseConverter::GetMultiPlanes(eudaq::StandardEventSP d2, unsigned p
   for (size_t roc = 0; roc < m_nplanes; roc++) {
 
     // Create a new StandardPlane object:
-    StandardPlane plane(plane_id + roc, m_event_type, m_detector);
+    StandardPlane plane(plane_id + roc, event_type(), m_detector);
 
     // Initialize the plane size (zero suppressed), set the number of pixels
     // Check which carrier PCB has been used and book planes accordingly:

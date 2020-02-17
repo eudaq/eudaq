@@ -13,6 +13,8 @@ namespace eudaq {
   class CMSPixelBaseConverter: public eudaq::StdEventConverter {
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+  protected:
+    virtual const std::string event_type() const = 0;
   private:
     void Initialize(eudaq::EventSPC bore, eudaq::ConfigurationSPC conf) const ;
 
@@ -27,7 +29,6 @@ namespace eudaq {
     static size_t m_nplanes;
     static std::string m_detector;
     static bool m_rotated_pcb;
-    static std::string m_event_type;
 
     // The pipeworks:
     mutable pxar::evtSource src;
@@ -37,21 +38,29 @@ namespace eudaq {
   };
 
   class CMSPixelDUT2StdEventConverter: public eudaq::CMSPixelBaseConverter {
+  protected:
+    const std::string event_type() const override { return "CMSPixelDUT"; }
   public:
     static const uint32_t m_id_factory = eudaq::cstr2hash("CMSPixelDUT");
   };
 
   class CMSPixelREF2StdEventConverter: public eudaq::CMSPixelBaseConverter {
+  protected:
+    const std::string event_type() const override { return "CMSPixelREF"; }
   public:
     static const uint32_t m_id_factory = eudaq::cstr2hash("CMSPixelREF");
   };
 
   class CMSPixelTRP2StdEventConverter: public eudaq::CMSPixelBaseConverter {
+  protected:
+    const std::string event_type() const override { return "CMSPixelTRP"; }
   public:
     static const uint32_t m_id_factory = eudaq::cstr2hash("CMSPixelTRP");
   };
 
   class CMSPixelQUAD2StdEventConverter: public eudaq::CMSPixelBaseConverter {
+  protected:
+    const std::string event_type() const override { return "CMSPixelQUAD"; }
   public:
     static const uint32_t m_id_factory = eudaq::cstr2hash("CMSPixelQUAD");
   };
