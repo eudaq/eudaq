@@ -36,6 +36,7 @@ bool CMSPixelBaseConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventS
   }
   // Check if we have BORE:
   else if (d1->IsBORE()) {
+    std::cout << "Starting initialization..." << std::endl;
     Initialize(d1, conf);
     return true;
   }
@@ -119,6 +120,8 @@ EUDAQ_THROW("Data contains invalid TBM type: " + tbmtype);
   // Connect the data source and set up the pipe:
   src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype, FLAG_DISABLE_EVENTID_CHECK);
   src >> splitter >> decoder >> Eventpump;
+
+  std::cout << "Finished initializing CMSPixel converter for detector " << m_detector << std::endl;
 }
 
 inline uint16_t CMSPixelBaseConverter::roc_to_mod_row(uint8_t roc, uint16_t row) {
