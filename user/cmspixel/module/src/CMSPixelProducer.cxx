@@ -516,6 +516,10 @@ void CMSPixelProducer::RunLoop() {
         ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvent.data[0]),
         sizeof(daqEvent.data[0]) * daqEvent.data.size());
 
+        // Use event counter as event ID as well as trigger ID
+        ev->SetTriggerN(m_ev);
+        ev->SetEventN(m_ev);
+
         // Compare event ID with TBM trigger counter:
         /*if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (m_ev%256)) {
         EUDAQ_ERROR("Unexpected trigger number: " +
