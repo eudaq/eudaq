@@ -340,6 +340,8 @@ void CMSPixelProducer::DoStartRun() {
 
     auto bore = eudaq::Event::MakeUnique(m_event_type);
     bore->SetBORE();
+    bore->SetTriggerN(m_ev, true);
+    bore->SetEventN(m_ev);
 
     // Set the TBM & ROC type for decoding:
     bore->SetTag("ROCTYPE", m_roctype);
@@ -492,11 +494,12 @@ void CMSPixelProducer::RunLoop() {
 
   std::cout << "Starting run loop..." << std::endl;
 
+  // Acquire lock for pxarCore object access:
+  std::lock_guard<std::mutex> lck(m_mutex);
+
   // Loop until Run Control tells us to terminate
   while (m_running) {
 
-    // Acquire lock for pxarCore object access:
-    std::lock_guard<std::mutex> lck(m_mutex);
 
     // Send periodic ROC Reset
     if (m_roc_resetperiod > 0 &&
@@ -517,7 +520,7 @@ void CMSPixelProducer::RunLoop() {
         sizeof(daqEvent.data[0]) * daqEvent.data.size());
 
         // Use event counter as event ID as well as trigger ID
-        ev->SetTriggerN(m_ev);
+        ev->SetTriggerN(m_ev, true);
         ev->SetEventN(m_ev);
 
         // Compare event ID with TBM trigger counter:
@@ -566,4 +569,6 @@ void CMSPixelProducer::RunLoop() {
       sched_yield();
     }
   }
+
+  std::cout << "Exiting run loop." << std::endl;
 }
