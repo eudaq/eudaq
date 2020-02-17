@@ -22,6 +22,10 @@ size_t CMSPixelBaseConverter::m_planeid;
 size_t CMSPixelBaseConverter::m_nplanes;
 std::string CMSPixelBaseConverter::m_detector;
 bool CMSPixelBaseConverter::m_rotated_pcb;
+pxar::evtSource CMSPixelBaseConverter::src;
+pxar::passthroughSplitter CMSPixelBaseConverter::splitter;
+pxar::dtbEventDecoder CMSPixelBaseConverter::decoder;
+pxar::dataSink<pxar::Event *> CMSPixelBaseConverter::Eventpump;
 bool CMSPixelBaseConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
 
   // If we receive the EORE print the collected statistics:

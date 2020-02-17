@@ -31,10 +31,10 @@ namespace eudaq {
     static bool m_rotated_pcb;
 
     // The pipeworks:
-    mutable pxar::evtSource src;
-    mutable pxar::passthroughSplitter splitter;
-    mutable pxar::dtbEventDecoder decoder;
-    mutable pxar::dataSink<pxar::Event *> Eventpump;
+    static pxar::evtSource src;
+    static pxar::passthroughSplitter splitter;
+    static pxar::dtbEventDecoder decoder;
+    static pxar::dataSink<pxar::Event *> Eventpump;
   };
 
   class CMSPixelDUT2StdEventConverter: public eudaq::CMSPixelBaseConverter {
