@@ -3,8 +3,8 @@ if(WIN32)
   return()
 endif()
 
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT QUIET)
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
 cmake_dependent_option(EUDAQ_BUILD_STDEVENT_MONITOR "monitor/StdEventMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)

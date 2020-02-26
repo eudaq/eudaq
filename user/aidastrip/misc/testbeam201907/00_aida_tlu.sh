@@ -4,7 +4,7 @@ RPCPORT=44000
 
 # Start Run Control
 xterm -T "Run Control" -e 'euRun' &
-sleep 2 
+#sleep 2 
 
 # Start Logger
 xterm -T "Log Collector" -e 'euLog -r tcp://${RUNCONTROLIP}' &

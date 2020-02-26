@@ -1,16 +1,12 @@
 /*
- * 2019 Jul 20
+ * origin @ 2019 Jul 20
+ * modify @ 2020 Feb 26
  * Author: Mengqing Wu <mengqing.wu@desy.de>
- * notes: producer to control Wiener PowerSupply from EUDAQ2
+ * Notes: producer for slow control Wiener PowerSupply from EUDAQ2
  * For a safety design: 
- *  - Followings are read-only but VERIFY BEFORE YOU TURN IT ON!
- *    -- current ;
- *    -- LV ;
- *  - Warning Error scheme:
- *    -- Voltage has hard-coded safe range not to break
- *    -- A strong WARN comes out if :
- *       --- HV is exceeding 150V
- *    -- Turn OFF the channel if HV Current monitor is over 2 uA && Exit()
+ *  - NO control of ON/OFF or voltage/current set from EUDAQ2
+ *  - ONLY monitoring the voltage and current
+ *  - record data out
  */
 
 #include "eudaq/Producer.hh"
@@ -34,9 +30,11 @@ public:
 
   // Customized:
   std::string update_curr(std::string channels );
-  void  SetVoltage(std::string channels, std::string voltage);
+  void  GetPara(std::string channels, std::string para);
+	void  GetVoltage(std::string channels);
+	void  GetCurrentMeas(std::string channels);	
   bool  Power(std::string channels, bool switchon);
-  bool checkstatus(std::string chan, std::string tomatch);
+  bool  checkstatus(std::string chan, std::string tomatch);
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("WienerProducer");
 private:
@@ -72,22 +70,28 @@ WienerProducer::WienerProducer(const std::string & name, const std::string & run
   :eudaq::Producer(name, runcontrol),
   m_ip("192.168.3.2"),m_stop(true),m_states("idle"),
   m_HV_volts("70.00"), m_HV_volts_limit("150"),
-  m_HV_chan("100,101,102,105,106,107"),
+  m_HV_chan("100,101,102,103,104,105,106,107"),
   m_HV_curr(""), m_HV_curr_limit("0.000004"), // 4 uA
   m_LV_chan("0,1,6,7"), m_LV_curr(""),
-  m_daq_chan("303"), m_daq_curr("")
+  m_daq_chan("4"), m_daq_curr("")
 {}
 
 void WienerProducer::DoInitialise(){
-  printf("DoInit");
-  std::stringstream tmp;
-  std::string str;
-  tmp.str("");
-  tmp << "snmpwalk -v 2c -m +WIENER-CRATE-MIB -c public " << m_ip
-      << " crate | grep outputSwitch";
-  str = tmp.str();
-  system(str.c_str());
-  m_stop = true;
+	/* read out wiener channel status*/
+	printf("DoInit");
+	auto ini = GetInitConfiguration();
+	ini->Print(std::cout);
+	std::string _ip = ini->Get("CRATE_IP", "");
+	if (_ip!="") m_ip = _ip;
+	
+	std::stringstream tmp;
+	std::string str;
+	tmp.str("");
+	tmp << "snmpwalk -v 2c -m +WIENER-CRATE-MIB -c public " << m_ip
+	    << " crate | grep outputSwitch";
+	str = tmp.str();
+	system(str.c_str());
+	m_stop = true;
 }
 
 void WienerProducer::DoConfigure(){
@@ -95,8 +99,11 @@ void WienerProducer::DoConfigure(){
 
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_HV_chan = conf->Get("HV_chan", "100,101,102,105,106,107");
-  m_HV_volts = conf->Get("HV_volts", "70.00");
+  std::string _HV_chan = conf->Get("HV_chan", "");
+  std::string _LV_chan = conf->Get("LV_chan", "");
+
+  if (_HV_chan!="") m_HV_chan = _HV_chan;
+  if (_LV_chan!="") m_LV_chan = _LV_chan;
 
   // safety check: if HV volts exceed the limit!
   float HV_volts = std::stof(m_HV_volts);
@@ -107,11 +114,11 @@ void WienerProducer::DoConfigure(){
 
   // Then WRITE the voltage:
   
-  Power(m_HV_chan, false);
-  SetVoltage(m_HV_chan, m_HV_volts);
+  //  Power(m_HV_chan, false);
+  GetVoltage(m_HV_chan);
 
   // Then TURN ON the HV channels; Safety check inside the PowerOn func
-  Power(m_HV_chan, true);
+  //Power(m_HV_chan, true);
   
 }
 
@@ -288,25 +295,35 @@ std::string WienerProducer::update_curr(std::string channels){
    return res;
 }
 
-void WienerProducer::SetVoltage(std::string channels, std::string voltage){
-  // WRITE operation
-  //snmpset -v 2c -m +WIENER-CRATE-MIB -c guru  192.168.3.2 outputVoltage.u1 F 6
-  
-  std::stringstream tmp(channels);
-  std::string chan;
-  
-  while( getline(tmp, chan, ',') ){
-    std::stringstream ss("");
-    ss << "snmpset -v 2c -m +WIENER-CRATE-MIB -c guru " << m_ip
-       << " outputVoltage.u"<< chan
-       << " F " << voltage;
-    std::string cmd = ss.str();
-    EUDAQ_INFO(cmd);
-    system(cmd.c_str());
+void WienerProducer::GetPara(std::string channels, std::string para){
+	// READ operation
+	std::stringstream tmp(channels);
+	std::string chan;
+	while( getline(tmp, chan, ',') ){
+		std::stringstream ss("");
+		ss << "snmpget -v 2c -m +WIENER-CRATE-MIB -c guru " << m_ip
+		   << " " << para
+		   <<".u" << chan;
+		std::string cmd = ss.str();
+		EUDAQ_INFO(cmd);
+		system(cmd.c_str());
   }
-    
-  
 }
+
+void WienerProducer::GetVoltage(std::string channels){
+  // READ operation
+  //snmpget -v 2c -m +WIENER-CRATE-MIB -c guru  192.168.3.2 outputVoltage.u1
+  std::string para = "outputVoltage";
+  GetPara(channels, para);
+}
+
+void WienerProducer::GetCurrentMeas(std::string channels){
+	// READ operation
+	//snmpget -v 2c -m +WIENER-CRATE-MIB -c guru  192.168.3.2 outputMeasurementCurrent.u1
+	std::string para = "outputMeasurementCurrent";
+	GetPara(channels, para);
+}
+
 
 
 std::string GetNumber(std::string input, bool digitonly = true){
