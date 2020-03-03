@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include "TTree.h"
+#include "TFile.h"
 
 class rawtocsv{
 public:
@@ -61,14 +62,33 @@ private:
 class rawtoroot{
 public:
 	rawtoroot(){};
-	~rawtoroot(){};
-	void open(std::string fout){}
-	void close(){}
-	void createTree(){}
+	~rawtoroot(){
+		this->close();
+		delete m_rfile, m_tree;
+	};
+	void open(std::string fout){
+		m_rfile = new TFile(fout.c_str(), "recreate");
+	}
+	void close(){
+		if (m_rfile->IsOpen())
+			m_rfile->Close();
+	}
+	void createTree(std::map<std::string, std::string> tags){
+		/* beta version: so far a fixed */
+		// m_tree = new TTree("wienerTree", "wiener tree from tags");
+		// for (auto const& it: tags){
+		// 	TString bname = it.first;
+			
+		// 	m_tree->Branch();
+		// }
+	}
 	void addEvent(){}
 private:
 	TTree* m_tree;
+	TFile* m_rfile;
 };
+
+//*****************************************************//
 
 int main(int /*argc*/, const char **argv) {
 	eudaq::OptionParser op("EUDAQ Command Line DataConverter for WienerProducer", "2.0",
@@ -108,26 +128,22 @@ int main(int /*argc*/, const char **argv) {
 	  type_out = "native";
   
   eudaq::FileReaderUP reader;
-  //  eudaq::FileWriterUP writer;
-  std::ofstream writerCSV;
-  std::string csv_str;
   rawtocsv tocsv;
+  rawtoroot toroot;
   
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
 
   if(!type_out.empty()){
-    if (type_out=="csv"){
-      writerCSV.open (outfile_path);
-      /* first line for excel read csv file directly: sep=<delimeter> */
-      writerCSV << "sep=,\n";
-      tocsv.open(outfile_path);
-    }
-    
-    else
-	    return(1);
-	    
+	  if (type_out=="csv")
+		  tocsv.open(outfile_path);
+	  
+	  else if (type_out =="root"){
+		  toroot.open(outfile_path);
+	  }
+	  else
+		  return(1);
+	  
   }
-  
 
   int evtCounting = 0;
   while(1){
@@ -160,6 +176,13 @@ int main(int /*argc*/, const char **argv) {
 	    /*add line value for all evts */
 	    tocsv.addLine(tag_map);
     }
+    else if (type_out == "root"){
+	    if (evtCounting==0){
+		    toroot.createTree(tag_map);
+	    }
+    }
+    
+    
     evtCounting++;    
   }
 
