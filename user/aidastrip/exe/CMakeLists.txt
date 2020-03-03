@@ -20,8 +20,8 @@ endif()
 ##-- Setup global variables:
 #set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 set(EXE_CLI_LYCORIS_DATACON lycorisCliConverter)
-set(EXE_CLI_SYNC_DATATOOL lycorisSyncTool)
-
+#set(EXE_CLI_SYNC_DATATOOL lycorisSyncTool)
+set(EXE_CLI_WIENER_DATATOOL wienerDataTool)
 
 ##-- Adding individual executables:
 ## 1) lycoris converter
@@ -46,6 +46,13 @@ list(APPEND INSTALL_TARGETS ${EXE_CLI_LYCORIS_DATACON})
 # list(APPEND INSTALL_TARGETS ${EXE_CLI_SYNC_DATATOOL})
 # endif()
 
+## 3) wiener converter
+add_executable(${EXE_CLI_WIENER_DATATOOL} src/wienerDataTool.cxx)
+target_link_libraries(${EXE_CLI_WIENER_DATATOOL}
+  ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB}
+  ${ROOT_LIBRARIES}
+  )
+list(APPEND INSTALL_TARGETS ${EXE_CLI_WIENER_DATATOOL})
 
 ##--- set run path of the dynamic kpix lib
 set_target_properties(${INSTALL_TARGETS}
