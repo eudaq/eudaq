@@ -2,7 +2,9 @@
  * mengqing.wu@desy.de
  * Created @ Mar 2nd, 2020
  * based on eudaq euCliConverter.cxx
- * Target: plot out time based wiener values
+ * Target: 
+ * - csv dump: dump all tags into csv
+ * - root dump: dump all tags into root tree (independent from changes in tags)
  */
 #include "eudaq/OptionParser.hh"
 #include "eudaq/DataConverter.hh"
@@ -22,11 +24,12 @@ public:
 			m_writer.close();
 	};
 
-	void open(std::string fout){
+	void open(std::string fout, bool doDeli=true){
 		std::cout << "[info] write raw into csv file." << std::endl;
 		m_writer.open(fout);
 		/* first line for excel read csv file directly: sep=<delimeter> */
-		m_writer << "sep=,\n";
+		if (doDeli)
+			m_writer << "sep=,\n";
 	}
 	void close(){
 		m_writer.close();
@@ -37,7 +40,12 @@ public:
 		for (auto const& it: tags){
 			m_v_cols.push_back(it.first);
 		}
-		for (auto const& s: m_v_cols) csv_str+=s+',';
+		int col=0;
+		for (auto const& s: m_v_cols) {
+			if (col) csv_str+=',' ;
+			csv_str+=s;
+			col++;
+		}
 		std::cout << "Your .csv has following collumns:\n"
 		          << csv_str <<"\n";
 		m_writer << csv_str << "\n";
@@ -48,8 +56,12 @@ public:
 		 * tight to the old fashion: doors open to choose tags to print
 		 */
 		std::string csv_line;
-		for (auto const& tag: m_v_cols)
-			csv_line += tags.at(tag)+',';
+		int col=0;
+		for (auto const& tag: m_v_cols){
+			if (col) csv_line += ',';
+			csv_line += tags.at(tag);
+			col++;
+		}
 		m_writer << csv_line << "\n";
 	};
 
@@ -59,34 +71,6 @@ private:
 
 };
 
-class rawtoroot{
-public:
-	rawtoroot(){};
-	~rawtoroot(){
-		this->close();
-		delete m_rfile, m_tree;
-	};
-	void open(std::string fout){
-		m_rfile = new TFile(fout.c_str(), "recreate");
-	}
-	void close(){
-		if (m_rfile->IsOpen())
-			m_rfile->Close();
-	}
-	void createTree(std::map<std::string, std::string> tags){
-		/* beta version: so far a fixed */
-		// m_tree = new TTree("wienerTree", "wiener tree from tags");
-		// for (auto const& it: tags){
-		// 	TString bname = it.first;
-			
-		// 	m_tree->Branch();
-		// }
-	}
-	void addEvent(){}
-private:
-	TTree* m_tree;
-	TFile* m_rfile;
-};
 
 //*****************************************************//
 
@@ -129,17 +113,14 @@ int main(int /*argc*/, const char **argv) {
   
   eudaq::FileReaderUP reader;
   rawtocsv tocsv;
-  rawtoroot toroot;
   
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
 
   if(!type_out.empty()){
 	  if (type_out=="csv")
 		  tocsv.open(outfile_path);
-	  
-	  else if (type_out =="root"){
-		  toroot.open(outfile_path);
-	  }
+	  else if (type_out == "root")
+		  tocsv.open(outfile_path+".csv", false);
 	  else
 		  return(1);
 	  
@@ -165,10 +146,12 @@ int main(int /*argc*/, const char **argv) {
 
 
     auto tag_map = ev->GetTags();
+    tag_map.insert({"EventN", std::to_string(ev->GetEventN()) });
+    tag_map.insert({"TimestampBegin", std::to_string(ev->GetTimestampBegin()) });
     /*
      * Register all tag-keys from the 1st event you read:
      */
-    if (type_out == "csv"){
+    if (type_out == "csv" || type_out=="root"){
 	    if (evtCounting==0 ){
 		    /* add col title if first */
 		    tocsv.addLineFirst(tag_map);
@@ -176,16 +159,21 @@ int main(int /*argc*/, const char **argv) {
 	    /*add line value for all evts */
 	    tocsv.addLine(tag_map);
     }
-    else if (type_out == "root"){
-	    if (evtCounting==0){
-		    toroot.createTree(tag_map);
-	    }
-    }
+    else{/*do nothing*/}
     
     
     evtCounting++;    
   }
-
+  if (type_out == "root"){
+	  tocsv.close();
+	  TFile f(outfile_path.c_str(),"recreate");
+	  TTree t("wiener","dump csv tree");
+	  std::string csv=outfile_path+".csv";
+	  t.ReadFile(csv.c_str());
+	  t.Write();
+	  f.Close();
+  }
+  
   
   std::cout<<"[Converter:info] # of Evt counting ==> "
 	   << evtCounting <<"\n";
