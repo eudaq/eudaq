@@ -19,7 +19,7 @@ namespace eudaq {
                const Time &t = Time::Current());
     LogMessage(Deserializer &);
     virtual void Serialize(Serializer &) const;
-    virtual void Print(std::ostream &) const;
+    virtual void Print(std::ostream &, size_t offset = 0) const override;
     void Write(std::ostream &) const;
     static LogMessage Read(std::istream &);
     LogMessage &SetLocation(const std::string &file, unsigned line,
