@@ -71,17 +71,9 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   // Set timestamps for StdEvent in nanoseconds (timestamps are picoseconds):
   d2->SetTimeBegin(triggerTime);
   d2->SetTimeEnd(triggerTime);
-
+  
   // Identify the detetor type
   d2->SetDetectorType("SpidrTrigger");
-
-  // Create a StandardPlane representing one DUMMY sensor plane
-  eudaq::StandardPlane plane(0, "SPIDR", "SpidrTrigger");
-  plane.SetSizeZS(1, 1, 0);
-
-  // creating new pixel object with dummy hit containing the timestammp
-  plane.PushPixel(0, 0, 0, triggerTime);
-  d2->AddPlane(plane);
 
   return true;
 }
