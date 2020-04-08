@@ -30,11 +30,25 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     d2->SetTag(TLU+stm+"_TRG", std::to_string(d1->GetTriggerN()));
   }
 
+  auto triggersFired = d1->GetTag("TRIGGER" , "NAN");
+  auto finets0 = d1->GetTag("FINE_TS0", "NAN");
+  auto finets1 = d1->GetTag("FINE_TS1", "NAN");
+  auto finets2 = d1->GetTag("FINE_TS2", "NAN");
+  auto finets3 = d1->GetTag("FINE_TS3", "NAN");
+  auto finets4 = d1->GetTag("FINE_TS4", "NAN");
+  auto finets5 = d1->GetTag("FINE_TS5", "NAN");
+
   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
   d2->SetTimeBegin(d1->GetTimestampBegin() * 1000);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
 
   // Identify the detetor type
   d2->SetDetectorType("TLU");
+  d2->SetTag("FINE_TS0", finets0);
+  d2->SetTag("FINE_TS1", finets1);
+  d2->SetTag("FINE_TS2", finets2);
+  d2->SetTag("FINE_TS3", finets3);
+  d2->SetTag("FINE_TS4", finets4);
+  d2->SetTag("FINE_TS5", finets5);
   return true;
 }

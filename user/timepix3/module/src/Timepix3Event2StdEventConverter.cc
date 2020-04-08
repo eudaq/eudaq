@@ -38,7 +38,12 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
     return false;
   }
 
-  unsigned long long int stamp = (trigdata & 0x1E0) >> 5;
+  // format of TDC data from SPIDR:
+  // 63   59   55   51   47   43   39   35   31   27   23   19   15   11   7    3  0
+  // 0110 1111 EEEE EEEE EEEE TTTT TTTT TTTT TTTT TTTT TTTT TTTT TTTT TTTF FFF0 0000
+  // where: E=event_no, T=coarse_timestamp, F=fine_timestamp (0x0 to 0xc)
+
+  unsigned int stamp = (trigdata & 0x1E0) >> 5;
   long long int timestamp_raw = static_cast<long long int>(trigdata & 0xFFFFFFFFE00) >> 9;
   long long int timestamp = 0;
 
@@ -46,6 +51,11 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   if((trigdata & 0x1F) != 0) {
     EUDAQ_WARN("Invalid data found in packet " + std::to_string(ev->GetEventNumber()));
     return false;
+  }
+  if(stamp == 0) {
+      // stamp value = 0 indicates a TDC error
+      // stamp value ranges from 1 to 12 correspond to coarse timestamp + <0-11>
+      EUDAQ_WARN("Invalid TDC stamp received in packet " + std::to_string(ev->GetEventNumber()));
   }
 
   // if jump back in time is larger than 1 sec, overflow detected...
@@ -56,7 +66,7 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   timestamp = timestamp_raw + (static_cast<long long int>(m_TDCoverflowCounter) << 35);
 
   // Calculate timestamp in picoseconds assuming 320 MHz clock:
-  uint64_t triggerTime = (timestamp + static_cast<long long int>(stamp) / 12) * 3125;
+  uint64_t triggerTime = timestamp * 3125 +(stamp * 3125) / 12;
 
   // Set timestamps for StdEvent in nanoseconds (timestamps are picoseconds):
   d2->SetTimeBegin(triggerTime);
