@@ -128,8 +128,8 @@ void PIStageProducer::DoConfigure(){
          EUDAQ_THROW("No movement position given for Rot");
 
   if(m_connected_X)     if(!m_controller->move(m_axis_X.c_str(),pX,servoX)) EUDAQ_THROW("X Movement failed");
-  if(m_connected_Y)     if(!m_controller->move(m_axis_Y.c_str(),pY,servoY)) EUDAQ_THROW("X Movement failed");
-  if(m_connected_Rot)   if(!m_controller->move(m_axis_Rot.c_str(),pRot,servoRot)) EUDAQ_THROW("X Movement failed");
+  if(m_connected_Y)     if(!m_controller->move(m_axis_Y.c_str(),pY,servoY)) EUDAQ_THROW("Y Movement failed");
+  if(m_connected_Rot)   if(!m_controller->move(m_axis_Rot.c_str(),pRot,servoRot)) EUDAQ_THROW("Rotation Movement failed");
 
 }
 
