@@ -40,9 +40,7 @@ int main(int /*argc*/, const char **argv) {
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
   if(!type_out.empty())
     writer = eudaq::Factory<eudaq::FileWriter>::MakeUnique(eudaq::str2hash(type_out), outfile_path);
-  int  counter = 0;
-  while(counter <1001){
-      counter++;
+  while(1){
     auto ev = reader->GetNextEvent();
     if(!ev)
       break;

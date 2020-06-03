@@ -36,18 +36,12 @@ int main(int /*argc*/, const char **argv) {
 
   eudaq::FileReaderUP reader;
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
-
-//   eudaq::FileReaderUP writer;
-//  writer = eudaq::Factory<eudaq::FileWriter>::MakeUnique(eudaq::str2hash(type_in), "test.raw");
-
   uint32_t event_count = 0;
 
   while(1){
     auto ev = reader->GetNextEvent();
-
     if(!ev)
       break;
-//    writer->WriteEvent(ev);
     bool in_range_evn = false;
     if(eventl_v!=0 || eventh_v!=0){
       uint32_t ev_n = ev->GetEventN();
@@ -81,7 +75,7 @@ int main(int /*argc*/, const char **argv) {
 
 
     if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
-      //ev->Print(std::cout);
+      ev->Print(std::cout);
       if(stdev_v){
         auto evstd = eudaq::StandardEvent::MakeShared();
         eudaq::StdEventConverter::Convert(ev, evstd, nullptr);
