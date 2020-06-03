@@ -116,6 +116,9 @@ void PIStageProducer::DoConfigure(){
   double pX     = conf->Get("positionX",-10000);
   double pY     = conf->Get("positionY",-10000);
   double pRot   = conf->Get("positionRot",-10000);
+  bool servoX   = conf->Get("keepServoOnX",1);
+  bool servoY   = conf->Get("keepServoOnY",1);
+  bool servoRot = conf->Get("keepServoOnRot",1);
 
   if(pX == -10000 && m_connected_X)
          EUDAQ_THROW("No movement position given for X");
@@ -124,9 +127,9 @@ void PIStageProducer::DoConfigure(){
   if(pRot == -10000 && m_connected_Rot)
          EUDAQ_THROW("No movement position given for Rot");
 
-  if(m_connected_X)     if(!m_controller->move(m_axis_X.c_str(),pX)) EUDAQ_THROW("X Movement failed");
-  if(m_connected_Y)     if(!m_controller->move(m_axis_Y.c_str(),pY)) EUDAQ_THROW("X Movement failed");
-  if(m_connected_Rot)   if(!m_controller->move(m_axis_Rot.c_str(),pRot)) EUDAQ_THROW("X Movement failed");
+  if(m_connected_X)     if(!m_controller->move(m_axis_X.c_str(),pX,servoX)) EUDAQ_THROW("X Movement failed");
+  if(m_connected_Y)     if(!m_controller->move(m_axis_Y.c_str(),pY,servoY)) EUDAQ_THROW("X Movement failed");
+  if(m_connected_Rot)   if(!m_controller->move(m_axis_Rot.c_str(),pRot,servoRot)) EUDAQ_THROW("X Movement failed");
 
 }
 
