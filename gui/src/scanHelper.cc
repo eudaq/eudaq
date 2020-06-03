@@ -29,9 +29,9 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
         if(scanConf->HasSection(std::to_string(i))) {
             scanConf->SetSection(std::to_string(i));
             bool nested     = scanConf->Get("nested",false) && m_allow_nested_scan;
-            double start    = scanConf->Get("start",-123456789);
-            double step     = scanConf->Get("step",-123456789);
-            double stop     = scanConf->Get("stop",-123456789);
+            double start    = scanConf->Get("start",-123456789.0);
+            double step     = scanConf->Get("step",-123456789.0);
+            double stop     = scanConf->Get("stop",-123456789.0);
             double defaultV = scanConf->Get("default",start);
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
@@ -40,7 +40,7 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             if(!m_scan_is_time_based && Counter == "wrongPara")
                 return scanError("To run a scan based on a number of events, \"eventCounter\" needs to be specified in section"+std::to_string(i));
             if(name == "wrongPara" || param == "wrongPara"
-               || start == -123456789 || stop == -123456789 || step == -123456789)
+               || start == -123456789.0 || stop == -123456789.0 || step == -123456789.0)
                 return scanError("Scan section "+std::to_string(i)+" is incomplete -> Please check");
 
             defaultConf->SetSection("");
