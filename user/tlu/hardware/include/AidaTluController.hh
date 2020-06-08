@@ -36,6 +36,7 @@ namespace tlu {
     //void SetTriggerMask(int value) { SetWRegister("triggerLogic.TriggerMaskW",value); };
     void SetTriggerMask(uint64_t value);
     void SetTriggerMask(uint32_t maskHi, uint32_t maskLo);
+    void SetTriggerPolarity(uint64_t value);
     //void SetTriggerVeto(int value) { SetWRegister("triggerLogic.TriggerVetoW",value); };
     void SetTriggerVeto(int value, uint8_t verbose);
     void SetPulseStretch(int value) { SetWRegister("triggerLogic.PulseStretchW",value); };
