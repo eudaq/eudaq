@@ -1082,8 +1082,8 @@ namespace tlu {
 
   void AidaTluController::SetTriggerPolarity(uint64_t value){
       // The least 6-bits of this register control which edge is used to generate a trigger ( writing '1' reverses the current behaviour ).
-      // '1' -> trigger on rising edge
-      // '0' -> trigger on falling edge (default in firmware)
+      // '1' -> trigger on falling edge
+      // '0' -> trigger on rising edge (default in firmware)
       uint64_t trgPol = (0x3F & value)
       std::cout << std::hex << "  TRIGGER POLARITY (for external triggers) SET TO 0x" << trgPol << std::dec << std::endl;
       SetWRegister("triggerInputs.InvertEdgeW", trgPol);
