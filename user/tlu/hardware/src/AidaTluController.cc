@@ -607,7 +607,7 @@ namespace tlu {
   /// Writes to IPBus register to instruct the TLU to start/stop a run.
   //  state= 1 when running, 0 when stopped.
   //  On start, the internal registers are reset and the TLU issues a T0 pulse to DUTs.
-    SetWRegister("Shutter.RunActive", state);
+    SetWRegister("Shutter.RunActiveRW", state);
     std::stringstream ss;
     std::string runState;
 
