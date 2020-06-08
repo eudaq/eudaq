@@ -265,7 +265,7 @@ void AidaTluProducer::DoConfigure() {
 
     // Set triggerPolarity
     if(m_verbose > 0) EUDAQ_INFO(" -DEFINE TRIGGER POLARITY");
-    m_tlu->SetTriggerPolarity( (uint64_t)(conf->Get("trigPol", 0x003F));
+    m_tlu->SetTriggerPolarity( (uint64_t)(conf->Get("trigPol", 0x003F)));
 
     // Set PMT power
     if(m_verbose > 0) EUDAQ_INFO(" -PMT OUTPUT VOLTAGES");
