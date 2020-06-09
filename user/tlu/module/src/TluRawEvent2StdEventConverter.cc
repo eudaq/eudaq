@@ -48,7 +48,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
                + (finets3 * ((triggersFired >> 3) & 0x1))
                + (finets4 * ((triggersFired >> 4) & 0x1))
                + (finets5 * ((triggersFired >> 5) & 0x1)))
-               / __builtin_popcount(triggersFired); // count "ones" in binary
+               / __builtin_popcount(triggersFired & 0x3F); // count "ones" in binary
 
   auto ts = (d1->GetTimestampBegin() * 1000) & 0xFFFFFFFFFFFFFF00 + static_cast<uint64_t>(25. / 32. * finets);
 
