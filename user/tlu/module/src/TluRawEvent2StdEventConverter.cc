@@ -19,7 +19,6 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     d2->SetEventN(d1->GetEventN());
     d2->SetStreamN(d1->GetStreamN());
     d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
-    d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
   }
   else{
     static const std::string TLU("TLU");
@@ -39,8 +38,11 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   auto finets5 = d1->GetTag("FINE_TS5", "NAN");
 
   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
+  auto ts = (d1->GetTimestampBegin() * 1000) & 0xFFFFFFFFFFFFFF00 + static_cast<uint64_t>(25. / 32. * std::stoi(finets0));
+
   d2->SetTimeBegin(d1->GetTimestampBegin() * 1000);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
+  d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
 
   // Identify the detetor type
   d2->SetDetectorType("TLU");
