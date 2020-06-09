@@ -31,11 +31,11 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   auto triggersFired = std::stoi(d1->GetTag("TRIGGER" , "NAN"), nullptr, 2); // interpret as binary
   auto finets0 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
-  auto finets1 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
-  auto finets2 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
-  auto finets3 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
-  auto finets4 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
-  auto finets5 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
+  auto finets1 = std::stoi(d1->GetTag("FINE_TS1", "NAN"));
+  auto finets2 = std::stoi(d1->GetTag("FINE_TS2", "NAN"));
+  auto finets3 = std::stoi(d1->GetTag("FINE_TS3", "NAN"));
+  auto finets4 = std::stoi(d1->GetTag("FINE_TS4", "NAN"));
+  auto finets5 = std::stoi(d1->GetTag("FINE_TS5", "NAN"));
 
   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
   // Note: __builtin_popcount counts the "ones" in a binary, see here:
