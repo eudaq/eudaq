@@ -127,7 +127,7 @@ namespace eudaq{
 
     const TGPicture* m_icon_summ;
     const TGPicture* m_icon_save, *m_icon_del, *m_icon_open;
-    const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tgraph, *m_icon_track;
+    const TGPicture* m_icon_th1, *m_icon_th2, *m_icon_tprofile, *m_icon_track;
 
     /// Timer for auto-refresh loop
     std::unique_ptr<TTimer> m_timer;
@@ -152,7 +152,8 @@ namespace eudaq{
     std::map<std::string, const TGPicture*> m_obj_icon = {
       {"TH1", m_icon_th1}, {"TH1F", m_icon_th1}, {"TH1D", m_icon_th1}, {"TH1I", m_icon_th1},
       {"TH2", m_icon_th2}, {"TH2F", m_icon_th2}, {"TH2D", m_icon_th2}, {"TH2I", m_icon_th2},
-      {"TGraph", m_icon_tgraph}, {"TMultiGraph", m_icon_track}
+      {"TGraph", m_icon_tprofile}, {"TGraph2D", m_icon_th2},
+      {"TProfile", m_icon_tprofile}, {"TMultiGraph", m_icon_track}
     };
     /// List of all objects to be drawn on main canvas
     std::vector<MonitoredObject*> m_drawable;
