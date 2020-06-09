@@ -29,23 +29,39 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     d2->SetTag(TLU+stm+"_TRG", std::to_string(d1->GetTriggerN()));
   }
 
-  auto triggersFired = d1->GetTag("TRIGGER" , "NAN");
-  auto finets0 = d1->GetTag("FINE_TS0", "NAN");
-  auto finets1 = d1->GetTag("FINE_TS1", "NAN");
-  auto finets2 = d1->GetTag("FINE_TS2", "NAN");
-  auto finets3 = d1->GetTag("FINE_TS3", "NAN");
-  auto finets4 = d1->GetTag("FINE_TS4", "NAN");
-  auto finets5 = d1->GetTag("FINE_TS5", "NAN");
+  auto triggersFired = std::stoi(d1->GetTag("TRIGGER" , "NAN"), nullptr, 2); // interpret as binary
+  auto finets0 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
+  auto finets1 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
+  auto finets2 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
+  auto finets3 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
+  auto finets4 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
+  auto finets5 = std::stoi(d1->GetTag("FINE_TS0", "NAN"));
+
+  std::cout << "triggersFired (stoi) = " << triggersFired << std::endl;
+  std::cout << "triggerFired GetTag = " << d1->GetTag("TRIGGER" , "NAN") << std::endl;
 
   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
-  auto ts = (d1->GetTimestampBegin() * 1000) & 0xFFFFFFFFFFFFFF00 + static_cast<uint64_t>(25. / 32. * std::stoi(finets0));
+  // Note: __builtin_popcount counts the "ones" in a binary, see here:
+  // https://www.geeksforgeeks.org/count-set-bits-in-an-integer/
+  // I.e. add up all timestamps for which the triggersFired bit is 1 and divide by number of active triggers:
+  // Factor 25./32. -> fine timestamp in 781ps binning
+  auto finets = ((finets0 * ((triggersFired >> 0) & 0x1))
+               + (finets1 * ((triggersFired >> 1) & 0x1))
+               + (finets2 * ((triggersFired >> 2) & 0x1))
+               + (finets3 * ((triggersFired >> 3) & 0x1))
+               + (finets4 * ((triggersFired >> 4) & 0x1))
+               + (finets5 * ((triggersFired >> 5) & 0x1)))
+               / __builtin_popcount(triggersFired); // count "ones" in binary
 
-  d2->SetTimeBegin(d1->GetTimestampBegin() * 1000);
+  auto ts = (d1->GetTimestampBegin() * 1000) & 0xFFFFFFFFFFFFFF00 + static_cast<uint64_t>(25. / 32. * finets);
+
+  d2->SetTimeBegin(ts);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
-  d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
+  d2->SetTimestamp(ts, d1->GetTimestampEnd(), d1->IsFlagTimestamp());
 
   // Identify the detetor type
   d2->SetDetectorType("TLU");
+  d2->SetTag("TRIGGER", triggersFired);
   d2->SetTag("FINE_TS0", finets0);
   d2->SetTag("FINE_TS1", finets1);
   d2->SetTag("FINE_TS2", finets2);
