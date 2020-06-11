@@ -42,15 +42,34 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // https://www.geeksforgeeks.org/count-set-bits-in-an-integer/
   // I.e. add up all timestamps for which the triggersFired bit is 1 and divide by number of active triggers:
   // Factor 25./32. -> fine timestamp in 781ps binning
-  auto finets = ((finets0 * ((triggersFired >> 0) & 0x1))
-               + (finets1 * ((triggersFired >> 1) & 0x1))
-               + (finets2 * ((triggersFired >> 2) & 0x1))
-               + (finets3 * ((triggersFired >> 3) & 0x1))
-               + (finets4 * ((triggersFired >> 4) & 0x1))
-               + (finets5 * ((triggersFired >> 5) & 0x1)))
-               / __builtin_popcount(triggersFired & 0x3F); // count "ones" in binary
+  // auto finets = ((finets0 * ((triggersFired >> 0) & 0x1))
+  //              + (finets1 * ((triggersFired >> 1) & 0x1))
+  //              + (finets2 * ((triggersFired >> 2) & 0x1))
+  //              + (finets3 * ((triggersFired >> 3) & 0x1))
+  //              + (finets4 * ((triggersFired >> 4) & 0x1))
+  //              + (finets5 * ((triggersFired >> 5) & 0x1)))
+  //              / __builtin_popcount(triggersFired & 0x3F); // count "ones" in binary
+  // The averaging works fine, I tested that with a cout!
 
-  auto ts = (d1->GetTimestampBegin() * 1000) & 0xFFFFFFFFFFFFFF00 + static_cast<uint64_t>(25. / 32. * finets);
+  auto finets = finets0; //--> this works perfectly!
+  // auto finets = finets1; //--> also works perfectly!
+  // auto earliest_ts = (finets0 < finets1) ? finet caution overflow!
+
+  auto coarse_ts = static_cast<uint64_t>(d1->GetTimestampBegin() / 25);
+
+  uint8_t coarse_3lsb = 0x3 & coarse_ts;
+  uint8_t finets_3msb = (0xE0 & finets) >> 5;
+
+  // I think the problem relates to rounding errors when averaging fineTS0 and fineTS1
+
+  // Casting to 32 bit is essential to detect the overflow in the 8th bit!
+  if(static_cast<uint32_t>(coarse_3lsb - finets_3msb) > 0x100) { // 200ns (range of 3 bits with 25ns binning)
+      // but WHY is it 2 and not 1?
+      coarse_ts -= 2;
+  }
+
+  // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets:
+  auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets & 0xFF))) * 1000.);
 
   d2->SetTimeBegin(ts);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
