@@ -356,7 +356,7 @@ double RotaController::getMaxLimit(const char *Axis)
     return *travelMax;
 }
 
-bool RotaController::move(const char *szAxis, double target, bool keepServoOn = true)
+bool RotaController::move(const char *szAxis, double target, bool keepServoOn)
 {
     BOOL servoState = TRUE;               //uppercase because it comes from hardware (gcs) library
     if (!PI_SVO(ID, szAxis, &servoState)) //Set Servo state
