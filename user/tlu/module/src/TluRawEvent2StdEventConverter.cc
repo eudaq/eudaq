@@ -66,32 +66,22 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       return false;
   }
 
-  // Now average over all vector elements: (don't forget the overflow compensation)
+  // Now average over all vector elements:
   // Initialize to 0th vector element:
   uint32_t finets_avg = 0xFF & finets_vec.at(0);
-  // Compare all to 0th trigger in vector
+
+  // Calculate "rolling average":
   for(int i=1; i<finets_vec.size(); i++) {
-      finets_avg += finets_vec.at(i);
-      if(abs(finets_vec.at(0) - finets_vec.at(i)) > 0xF0) {
-          finets_avg += 0xFF;
+      if(abs(finets_avg - finets_vec.at(i)) > 0xF0) {
+          finets_avg += 0xFF; // overflow compensation
       }
+      finets_avg += finets_vec.at(i);
+      finets_avg = (finets_avg / 2) & 0xFF;
   }
-  // Divide by number of triggers and trim to 8 bits:
-  finets_avg = (finets_avg % (nTriggerInputs * 0xFF) / nTriggerInputs) & 0xFF;
 
-  // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
-  // I.e. add up all timestamps for which the triggersFired bit is 1 and divide by number of active triggers:
-  // Factor 25./32. -> fine timestamp in 781ps binning
-  // auto finets = ((finets0 * ((triggersFired >> 0) & 0x1))
-  //              + (finets1 * ((triggersFired >> 1) & 0x1))
-  //              + (finets2 * ((triggersFired >> 2) & 0x1))
-  //              + (finets3 * ((triggersFired >> 3) & 0x1))
-  //              + (finets4 * ((triggersFired >> 4) & 0x1))
-  //              + (finets5 * ((triggersFired >> 5) & 0x1)))
-  //              / __builtin_popcount(triggersFired & 0x3F); // count "ones" in binary
-
-  // auto finets = finets0; //--> this works perfectly!
-  // auto finets = finets1; //--> also works perfectly!
+  // This works well: using ONLY fineTS0 OR fineTS1:
+  // auto finets = finets0;
+  // auto finets = finets1;
 
   // This also works well:
   // Consider overflow:
@@ -117,6 +107,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets_avg:
   auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets_avg & 0xFF))) * 1000.);
 
+  // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
   d2->SetTimeBegin(ts);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
   d2->SetTimestamp(ts, d1->GetTimestampEnd(), d1->IsFlagTimestamp());
