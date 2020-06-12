@@ -31,6 +31,9 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   auto triggersFired = std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
+  auto nTriggerInputs = __builtin_popcount(triggersFired & 0x3F); // count "ones" in binary
+  // Note: __builtin_popcount counts the "ones" in a binary, see here:
+  // https://www.geeksforgeeks.org/count-set-bits-in-an-integer/
   auto finets0 = std::stoi(d1->GetTag("FINE_TS0", "0"));
   auto finets1 = std::stoi(d1->GetTag("FINE_TS1", "0"));
   auto finets2 = std::stoi(d1->GetTag("FINE_TS2", "0"));
@@ -38,9 +41,45 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   auto finets4 = std::stoi(d1->GetTag("FINE_TS4", "0"));
   auto finets5 = std::stoi(d1->GetTag("FINE_TS5", "0"));
 
+  // add all valid trigger to vector:
+  std::vector<uint8_t> finets_vec;
+  if ((triggersFired >> 0) & 0x1) {
+      finets_vec.emplace_back(finets0 & 0xFF);
+  }
+  if ((triggersFired >> 1) & 0x1) {
+      finets_vec.emplace_back(finets1 & 0xFF);
+  }
+  if ((triggersFired >> 2) & 0x1) {
+      finets_vec.emplace_back(finets2 & 0xFF);
+  }
+  if ((triggersFired >> 3) & 0x1) {
+      finets_vec.emplace_back(finets3 & 0xFF);
+  }
+  if ((triggersFired >> 4) & 0x1) {
+      finets_vec.emplace_back(finets4 & 0xFF);
+  }
+  if ((triggersFired >> 5) & 0x1) {
+      finets_vec.emplace_back(finets5 & 0xFF);
+  }
+  if(finets_vec.size() < 2) {
+      std::cout << "ERROR: received less than 2 trigger inputs" << std::endl;
+      return false;
+  }
+
+  // Now average over all vector elements: (don't forget the overflow compensation)
+  // Initialize to 0th vector element:
+  uint32_t finets_avg = 0xFF & finets_vec.at(0);
+  // Compare all to 0th trigger in vector
+  for(int i=1; i<finets_vec.size(); i++) {
+      finets_avg += finets_vec.at(i);
+      if(abs(finets_vec.at(0) - finets_vec.at(i)) > 0xF0) {
+          finets_avg += 0xFF;
+      }
+  }
+  // Divide by number of triggers and trim to 8 bits:
+  finets_avg = (finets_avg % (nTriggerInputs * 0xFF) / nTriggerInputs) & 0xFF;
+
   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
-  // Note: __builtin_popcount counts the "ones" in a binary, see here:
-  // https://www.geeksforgeeks.org/count-set-bits-in-an-integer/
   // I.e. add up all timestamps for which the triggersFired bit is 1 and divide by number of active triggers:
   // Factor 25./32. -> fine timestamp in 781ps binning
   // auto finets = ((finets0 * ((triggersFired >> 0) & 0x1))
@@ -54,36 +93,29 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // auto finets = finets0; //--> this works perfectly!
   // auto finets = finets1; //--> also works perfectly!
 
-  uint32_t finets = 0xFF & ((finets0 + finets1) / 2);
+  // This also works well:
   // Consider overflow:
-  if(abs(finets0 - finets1) > 0xF0) {
-      finets = (finets + 128) & 0x1FF;
-  }
-  auto diff = abs(finets1 - finets0);
-  std::bitset<8> fineTS0_b(finets0);
-  std::bitset<8> fineTS1_b(finets1);
-  std::bitset<8> diff_b(diff);
-  std::bitset<9> fineTS_b(finets);
-
-  // std::cout << "fineTS0: " << fineTS0_b << ", fineTS1: " << fineTS1_b << ", fineTSavg: " << fineTS_b << std::endl;
-  // std::cout << "fineTS0: " << fineTS0_b << ", fineTS1: " << fineTS1_b << ", diff: " << diff_b <<", fineTSavg: " << fineTS_b << std::endl;
-  // std::cout << "fineTS0: " << finets0 << ", fineTS1: " << finets1 << ", diff: " << diff <<", fineTSavg: " << finets << std::endl;
+  // if(abs(finets0 - finets1) > 0xF0) {
+  //     // This only works for 2 inputs:
+  //     // finets_avg = (finets_avg + 128) & 0xFF;
+  //     finets1 += 0xFF;
+  // }
+  // uint8_t finets_avg = 0xFF & ((finets0 + finets1) / 2);
 
   auto coarse_ts = static_cast<uint64_t>(d1->GetTimestampBegin() / 25);
 
   uint8_t coarse_3lsb = 0x3 & coarse_ts;
-  uint8_t finets_3msb = (0xE0 & finets) >> 5;
-
-  // I think the problem relates to rounding errors when averaging fineTS0 and fineTS1
+  uint8_t finets_avg_3msb = (0xE0 & finets_avg) >> 5;
 
   // Casting to 32 bit is essential to detect the overflow in the 8th bit!
-  if(static_cast<uint32_t>(coarse_3lsb - finets_3msb) > 0x100) { // 200ns (range of 3 bits with 25ns binning)
-      // but WHY is it 2 and not 1?
+  // 0x100 = 200ns (range of 3 bits with 25ns binning)
+  if(static_cast<uint32_t>(coarse_3lsb - finets_avg_3msb) > 0x100) {
+      // coarse_ts is delayed by 2 clock cycles -> roll back
       coarse_ts -= 2;
   }
 
-  // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets:
-  auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets & 0xFF))) * 1000.);
+  // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets_avg:
+  auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets_avg & 0xFF))) * 1000.);
 
   d2->SetTimeBegin(ts);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
