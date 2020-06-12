@@ -1,5 +1,6 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
+#include <bitset>
 
 class TluRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
@@ -49,11 +50,24 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   //              + (finets4 * ((triggersFired >> 4) & 0x1))
   //              + (finets5 * ((triggersFired >> 5) & 0x1)))
   //              / __builtin_popcount(triggersFired & 0x3F); // count "ones" in binary
-  // The averaging works fine, I tested that with a cout!
 
-  auto finets = finets0; //--> this works perfectly!
+  // auto finets = finets0; //--> this works perfectly!
   // auto finets = finets1; //--> also works perfectly!
-  // auto earliest_ts = (finets0 < finets1) ? finet caution overflow!
+
+  uint32_t finets = 0xFF & ((finets0 + finets1) / 2);
+  // Consider overflow:
+  if(abs(finets0 - finets1) > 0xF0) {
+      finets = (finets + 128) & 0x1FF;
+  }
+  auto diff = abs(finets1 - finets0);
+  std::bitset<8> fineTS0_b(finets0);
+  std::bitset<8> fineTS1_b(finets1);
+  std::bitset<8> diff_b(diff);
+  std::bitset<9> fineTS_b(finets);
+
+  // std::cout << "fineTS0: " << fineTS0_b << ", fineTS1: " << fineTS1_b << ", fineTSavg: " << fineTS_b << std::endl;
+  // std::cout << "fineTS0: " << fineTS0_b << ", fineTS1: " << fineTS1_b << ", diff: " << diff_b <<", fineTSavg: " << fineTS_b << std::endl;
+  // std::cout << "fineTS0: " << finets0 << ", fineTS1: " << finets1 << ", diff: " << diff <<", fineTSavg: " << finets << std::endl;
 
   auto coarse_ts = static_cast<uint64_t>(d1->GetTimestampBegin() / 25);
 
