@@ -29,9 +29,9 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
         if(scanConf->HasSection(std::to_string(i))) {
             scanConf->SetSection(std::to_string(i));
             bool nested     = scanConf->Get("nested",false) && m_allow_nested_scan;
-            double start    = scanConf->Get("start",-123456789.0);
-            double step     = scanConf->Get("step",-123456789.0);
-            double stop     = scanConf->Get("stop",-123456789.0);
+            double start    = scanConf->Get("start",std::numeric_limits<double>::min());
+            double step     = scanConf->Get("step",std::numeric_limits<double>::min());
+            double stop     = scanConf->Get("stop",std::numeric_limits<double>::min());
             double defaultV = scanConf->Get("default",start);
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
@@ -40,9 +40,9 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             if(!m_scan_is_time_based && Counter == "wrongPara")
                 return scanError("To run a scan based on a number of events, \"eventCounter\" needs to be specified in section"+std::to_string(i));
             if(name == "wrongPara" || param == "wrongPara"
-               || (std::numeric_limits<double>::epsilon()>std::abs(start +123456789.0))
-               || (std::numeric_limits<double>::epsilon()>std::abs(stop +123456789.0))
-               || (std::numeric_limits<double>::epsilon()>std::abs(step +123456789.0)))
+               || (std::numeric_limits<double>::epsilon()>std::abs(start - std::numeric_limits<double>::min()))
+               || (std::numeric_limits<double>::epsilon()>std::abs(stop - std::numeric_limits<double>::min()))
+               || (std::numeric_limits<double>::epsilon()>std::abs(step - std::numeric_limits<double>::min())))
                 return scanError("Scan section "+std::to_string(i)+" is incomplete -> Please check");
 
             defaultConf->SetSection("");
