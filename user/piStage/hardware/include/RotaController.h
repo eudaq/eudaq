@@ -37,7 +37,7 @@ public:
   bool defineNewHome(const char *Axis, double newHome);
   double getMinLimit(const char *szAxis);
   double getMaxLimit(const char *szAxis);
-  bool move(const char *szAxis, double target);
+  bool move(const char *szAxis, double target, bool keepServoOn= true);
   bool GoHome(const char *Axis);
   bool HaltSmoothly(const char *Axis);
   bool Reboot();

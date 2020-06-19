@@ -356,7 +356,7 @@ double RotaController::getMaxLimit(const char *Axis)
     return *travelMax;
 }
 
-bool RotaController::move(const char *szAxis, double target)
+bool RotaController::move(const char *szAxis, double target, bool keepServoOn)
 {
     BOOL servoState = TRUE;               //uppercase because it comes from hardware (gcs) library
     if (!PI_SVO(ID, szAxis, &servoState)) //Set Servo state
@@ -389,11 +389,14 @@ bool RotaController::move(const char *szAxis, double target)
         //LogInfo(std::string("Axis ") + std::string(szAxis) + std::string(" currently at ") + std::to_string(position));
     } while (bFlag);
     LogInfo(std::string("Axis ") + std::string(szAxis) + std::string(" finished moving to ") + std::to_string(position));
-    servoState = FALSE;                   //uppercase because it comes from hardware (gcs) library
-    if (!PI_SVO(ID, szAxis, &servoState)) //Set Servo state
-    {
-        HardError("SVO failed  : could not turn off servo (motor)");
-        return false;
+
+    if(!keepServoOn){
+        servoState = FALSE;                   //uppercase because it comes from hardware (gcs) library
+        if (!PI_SVO(ID, szAxis, &servoState)) //Set Servo state
+        {
+            HardError("SVO failed  : could not turn off servo (motor)");
+            return false;
+        }
     }
     return true;
 }
