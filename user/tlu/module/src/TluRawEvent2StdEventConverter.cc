@@ -77,6 +77,8 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       }
       finets_avg += finets_vec.at(i);
       finets_avg = (finets_avg / 2) & 0xFF;
+      // This leads to rounding errors on the 781ps binning level
+      // --> Convert to double in nanoseconds?
   }
 
   // This works well: using ONLY fineTS0 OR fineTS1:
