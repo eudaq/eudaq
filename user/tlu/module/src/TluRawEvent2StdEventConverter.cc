@@ -82,8 +82,8 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   // This works well: using ONLY fineTS0 OR fineTS1:
-  // auto finets = finets0;
-  // auto finets = finets1;
+  // auto finets_avg = finets0;
+  // auto finets_avg = finets1;
 
   // This also works well:
   // Consider overflow:
