@@ -74,7 +74,7 @@ namespace eudaq {
     ser.write(m_time);
   }
 
-  void LogMessage::Print(std::ostream &os) const {
+  void LogMessage::Print(std::ostream &os, size_t offset) const {
       // print the time bold
 
 #ifdef _WIN32
