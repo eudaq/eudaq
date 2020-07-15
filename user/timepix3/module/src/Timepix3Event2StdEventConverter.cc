@@ -81,7 +81,52 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
 
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
+bool Timepix3RawEvent2StdEventConverter::applyCalibration(false);
+bool Timepix3RawEvent2StdEventConverter::first_time(true);
+std::string Timepix3RawEvent2StdEventConverter::calibrateDetector("");
+std::string Timepix3RawEvent2StdEventConverter::calibrationPath("");
+std::string Timepix3RawEvent2StdEventConverter::threshold("");
+std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
+std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
+
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
+
+  // Read from configuration:
+  if(first_time) {
+      if(conf->Has("calibrate_detector") && conf->Has("calibration_path") && conf->Has("threshold")) {
+          calibrateDetector = conf->Get("calibrate_detector","");
+          calibrationPath = conf->Get("calibration_path","");
+          threshold = conf->Get("threshold","");
+          applyCalibration = true;
+          EUDAQ_INFO("Applying calibration from " + calibrationPath + " for detector " + calibrateDetector);
+
+          // make paths to calibration files and read
+            std::string tmp;
+            tmp = calibrationPath + "/" + calibrateDetector + "/cal_thr_" + threshold + "_ik_10/" + calibrateDetector + "_cal_tot.txt";
+            loadCalibration(tmp, ' ', vtot);
+            tmp = calibrationPath + "/" + calibrateDetector + "/cal_thr_" + threshold + "_ik_10/" + calibrateDetector + "_cal_toa.txt";
+            loadCalibration(tmp, ' ', vtoa);
+
+            for(size_t row = 0; row < 256; row++) {
+                for(size_t col = 0; col < 256; col++) {
+                    float a = vtot.at(256 * row + col).at(2);
+                    float b = vtot.at(256 * row + col).at(3);
+                    float c = vtot.at(256 * row + col).at(4);
+                    float t = vtot.at(256 * row + col).at(5);
+                    float toa_c = vtoa.at(256 * row + col).at(2);
+                    float toa_t = vtoa.at(256 * row + col).at(3);
+                    float toa_d = vtoa.at(256 * row + col).at(4);
+
+                    double cold = static_cast<double>(col);
+                    double rowd = static_cast<double>(row);
+                }
+            }
+        } else {
+            EUDAQ_INFO("No calibration file path or no DUT name given; data will be uncalibrated.");
+            applyCalibration = false;
+        }
+        first_time = false;
+    }
 
   bool data_found = false;
 
