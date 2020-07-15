@@ -220,13 +220,56 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       // Convert final timestamp into picoseconds
       const uint64_t timestamp = time * 1000 / 4096 * 25;
 
-      // Set event start/stop:
-      event_begin = (timestamp < event_begin) ? timestamp : event_begin;
-      event_end = (timestamp > event_end) ? timestamp : event_end;
+      // Apply calibration if applyCalibration is true
+      // (copied over from Corryvreckan EventLoaderTimepix3)
+      if(applyCalibration) {
+        // LOG(DEBUG) << "Applying calibration to DUT";
+        size_t scol = static_cast<size_t>(col);
+        size_t srow = static_cast<size_t>(row);
+        float a = vtot.at(256 * srow + scol).at(2);
+        float b = vtot.at(256 * srow + scol).at(3);
+        float c = vtot.at(256 * srow + scol).at(4);
+        float t = vtot.at(256 * srow + scol).at(5);
 
-      // creating new pixel object with non-calibrated values of tot and toa
-      plane.PushPixel(col, row, tot, timestamp);
-    }
+        float toa_c = vtoa.at(256 * srow + scol).at(2);
+        float toa_t = vtoa.at(256 * srow + scol).at(3);
+        float toa_d = vtoa.at(256 * srow + scol).at(4);
+
+        // Calculating calibrated tot and toa
+        float fvolts = (sqrt(a * a * t * t + 2 * a * b * t + 4 * a * c - 2 * a * t * static_cast<float>(tot) +
+                             b * b - 2 * b * static_cast<float>(tot) + static_cast<float>(tot * tot)) +
+                        a * t - b + static_cast<float>(tot)) /
+                       (2 * a);
+        double fcharge = fvolts * 1e-3 * 3e-15 * 6241.509 * 1e15; // capacitance is 3 fF or 18.7 e-/mV
+
+        /* Note 1: fvolts is the inverse to f(x) = a*x + b - c/(x-t). Note the +/- signs! */
+        /* Note 2: The capacitance is actually smaller than 3 fC, more like 2.5 fC. But there is an offset when when
+         * using testpulses. Multiplying the voltage value with 20 [e-/mV] is a good approximation but means one is
+         * over estimating the input capacitance to compensate the missing information of the offset. */
+
+        uint64_t t_shift = (toa_c / (fvolts - toa_t) + toa_d) * 1000; // convert to ps // was float
+        const uint64_t ftimestamp = timestamp - t_shift; // uint64_t - float?! // was float
+        // LOG(DEBUG) << "Time shift= " << Units::display(t_shift, {"s", "ns"});
+        // LOG(DEBUG) << "Timestamp calibrated = " << Units::display(ftimestamp, {"s", "ns"});
+
+        if(col >= 256 || row >= 256) {
+            EUDAQ_WARN("Pixel address " + std::to_string(col) + ", " + std::to_string(row) + " is outside of pixel matrix.");
+        }
+        // Set event start/stop:
+        event_begin = (ftimestamp < event_begin) ? ftimestamp : event_begin;
+        event_end = (ftimestamp > event_end) ? ftimestamp : event_end;
+
+        // push new pixel object with non-calibrated values of tot and toa
+        plane.PushPixel(col, row, fcharge, ftimestamp); // <-- or also ToT? Can EUDAQ2 handle charge? false to identify overloaded function
+      } else {
+        // Set event start/stop:
+        event_begin = (timestamp < event_begin) ? timestamp : event_begin;
+        event_end = (timestamp > event_end) ? timestamp : event_end;
+
+        // creating new pixel object with non-calibrated values of tot and toa
+        plane.PushPixel(col, row, tot, timestamp);
+      } // end applyCalibration
+    } // end header 0xA and 0xB indicate pixel data
   }
 
   // Add the plane to the StandardEvent
