@@ -194,8 +194,8 @@ void WienerProducer::RunLoop(){
 	  m_LV_curr  = GetCurrentMeas(m_LV_chan);
 	  m_HV_curr  = GetCurrentMeas(m_HV_chan, true);
 	  m_daq_volt = GetVoltageMeas(m_daq_chan);
-	  m_LV_volts = GetCurrentMeas(m_LV_chan);
-	  m_HV_volts = GetCurrentMeas(m_HV_chan);
+	  m_LV_volts = GetVoltageMeas(m_LV_chan);
+	  m_HV_volts = GetVoltageMeas(m_HV_chan);
 
 	  /* save wiener data to individual data collector */
 	  auto rawevt = eudaq::Event::MakeUnique("WienerRawEvt");

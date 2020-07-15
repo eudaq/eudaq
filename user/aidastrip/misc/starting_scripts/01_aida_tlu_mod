@@ -1,10 +1,10 @@
 # IP-environment variables are set by user/eudet/misc/environments/setup_eudaq2_aida-tlu.sh 
 # Define port
-RPCPORT=44444
+RPCPORT=44000
 
 # Start Run Control
 euRun -a tcp://${RPCPORT} &
-sleep 2
+sleep 3
 
 # Start Logger
 euLog -r tcp://${RUNCONTROLIP}:${RPCPORT} &

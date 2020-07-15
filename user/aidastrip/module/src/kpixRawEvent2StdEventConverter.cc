@@ -115,9 +115,9 @@ namespace{
 
 kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 	
-	createMap("/opt/data/calib_normalgain.csv");
+	createMap("/scratch2/data/calib_normalgain.csv");
 	auto noise_hists = loadNoiseDB();
-		
+
 	TTree* pedestal_tree;
 	TFile* rFile;
 	double pedestal_median=0, pedestal_MAD=0;
@@ -126,7 +126,7 @@ kpixRawEvent2StdEventConverter::kpixRawEvent2StdEventConverter() {
 	TH1::AddDirectory(kFALSE);
 
 	
-	std::string pedfile_name ="/opt/data/eudaq2-dev/Run_20190802_121655.dat.tree_pedestal.root";
+	std::string pedfile_name ="/scratch2/data/eudaq2-dev/Run_20190802_121655.dat.tree_pedestal.root";
 	
 	  //"/opt/data/eudaq2-dev/Run_20190802_115859.dat.tree_pedestal.root";
 	std::string pedtree_name = "pedestal_tree";
@@ -189,7 +189,7 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	
 	// TODO: currently is hard coded to change trigger mode
 	//string triggermode = d1->GetTag("triggermode", "internal");
-	string triggermode = "external";
+	string triggermode = "internal";
 	m_isSelfTrig = triggermode == "internal" ? true:false ;
 	
 	if (m_isSelfTrig)
@@ -219,8 +219,8 @@ bool kpixRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 	// TODO: hard coded to be 6 plane. - MQ
 	for (auto id=0; id<6; id++){
 		eudaq::StandardPlane plane(id, "lycoris", "lycoris");
-		plane.SetSizeZS(1840, // x, width, TODO: strip ID of half sensor
-		                1, // y, height
+		plane.SetSizeZS(1, // x, width, TODO: strip ID of half sensor
+		                1840, // y, height
 		                0 // not used 
 		                ); // TODO: only 1 frame, define for us as bucket, i.e. only bucket 0 is considered
 		plane.Print(std::cout);
@@ -303,8 +303,8 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 			// PushPixel here. ~LoCo 01/08: changed '>' to '>='. Tested and kept
 			std::cout << "[+] plane : "<< planeID << ", hitX at : " << hitX << std::endl;
 			auto &plane = d2->GetPlane(planeID);
-			plane.PushPixel(hitX, // x
-			                1,    // y, always to be 1 since we are strips
+			plane.PushPixel(1, // x
+			                hitX,    // y, always to be 1 since we are strips
 			                1     // T pix
 			                );    // use bucket as input for frame_num
 		}
@@ -321,6 +321,12 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 		}
 		
 	}// - sample loop over
+
+
+
+
+
+//EXTERNAL TRIGGER ALGORITHM
 
 	if ( (!m_isSelfTrig) && (!emptyframe)   ){
 		
@@ -350,18 +356,19 @@ void kpixRawEvent2StdEventConverter::parseFrame(eudaq::StdEventSP d2, KpixEvent 
 			else strip = RotateStrip(strip, planeID);
 			
 			//~MQ: correct common mode noise
-			double charge_corr_CM = entry.second.charge - m_common_mode_perCycle.at(kpix);
+			//double charge_corr_CM = entry.second.charge - m_common_mode_perCycle.at(kpix);
+			double charge_corr_CM = entry.second.charge;
 			// TODO: plot  with cluster_analysis.cxx output :
 			// - noise
 			// - charge_corr_CM
 			// temperarily ignore S/N but use a harsh charge level cut
 			
-			if (charge_corr_CM > 1.5 ){
+			//if (charge_corr_CM > 0 ){
 			//if ( charge_corr_CM > 3*entry.second.noise ){
-			//if (true){
+			if (true){
 			  std::cout << "[+] plane : "<< planeID << ", hitX at : " << strip << std::endl;
 			  auto &plane = d2->GetPlane( getStdPlaneID(kpix) );
-			  plane.PushPixel(strip , 1, 1);
+			  plane.PushPixel(1 , strip, 1);
 			}
 			                        
 		}
@@ -572,7 +579,7 @@ double RotateStrip(double strip, int sensor){
 std::unordered_map<int,TH1F*> kpixRawEvent2StdEventConverter::loadNoiseDB()const{
 	TH1::AddDirectory(kFALSE);
 		
-	std::string noisefile_name ="/opt/data/eudaq2-dev/Run_20190802_121655.dat_Run_20190802_121655.cluster.root";
+	std::string noisefile_name ="/scratch2/data/eudaq2-dev/Run_20190802_121655.dat_Run_20190802_121655.cluster.root";
 	//~MQ: load noise distribution histos
 	TFile* rFile = new TFile(noisefile_name.c_str(),"read");
 	std::unordered_map<int, TH1F*> noise_hists;
