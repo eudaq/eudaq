@@ -14,6 +14,17 @@ namespace eudaq {
   private:
     static uint64_t m_syncTime;
     static bool m_clearedHeader;
+
+    // configuration parameters:
+    static bool first_time;     // How to avoid this with an Initialize() function?
+    static bool applyCalibration;
+    static std::string calibrateDetector;
+    static std::string calibrationPath;
+    static std::string threshold;
+    static std::vector<std::vector<float>> vtot;
+    static std::vector<std::vector<float>> vtoa;
+
+    void loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat) const;
   };
 
   class Timepix3TrigEvent2StdEventConverter: public eudaq::StdEventConverter{

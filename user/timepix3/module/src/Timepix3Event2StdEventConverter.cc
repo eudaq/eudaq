@@ -196,3 +196,45 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
 
   return data_found;
 }
+
+void Timepix3RawEvent2StdEventConverter::loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat) const {
+    // copied from Corryvreckan EventLoaderTimepix3
+    std::ifstream f;
+    f.open(path);
+    dat.clear();
+
+    // check if file is open
+    if(!f.is_open()) {
+        EUDAQ_WARN("Cannot open input file:\n\t" + path);
+        // throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
+        return;
+    }
+
+    // read file line by line
+    int i = 0;
+    std::string line;
+    while(!f.eof()) {
+        std::getline(f, line);
+
+        // check if line is empty or a comment
+        // if not write to output vector
+        if(line.size() > 0 && isdigit(line.at(0))) {
+            std::stringstream ss(line);
+            std::string word;
+            std::vector<float> row;
+            while(std::getline(ss, word, delim)) {
+                i += 1;
+                row.push_back(stof(word));
+            }
+            dat.push_back(row);
+        }
+    }
+
+    // warn if too few entries
+    if(dat.size() != 256 * 256) {
+        EUDAQ_WARN("Something went wrong. Found only " + to_string(i) + " entries. Not enough for TPX3.\n\t");
+        // throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
+    }
+
+    f.close();
+}
