@@ -3,6 +3,10 @@
 #include "eudaq/StdEventConverter.hh"
 
 #include <iostream>
+/*
+ * Created by Jan Dreyling-Eschweiler
+ * Modified by Mengqing Wu <mengqing.wu@desy.de> @DESY on 2019-May-22
+ */
 
 int main(int /*argc*/, const char **argv) {
   eudaq::OptionParser op("EUDAQ Command Line FileReader", "2.1", 
@@ -12,8 +16,8 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<uint32_t> eventh(op, "E", "eventhigh", 0, "uint32_t", "event number high");
   eudaq::Option<uint32_t> triggerl(op, "tg", "trigger", 0, "uint32_t", "trigger number low");
   eudaq::Option<uint32_t> triggerh(op, "TG", "triggerhigh", 0, "uint32_t", "trigger number high");
-  eudaq::Option<uint64_t> timestampl(op, "ts", "timestamp", 0, "uint64_t", "timestamp low");
-  eudaq::Option<uint64_t> timestamph(op, "TS", "timestamphigh", 0, "uint64_t", "timestamp high");
+  eudaq::Option<uint32_t> timestampl(op, "ts", "timestamp", 0, "uint32_t", "timestamp low");
+  eudaq::Option<uint32_t> timestamph(op, "TS", "timestamphigh", 0, "uint32_t", "timestamp high");
   eudaq::OptionFlag csvout(op, "csv", "csv_output", "for output to save as csv, without last info line");
 
   op.Parse(argv);
@@ -27,15 +31,16 @@ int main(int /*argc*/, const char **argv) {
   uint32_t eventh_v = eventh.Value();
   uint32_t triggerl_v = triggerl.Value();
   uint32_t triggerh_v = triggerh.Value();
-  uint64_t timestampl_v = timestampl.Value();
-  uint64_t timestamph_v = timestamph.Value();
+  uint32_t timestampl_v = timestampl.Value();
+  uint32_t timestamph_v = timestamph.Value();
   bool not_all_zero = eventl_v||eventh_v||triggerl_v||triggerh_v||timestampl_v||timestamph_v;
 
   eudaq::FileReaderUP reader;
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
   uint32_t event_count = 0;
 
-  std::cout << "run,event,trigger,timestamp_low,timestamp_high,ni_trigger_number,ni_pivot_pixel" << std::endl;
+  //  std::cout << "run,event,trigger,timestamp_64,timestamp_low,timestamp_high,ni_trigger_number,ni_pivot_pixel" << std::endl;
+  std::cout << "run,event,trigger,timestamp_64,ni_trigger_number,ni_pivot_pixel" << std::endl;
   while(1){
     auto ev = reader->GetNextEvent();
     if(!ev)
@@ -62,8 +67,8 @@ int main(int /*argc*/, const char **argv) {
 
     bool in_range_tsn = false;
     if(timestampl_v!=0 || timestamph_v!=0){
-      uint64_t ts_beg = ev->GetTimestampBegin();
-      uint64_t ts_end = ev->GetTimestampEnd();
+      uint32_t ts_beg = ev->GetTimestampBegin();
+      uint32_t ts_end = ev->GetTimestampEnd();
       if(ts_beg >= timestampl_v && ts_end <= timestamph_v){
 	in_range_tsn = true;
       }
@@ -76,15 +81,20 @@ int main(int /*argc*/, const char **argv) {
       uint32_t run_number = ev->GetRunN();
       uint32_t event_number = ev->GetEventN();
       uint32_t trigger_number = ev->GetTriggerN();
-      uint64_t ts_low = ev->GetTimestampBegin();
-      uint64_t ts_high = ev->GetTimestampEnd();
+      // uint32_t ts_low = ev->GetTimestampBegin();
+      // uint32_t ts_high = ev->GetTimestampEnd();
+
+      uint64_t ts_64 = ev->GetTimestampBegin();
+      
       uint32_t ni_trigger_number = 0;
       uint16_t ni_pivot_pixel = 0;
       auto sub_events = ev->GetSubEvents();
       for(auto &sub_event : sub_events){
           if (sub_event->GetDescription() == "TluRawDataEvent") {
-              ts_low = sub_event->GetTimestampBegin();
-              ts_high = sub_event->GetTimestampEnd();
+	          //ts_low = sub_event->GetTimestampBegin();
+	          //ts_high = sub_event->GetTimestampEnd();
+              ts_64 = sub_event->GetTimestampBegin();
+
           }
           if (sub_event->GetDescription() == "NiRawDataEvent") {
               ni_trigger_number = sub_event->GetTriggerN();
@@ -93,12 +103,13 @@ int main(int /*argc*/, const char **argv) {
           }
       }
       std::cout << run_number << "," 
-          << event_number << "," 
-          << trigger_number << "," 
-          << ts_low << "," 
-          << ts_high << "," 
-          << ni_trigger_number << "," 
-          << ni_pivot_pixel << std::endl; 
+                << event_number << "," 
+                << trigger_number << ","
+                << ts_64 << ","
+	      // << ts_low << "," 
+	      // << ts_high << "," 
+                << ni_trigger_number << "," 
+                << ni_pivot_pixel << std::endl; 
     }
 
     event_count ++;

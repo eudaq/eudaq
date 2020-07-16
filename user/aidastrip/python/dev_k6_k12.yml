@@ -1,0 +1,126 @@
+DesyTrackerRoot:
+  enable: 'True'
+  ForceWrite: 'False'
+#  DataWriter:
+#    enable: 'True'
+#    dataFile: ''
+#    open: 'False'
+#    bufferSize: '0'
+#    maxFileSize: '0'
+  DesyTracker:
+    enable: 'True'
+    AxiVersion:
+      enable: 'True'
+      ScratchPad: '0xDEADBEEF'
+    KpixDaqCore:
+      enable: 'True'
+      SysConfig:
+        enable: 'True'
+        RawDataMode: 'False'
+        AutoReadDisable: 'False'
+      KpixClockGen:
+        enable: 'True'
+        ClkSelReadout: '0x20'
+        ClkSelDigitize: '0x20'
+        ClkSelAcquire: '0x3f'
+        ClkSelIdle: '0x020'
+        ClkSelPrecharge: '0x4af'
+      AcquisitionControl:
+        enable: 'True'
+        ExtTrigSrc: Disabled
+        ExtTimestampSrc: Disabled
+        ExtAcquisitionSrc: EthAcquire
+        ExtStartSrc: EthStart
+        Calibrate: 'False'
+      KpixAsicArray:
+        enable: 'True'
+        KpixAsic[*]:
+          enable: 'False'
+          CfgAutoReadDisable: 'False'
+          CfgForceTemp: 'False'
+          CfgDisableTemp: 'False'
+          CfgAutoStatusReadEn: 'True'
+          TimeResetOn: 11
+          TimeResetOff: 900
+          TimeOffsetNullOff: 1000
+          TimeLeakageNullOff: 1
+          TimeDeselDelay: 18
+          TimeBunchClkDelay: 3000
+          TimeDigitizeDelay: 0x1
+          TimePowerUpOn: 11
+          TimePowerUpDigOn: 11          
+          TimeThreshOff: 2600
+          TrigInhibitOff: 1000
+          BunchClockCount: 7000
+          Cal0Delay: 750
+          Cal1Delay: 50
+          Cal2Delay: 50
+          Cal3Delay: 50
+          CalCount: 1
+          DacRampThresh: 240
+          DacRangeThreshold: 0
+          DacCalibration: 245
+          DacEventThreshold: 80
+          DacShaperBias: 120
+          DacDefaultAnalog: 189
+          DacThresholdA: 250
+          DacThresholdB: 0
+          CntrlDisPerReset: 'True'
+          CntrlEnDcReset: 'True'
+          CntrlHighGain: 'True'
+          CntrlNearNeighbor: 'False'
+          CntrlCalSource: 'Disable'
+          CntrlForceTrigSource: 'Disable'
+          CntrlHoldTime: 64x
+          CntrlCalibHigh: 'False'
+          CntrlShortIntEn: 'False'
+          CntrlForceLowGain: 'False'
+          CntrlLeakNullDisable: 'True'
+          CntrlPolarity: Positive
+          CntrlTrigDisable: 'False'
+          CntrlDisPwrCycle: 'False'
+          CntrlFeCurr: 31uA
+          CntrlDiffTime: Half
+          CntrlMonSource: None
+          Chan_0_31: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_32_63: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_64_95: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_96_127: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_128_159: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_160_191: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_192_223: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_224_255: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_256_287: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_288_319: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_320_351: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_352_383: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_384_415: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_416_447: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_448_479: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_480_511: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_512_543: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_544_575: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_576_607: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_608_639: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_640_671: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_672_703: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_704_735: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_736_767: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_768_799: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_800_831: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_832_863: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_864_895: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_896_927: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_928_959: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_960_991: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+          Chan_992_1023: AAAAAAAA AAAAAAAA AAAAAAAA AAAAAAAA
+        KpixAsic[6]:
+          enable: 'True'
+        KpixAsic[12]:
+          enable: 'True'
+        KpixAsic[24]: # virtual kpix
+          enable: 'True'
+      KpixDataRxArray:
+        enable: 'True'
+        KpixDataRx[*]:
+          enable: 'True'
