@@ -129,17 +129,17 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
-  // Check for a sane shutter:
-  if(shutter_open > shutter_close) {
-    EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
-    return false;
-  }
-
   // Check if there was a T0:
   if(last_shutter_open_ > shutter_open) {
       t0_seen_++;
   }
   last_shutter_open_ = shutter_open;
+
+  // Check for a sane shutter:
+  if(shutter_open > shutter_close) {
+    EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
+    return false;
+  }
 
   // FIXME - hardcoded configuration:
   bool drop_before_t0 = true;
