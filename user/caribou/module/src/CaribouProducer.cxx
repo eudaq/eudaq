@@ -194,7 +194,7 @@ void CaribouProducer::RunLoop() {
   while(!m_exit_of_run) {
     try {
       // Retrieve data from the device:
-      std::vector<uint32_t> data = device_->getRawData();
+      auto data = device_->getRawData();
 
       if(!data.empty()) {
         // Create new event
