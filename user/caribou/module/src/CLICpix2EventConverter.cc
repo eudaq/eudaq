@@ -111,10 +111,12 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   bool full_shutter = false;
   uint64_t shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
-    if((timestamp >> 48) == 3) {
+    auto signal_pattern = (timestamp >> 48) & 0x3F;
+
+    if(signal_pattern == 3) {
       shutter_open = (timestamp & 0xffffffffffff) * 10.;
       shutterOpen = true;
-    } else if((timestamp >> 48) == 1 && shutterOpen == true) {
+    } else if(signal_pattern == 1 && shutterOpen == true) {
       shutter_close = (timestamp & 0xffffffffffff) * 10.;
       shutterOpen = false;
       full_shutter = true;
