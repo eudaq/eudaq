@@ -18,19 +18,19 @@ namespace eudaq{
 
   // Exceptions to communicate information from conversion process:
   #define STDEVENTCONVERTER_EXCEPTIONS_
-  class DecodingIssue : public Exception {
+  class StdEventConverterException : public Exception {
   public:
-    DecodingIssue(const std::string& msg) : Exception(msg) {};
+    StdEventConverterException(const std::string& msg) : Exception(msg) {};
   };
 
-  class DataInvalid : public DecodingIssue {
+  class DataInvalid : public StdEventConverterException {
   public:
-    DataInvalid(const std::string& msg) : DecodingIssue(msg) {};
+    DataInvalid(const std::string& msg) : StdEventConverterException(msg) {};
   };
 
-  class DataDiscarded : public DecodingIssue {
+  class DataDiscarded : public StdEventConverterException {
   public:
-    DataDiscarded(const std::string& msg) : DecodingIssue(msg) {};
+    DataDiscarded(const std::string& msg) : StdEventConverterException(msg) {};
   };
 
   class DLLEXPORT StdEventConverter:public DataConverter<Event, StandardEvent>{
