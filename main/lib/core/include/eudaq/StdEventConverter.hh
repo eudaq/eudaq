@@ -17,6 +17,7 @@ namespace eudaq{
   using StdEventConverterUP = Factory<StdEventConverter>::UP;
 
   // Exceptions to communicate information from conversion process:
+  #define STDEVENTCONVERTER_EXCEPTIONS_
   class DecodingIssue : public Exception {
   public:
     DecodingIssue(const std::string& msg) : Exception(msg) {};
