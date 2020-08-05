@@ -12,7 +12,7 @@ namespace{
 }
 
 bool CLICTDEvent2StdEventConverter::t0_is_high_(false);
-bool CLICTDEvent2StdEventConverter::t0_seen_(false);
+size_t CLICTDEvent2StdEventConverter::t0_seen_(0);
 uint64_t CLICTDEvent2StdEventConverter::last_shutter_open_(0);
 bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
@@ -134,11 +134,17 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
       // Check for T0 signal going from high to low
       if(!(signals & 0x1) && t0_is_high_) {
-        t0_seen_ = true;
+        t0_seen_++;
         t0_is_high_ = false;
-        EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
-        // Discard this event:
-        return false;
+
+        if(t0_seen_ == 1) {
+            EUDAQ_INFO("Detected 1st T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+            // Discard this event:
+            return false;
+        } else {
+            // throw exception and interrupt analysis:
+            throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+        }
       }
     } else {
       // New format:
@@ -157,10 +163,15 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
       // Check for T0 signal going from high to low
       if((triggers & 0x1) && !(signals & 0x1)) {
-        t0_seen_ = true;
-        EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
-        // Discard this event:
-        return false;
+        t0_seen_++;
+        if(t0_seen_ == 1) {
+            EUDAQ_INFO("Detected 1st T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+            // Discard this event:
+            return false;
+        } else {
+            // throw exception and interrupt analysis:
+            throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+        }
       }
     }
   }
@@ -171,29 +182,39 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     return false;
   }
 
-  // Check for a sane shutter:
+  // Check for a sane shutter, else T0 during shutter open:
   if(shutter_open > shutter_close) {
     EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
-    return false;
-  }
-
-  // Check if there was a T0:
-  if(!t0_seen_) {
-    // Last shutter open had higher timestamp than this one:
-    t0_seen_ = (last_shutter_open_ > shutter_open);
-    // Log when we have it detector:
-    if(t0_seen_) {
-      EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
-      // Discard this event:
-      return false;
+    t0_seen_++;
+    if(t0_seen_==1) {
+        return false;
+    } else {
+        // throw exception and interrupt analysis:
+        throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
     }
   }
+
+  // Check if there was a T0 between shutters:
+  // Last shutter open had higher timestamp than this one:
+  if (last_shutter_open_ > shutter_open) {
+      t0_seen_++;
+      // Log when we have it detector:
+      if(t0_seen_==1) {
+          EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
+          // Discard this event:
+          return false;
+      } else if (t0_seen_ > 1) {
+          // throw exception and interrupt analysis:
+          throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+      }
+  }
+
   last_shutter_open_ = shutter_open;
 
   // FIXME - hardcoded configuration:
   bool drop_before_t0 = true;
   // No T0 signal seen yet, dropping frame:
-  if(drop_before_t0 && !t0_seen_) {
+  if(drop_before_t0 && t0_seen_==0) {
     return false;
   }
 
