@@ -147,11 +147,9 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   if(drop_before_t0 && (t0_seen_==0)) {
     return false;
   }
-  // drop everything after second t0 has been seen:
+  // throw exception when T0 occurs more than once:
   if(t0_seen_>1) {
-      std::string message = "Detected T0 " + std::to_string(t0_seen_) + " times.";
-      EUDAQ_WARN(message);
-      throw DataInvalid(message);
+      throw DataInvalid("Detected T0 " + std::to_string(t0_seen_) + " times.");
   }
 
   // Decode the data:
