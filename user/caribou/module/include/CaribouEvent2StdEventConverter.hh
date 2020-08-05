@@ -65,7 +65,7 @@ private:
     static uint64_t fpga_ts3_;
     static bool new_ts1_;
     static bool new_ts2_;
-    static bool timestamps_cleared_;
+    static size_t t0_seen_;
   };
 
 } // namespace eudaq
