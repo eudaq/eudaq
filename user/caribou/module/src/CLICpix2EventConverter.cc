@@ -149,8 +149,9 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   }
   // drop everything after second t0 has been seen:
   if(t0_seen_>1) {
-      EUDAQ_WARN("Detected T0 " + std::to_string(t0_seen_) + " times.");
-      return false;
+      std::string message = "Detected T0 " + std::to_string(t0_seen_) + " times.";
+      EUDAQ_WARN(message);
+      throw DataInvalid(message);
   }
 
   // Decode the data:
