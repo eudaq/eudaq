@@ -71,7 +71,7 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   // Set timestamps for StdEvent in nanoseconds (timestamps are picoseconds):
   d2->SetTimeBegin(triggerTime);
   d2->SetTimeEnd(triggerTime);
-  
+
   // Identify the detetor type
   d2->SetDetectorType("SpidrTrigger");
 
@@ -79,7 +79,8 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
 }
 
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
-bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
+uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
+size_t Timepix3RawEvent2StdEventConverter::m_clearedHeader(0);
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
   bool data_found = false;
@@ -129,16 +130,35 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // The data is shifted 16 bits to the right, then 44 to the left in order to match the timestamp format (net 28 left)
         m_syncTime = (m_syncTime & 0x00000FFFFFFFFFFF) + ((pixdata & 0x00000000FFFF0000) << 28);
 
-        if(!m_clearedHeader && (m_syncTime / 4096 / 40) < 6000000) {
-          m_clearedHeader = true;
+        std::cout << "syncTime / syncTime_prev = " << m_syncTime / 4096 / 40 / 1e6 << "s, " << m_syncTime_prev / 4096 / 40 / 1e6 << "s"<< std::endl;
+
+        // if(((m_syncTime / 4096 / 40) < 6000000) && ((m_syncTime_prev / 4096 / 40) > 6000000)) {
+        if(m_clearedHeader==0 && (m_syncTime / 4096 / 40) < 6000000) {
+          EUDAQ_WARN("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()));
+          m_clearedHeader++;
         }
+        // If the current timestamp is more than 20us earlier than the previous timestamp, assume a 2nd T0 has occured.
+        // From SPS data we know that even though pixel timestamps are not perfectly chronological, they are not more
+        // than "inverted by -20us". Take 100us with some safety margin.
+        // This implies we cannot detect a 2nd T0 within the first 100us after the initial T0. But did this ever happen?
+
+        // One more comment: this timestamp is the "heartbeat" and seems to be incremented by ~1sec, it's not the pixel timestamp directly.
+        else if (m_syncTime < m_syncTime_prev - 50 * 4096 * 40) {
+          std::cout << "m_syncTime - m_syncTime_prev: " << (m_syncTime - m_syncTime_prev) / 4096 / 40 << std::endl;
+          m_clearedHeader++;
+        }
+        m_syncTime_prev = m_syncTime;
       }
     }
 
     // Sometimes there is still data left in the buffers at the start of a run. For that reason we keep skipping data until
-    // this "header" data has been cleared, when the heart beat signal starts from a low number (~few seconds max)
-    if(!m_clearedHeader) {
+    // this "header" data has been cleared, when the heart beat signal starts from a low number (~few seconds max).
+    // To detect a possible second T0, we have no better gauge than the same criterion.
+    // However, that's probably okay since this usually happens only after much more than 10 sec or so.
+    if(m_clearedHeader == 0) {
         continue;
+    } else if(m_clearedHeader > 1) {
+        throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()));
     }
 
     // Header 0xA and 0xB indicate pixel data
