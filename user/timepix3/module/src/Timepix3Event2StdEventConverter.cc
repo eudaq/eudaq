@@ -137,9 +137,9 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // From SPS data we know that even though pixel timestamps are not perfectly chronological, they are not more
         // than "mixed up by -20us". At DESY, this is hardly (ever?) the case due to the lower occupancies.
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
-        // a 2nd T0 has occured. Take 100us with some safety margin.
-        // This implies we cannot detect a 2nd T0 within the first 100us after the initial T0. But did this ever happen?
-        } else if (m_syncTime < m_syncTime_prev - (50 * 4096 * 40)) {
+        // a 2nd T0 has occured. Take 500us with some safety margin.
+        // This implies we cannot detect a 2nd T0 within the first 500us after the initial T0. But did this ever happen?
+      } else if (m_syncTime < m_syncTime_prev - (500 * 4096 * 40)) {
           m_clearedHeader++;
         }
         m_syncTime_prev = m_syncTime;
