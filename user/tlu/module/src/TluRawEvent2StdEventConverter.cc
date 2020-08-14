@@ -123,5 +123,8 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   d2->SetTag("FINE_TS3", finets3);
   d2->SetTag("FINE_TS4", finets4);
   d2->SetTag("FINE_TS5", finets5);
+  // if(d1->IsFlagTrigger()) {
+  //     std::cout << "TLU trigger number: " << d1->GetTriggerN() << std::endl;
+  // }
   return true;
 }
