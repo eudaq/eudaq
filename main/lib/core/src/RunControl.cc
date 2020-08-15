@@ -427,7 +427,7 @@ namespace eudaq {
 	EUDAQ_INFO(std::string("Connect:    ") + con->GetName());
 	std::string msg = "OK EUDAQ CMD RunControl " + con->GetRemote();
         m_cmdserver->SendPacket(msg.c_str(), *con, true);
-	m_conn_status[con].reset();
+	m_conn_status[con].reset(new Status());
       } else {
 	EUDAQ_INFO(std::string("Refused connect:    ") + con->GetName());
         m_cmdserver->SendPacket("ERROR EUDAQ CMD Not accepting new connections",
