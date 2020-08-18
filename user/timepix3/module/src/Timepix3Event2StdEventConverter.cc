@@ -71,7 +71,7 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   // Set timestamps for StdEvent in nanoseconds (timestamps are picoseconds):
   d2->SetTimeBegin(triggerTime);
   d2->SetTimeEnd(triggerTime);
-  
+
   // Identify the detetor type
   d2->SetDetectorType("SpidrTrigger");
 
@@ -79,7 +79,8 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
 }
 
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
-bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
+uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
+size_t Timepix3RawEvent2StdEventConverter::m_clearedHeader(0);
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
   bool data_found = false;
@@ -129,16 +130,30 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // The data is shifted 16 bits to the right, then 44 to the left in order to match the timestamp format (net 28 left)
         m_syncTime = (m_syncTime & 0x00000FFFFFFFFFFF) + ((pixdata & 0x00000000FFFF0000) << 28);
 
-        if(!m_clearedHeader && (m_syncTime / 4096 / 40) < 6000000) {
-          m_clearedHeader = true;
+        if(m_clearedHeader==0 && (m_syncTime / 4096 / 40) < 6000000) { // < 6sec
+          EUDAQ_INFO("Detected T0 signal. Header cleared.");
+          m_clearedHeader++;
+
+        // From SPS data we know that even though pixel timestamps are not perfectly chronological, they are not more
+        // than "mixed up by -20us". At DESY, this is hardly (ever?) the case due to the lower occupancies.
+        // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
+        // a 2nd T0 has occured. Take 500us with some safety margin.
+        // This implies we cannot detect a 2nd T0 within the first 500us after the initial T0. But did this ever happen?
+      } else if (m_syncTime < m_syncTime_prev - (500 * 4096 * 40)) {
+          m_clearedHeader++;
         }
+        m_syncTime_prev = m_syncTime;
       }
     }
 
     // Sometimes there is still data left in the buffers at the start of a run. For that reason we keep skipping data until
-    // this "header" data has been cleared, when the heart beat signal starts from a low number (~few seconds max)
-    if(!m_clearedHeader) {
+    // this "header" data has been cleared, when the heart beat signal starts from a low number (~few seconds max).
+    // To detect a possible second T0, we have no better gauge than the same criterion:
+    // Comparing the timestamp to the previous timestamp (see above).
+    if(m_clearedHeader == 0) {
         continue;
+    } else if(m_clearedHeader > 1) {
+        throw DataInvalid("Detected second T0 signal.");
     }
 
     // Header 0xA and 0xB indicate pixel data

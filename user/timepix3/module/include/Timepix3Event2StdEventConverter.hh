@@ -13,7 +13,8 @@ namespace eudaq {
     static const uint32_t m_id_factory = eudaq::cstr2hash("Timepix3RawEvent");
   private:
     static uint64_t m_syncTime;
-    static bool m_clearedHeader;
+    static uint64_t m_syncTime_prev;
+    static size_t m_clearedHeader;
   };
 
   class Timepix3TrigEvent2StdEventConverter: public eudaq::StdEventConverter{
