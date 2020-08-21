@@ -64,6 +64,11 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   if(finets_vec.size() < 2) {
       std::cout << "ERROR: received less than 2 trigger inputs" << std::endl;
       return false;
+
+      // or throw exception:
+      throw eudaq::DataInvalid("Received less than 2 trigger inputs.");
+
+      // or is that even fine to have only one trigger input???
   }
 
   // Now average over all vector elements:
@@ -75,8 +80,12 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       if(abs(finets_avg - finets_vec.at(i)) > 0xF0) {
           finets_avg += 0xFF; // overflow compensation
       }
-      finets_avg += finets_vec.at(i);
-      finets_avg = (finets_avg / 2) & 0xFF;
+      // Need to weight average with previous number of iterations:
+      finets_avg = ((i*finets_avg + finets_vec.at(i)) / (i+1)) & 0xFF;
+
+      // finets_avg += finets_vec.at(i);
+      // finets_avg = (finets_avg / 2) & 0xFF;
+
       // This leads to rounding errors on the 781ps binning level
       // --> Convert to double in nanoseconds?
   }
