@@ -607,7 +607,7 @@ namespace tlu {
   /// Writes to IPBus register to instruct the TLU to start/stop a run.
   //  state= 1 when running, 0 when stopped.
   //  On start, the internal registers are reset and the TLU issues a T0 pulse to DUTs.
-    SetWRegister("Shutter.RunActive", state);
+    SetWRegister("Shutter.RunActiveRW", state);
     std::stringstream ss;
     std::string runState;
 
@@ -1078,6 +1078,15 @@ namespace tlu {
     std::cout << std::hex << "  TRIGGER PATTERN (for external triggers) SET TO 0x" << maskHi << " --- 0x"<< maskLo << " (Two 32-bit words)" << std::dec << std::endl;
     SetWRegister("triggerLogic.TriggerPattern_lowW",  maskLo);
     SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
+  }
+
+  void AidaTluController::SetTriggerPolarity(uint64_t value){
+      // The least 6-bits of this register control which edge is used to generate a trigger ( writing '1' reverses the current behaviour ).
+      // '1' -> trigger on falling edge
+      // '0' -> trigger on rising edge (default in firmware)
+    uint64_t trgPol = (0x3F & value);
+      std::cout << std::hex << "  TRIGGER POLARITY (for external triggers) SET TO 0x" << trgPol << std::dec << std::endl;
+      SetWRegister("triggerInputs.InvertEdgeW", trgPol);
   }
 
   void AidaTluController::SetTriggerVeto(int value, uint8_t verbose){

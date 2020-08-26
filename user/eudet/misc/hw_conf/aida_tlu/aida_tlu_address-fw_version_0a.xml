@@ -66,7 +66,7 @@
   <node id="PulseStretchR" address="0x16" permission="r" description="" />
   <node id="PulseDelayW" address="0x7" permission="w" description="" />
   <node id="PulseDelayR" address="0x17" permission="r" description="" />
-  <node id="TriggerHoldOffW" address="0x8" permission="W" description="" /><!--Wait, this does nothing at the moment...-->
+  <node id="TriggerHoldOffW" address="0x8" permission="w" description="" /><!--Wait, this does nothing at the moment...-->
   <node id="TriggerHoldOffR" address="0x18" permission="r" description="" /><!--Wait, this does nothing at the moment...-->
   <node id="AuxTriggerCountR" address="0x19" permission="r" description="" />
   <node id="TriggerPattern_lowW" address="0xA" permission="w" description="" />
