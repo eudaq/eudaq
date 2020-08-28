@@ -143,7 +143,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
             return false;
         } else {
             // throw exception and interrupt analysis:
-            throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+            throw DataInvalid("CLICTD: Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
         }
       }
     } else {

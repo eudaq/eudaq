@@ -131,7 +131,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         m_syncTime = (m_syncTime & 0x00000FFFFFFFFFFF) + ((pixdata & 0x00000000FFFF0000) << 28);
 
         if(m_clearedHeader==0 && (m_syncTime / 4096 / 40) < 6000000) { // < 6sec
-          EUDAQ_INFO("Detected T0 signal. Header cleared.");
+          EUDAQ_INFO("Timepix3: Detected T0 signal. Header cleared.");
           m_clearedHeader++;
 
         // From SPS data we know that even though pixel timestamps are not perfectly chronological, they are not more
