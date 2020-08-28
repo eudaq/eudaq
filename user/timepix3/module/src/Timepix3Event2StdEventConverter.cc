@@ -153,7 +153,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
     if(m_clearedHeader == 0) {
         continue;
     } else if(m_clearedHeader > 1) {
-        throw DataInvalid("Detected second T0 signal.");
+        throw DataInvalid("Timepix3: Detected second T0 signal.");
     }
 
     // Header 0xA and 0xB indicate pixel data

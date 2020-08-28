@@ -138,7 +138,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
         t0_is_high_ = false;
 
         if(t0_seen_ == 1) {
-            EUDAQ_INFO("Detected 1st T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+            EUDAQ_INFO("CLIDTD: Detected 1st T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
             // Discard this event:
             return false;
         } else {
