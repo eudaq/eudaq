@@ -61,15 +61,6 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   if ((triggersFired >> 5) & 0x1) {
       finets_vec.emplace_back(finets5 & 0xFF);
   }
-  if(finets_vec.size() < 2) {
-      std::cout << "ERROR: received less than 2 trigger inputs" << std::endl;
-      return false;
-
-      // or throw exception:
-      throw eudaq::DataInvalid("Received less than 2 trigger inputs.");
-
-      // or is that even fine to have only one trigger input???
-  }
 
   // Now average over all vector elements:
   // Initialize to 0th vector element:
