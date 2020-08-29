@@ -218,6 +218,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
           EUDAQ_WARN("CLICTD: Detected 2nd T0 signal indirectly: shutter_open ("
             + to_string(shutter_open) + "ns) earlier than previous shutter_open ("
             + to_string(last_shutter_open_) + "ns), time difference: " + to_string(last_shutter_open_ - shutter_open) + "ns");
+          last_shutter_open_ = shutter_open;
           return false;
       }
   }
