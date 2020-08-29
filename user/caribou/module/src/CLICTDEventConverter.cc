@@ -170,10 +170,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
             return false;
         } else {
             // throw exception and interrupt analysis:
-            // throw DataInvalid("CLICTD: Detected 2nd T0 signal directly: T0 flag at " + to_string(time) + "ns");
-
-            EUDAQ_WARN("CLICTD: Detected 2nd T0 signal directly: T0 flag at " + to_string(time) + "ns");
-            return false;
+            throw DataInvalid("CLICTD: Detected 2nd T0 signal directly: T0 flag at " + to_string(time) + "ns");
         }
       }
     }
@@ -211,14 +208,9 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
           return false;
       } else if (t0_seen_ > 1) {
           // throw exception and interrupt analysis:
-          // throw DataInvalid("CLICTD: Detected 2nd T0 signal indirectly: shutter_open ("
-          //   + to_string(shutter_open) + "ns) earlier than previous shutter_open ("
-          //   + to_string(last_shutter_open_) + "ns), time difference: " + to_string(last_shutter_open_ - shutter_open) + "ns");
-
-          EUDAQ_WARN("CLICTD: Detected 2nd T0 signal indirectly: shutter_open ("
+          throw DataInvalid("CLICTD: Detected 2nd T0 signal indirectly: shutter_open ("
             + to_string(shutter_open) + "ns) earlier than previous shutter_open ("
             + to_string(last_shutter_open_) + "ns), time difference: " + to_string(last_shutter_open_ - shutter_open) + "ns");
-          return false;
       }
   }
 
