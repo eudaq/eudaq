@@ -73,7 +73,6 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
   d2->SetTimeEnd(triggerTime);
 
   // Identify the detetor type
-  // std::cout << "Found SpidrTrigger at timestamp = " << std::setprecision(9) << triggerTime/1e12 << "s" << std::endl;
   d2->SetDetectorType("SpidrTrigger");
 
   return true;
@@ -130,8 +129,6 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       if(header2 == 0x5) {
         // The data is shifted 16 bits to the right, then 44 to the left in order to match the timestamp format (net 28 left)
         m_syncTime = (m_syncTime & 0x00000FFFFFFFFFFF) + ((pixdata & 0x00000000FFFF0000) << 28);
-
-        // std::cout << "m_syncTime = " << m_syncTime/4096/40/1e6 << ", m_syncTime_prev = " << m_syncTime_prev/4096/40/1e6 << std::endl;
 
         if(m_clearedHeader==0 && (m_syncTime / 4096 / 40) < 6000000) { // < 6sec
           EUDAQ_INFO("Detected T0 signal. Header cleared.");
@@ -210,7 +207,6 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   d2->SetTimeEnd(event_end);
 
   // Identify the detetor type
-  // std::cout << "Timepix3 data at timestamp " << std::setprecision(9) << event_begin/1e12 << "s" << std::endl;
   d2->SetDetectorType("Timepix3");
 
   return data_found;
