@@ -1,6 +1,5 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
-#include <bitset>
 
 class TluRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
@@ -31,9 +30,6 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   auto triggersFired = std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
-  auto nTriggerInputs = __builtin_popcount(triggersFired & 0x3F); // count "ones" in binary
-  // Note: __builtin_popcount counts the "ones" in a binary, see here:
-  // https://www.geeksforgeeks.org/count-set-bits-in-an-integer/
   auto finets0 = std::stoi(d1->GetTag("FINE_TS0", "0"));
   auto finets1 = std::stoi(d1->GetTag("FINE_TS1", "0"));
   auto finets2 = std::stoi(d1->GetTag("FINE_TS2", "0"));
