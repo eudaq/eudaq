@@ -165,12 +165,12 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       if((triggers & 0x1) && !(signals & 0x1)) {
         t0_seen_++;
         if(t0_seen_ == 1) {
-            EUDAQ_INFO("Detected 1st T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+            EUDAQ_INFO("Detected 1st T0 signal directly: T0 flag at " + to_string(time) + "ns");
             // Discard this event:
             return false;
         } else {
             // throw exception and interrupt analysis:
-            throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+            throw DataInvalid("Detected 2nd T0 signal directly: T0 flag at " + to_string(time) + "ns");
         }
       }
     }
@@ -187,10 +187,11 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
     t0_seen_++;
     if(t0_seen_==1) {
+        EUDAQ_INFO("Detected 1st T0 signal indirectly: shutter_close earlier than shutter_open in event " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
         return false;
     } else {
         // throw exception and interrupt analysis:
-        throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+        throw DataInvalid("Detected 2nd T0 signal indirectly: shutter_close earlier than shutter_open in event " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
     }
   }
 
@@ -200,12 +201,12 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       t0_seen_++;
       // Log when we have it detector:
       if(t0_seen_==1) {
-          EUDAQ_INFO("Detected T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
+          EUDAQ_INFO("Detected 1st T0 signal indirectly: shutter_open earlier than previous shutter_open in event " + std::to_string(ev->GetEventNumber()) + " (ts jump)");
           // Discard this event:
           return false;
       } else if (t0_seen_ > 1) {
           // throw exception and interrupt analysis:
-          throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+          throw DataInvalid("Detected 2nd T0 signal indirectly: shutter_open earlier than previous shutter_open in event " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
       }
   }
 
