@@ -15,6 +15,7 @@ namespace eudaq {
     static uint64_t m_syncTime;
     static uint64_t m_syncTime_prev;
     static size_t m_clearedHeader;
+    static bool m_first_time;     // How to avoid this with an Initialize() function?
   };
 
   class Timepix3TrigEvent2StdEventConverter: public eudaq::StdEventConverter{
