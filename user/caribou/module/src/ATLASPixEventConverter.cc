@@ -23,7 +23,7 @@ uint64_t ATLASPixEvent2StdEventConverter::fpga_ts2_(0);
 uint64_t ATLASPixEvent2StdEventConverter::fpga_ts3_(0);
 bool ATLASPixEvent2StdEventConverter::new_ts1_(false);
 bool ATLASPixEvent2StdEventConverter::new_ts2_(false);
-bool ATLASPixEvent2StdEventConverter::timestamps_cleared_(false);
+size_t ATLASPixEvent2StdEventConverter::t0_seen_(0);
 
 bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
@@ -45,9 +45,12 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Check if current word is a pixel data:
   if(datain & 0x80000000) {
     // Do not return and decode pixel data before T0 arrived
-    if(!timestamps_cleared_) {
+    if(t0_seen_ == 0) {
       return false;
-    }
+  } else if (t0_seen_ > 1) {
+      // throw exception and interrupt analysis:
+      throw DataInvalid("Detected 2nd T0 signal in event: " + std::to_string(ev->GetEventNumber()) + " (ts signal)");
+  }
     // Structure: {1'b1, column_addr[5:0], row_addr[8:0], rise_timestamp[9:0], fall_timestamp[5:0]}
     // Extract pixel data
     long ts2 = gray_decode((datain)&0x003F);
@@ -164,7 +167,7 @@ bool ATLASPixEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       fpga_ts1_ = 0;
       fpga_ts2_ = 0;
       fpga_ts3_ = 0;
-      timestamps_cleared_ = true;
+      t0_seen_++;
     } else if(message_type == 0b00000000) {
 
       // Empty data - should not happen

@@ -34,7 +34,7 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouCLICTDEvent");
   private:
-    static bool t0_seen_;
+    static size_t t0_seen_;
     static bool t0_is_high_;
     static uint64_t last_shutter_open_;
   };
@@ -65,7 +65,7 @@ private:
     static uint64_t fpga_ts3_;
     static bool new_ts1_;
     static bool new_ts2_;
-    static bool timestamps_cleared_;
+    static size_t t0_seen_;
   };
 
 } // namespace eudaq

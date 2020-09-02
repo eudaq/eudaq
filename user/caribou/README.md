@@ -28,6 +28,9 @@ The producer interfaces the Peary device manager to add devices and to control t
 
     Both keys need to be set, of one or the other is missing, no change of configuration is attempted.
 
+    The producer itself reads the value `number_of_subevents` which allows buffering. If set to a value larger than zero, events are first buffered and upon reaching the desired buffer depth, they are collectively sent as sub-events of a Caribou event of the same type.
+    A value of, for example, `number_of_subevents = 100` would therefore result in one event being sent to the DataCollector every 100 events read from the device. This event would contain 100 sub-events with the individual data blocks. This is completely transparent to data analysis performed in Corryvreckan using the EventLoaderEUDAQ2 and can be used to reduce the number of packets sent via the network.
+
 * **DAQ Start / Stop**: During DAQ start and stop, the corresponding Peary device functions `daqStart()` and `daqStop()` are called.
 
 Since the Peary device libraries are not thread-safe, all access to Peary libraries is guarded using C++11 `std::lock_guard` with a central class-member mutex to avoid concurrent device access. The Peary device manager itself ensures that no two instances are executed on the same hardware. This means, only one EUDAQ2 producer can be run on each Caribou board.

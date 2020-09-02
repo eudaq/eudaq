@@ -34,6 +34,8 @@ private:
   LogLevel level_;
   bool m_exit_of_run;
 
+  size_t number_of_subevents_{0};
+
   std::string adc_signal_;
 };
 
@@ -137,6 +139,10 @@ void CaribouProducer::DoConfigure() {
     auto adc_value = device_->getADC(adc_signal_);
   }
 
+  // Allow to stack multiple sub-events
+  number_of_subevents_ = config->Get("number_of_subevents", 0);
+  EUDAQ_USER("Will stack " + std::to_string(number_of_subevents_) + " subevents before sending event");
+
   LOG(STATUS) << "CaribouProducer configured. Ready to start run.";
 }
 
@@ -191,10 +197,11 @@ void CaribouProducer::RunLoop() {
   LOG(INFO) << "Starting run loop...";
   std::lock_guard<std::mutex> lock{device_mutex_};
 
+  std::vector<eudaq::EventSPC> data_buffer;
   while(!m_exit_of_run) {
     try {
       // Retrieve data from the device:
-      std::vector<uint32_t> data = device_->getRawData();
+      auto data = device_->getRawData();
 
       if(!data.empty()) {
         // Create new event
@@ -213,12 +220,27 @@ void CaribouProducer::RunLoop() {
           }
         }
 
-        // Send the event to the Data Collector
-        SendEvent(std::move(event));
+        if(number_of_subevents_ == 0) {
+          // We do not want to generate sub-events - send the event directly off to the Data Collector
+          SendEvent(std::move(event));
+        } else {
+          // We are still buffering sub-events, buffer not filled yet:
+          data_buffer.push_back(std::move(event));
+        }
       }
 
       // Now increment the event number
       m_ev++;
+
+      // Buffer of sub-events is full, let's ship this off to the Data Collector
+      if(!data_buffer.empty() && data_buffer.size() == number_of_subevents_) {
+        auto evup = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+        for(auto& subevt : data_buffer) {
+          evup->AddSubEvent(subevt);
+        }
+        SendEvent(std::move(evup));
+        data_buffer.clear();
+      }
 
       LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev;
     } catch(caribou::NoDataAvailable&) {
@@ -231,6 +253,17 @@ void CaribouProducer::RunLoop() {
       EUDAQ_ERROR(e.what());
       break;
     }
+  }
+
+  // Send remaining pixel data:
+  if(!data_buffer.empty()) {
+    LOG(INFO) << "Sending remaining " << data_buffer.size() << " events from data buffer";
+    auto evup = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+    for(auto& subevt : data_buffer) {
+      evup->AddSubEvent(subevt);
+    }
+    SendEvent(std::move(evup));
+    data_buffer.clear();
   }
 
   LOG(INFO) << "Exiting run loop.";
