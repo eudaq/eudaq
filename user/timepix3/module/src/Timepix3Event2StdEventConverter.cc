@@ -262,8 +262,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
          * using testpulses. Multiplying the voltage value with 20 [e-/mV] is a good approximation but means one is
          * over estimating the input capacitance to compensate the missing information of the offset. */
 
-        uint64_t t_shift = (toa_c / (fvolts - toa_t) + toa_d) * 1000; // convert to ps // was float
-        const uint64_t ftimestamp = timestamp - t_shift; // uint64_t - float?! // was float
+        uint64_t t_shift = (toa_c / (fvolts - toa_t) + toa_d) * 1000; // convert to ps
+        const uint64_t ftimestamp = timestamp - t_shift;
         EUDAQ_DEBUG("Time shift = " + to_string(t_shift) + "ps");
         EUDAQ_DEBUG("Timestamp calibrated = " + to_string(ftimestamp) + "ps");
 
