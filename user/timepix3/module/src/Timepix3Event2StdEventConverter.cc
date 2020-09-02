@@ -274,8 +274,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         event_begin = (ftimestamp < event_begin) ? ftimestamp : event_begin;
         event_end = (ftimestamp > event_end) ? ftimestamp : event_end;
 
-        // push new pixel object with non-calibrated values of tot and toa
-        plane.PushPixel(col, row, fcharge, ftimestamp); // <-- or also ToT? Can EUDAQ2 handle charge?
+        // push new pixel object with calibrated values of tot and toa
+        plane.PushPixel(col, row, fcharge, ftimestamp);
       } else {
         // Set event start/stop:
         event_begin = (timestamp < event_begin) ? timestamp : event_begin;
