@@ -1,9 +1,10 @@
 # Timepix3 Module for EUDAQ2
 
-This module allows to integrate Timepix3 sensors running with the SPIDR readout system into the EUDAQ2 eco system.
+This module allows to integrate a Timepix3 sensor running with the SPIDR readout system into the EUDAQ2 eco system.
+In addition, the fast ADC input on the SPIDR board can be used as a SPIDRTrigger auxiliary device.
 
 Currently, this producer is in early development stage and has only been tested in the AIDA mode, i.e. receiving a global clock and a T0 signal at beginning of the run.
-The producer interfaces the SPIDR device manager to add devices and to control them. The following actions are performed in the different FSM stages:
+The producer interfaces the SPIDR DAQ software via a `SpidrController` to control the Timepix3. The following actions are performed in the different FSM stages:
 
 * **Initialisation**: The device to be instantiated is taken from the name of the producer (added with `-t <name>` on the command line). This means, the following command
 
@@ -11,9 +12,9 @@ The producer interfaces the SPIDR device manager to add devices and to control t
     $ euCliProducer -n Timepix3Producer -t Timepix3 -r <tcp>
     ```
 
-    will ask SPIDR to instantiate a Timepix3 device. Device names are case sensitive and have to be available in the linked SPIDR installation.
+    will ask the `SpidrController` to establish a network connection, retrieve software and firmware versions, and determines the number of connected devices.
 
-* **Configuration**: During configuration, the device is powered using SPIDR's `powerOn()` command. After this, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the `configure()` command of the SPIDR device interface is called.
+* **Configuration**: Before configuration of the device, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the device is configured.
 
 * **DAQ Start / Stop**: During DAQ start and stop, the corresponding SPIDR device functions are called.
 
@@ -26,8 +27,8 @@ Since the SPIDR device libraries are not thread-safe, all access to SPIDR librar
 
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
-* `delta_t_t0`: Integer in nanoseconds to determine the criterion for the indirect T0 detection. If the Timepix3 timestamps jump back by more than this value, a 2nd T0 is assumed to have been recorded. The value needs to be passed without units, but a syntax such as `1e3` is supported. Defaults to `1e6`.
+* `delta_t_t0`: Integer in microseconds as the criterion for the indirect T0 detection. If the Timepix3 timestamps jump back by more than this value, a 2nd T0 is assumed to have been recorded. The value needs to be passed as an integer without units, but a syntax such as `1e3` is supported. Defaults to `1e6` (corresponding to 1s).
 
 ### Timepix3TrigEvent2StdEventConverter
 
-The following parameters can be passed...
+No parameters.
