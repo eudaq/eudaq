@@ -85,9 +85,9 @@ bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
   // Time difference as criterion for indirect T0 detection (time to previous hit) in MICRO-seconds:
-  uint64_t delta_t_t0 = conf->Get("delta_t_t0", 1e6); // default: 1sec
+  uint64_t delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
   if(m_first_time){
-      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t_t0) + "ns.");
+      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "ns.");
       m_first_time = false;
   }
 
@@ -146,8 +146,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // than "mixed up by -20us". At DESY, this is hardly (ever?) the case due to the lower occupancies.
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
         // a 2nd T0 has occured.
-        // This implies we cannot detect a 2nd T0 within the first "delta_t_t0" microseconds after the initial T0.
-      } else if (m_syncTime < m_syncTime_prev - (delta_t_t0 * 4096 * 40)) {
+        // This implies we cannot detect a 2nd T0 within the first "delta_t0" microseconds after the initial T0.
+      } else if (m_syncTime < m_syncTime_prev - (delta_t0 * 4096 * 40)) {
           m_clearedHeader++;
         }
         m_syncTime_prev = m_syncTime;
