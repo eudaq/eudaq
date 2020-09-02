@@ -17,7 +17,7 @@ namespace eudaq {
     static size_t m_clearedHeader;
 
     // configuration parameters:
-    static bool first_time;     // How to avoid this with an Initialize() function?
+    static bool m_first_time;
     static bool applyCalibration;
     static std::string calibrateDetector;
     static std::string calibrationPath;

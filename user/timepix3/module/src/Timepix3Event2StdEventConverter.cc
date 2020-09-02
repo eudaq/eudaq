@@ -82,8 +82,8 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
 size_t Timepix3RawEvent2StdEventConverter::m_clearedHeader(0);
+bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
 bool Timepix3RawEvent2StdEventConverter::applyCalibration(false);
-bool Timepix3RawEvent2StdEventConverter::first_time(true);
 std::string Timepix3RawEvent2StdEventConverter::calibrateDetector("");
 std::string Timepix3RawEvent2StdEventConverter::calibrationPath("");
 std::string Timepix3RawEvent2StdEventConverter::threshold("");
@@ -93,7 +93,7 @@ std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
   // Read from configuration:
-  if(first_time) {
+  if(m_first_time) {
       if(conf->Has("calibrate_detector") && conf->Has("calibration_path") && conf->Has("threshold")) {
           calibrateDetector = conf->Get("calibrate_detector","");
           calibrationPath = conf->Get("calibration_path","");
@@ -126,7 +126,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
             EUDAQ_INFO("No calibration file path or no DUT name given; data will be uncalibrated.");
             applyCalibration = false;
         }
-        first_time = false;
+        m_first_time = false;
     }
 
   bool data_found = false;
