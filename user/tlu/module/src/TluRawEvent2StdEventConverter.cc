@@ -29,13 +29,30 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     d2->SetTag(TLU+stm+"_TRG", std::to_string(d1->GetTriggerN()));
   }
 
-  auto triggersFired = std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
-  auto finets0 = std::stoi(d1->GetTag("FINE_TS0", "0"));
-  auto finets1 = std::stoi(d1->GetTag("FINE_TS1", "0"));
-  auto finets2 = std::stoi(d1->GetTag("FINE_TS2", "0"));
-  auto finets3 = std::stoi(d1->GetTag("FINE_TS3", "0"));
-  auto finets4 = std::stoi(d1->GetTag("FINE_TS4", "0"));
-  auto finets5 = std::stoi(d1->GetTag("FINE_TS5", "0"));
+  uint8_t triggersFired;
+  uint32_t finets0;
+  uint32_t finets1;
+  uint32_t finets2;
+  uint32_t finets3;
+  uint32_t finets4;
+  uint32_t finets5;
+  try {
+    triggersFired = 0x3F & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
+  } catch (...) {
+    EUDAQ_WARN("Event flag TRIGGER cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
+    return false;
+  }
+  try {
+    finets0 = std::stoi(d1->GetTag("FINE_TS0", "0"));
+    finets1 = std::stoi(d1->GetTag("FINE_TS1", "0"));
+    finets2 = std::stoi(d1->GetTag("FINE_TS2", "0"));
+    finets3 = std::stoi(d1->GetTag("FINE_TS3", "0"));
+    finets4 = std::stoi(d1->GetTag("FINE_TS4", "0"));
+    finets5 = std::stoi(d1->GetTag("FINE_TS5", "0"));
+} catch (...) {
+    EUDAQ_WARN("Event flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
+    return false;
+}
 
   // add all valid trigger to vector:
   std::vector<uint8_t> finets_vec;
