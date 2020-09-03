@@ -91,9 +91,12 @@ std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-
+  uint64_t delta_t0 = 1e6; // default: 1sec
   // Read from configuration:
   if(m_first_time) {
+      delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
+      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "ns.");
+      m_first_time = false;
       if(conf->Has("calibrate_detector") && conf->Has("calibration_path") && conf->Has("threshold")) {
           calibrateDetector = conf->Get("calibrate_detector","");
           calibrationPath = conf->Get("calibration_path","");
@@ -126,7 +129,6 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
             EUDAQ_INFO("No calibration file path or no DUT name given; data will be uncalibrated.");
             applyCalibration = false;
         }
-        m_first_time = false;
     }
 
   bool data_found = false;
@@ -183,9 +185,9 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // From SPS data we know that even though pixel timestamps are not perfectly chronological, they are not more
         // than "mixed up by -20us". At DESY, this is hardly (ever?) the case due to the lower occupancies.
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
-        // a 2nd T0 has occured. Take 500us with some safety margin.
-        // This implies we cannot detect a 2nd T0 within the first 500us after the initial T0. But did this ever happen?
-      } else if (m_syncTime < m_syncTime_prev - (1e6 * 4096 * 40)) {
+        // a 2nd T0 has occured.
+        // This implies we cannot detect a 2nd T0 within the first "delta_t0" microseconds after the initial T0.
+      } else if (m_syncTime < m_syncTime_prev - (delta_t0 * 4096 * 40)) {
           m_clearedHeader++;
         }
         m_syncTime_prev = m_syncTime;
