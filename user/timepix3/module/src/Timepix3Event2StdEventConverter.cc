@@ -307,8 +307,7 @@ void Timepix3RawEvent2StdEventConverter::loadCalibration(std::string path, char 
 
     // check if file is open
     if(!f.is_open()) {
-        EUDAQ_WARN("Cannot open input file:\n\t" + path);
-        // throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
+        throw DataInvalid("Cannot open calibration file:\n\t" + path);
         return;
     }
 
@@ -334,8 +333,7 @@ void Timepix3RawEvent2StdEventConverter::loadCalibration(std::string path, char 
 
     // warn if too few entries
     if(dat.size() != 256 * 256) {
-        EUDAQ_WARN("Something went wrong. Found only " + to_string(i) + " entries. Not enough for TPX3.\n\t");
-        // throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
+        throw DataInvalid("Something went wrong. Found only " + to_string(i) + " entries. Not enough for TPX3.\n\t");
     }
 
     f.close();
