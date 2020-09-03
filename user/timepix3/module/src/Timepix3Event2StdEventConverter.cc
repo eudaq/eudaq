@@ -87,10 +87,9 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   // Time difference as criterion for indirect T0 detection (time to previous hit) in MICRO-seconds:
   uint64_t delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
   if(m_first_time){
-      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "ns.");
+      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "us.");
       m_first_time = false;
   }
-
   bool data_found = false;
 
   // No event
@@ -147,7 +146,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
         // a 2nd T0 has occured.
         // This implies we cannot detect a 2nd T0 within the first "delta_t0" microseconds after the initial T0.
-      } else if (m_syncTime < m_syncTime_prev - (delta_t0 * 4096 * 40)) {
+    } else if (m_syncTime < m_syncTime_prev - 0xFFFFFFFFFFFFFFFF & (delta_t0 * 4096 * 40)) { // mask to avoid wrap-around of uint64_t
           m_clearedHeader++;
         }
         m_syncTime_prev = m_syncTime;
