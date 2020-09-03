@@ -19,9 +19,8 @@ namespace eudaq {
     // configuration parameters:
     static bool m_first_time;
     static bool applyCalibration;
-    static std::string calibrateDetector;
-    static std::string calibrationPath;
-    static std::string threshold;
+    static std::string calibrationPathToT;
+    static std::string calibrationPathToA;
     static std::vector<std::vector<float>> vtot;
     static std::vector<std::vector<float>> vtoa;
 

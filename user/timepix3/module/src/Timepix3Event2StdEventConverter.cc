@@ -84,9 +84,8 @@ uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
 size_t Timepix3RawEvent2StdEventConverter::m_clearedHeader(0);
 bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
 bool Timepix3RawEvent2StdEventConverter::applyCalibration(false);
-std::string Timepix3RawEvent2StdEventConverter::calibrateDetector("");
-std::string Timepix3RawEvent2StdEventConverter::calibrationPath("");
-std::string Timepix3RawEvent2StdEventConverter::threshold("");
+std::string Timepix3RawEvent2StdEventConverter::calibrationPathToT("");
+std::string Timepix3RawEvent2StdEventConverter::calibrationPathToA("");
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 
@@ -97,19 +96,17 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
       EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "ns.");
       m_first_time = false;
-      if(conf->Has("calibrate_detector") && conf->Has("calibration_path") && conf->Has("threshold")) {
-          calibrateDetector = conf->Get("calibrate_detector","");
-          calibrationPath = conf->Get("calibration_path","");
-          threshold = conf->Get("threshold","");
-          applyCalibration = true;
-          EUDAQ_INFO("Applying calibration from " + calibrationPath + " for detector " + calibrateDetector);
 
-          // make paths to calibration files and read
-            std::string tmp;
-            tmp = calibrationPath + "/" + calibrateDetector + "/cal_thr_" + threshold + "_ik_10/" + calibrateDetector + "_cal_tot.txt";
-            loadCalibration(tmp, ' ', vtot);
-            tmp = calibrationPath + "/" + calibrateDetector + "/cal_thr_" + threshold + "_ik_10/" + calibrateDetector + "_cal_toa.txt";
-            loadCalibration(tmp, ' ', vtoa);
+      if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
+          calibrationPathToT = conf->Get("calibration_path_tot","");
+          calibrationPathToA = conf->Get("calibration_path_toa","");
+          applyCalibration = true;
+          EUDAQ_INFO("Applying ToT calibration from " + calibrationPathToT);
+          EUDAQ_INFO("Applying ToA calibration from " + calibrationPathToA);
+
+          std::string tmp;
+          loadCalibration(calibrationPathToT, ' ', vtot);
+          loadCalibration(calibrationPathToA, ' ', vtoa);
 
             for(size_t row = 0; row < 256; row++) {
                 for(size_t col = 0; col < 256; col++) {
