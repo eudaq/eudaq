@@ -184,7 +184,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
         // a 2nd T0 has occured.
         // This implies we cannot detect a 2nd T0 within the first "delta_t0" microseconds after the initial T0.
-      } else if (m_syncTime < m_syncTime_prev - (delta_t0 * 4096 * 40)) {
+    } else if (m_syncTime < m_syncTime_prev - 0xFFFFFFFFFFFFFFFF & (delta_t0 * 4096 * 40)) { // mask to avoid wrap-around of uint64_t
           m_clearedHeader++;
         }
         m_syncTime_prev = m_syncTime;
