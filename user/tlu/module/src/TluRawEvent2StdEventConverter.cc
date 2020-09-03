@@ -39,7 +39,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   try {
     triggersFired = 0x3F & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
   } catch (...) {
-    EUDAQ_WARN("Event flag TRIGGER cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
+    EUDAQ_WARN("EUDAQ2 RawEvent flag TRIGGER cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
     return false;
   }
   try {
@@ -50,7 +50,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     finets4 = std::stoi(d1->GetTag("FINE_TS4", "0"));
     finets5 = std::stoi(d1->GetTag("FINE_TS5", "0"));
 } catch (...) {
-    EUDAQ_WARN("Event flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
+    EUDAQ_WARN("EUDAQ2 RawEvent flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
     return false;
 }
 
