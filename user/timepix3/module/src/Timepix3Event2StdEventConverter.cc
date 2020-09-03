@@ -237,7 +237,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       // Apply calibration if applyCalibration is true
       // (copied over from Corryvreckan EventLoaderTimepix3)
       if(applyCalibration) {
-        // LOG(DEBUG) << "Applying calibration to DUT";
+        // EUDAQ_DEBUG()"Applying calibration to DUT"); // cannot change verbosity in Corryvreckan
         size_t scol = static_cast<size_t>(col);
         size_t srow = static_cast<size_t>(row);
         float a = vtot.at(256 * srow + scol).at(2);
@@ -263,8 +263,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
 
         uint64_t t_shift = (toa_c / (fvolts - toa_t) + toa_d) * 1000; // convert to ps
         const uint64_t ftimestamp = timestamp - t_shift;
-        EUDAQ_DEBUG("Time shift = " + to_string(t_shift) + "ps");
-        EUDAQ_DEBUG("Timestamp calibrated = " + to_string(ftimestamp) + "ps");
+        // EUDAQ_DEBUG("Time shift = " + to_string(t_shift) + "ps"); // cannot change verbosity in Corryvreckan
+        // EUDAQ_DEBUG("Timestamp calibrated = " + to_string(ftimestamp) + "ps"); // cannot change verbosity in Corryvreckan
 
         if(col >= 256 || row >= 256) {
             EUDAQ_WARN("Pixel address " + std::to_string(col) + ", " + std::to_string(row) + " is outside of pixel matrix.");
