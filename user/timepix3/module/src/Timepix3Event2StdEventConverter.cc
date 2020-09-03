@@ -139,8 +139,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
         // a 2nd T0 has occured. Take 500us with some safety margin.
         // This implies we cannot detect a 2nd T0 within the first 500us after the initial T0. But did this ever happen?
-      // } else if (m_syncTime < m_syncTime_prev - (500 * 4096 * 40)) {
-      } else if (m_syncTime < m_syncTime_prev - (1e6 * 4096 * 40)) { // 1 sec
+      } else if (m_syncTime < m_syncTime_prev - (1e6 * 4096 * 40)) {
           m_clearedHeader++;
         }
         m_syncTime_prev = m_syncTime;
