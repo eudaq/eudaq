@@ -15,6 +15,17 @@ namespace eudaq {
     static uint64_t m_syncTime;
     static uint64_t m_syncTime_prev;
     static size_t m_clearedHeader;
+
+    // configuration parameters:
+    static bool m_first_time;
+    static bool applyCalibration;
+    static std::string calibrateDetector;
+    static std::string calibrationPath;
+    static std::string threshold;
+    static std::vector<std::vector<float>> vtot;
+    static std::vector<std::vector<float>> vtoa;
+
+    void loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat) const;
   };
 
   class Timepix3TrigEvent2StdEventConverter: public eudaq::StdEventConverter{
