@@ -1,5 +1,6 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
+#include <cmath> // for round()
 
 class TluRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
@@ -36,6 +37,15 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   uint32_t finets3;
   uint32_t finets4;
   uint32_t finets5;
+
+  // Should I read these in at m_first_time and store in static member variable or read in each time?
+  double tof_scint0 = conf->Get("tof_scint0", 1.); // in nanoseconds
+  double tof_scint1 = conf->Get("tof_scint1", 1.); // in nanoseconds
+  double tof_scint2 = conf->Get("tof_scint2", 1.); // in nanoseconds
+  double tof_scint3 = conf->Get("tof_scint3", 1.); // in nanoseconds
+  double tof_scint4 = conf->Get("tof_scint4", 1.); // in nanoseconds
+  double tof_scint5 = conf->Get("tof_scint5", 1.); // in nanoseconds
+  // EUDAQ_WARN("Using finets0_tof = " + std::to_string(tof_scint0));
   try {
     triggersFired = 0x3F & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
   } catch (...) {
@@ -43,12 +53,12 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     return false;
   }
   try {
-    finets0 = std::stoi(d1->GetTag("FINE_TS0", "0"));
-    finets1 = std::stoi(d1->GetTag("FINE_TS1", "0"));
-    finets2 = std::stoi(d1->GetTag("FINE_TS2", "0"));
-    finets3 = std::stoi(d1->GetTag("FINE_TS3", "0"));
-    finets4 = std::stoi(d1->GetTag("FINE_TS4", "0"));
-    finets5 = std::stoi(d1->GetTag("FINE_TS5", "0"));
+    finets0 = std::stoi(d1->GetTag("FINE_TS0", "0")) + static_cast<uint32_t>(round(tof_scint0 / 0.78125)); // convert into 781.25ps bins and round
+    finets1 = std::stoi(d1->GetTag("FINE_TS1", "0")) + static_cast<uint32_t>(round(tof_scint1 / 0.78125)); // convert into 781.25ps bins and round
+    finets2 = std::stoi(d1->GetTag("FINE_TS2", "0")) + static_cast<uint32_t>(round(tof_scint2 / 0.78125)); // convert into 781.25ps bins and round
+    finets3 = std::stoi(d1->GetTag("FINE_TS3", "0")) + static_cast<uint32_t>(round(tof_scint3 / 0.78125)); // convert into 781.25ps bins and round
+    finets4 = std::stoi(d1->GetTag("FINE_TS4", "0")) + static_cast<uint32_t>(round(tof_scint4 / 0.78125)); // convert into 781.25ps bins and round
+    finets5 = std::stoi(d1->GetTag("FINE_TS5", "0")) + static_cast<uint32_t>(round(tof_scint5 / 0.78125)); // convert into 781.25ps bins and round
 } catch (...) {
     EUDAQ_WARN("EUDAQ2 RawEvent flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
     return false;
@@ -105,6 +115,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   //     // finets_avg = (finets_avg + 128) & 0xFF;
   //     finets1 += 0xFF;
   // }
+  // finets_avg = 0xFF & ((finets0 + finets1) / 2);
   // uint8_t finets_avg = 0xFF & ((finets0 + finets1) / 2);
 
   auto coarse_ts = static_cast<uint64_t>(d1->GetTimestampBegin() / 25);
