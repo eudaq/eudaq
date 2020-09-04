@@ -1,5 +1,5 @@
 #include "Timepix3Event2StdEventConverter.hh"
-#include <math.h> // for sqrt()
+#include <cmath> // for sqrt()
 
 using namespace eudaq;
 
