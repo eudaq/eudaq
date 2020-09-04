@@ -1,4 +1,5 @@
 #include "Timepix3Event2StdEventConverter.hh"
+#include <cmath> // for sqrt()
 
 using namespace eudaq;
 
@@ -82,14 +83,46 @@ uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
 bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
 bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
-bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
+std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
+std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 
-  // Time difference as criterion for indirect T0 detection (time to previous hit) in MICRO-seconds:
-  uint64_t delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
-  if(m_first_time){
-      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "us.");
+bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
+  uint64_t delta_t0 = 1e6; // default: 1sec
+  // Read from configuration:
+  if(m_first_time) {
+      delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
+      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "ns.");
       m_first_time = false;
-  }
+
+      if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
+          std::string calibrationPathToT = conf->Get("calibration_path_tot","");
+          std::string calibrationPathToA = conf->Get("calibration_path_toa","");
+          EUDAQ_INFO("Applying ToT calibration from " + calibrationPathToT);
+          EUDAQ_INFO("Applying ToA calibration from " + calibrationPathToA);
+
+          std::string tmp;
+          loadCalibration(calibrationPathToT, ' ', vtot);
+          loadCalibration(calibrationPathToA, ' ', vtoa);
+
+            for(size_t row = 0; row < 256; row++) {
+                for(size_t col = 0; col < 256; col++) {
+                    float a = vtot.at(256 * row + col).at(2);
+                    float b = vtot.at(256 * row + col).at(3);
+                    float c = vtot.at(256 * row + col).at(4);
+                    float t = vtot.at(256 * row + col).at(5);
+                    float toa_c = vtoa.at(256 * row + col).at(2);
+                    float toa_t = vtoa.at(256 * row + col).at(3);
+                    float toa_d = vtoa.at(256 * row + col).at(4);
+
+                    double cold = static_cast<double>(col);
+                    double rowd = static_cast<double>(row);
+                }
+            }
+        } else {
+            EUDAQ_INFO("No calibration file path for ToT or ToA; data will be uncalibrated.");
+        }
+    }
+
   bool data_found = false;
 
   // No event
@@ -192,15 +225,55 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       }
 
       // Convert final timestamp into picoseconds
-      const uint64_t timestamp = time * 1000 / 4096 * 25;
+      uint64_t timestamp = time * 1000 / 4096 * 25;
+
+      // best guess for charge is ToT if no calibration is available
+      double charge = static_cast<float>(tot);
+
+      // Apply calibration if both vtot and vtoa are not empty
+      // (copied over from Corryvreckan EventLoaderTimepix3)
+      if(!vtot.empty() && !vtoa.empty()) {
+        // EUDAQ_DEBUG()"Applying calibration to DUT"); // cannot change verbosity in Corryvreckan
+        size_t scol = static_cast<size_t>(col);
+        size_t srow = static_cast<size_t>(row);
+        float a = vtot.at(256 * srow + scol).at(2);
+        float b = vtot.at(256 * srow + scol).at(3);
+        float c = vtot.at(256 * srow + scol).at(4);
+        float t = vtot.at(256 * srow + scol).at(5);
+
+        float toa_c = vtoa.at(256 * srow + scol).at(2);
+        float toa_t = vtoa.at(256 * srow + scol).at(3);
+        float toa_d = vtoa.at(256 * srow + scol).at(4);
+
+        // Calculating calibrated tot and toa
+        float fvolts = (sqrt(a * a * t * t + 2 * a * b * t + 4 * a * c - 2 * a * t * static_cast<float>(tot) +
+                             b * b - 2 * b * static_cast<float>(tot) + static_cast<float>(tot * tot)) +
+                        a * t - b + static_cast<float>(tot)) /
+                       (2 * a);
+        charge = fvolts * 1e-3 * 3e-15 * 6241.509 * 1e15; // capacitance is 3 fF or 18.7 e-/mV // overwrite fcharge variable (was ToT before)
+
+        /* Note 1: fvolts is the inverse to f(x) = a*x + b - c/(x-t). Note the +/- signs! */
+        /* Note 2: The capacitance is actually smaller than 3 fC, more like 2.5 fC. But there is an offset when when
+         * using testpulses. Multiplying the voltage value with 20 [e-/mV] is a good approximation but means one is
+         * over estimating the input capacitance to compensate the missing information of the offset. */
+
+        uint64_t t_shift = (toa_c / (fvolts - toa_t) + toa_d) * 1000; // convert to ps
+        timestamp -= t_shift; // apply correction
+        // EUDAQ_DEBUG("Time shift = " + to_string(t_shift) + "ps"); // cannot change verbosity in Corryvreckan
+        // EUDAQ_DEBUG("Timestamp calibrated = " + to_string(ftimestamp) + "ps"); // cannot change verbosity in Corryvreckan
+
+        if(col >= 256 || row >= 256) {
+            EUDAQ_WARN("Pixel address " + std::to_string(col) + ", " + std::to_string(row) + " is outside of pixel matrix.");
+        }
+      }  // end applyCalibration
 
       // Set event start/stop:
       event_begin = (timestamp < event_begin) ? timestamp : event_begin;
       event_end = (timestamp > event_end) ? timestamp : event_end;
 
-      // creating new pixel object with non-calibrated values of tot and toa
-      plane.PushPixel(col, row, tot, timestamp);
-    }
+      // creating new pixel object
+      plane.PushPixel(col, row, charge, timestamp);
+    } // end header 0xA and 0xB indicate pixel data
   }
 
   // Add the plane to the StandardEvent
@@ -214,4 +287,44 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
   d2->SetDetectorType("Timepix3");
 
   return data_found;
+}
+
+void Timepix3RawEvent2StdEventConverter::loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat) const {
+    // copied from Corryvreckan EventLoaderTimepix3
+    std::ifstream f;
+    f.open(path);
+    dat.clear();
+
+    // check if file is open
+    if(!f.is_open()) {
+        throw DataInvalid("Cannot open calibration file:\n\t" + path);
+        return;
+    }
+
+    // read file line by line
+    int i = 0;
+    std::string line;
+    while(!f.eof()) {
+        std::getline(f, line);
+
+        // check if line is empty or a comment
+        // if not write to output vector
+        if(line.size() > 0 && isdigit(line.at(0))) {
+            std::stringstream ss(line);
+            std::string word;
+            std::vector<float> row;
+            while(std::getline(ss, word, delim)) {
+                i += 1;
+                row.push_back(stof(word));
+            }
+            dat.push_back(row);
+        }
+    }
+
+    // warn if too few entries
+    if(dat.size() != 256 * 256) {
+        throw DataInvalid("Something went wrong. Found only " + to_string(i) + " entries. Not enough for TPX3.\n\t");
+    }
+
+    f.close();
 }
