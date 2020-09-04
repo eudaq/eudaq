@@ -45,7 +45,6 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   double tof_scint3 = conf->Get("tof_scint3", 1.); // in nanoseconds
   double tof_scint4 = conf->Get("tof_scint4", 1.); // in nanoseconds
   double tof_scint5 = conf->Get("tof_scint5", 1.); // in nanoseconds
-  // EUDAQ_WARN("Using finets0_tof = " + std::to_string(tof_scint0));
   try {
     triggersFired = 0x3F & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
   } catch (...) {
