@@ -121,7 +121,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
                 }
             }
         } else {
-            EUDAQ_INFO("No calibration file path or no DUT name given; data will be uncalibrated.");
+            EUDAQ_INFO("No calibration file path for ToT or ToA; data will be uncalibrated.");
             applyCalibration = false;
         }
     }
