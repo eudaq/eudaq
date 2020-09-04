@@ -1,5 +1,5 @@
 #include "Timepix3Event2StdEventConverter.hh"
-#include <math.h> // for sqrt()
+#include <cmath> // for sqrt()
 
 using namespace eudaq;
 
@@ -81,32 +81,28 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
 
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
-size_t Timepix3RawEvent2StdEventConverter::m_clearedHeader(0);
+bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
 bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
-bool Timepix3RawEvent2StdEventConverter::applyCalibration(false);
-std::string Timepix3RawEvent2StdEventConverter::calibrateDetector("");
-std::string Timepix3RawEvent2StdEventConverter::calibrationPath("");
-std::string Timepix3RawEvent2StdEventConverter::threshold("");
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-
+  uint64_t delta_t0 = 1e6; // default: 1sec
   // Read from configuration:
   if(m_first_time) {
-      if(conf->Has("calibrate_detector") && conf->Has("calibration_path") && conf->Has("threshold")) {
-          calibrateDetector = conf->Get("calibrate_detector","");
-          calibrationPath = conf->Get("calibration_path","");
-          threshold = conf->Get("threshold","");
-          applyCalibration = true;
-          EUDAQ_INFO("Applying calibration from " + calibrationPath + " for detector " + calibrateDetector);
+      delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
+      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "ns.");
+      m_first_time = false;
 
-          // make paths to calibration files and read
-            std::string tmp;
-            tmp = calibrationPath + "/" + calibrateDetector + "/cal_thr_" + threshold + "_ik_10/" + calibrateDetector + "_cal_tot.txt";
-            loadCalibration(tmp, ' ', vtot);
-            tmp = calibrationPath + "/" + calibrateDetector + "/cal_thr_" + threshold + "_ik_10/" + calibrateDetector + "_cal_toa.txt";
-            loadCalibration(tmp, ' ', vtoa);
+      if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
+          std::string calibrationPathToT = conf->Get("calibration_path_tot","");
+          std::string calibrationPathToA = conf->Get("calibration_path_toa","");
+          EUDAQ_INFO("Applying ToT calibration from " + calibrationPathToT);
+          EUDAQ_INFO("Applying ToA calibration from " + calibrationPathToA);
+
+          std::string tmp;
+          loadCalibration(calibrationPathToT, ' ', vtot);
+          loadCalibration(calibrationPathToA, ' ', vtoa);
 
             for(size_t row = 0; row < 256; row++) {
                 for(size_t col = 0; col < 256; col++) {
@@ -123,10 +119,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
                 }
             }
         } else {
-            EUDAQ_INFO("No calibration file path or no DUT name given; data will be uncalibrated.");
-            applyCalibration = false;
+            EUDAQ_INFO("No calibration file path for ToT or ToA; data will be uncalibrated.");
         }
-        m_first_time = false;
     }
 
   bool data_found = false;
@@ -176,17 +170,17 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // The data is shifted 16 bits to the right, then 44 to the left in order to match the timestamp format (net 28 left)
         m_syncTime = (m_syncTime & 0x00000FFFFFFFFFFF) + ((pixdata & 0x00000000FFFF0000) << 28);
 
-        if(m_clearedHeader==0 && (m_syncTime / 4096 / 40) < 6000000) { // < 6sec
+        if(!m_clearedHeader && (m_syncTime / 4096 / 40) < 6000000) { // < 6sec
           EUDAQ_INFO("Timepix3: Detected T0 signal. Header cleared.");
-          m_clearedHeader++;
+          m_clearedHeader = true;
 
         // From SPS data we know that even though pixel timestamps are not perfectly chronological, they are not more
         // than "mixed up by -20us". At DESY, this is hardly (ever?) the case due to the lower occupancies.
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
-        // a 2nd T0 has occured. Take 500us with some safety margin.
-        // This implies we cannot detect a 2nd T0 within the first 500us after the initial T0. But did this ever happen?
-      } else if (m_syncTime < m_syncTime_prev - (1e6 * 4096 * 40)) {
-          m_clearedHeader++;
+        // a 2nd T0 has occured. With some safety margin, set delta_t0 = 1e6 (1s, default).
+        // This implies we cannot detect a 2nd T0 within the first "delta_t0" microseconds after the initial T0.
+        } else if ((m_syncTime + delta_t0 * 4096 * 40) < m_syncTime_prev) { // delta_t0 on left side to avoid neg. difference between uint64_t
+          throw DataInvalid("Timepix3: Detected second T0 signal. Time jumps back by " + to_string((m_syncTime_prev - m_syncTime) / 4096 / 40) + "us.");
         }
         m_syncTime_prev = m_syncTime;
       }
@@ -196,10 +190,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
     // this "header" data has been cleared, when the heart beat signal starts from a low number (~few seconds max).
     // To detect a possible second T0, we have no better gauge than the same criterion:
     // Comparing the timestamp to the previous timestamp (see above).
-    if(m_clearedHeader == 0) {
+    if(!m_clearedHeader) {
         continue;
-    } else if(m_clearedHeader > 1) {
-        throw DataInvalid("Timepix3: Detected second T0 signal.");
     }
 
     // Header 0xA and 0xB indicate pixel data
@@ -233,12 +225,15 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       }
 
       // Convert final timestamp into picoseconds
-      const uint64_t timestamp = time * 1000 / 4096 * 25;
+      uint64_t timestamp = time * 1000 / 4096 * 25;
 
-      // Apply calibration if applyCalibration is true
+      // best guess for charge is ToT if no calibration is available
+      double charge = static_cast<float>(tot);
+
+      // Apply calibration if both vtot and vtoa are not empty
       // (copied over from Corryvreckan EventLoaderTimepix3)
-      if(applyCalibration) {
-        // LOG(DEBUG) << "Applying calibration to DUT";
+      if(!vtot.empty() && !vtoa.empty()) {
+        // EUDAQ_DEBUG()"Applying calibration to DUT"); // cannot change verbosity in Corryvreckan
         size_t scol = static_cast<size_t>(col);
         size_t srow = static_cast<size_t>(row);
         float a = vtot.at(256 * srow + scol).at(2);
@@ -255,7 +250,7 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
                              b * b - 2 * b * static_cast<float>(tot) + static_cast<float>(tot * tot)) +
                         a * t - b + static_cast<float>(tot)) /
                        (2 * a);
-        double fcharge = fvolts * 1e-3 * 3e-15 * 6241.509 * 1e15; // capacitance is 3 fF or 18.7 e-/mV
+        charge = fvolts * 1e-3 * 3e-15 * 6241.509 * 1e15; // capacitance is 3 fF or 18.7 e-/mV // overwrite fcharge variable (was ToT before)
 
         /* Note 1: fvolts is the inverse to f(x) = a*x + b - c/(x-t). Note the +/- signs! */
         /* Note 2: The capacitance is actually smaller than 3 fC, more like 2.5 fC. But there is an offset when when
@@ -263,27 +258,21 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
          * over estimating the input capacitance to compensate the missing information of the offset. */
 
         uint64_t t_shift = (toa_c / (fvolts - toa_t) + toa_d) * 1000; // convert to ps
-        const uint64_t ftimestamp = timestamp - t_shift;
-        EUDAQ_DEBUG("Time shift = " + to_string(t_shift) + "ps");
-        EUDAQ_DEBUG("Timestamp calibrated = " + to_string(ftimestamp) + "ps");
+        timestamp -= t_shift; // apply correction
+        // EUDAQ_DEBUG("Time shift = " + to_string(t_shift) + "ps"); // cannot change verbosity in Corryvreckan
+        // EUDAQ_DEBUG("Timestamp calibrated = " + to_string(ftimestamp) + "ps"); // cannot change verbosity in Corryvreckan
 
         if(col >= 256 || row >= 256) {
             EUDAQ_WARN("Pixel address " + std::to_string(col) + ", " + std::to_string(row) + " is outside of pixel matrix.");
         }
-        // Set event start/stop:
-        event_begin = (ftimestamp < event_begin) ? ftimestamp : event_begin;
-        event_end = (ftimestamp > event_end) ? ftimestamp : event_end;
+      }  // end applyCalibration
 
-        // push new pixel object with calibrated values of tot and toa
-        plane.PushPixel(col, row, fcharge, ftimestamp);
-      } else {
-        // Set event start/stop:
-        event_begin = (timestamp < event_begin) ? timestamp : event_begin;
-        event_end = (timestamp > event_end) ? timestamp : event_end;
+      // Set event start/stop:
+      event_begin = (timestamp < event_begin) ? timestamp : event_begin;
+      event_end = (timestamp > event_end) ? timestamp : event_end;
 
-        // creating new pixel object with non-calibrated values of tot and toa
-        plane.PushPixel(col, row, tot, timestamp);
-      } // end applyCalibration
+      // creating new pixel object
+      plane.PushPixel(col, row, charge, timestamp);
     } // end header 0xA and 0xB indicate pixel data
   }
 
@@ -308,8 +297,7 @@ void Timepix3RawEvent2StdEventConverter::loadCalibration(std::string path, char 
 
     // check if file is open
     if(!f.is_open()) {
-        EUDAQ_WARN("Cannot open input file:\n\t" + path);
-        // throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
+        throw DataInvalid("Cannot open calibration file:\n\t" + path);
         return;
     }
 
@@ -335,8 +323,7 @@ void Timepix3RawEvent2StdEventConverter::loadCalibration(std::string path, char 
 
     // warn if too few entries
     if(dat.size() != 256 * 256) {
-        EUDAQ_WARN("Something went wrong. Found only " + to_string(i) + " entries. Not enough for TPX3.\n\t");
-        // throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
+        throw DataInvalid("Something went wrong. Found only " + to_string(i) + " entries. Not enough for TPX3.\n\t");
     }
 
     f.close();
