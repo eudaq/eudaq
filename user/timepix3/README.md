@@ -28,6 +28,8 @@ Since the SPIDR device libraries are not thread-safe, all access to SPIDR librar
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
 * `delta_t0`: Integer in microseconds as the criterion for the indirect T0 detection. If the Timepix3 timestamps jump back by more than this value, a 2nd T0 is assumed to have been recorded. The value needs to be passed as an integer without units, but a syntax such as `1e3` is supported. Defaults to `1e6` (corresponding to 1s).
+* `calibration_path_tot`: Path to ToT calibration file. If this parameter is set, a conversion of the pixel time-over-threshold values to charge is applied. The file format needs to be `col | row | row | a (ADC/mV) | b (ADC) | c (ADC*mV) | t (mV) | chi2/ndf`.
+* `calibration_path_toa`: Path to ToA calibration file. If this parameter is set, a timewalk correction is applied to each pixel timestamp. The file format needs to be `column | row | c (ns*mV) | t (mV) | d (ns) | chi2/ndf`.
 
 ### Timepix3TrigEvent2StdEventConverter
 
