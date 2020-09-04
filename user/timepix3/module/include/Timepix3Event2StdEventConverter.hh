@@ -16,7 +16,6 @@ namespace eudaq {
     static uint64_t m_syncTime_prev;
     static bool m_clearedHeader;
     static bool m_first_time;
-    static bool applyCalibration;
     static std::vector<std::vector<float>> vtot;
     static std::vector<std::vector<float>> vtoa;
 

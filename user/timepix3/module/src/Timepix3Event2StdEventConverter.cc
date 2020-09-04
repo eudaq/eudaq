@@ -83,7 +83,6 @@ uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
 bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
 bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
-bool Timepix3RawEvent2StdEventConverter::applyCalibration(false);
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 
@@ -98,7 +97,6 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
           std::string calibrationPathToT = conf->Get("calibration_path_tot","");
           std::string calibrationPathToA = conf->Get("calibration_path_toa","");
-          applyCalibration = true;
           EUDAQ_INFO("Applying ToT calibration from " + calibrationPathToT);
           EUDAQ_INFO("Applying ToA calibration from " + calibrationPathToA);
 
@@ -122,7 +120,6 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
             }
         } else {
             EUDAQ_INFO("No calibration file path for ToT or ToA; data will be uncalibrated.");
-            applyCalibration = false;
         }
     }
 
@@ -230,9 +227,9 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       // Convert final timestamp into picoseconds
       const uint64_t timestamp = time * 1000 / 4096 * 25;
 
-      // Apply calibration if applyCalibration is true
+      // Apply calibration if both vtot and vtoa are not empty
       // (copied over from Corryvreckan EventLoaderTimepix3)
-      if(applyCalibration) {
+      if(!vtot.empty() && !vtoa.empty()) {
         // EUDAQ_DEBUG()"Applying calibration to DUT"); // cannot change verbosity in Corryvreckan
         size_t scol = static_cast<size_t>(col);
         size_t srow = static_cast<size_t>(row);
