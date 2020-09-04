@@ -84,8 +84,6 @@ uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
 size_t Timepix3RawEvent2StdEventConverter::m_clearedHeader(0);
 bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
 bool Timepix3RawEvent2StdEventConverter::applyCalibration(false);
-std::string Timepix3RawEvent2StdEventConverter::calibrationPathToT("");
-std::string Timepix3RawEvent2StdEventConverter::calibrationPathToA("");
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 
@@ -98,8 +96,8 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       m_first_time = false;
 
       if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
-          calibrationPathToT = conf->Get("calibration_path_tot","");
-          calibrationPathToA = conf->Get("calibration_path_toa","");
+          std::string calibrationPathToT = conf->Get("calibration_path_tot","");
+          std::string calibrationPathToA = conf->Get("calibration_path_toa","");
           applyCalibration = true;
           EUDAQ_INFO("Applying ToT calibration from " + calibrationPathToT);
           EUDAQ_INFO("Applying ToA calibration from " + calibrationPathToA);
