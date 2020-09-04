@@ -14,9 +14,7 @@ namespace eudaq {
   private:
     static uint64_t m_syncTime;
     static uint64_t m_syncTime_prev;
-    static size_t m_clearedHeader;
-
-    // configuration parameters:
+    static bool m_clearedHeader;
     static bool m_first_time;
     static bool applyCalibration;
     static std::vector<std::vector<float>> vtot;
