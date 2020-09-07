@@ -44,9 +44,4 @@ The usage with EUDAQ2 and EUDET-type telescopes is described [here](https://tele
 The conversion of raw data containing **TluRawDataEvent** is the same for both types of TLU. For example and if LCIO is built, you can convert by: ```euCliConverter -i data.raw -o data.slcio```
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
-* `tof_scint0`: Double time-of-flight of the 0th scintillator in nanoseconds. This value is rounded into 781.125ps bins and added to the fine timestamp of the 0th scintillator. Defaults to `0` (pass only value without units).
-* `tof_scint1`: Double time-of-flight of the 1st scintillator in nanoseconds. This value is rounded into 781.125ps bins and added to the fine timestamp of the 1st scintillator. Defaults to `0` (pass only value without units).
-* `tof_scint2`: Double time-of-flight of the 2nd scintillator in nanoseconds. This value is rounded into 781.125ps bins and added to the fine timestamp of the 2nd scintillator. Defaults to `0` (pass only value without units).
-* `tof_scint3`: Double time-of-flight of the 3rd scintillator in nanoseconds. This value is rounded into 781.125ps bins and added to the fine timestamp of the 3rd scintillator. Defaults to `0` (pass only value without units).
-* `tof_scint4`: Double time-of-flight of the 4th scintillator in nanoseconds. This value is rounded into 781.125ps bins and added to the fine timestamp of the 4th scintillator. Defaults to `0` (pass only value without units).
-* `tof_scint5`: Double time-of-flight of the 5th scintillator in nanoseconds. This value is rounded into 781.125ps bins and added to the fine timestamp of the 5th scintillator. Defaults to `0` (pass only value without units).
+* `tof_scint0`, `tof_scint1`, ..., `tof_scint5`: Time-of-flight of the i-th scintillator in nanoseconds as double. This value is rounded to 781.25ps bins and subtracted from the fine timestamp of the i-th scintillator. Defaults to `0` (pass value without units). Please note that the most upstream scintillator should have a time-of-flight of zero.
