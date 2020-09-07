@@ -97,6 +97,14 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
       if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
           std::string calibrationPathToT = conf->Get("calibration_path_tot","");
           std::string calibrationPathToA = conf->Get("calibration_path_toa","");
+
+          if(calibrationPathToT.find("toa") != std::string::npos) {
+              throw DataInvalid("Timepix3: Parameter calibration_path_toa contains substring \"tot\", please update your configuration file!");
+          }
+          if(calibrationPathToT.find("tot") != std::string::npos) {
+              throw DataInvalid("Timepix3: Parameter calibration_path_tot contains substring \"toa\", please update your configuration file!");
+          }
+
           EUDAQ_INFO("Applying ToT calibration from " + calibrationPathToT);
           EUDAQ_INFO("Applying ToA calibration from " + calibrationPathToA);
 
