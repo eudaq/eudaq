@@ -94,8 +94,6 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   for(int i=1; i<finets_vec.size(); i++) {
       // 128 = half the fineTS counter range -> 128*780ps = 99ns = 3m (TOF)
       // For a time difference larger than 99ns, the overflow detection doesn't work anymore.
-      // If the delay (TOF/cabling) between scintillators exceeds 99ns, the TOFs should be
-      // specified as input parameters for correction.
       if(abs(finets_avg - finets_vec.at(i)) > 128) { // 128*780ps = 99ns
           finets_vec.at(i) += 0xFF; // overflow compensation
       }
