@@ -39,12 +39,12 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   uint32_t finets5;
 
   // Should I read these in at m_first_time and store in static member variable or read in each time?
-  double tof_scint0 = conf->Get("tof_scint0", 1.); // in nanoseconds
-  double tof_scint1 = conf->Get("tof_scint1", 1.); // in nanoseconds
-  double tof_scint2 = conf->Get("tof_scint2", 1.); // in nanoseconds
-  double tof_scint3 = conf->Get("tof_scint3", 1.); // in nanoseconds
-  double tof_scint4 = conf->Get("tof_scint4", 1.); // in nanoseconds
-  double tof_scint5 = conf->Get("tof_scint5", 1.); // in nanoseconds
+  double tof_scint0 = conf->Get("tof_scint0", 0.); // in nanoseconds
+  double tof_scint1 = conf->Get("tof_scint1", 0.); // in nanoseconds
+  double tof_scint2 = conf->Get("tof_scint2", 0.); // in nanoseconds
+  double tof_scint3 = conf->Get("tof_scint3", 0.); // in nanoseconds
+  double tof_scint4 = conf->Get("tof_scint4", 0.); // in nanoseconds
+  double tof_scint5 = conf->Get("tof_scint5", 0.); // in nanoseconds
   try {
     triggersFired = 0x3F & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
   } catch (...) {
