@@ -64,7 +64,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 }
 
   // add all valid trigger to vector:
-  std::vector<uint8_t> finets_vec;
+  std::vector<uint32_t> finets_vec;
   if ((triggersFired >> 0) & 0x1) {
       finets_vec.emplace_back(finets0 & 0xFF);
   }
@@ -90,32 +90,35 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Calculate "rolling average":
   for(int i=1; i<finets_vec.size(); i++) {
-      if(abs(finets_avg - finets_vec.at(i)) > 0xF0) {
-          finets_avg += 0xFF; // overflow compensation
+      // 128 = half the fineTS counter range -> 128*780ps = 99ns = 3m (TOF)
+      // For a time difference larger than 99ns, the overflow detection doesn't work anymore.
+      // If the delay (TOF/cabling) between scintillators exceeds 99ns, the TOFs should be
+      // specified as input parameters for correction.
+      if(abs(finets_avg - finets_vec.at(i)) > 128) { // 128*780ps = 99ns
+          finets_vec.at(i) += 0xFF; // overflow compensation
       }
       // Need to weight average with previous number of iterations:
-      finets_avg = ((i*finets_avg + finets_vec.at(i)) / (i+1)) & 0xFF;
-
-      // finets_avg += finets_vec.at(i);
-      // finets_avg = (finets_avg / 2) & 0xFF;
+      // (Don't truncate to 8-bit for correct averaging, i.e. don't apply 0xFF)
+      finets_avg = ((i*finets_avg + finets_vec.at(i)) / (i+1));
 
       // This leads to rounding errors on the 781ps binning level
       // --> Convert to double in nanoseconds?
   }
 
+  /*
   // This works well: using ONLY fineTS0 OR fineTS1:
-  // auto finets_avg = finets0;
-  // auto finets_avg = finets1;
+  auto finets_avg = finets0;
+  auto finets_avg = finets1;
+  */
 
-  // This also works well:
+  /*
+  // This also works well (only for 2 inputs):
   // Consider overflow:
-  // if(abs(finets0 - finets1) > 0xF0) {
-  //     // This only works for 2 inputs:
-  //     // finets_avg = (finets_avg + 128) & 0xFF;
-  //     finets1 += 0xFF;
-  // }
-  // finets_avg = 0xFF & ((finets0 + finets1) / 2);
-  // uint8_t finets_avg = 0xFF & ((finets0 + finets1) / 2);
+  if(abs(finets0 - finets1) > 0xF0) {
+      finets1 += 0xFF;
+  }
+  finets_avg = 0xFF & ((finets0 + finets1) / 2);
+  */
 
   auto coarse_ts = static_cast<uint64_t>(d1->GetTimestampBegin() / 25);
 
