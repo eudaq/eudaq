@@ -52,12 +52,14 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     return false;
   }
   try {
-    finets0 = std::stoi(d1->GetTag("FINE_TS0", "0")) + static_cast<uint32_t>(round(tof_scint0 / 0.78125)); // convert into 781.25ps bins and round
-    finets1 = std::stoi(d1->GetTag("FINE_TS1", "0")) + static_cast<uint32_t>(round(tof_scint1 / 0.78125)); // convert into 781.25ps bins and round
-    finets2 = std::stoi(d1->GetTag("FINE_TS2", "0")) + static_cast<uint32_t>(round(tof_scint2 / 0.78125)); // convert into 781.25ps bins and round
-    finets3 = std::stoi(d1->GetTag("FINE_TS3", "0")) + static_cast<uint32_t>(round(tof_scint3 / 0.78125)); // convert into 781.25ps bins and round
-    finets4 = std::stoi(d1->GetTag("FINE_TS4", "0")) + static_cast<uint32_t>(round(tof_scint4 / 0.78125)); // convert into 781.25ps bins and round
-    finets5 = std::stoi(d1->GetTag("FINE_TS5", "0")) + static_cast<uint32_t>(round(tof_scint5 / 0.78125)); // convert into 781.25ps bins and round
+    // try/catch for std::stoi()
+    // Convert TOF into 781.25ps bins and round to integer, then subtract from fine timestamp:
+    finets0 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS0", "0"))) - static_cast<uint32_t>(round(tof_scint0 / 0.78125));
+    finets1 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS1", "0"))) - static_cast<uint32_t>(round(tof_scint1 / 0.78125));
+    finets2 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS2", "0"))) - static_cast<uint32_t>(round(tof_scint2 / 0.78125));
+    finets3 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS3", "0"))) - static_cast<uint32_t>(round(tof_scint3 / 0.78125));
+    finets4 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS4", "0"))) - static_cast<uint32_t>(round(tof_scint4 / 0.78125));
+    finets5 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS5", "0"))) - static_cast<uint32_t>(round(tof_scint5 / 0.78125));
 } catch (...) {
     EUDAQ_WARN("EUDAQ2 RawEvent flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
     return false;
