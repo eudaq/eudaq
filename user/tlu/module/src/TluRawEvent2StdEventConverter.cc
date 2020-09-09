@@ -39,12 +39,12 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   uint32_t finets5;
 
   // Should I read these in at m_first_time and store in static member variable or read in each time?
-  double tof_scint0 = conf->Get("tof_scint0", 0.); // in nanoseconds
-  double tof_scint1 = conf->Get("tof_scint1", 0.); // in nanoseconds
-  double tof_scint2 = conf->Get("tof_scint2", 0.); // in nanoseconds
-  double tof_scint3 = conf->Get("tof_scint3", 0.); // in nanoseconds
-  double tof_scint4 = conf->Get("tof_scint4", 0.); // in nanoseconds
-  double tof_scint5 = conf->Get("tof_scint5", 0.); // in nanoseconds
+  uint32_t delay_scint0 = conf->Get("delay_scint0", 0); // in 781.25ps bins
+  uint32_t delay_scint1 = conf->Get("delay_scint1", 0); // in 781.25ps bins
+  uint32_t delay_scint2 = conf->Get("delay_scint2", 0); // in 781.25ps bins
+  uint32_t delay_scint3 = conf->Get("delay_scint3", 0); // in 781.25ps bins
+  uint32_t delay_scint4 = conf->Get("delay_scint4", 0); // in 781.25ps bins
+  uint32_t delay_scint5 = conf->Get("delay_scint5", 0); // in 781.25ps bins
   try {
     triggersFired = 0x3F & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
   } catch (...) {
@@ -53,13 +53,13 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
   try {
     // try/catch for std::stoi()
-    // Convert TOF into 781.25ps bins and round to integer, then subtract from fine timestamp:
-    finets0 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS0", "0"))) - static_cast<uint32_t>(round(tof_scint0 / 0.78125));
-    finets1 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS1", "0"))) - static_cast<uint32_t>(round(tof_scint1 / 0.78125));
-    finets2 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS2", "0"))) - static_cast<uint32_t>(round(tof_scint2 / 0.78125));
-    finets3 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS3", "0"))) - static_cast<uint32_t>(round(tof_scint3 / 0.78125));
-    finets4 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS4", "0"))) - static_cast<uint32_t>(round(tof_scint4 / 0.78125));
-    finets5 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS5", "0"))) - static_cast<uint32_t>(round(tof_scint5 / 0.78125));
+    // Subtract delay from fine timestamp:
+    finets0 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS0", "0"))) - delay_scint0;
+    finets1 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS1", "0"))) - delay_scint1;
+    finets2 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS2", "0"))) - delay_scint2;
+    finets3 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS3", "0"))) - delay_scint3;
+    finets4 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS4", "0"))) - delay_scint4;
+    finets5 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS5", "0"))) - delay_scint5;
 } catch (...) {
     EUDAQ_WARN("EUDAQ2 RawEvent flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
     return false;
