@@ -143,11 +143,11 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // Identify the detetor type
   d2->SetDetectorType("TLU");
   d2->SetTag("TRIGGER", triggersFired);
-  d2->SetTag("FINE_TS0", d1->GetTag("FINE_TS0", "0"));
-  d2->SetTag("FINE_TS1", d1->GetTag("FINE_TS1", "0"));
-  d2->SetTag("FINE_TS2", d1->GetTag("FINE_TS2", "0"));
-  d2->SetTag("FINE_TS3", d1->GetTag("FINE_TS3", "0"));
-  d2->SetTag("FINE_TS4", d1->GetTag("FINE_TS4", "0"));
-  d2->SetTag("FINE_TS5", d1->GetTag("FINE_TS5", "0"));
+  d2->SetTag("FINE_TS0", std::to_string(finets0 & 0xFF).c_str());
+  d2->SetTag("FINE_TS1", std::to_string(finets1 & 0xFF).c_str());
+  d2->SetTag("FINE_TS2", std::to_string(finets2 & 0xFF).c_str());
+  d2->SetTag("FINE_TS3", std::to_string(finets3 & 0xFF).c_str());
+  d2->SetTag("FINE_TS4", std::to_string(finets4 & 0xFF).c_str());
+  d2->SetTag("FINE_TS5", std::to_string(finets5 & 0xFF).c_str());
   return true;
 }
