@@ -44,4 +44,4 @@ The usage with EUDAQ2 and EUDET-type telescopes is described [here](https://tele
 The conversion of raw data containing **TluRawDataEvent** is the same for both types of TLU. For example and if LCIO is built, you can convert by: ```euCliConverter -i data.raw -o data.slcio```
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
-* `tof_scint0`, `tof_scint1`, ..., `tof_scint5`: Time-of-flight of the i-th scintillator in nanoseconds as double. This value is rounded to 781.25ps bins and subtracted from the fine timestamp of the i-th scintillator. Defaults to `0` (pass value without units). Please note that the most upstream scintillator should have a time-of-flight of zero.
+* `delay_scint0`, `delay_scint1`, ..., `delay_scint5`: Delay (time-of-flight + cable delays) of the i-th scintillator in 781.25ps bins as integer. This value is subtracted from the fine timestamp of the i-th scintillator in order to calculate the correct precise TLU trigger timestamp. Defaults to `0`. Please note that the most upstream scintillator should have a delay of zero.
