@@ -1,6 +1,5 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
-#include <cmath> // for round()
 
 class TluRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
