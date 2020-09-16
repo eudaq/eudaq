@@ -163,14 +163,18 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
       // Check for T0 signal going from high to low
       if((triggers & 0x1) && !(signals & 0x1)) {
-        t0_seen_++;
-        if(t0_seen_ == 1) {
-            EUDAQ_INFO("CLICTD: Detected 1st T0 signal directly: T0 flag at " + to_string(time) + "ns");
-            // Discard this event:
-            return false;
+        if (time <= 10) {
+          t0_seen_++;
+          if(t0_seen_ == 1) {
+              EUDAQ_INFO("CLICTD: Detected 1st T0 signal directly: T0 flag at " + to_string(time) + "ns");
+              // Discard this event:
+              return false;
+          } else {
+              // throw exception and interrupt analysis:
+              throw DataInvalid("CLICTD: Detected 2nd T0 signal directly: T0 flag at " + to_string(time) + "ns");
+          }
         } else {
-            // throw exception and interrupt analysis:
-            throw DataInvalid("CLICTD: Detected 2nd T0 signal directly: T0 flag at " + to_string(time) + "ns");
+          EUDAQ_INFO("CLIDTD: Detected T0 signal directly: T0 flag at " + to_string(time) + "ns. This did not reset the counter and was ignored in the analysis.");
         }
       }
     }
