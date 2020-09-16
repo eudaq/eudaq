@@ -51,8 +51,9 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     EUDAQ_WARN("EUDAQ2 RawEvent flag TRIGGER cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
     return false;
   }
+
+  // try/catch for std::stoi()
   try {
-    // try/catch for std::stoi()
     // Subtract delay from fine timestamp:
     finets0 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS0", "0"))) - delay_scint0;
     finets1 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS1", "0"))) - delay_scint1;
@@ -102,23 +103,8 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       finets_avg = ((i*finets_avg + finets_vec.at(i)) / (i+1));
 
       // This leads to rounding errors on the 781ps binning level
-      // --> Convert to double in nanoseconds?
+      // but otherwise the overflow detection logic breaks down.
   }
-
-  /*
-  // This works well: using ONLY fineTS0 OR fineTS1:
-  auto finets_avg = finets0;
-  auto finets_avg = finets1;
-  */
-
-  /*
-  // This also works well (only for 2 inputs):
-  // Consider overflow:
-  if(abs(finets0 - finets1) > 0xF0) {
-      finets1 += 0xFF;
-  }
-  finets_avg = 0xFF & ((finets0 + finets1) / 2);
-  */
 
   auto coarse_ts = static_cast<uint64_t>(d1->GetTimestampBegin() / 25);
 
