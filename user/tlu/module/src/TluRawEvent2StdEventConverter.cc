@@ -112,7 +112,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Casting to 32 bit is essential to detect the overflow in the 8th bit!
   // 0x100 = 200ns (range of 3 bits with 25ns binning)
-  if((static_cast<uint32_t>(coarse_3lsb - finets_avg_3msb)) > 0x100) {
+  if((static_cast<uint32_t>(coarse_3lsb) - finets_avg_3msb) > 0x100) {
       // coarse_ts is delayed by 2 clock cycles -> roll back
       coarse_ts -= 2;
   }
