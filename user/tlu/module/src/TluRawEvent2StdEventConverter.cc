@@ -127,7 +127,6 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Identify the detetor type
   d2->SetDetectorType("TLU");
-  d2->SetTag("TRIGGER", triggersFired);
   d2->SetTag("TRIGGER", d1->GetTag("TRIGGER" , "0"));
 
   // forward original tags:
