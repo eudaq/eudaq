@@ -128,11 +128,44 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // Identify the detetor type
   d2->SetDetectorType("TLU");
   d2->SetTag("TRIGGER", triggersFired);
-  d2->SetTag("FINE_TS0", std::to_string(finets0 & 0xFF).c_str());
-  d2->SetTag("FINE_TS1", std::to_string(finets1 & 0xFF).c_str());
-  d2->SetTag("FINE_TS2", std::to_string(finets2 & 0xFF).c_str());
-  d2->SetTag("FINE_TS3", std::to_string(finets3 & 0xFF).c_str());
-  d2->SetTag("FINE_TS4", std::to_string(finets4 & 0xFF).c_str());
-  d2->SetTag("FINE_TS5", std::to_string(finets5 & 0xFF).c_str());
+  d2->SetTag("TRIGGER", d1->GetTag("TRIGGER" , "0"));
+
+  // forward original tags:
+  d2->SetTag("FINE_TS0", d1->GetTag("FINE_TS0", "0")); // forward original tag
+  d2->SetTag("FINE_TS1", d1->GetTag("FINE_TS1", "0")); // forward original tag
+  d2->SetTag("FINE_TS2", d1->GetTag("FINE_TS2", "0")); // forward original tag
+  d2->SetTag("FINE_TS3", d1->GetTag("FINE_TS3", "0")); // forward original tag
+  d2->SetTag("FINE_TS4", d1->GetTag("FINE_TS4", "0")); // forward original tag
+  d2->SetTag("FINE_TS5", d1->GetTag("FINE_TS5", "0")); // forward original tag
+
+  // calculate (delayed) fine timestamps in ns:
+  double finets0_ns = (finets0 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets1_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets2_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets3_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets4_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets5_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
+
+  // differences between (delayed) fine timestamps:
+  d2->SetTag("DIFF_FINETS01_del_ns", std::to_string((finets0_ns - finets1_ns)).c_str());
+  d2->SetTag("DIFF_FINETS02_del_ns", std::to_string((finets0_ns - finets2_ns)).c_str());
+  d2->SetTag("DIFF_FINETS03_del_ns", std::to_string((finets0_ns - finets3_ns)).c_str());
+  d2->SetTag("DIFF_FINETS04_del_ns", std::to_string((finets0_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS05_del_ns", std::to_string((finets0_ns - finets5_ns)).c_str());
+
+  d2->SetTag("DIFF_FINETS12_del_ns", std::to_string((finets1_ns - finets2_ns)).c_str());
+  d2->SetTag("DIFF_FINETS13_del_ns", std::to_string((finets1_ns - finets3_ns)).c_str());
+  d2->SetTag("DIFF_FINETS14_del_ns", std::to_string((finets1_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS15_del_ns", std::to_string((finets1_ns - finets5_ns)).c_str());
+
+  d2->SetTag("DIFF_FINETS23_del_ns", std::to_string((finets3_ns - finets3_ns)).c_str());
+  d2->SetTag("DIFF_FINETS24_del_ns", std::to_string((finets3_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS25_del_ns", std::to_string((finets3_ns - finets5_ns)).c_str());
+
+  d2->SetTag("DIFF_FINETS34_del_ns", std::to_string((finets4_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS35_del_ns", std::to_string((finets4_ns - finets5_ns)).c_str());
+
+  d2->SetTag("DIFF_FINETS45_del_ns", std::to_string((finets5_ns - finets5_ns)).c_str());
+
   return true;
 }
