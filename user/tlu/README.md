@@ -45,3 +45,9 @@ The conversion of raw data containing **TluRawDataEvent** is the same for both t
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
 * `delay_scint0`, `delay_scint1`, ..., `delay_scint5`: Delay (time-of-flight + cable delays) of the i-th scintillator in 781.25ps bins as integer. This value is subtracted from the fine timestamp of the i-th scintillator in order to calculate the correct precise TLU trigger timestamp. Defaults to `0`. Please note that the most upstream scintillator should have a delay of zero.
+
+The following flags are forwarded directly from the raw event to the standard event:
+* `FINE_TS0`, `FINE_TS1`, ..., `FINE_TS5`: Fine timestamp of the i-th scintillator in 781.25ps bins.
+
+The following flags are added in addition the the standard event:
+* `DIFF_FINETS01_del_ns`, ..., `DIFF_FINETS45_del_ns`: Difference of the i-th and the j-th scinitllator timestamp converted into nanoseconds and including the delay values provided by `delay_scint0` etc.
