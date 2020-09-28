@@ -141,10 +141,10 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // calculate (delayed) fine timestamps in ns:
   double finets0_ns = (finets0 & 0xFF) * 25. / 32.; // 781ps binning
   double finets1_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
-  double finets2_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
-  double finets3_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
-  double finets4_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
-  double finets5_ns = (finets1 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets2_ns = (finets2 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets3_ns = (finets3 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets4_ns = (finets4 & 0xFF) * 25. / 32.; // 781ps binning
+  double finets5_ns = (finets5 & 0xFF) * 25. / 32.; // 781ps binning
 
   // differences between (delayed) fine timestamps:
   d2->SetTag("DIFF_FINETS01_del_ns", std::to_string((finets0_ns - finets1_ns)).c_str());
