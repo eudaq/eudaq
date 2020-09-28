@@ -37,15 +37,17 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   uint32_t finets4;
   uint32_t finets5;
 
-  // Should I read these in at m_first_time and store in static member variable or read in each time?
+  uint8_t triggerMask = conf->Get("trigger_mask", 0x3F);
   uint32_t delay_scint0 = conf->Get("delay_scint0", 0); // in 781.25ps bins
   uint32_t delay_scint1 = conf->Get("delay_scint1", 0); // in 781.25ps bins
   uint32_t delay_scint2 = conf->Get("delay_scint2", 0); // in 781.25ps bins
   uint32_t delay_scint3 = conf->Get("delay_scint3", 0); // in 781.25ps bins
   uint32_t delay_scint4 = conf->Get("delay_scint4", 0); // in 781.25ps bins
   uint32_t delay_scint5 = conf->Get("delay_scint5", 0); // in 781.25ps bins
+
+  // try/catch for std::stoi()
   try {
-    triggersFired = 0x3F & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary
+    triggersFired = triggerMask & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary and combine with triggerMask
   } catch (...) {
     EUDAQ_WARN("EUDAQ2 RawEvent flag TRIGGER cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
     return false;
