@@ -90,7 +90,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Now average over all vector elements:
   // Initialize to 0th vector element:
-  uint32_t finets_avg = 0xFF & finets_vec.at(0);
+  uint32_t finets_avg = (finets_vec.empty() ? 0 : (0xFF & finets_vec.at(0)));
 
   // Calculate "rolling average":
   for(int i=1; i<finets_vec.size(); i++) {
