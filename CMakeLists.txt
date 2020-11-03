@@ -84,6 +84,10 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+
+option(USER_BUILD_ONLY_CONVERTER "build only the converters of user modules" OFF)
+
+
 add_subdirectory(main)
 add_subdirectory(extra)
 add_subdirectory(doc)

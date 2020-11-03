@@ -23,10 +23,12 @@ cmake_dependent_option(USER_TLU_BUILD_AIDA "build user/eudet AIDA TLU" ON
 #set(USER_BUILD_AIDA_TLU ${USER_TLU_BUILD_AIDA})
 
 # for the EUDET TLU
-find_package(ZestSC1)
-find_package(LIBUSB)
-find_package(TLUFirmware)
-cmake_dependent_option(USER_TLU_BUILD_EUDET "build user/eudet EUDET TLU" ON
+if(NOT USER_BUILD_ONLY_CONVERTER)
+    find_package(ZestSC1)
+    find_package(LIBUSB)
+    find_package(TLUFirmware)
+endif()
+    cmake_dependent_option(USER_TLU_BUILD_EUDET "build user/eudet EUDET TLU" ON
   "LIBUSB_FOUND;ZESTSC1_FOUND;TLUFIRMWARE_FOUND" OFF)
 
 if(USER_TLU_BUILD_AIDA OR USER_TLU_BUILD_EUDET)
