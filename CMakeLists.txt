@@ -85,7 +85,7 @@ set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 
-option(USER_BUILD_ONLY_CONVERTER "build only the converters of user modules" OFF)
+option(USER_BUILD_ONLY_CONVERTER "build only the converters of user modules - needs to be supported on module side" OFF)
 
 
 add_subdirectory(main)
