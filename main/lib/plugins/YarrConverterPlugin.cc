@@ -2,6 +2,14 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <math.h>
+#include <unistd.h>
+#include <map>
+#include <stdexcept>
+
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
 #if USE_LCIO
@@ -32,6 +40,66 @@ namespace eudaq {
     // Modify this to match your actual event type (from the Producer)
     static const std::string EVENT_TYPE = "Yarr";
 
+
+    //Set correct width (number of columns) of the sensor, based on the layout
+    static int sensorWidth(std::string layout){
+      if (layout=="100_25_odd" or layout=="100_25_even")
+        return 800;
+      else if (layout=="25_100_odd" or layout=="25_100_even")
+        return 200;
+      else
+        return 400;
+    }
+
+    //Set correct height (number of rows) of the sensor, based on the layout
+    static int sensorHeight(std::string layout){
+      if (layout=="100_25_odd" or layout=="100_25_even")
+        return 96;
+      else if (layout=="25_100_odd" or layout=="25_100_even")
+        return 384;
+      else
+        return 192;
+    }
+
+    // Mapping columns from RD53 to Sensor Geometry
+    static int _column_RD53toSensorGeometry(std::string layout, unsigned int column_roc, unsigned int row_roc ){
+        // Mapping for 100x25 planar pixel sensor with odd connectivity on RD53a
+        if (layout=="100_25_odd")
+          return 2*column_roc+(row_roc%2);
+        // Mapping for 100x25 planar pixel sensor with even connectivity on RD53a
+        else if (layout=="100_25_even")
+          return 2*column_roc+((row_roc-1)%2);
+        // Mapping for 25x100 planar pixel sensor with odd connectivity on RD53a
+        else if (layout=="25_100_odd")
+          return static_cast<int>(floor(column_roc/2.0));
+        // Mapping for 25x100 planar pixel sensor with  even connectivity on RD53a
+        else if (layout=="25_100_even")
+          return static_cast<int>(floor(column_roc/2.0));
+        // DEFAULT 50x50 geometry
+        else
+          return static_cast<int>(column_roc);
+    }
+
+    // Mapping rows from RD53 to Sensor Geometry
+    static int _row_RD53toSensorGeometry(std::string layout, unsigned int column_roc, unsigned int row_roc ){
+        // Mapping for 100x25 planar pixel sensor with odd connectivity on RD53a
+        if (layout=="100_25_odd")
+          return static_cast<int>(floor(row_roc/2.0));
+        // Mapping for 100x25 planar pixel sensor with even connectivity on RD53a
+        else if (layout=="100_25_even")
+          return static_cast<int>(floor(row_roc/2.0));
+        // Mapping for 25x100 planar pixel sensor with odd connectivity on RD53a
+        else if (layout=="25_100_odd")
+          return 2*row_roc+(column_roc%2);
+        // Mapping for 25x100 planar pixel sensor with  even connectivity on RD53a
+        else if (layout=="25_100_even")
+          return 2*row_roc+((column_roc-1)%2);
+        // DEFAULT 50x50 geometry
+        else
+          return static_cast<int>(row_roc);
+    }
+
+
     // Declare a new class that inherits from DataConverterPlugin
     class YARRConverterPlugin : public DataConverterPlugin {
 
@@ -48,6 +116,8 @@ namespace eudaq {
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
             // The return value indicates whether the conversion was successful.
             // Again, this is just an example, adapted it for the actual data layout.
+
+
             virtual bool GetStandardSubEvent(StandardEvent &sev,
                     const Event &ev) const {
                 // If the event type is used for different sensors
@@ -55,22 +125,62 @@ namespace eudaq {
                 std::string sensortype = "Rd53a";
                 // Create a StandardPlane representing one sensor plane
                 int base_id = 110;
-                int width = 400, height = 192;
-                
+                //int width = 800, height = 96;
+
+
+                //std::string layout_dut0, layout_dut1;
+                //std::string sensorLayout;
+
+                //Possible sensor layouts
+                std::string possible_layouts[5] = {"100_25_odd", "100_25_even", "25_100_odd", "25_100_even", "50_50"};
+                // Read the sensor layouts from the file
+                std::ifstream infile;
+                infile.open("./sensor_layout.txt");
+
+                std::map<unsigned int, std::string> layout_DUT;
+                std::map<unsigned int, bool> correct_layout;
+                std::string layout;
+                int DUT_id;
+
+                   while(true){
+                        infile >> DUT_id >> layout;
+                        if (infile.eof()) {
+                            break;
+                        }
+                        layout_DUT[DUT_id]=layout;
+                        correct_layout[DUT_id]=false;
+                    }
+
+
                 const RawDataEvent & my_ev = dynamic_cast<const RawDataEvent &>(ev);
-                int ev_id = my_ev.GetTag("EventNumber", -1); 
-                
+                int ev_id = my_ev.GetTag("EventNumber", -1);
+
                 for (unsigned i=0; i<my_ev.NumBlocks(); i++) {
                     eudaq::RawDataEvent::data_t block=my_ev.GetBlock(i);
                     int plane_id = base_id + my_ev.GetID(i);
-                     
+
+                    if (layout_DUT[plane_id].empty()){
+                      throw std::invalid_argument( "DUT ID does not exist in the setup." );
+                    }
+
+                    for (unsigned int i=0; i<5; i++){
+                      if (layout_DUT[plane_id]==possible_layouts[i]){
+                        correct_layout[plane_id] = true;
+                      }
+                    }
+
+                    if (correct_layout[plane_id]==false){
+                      throw std::invalid_argument( "Incorrect sensor layout." );
+                    }
+
+
+
                     StandardPlane plane(plane_id, EVENT_TYPE, sensortype);
-                    
+
                     // Set the number of pixels
-                    plane.SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-                    
+                    plane.SetSizeZS(sensorWidth(layout_DUT[plane_id]), sensorHeight(layout_DUT[plane_id]), 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
                     plane.SetTLUEvent(ev_id);
-                         
+
                     unsigned it = 0;
                     unsigned fragmentCnt = 0;
                     while (it < block.size()) { // Should find as many fragments as trigger per event
@@ -81,7 +191,8 @@ namespace eudaq {
                         for (unsigned i=0; i<nHits; i++) {
                             Fei4Hit hit = *((Fei4Hit*)(&block[it])); it+= sizeof(Fei4Hit);
 			    //                            plane.PushPixel(hit.col,hit.row,hit.tot);
-                            plane.PushPixel(hit.col,hit.row,hit.tot,false,l1id);
+                          //std::cout << "Frame: " << l1id << ", Plane: " << plane_id << std::endl;
+                            plane.PushPixel(_column_RD53toSensorGeometry(layout_DUT[plane_id],hit.col-1,hit.row-1),_row_RD53toSensorGeometry(layout_DUT[plane_id],hit.col-1,hit.row-1),hit.tot,l1id);
                         }
                         fragmentCnt++;
                     }
@@ -126,14 +237,14 @@ namespace eudaq {
 		//                std::string sensortype = "Rd53a";
                 int base_id = 110;
                 int width = 400, height = 192;
-		
+
 
 
 
                 const RawDataEvent & my_ev = dynamic_cast<const RawDataEvent &>(ev_raw);
                 for (int i=0; i<ev_raw.NumBlocks(); i++) {
                     eudaq::RawDataEvent::data_t block=my_ev.GetBlock(i);
-		    
+
 		    zsDataEncoder["sensorID"] = base_id+my_ev.GetID(i);
 		    zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 		    // prepare a new TrackerData object for the ZS data
@@ -141,7 +252,7 @@ namespace eudaq {
 		    std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
 		    // set some values of "Cells" for this object
 		    zsDataEncoder.setCellID( zsFrame.get() );
-		    
+
 		    // this is the structure that will host the sparse pixel
 		    // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
 		    // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
@@ -164,7 +275,7 @@ namespace eudaq {
 		      }
 		      fragmentCnt++;
 		    }
-		    // write TrackerData object that contains info from one sensor to LCIO collection 
+		    // write TrackerData object that contains info from one sensor to LCIO collection
 		    zsDataCollection->push_back( zsFrame.release() );
                 }
 
