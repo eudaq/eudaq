@@ -8,7 +8,7 @@ PROJECT( EUDAQ )
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 10 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
-
+set (CMAKE_CXX_STANDARD 17)
 # some macros are redefined if not exisiting
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
