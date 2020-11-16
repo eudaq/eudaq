@@ -1,6 +1,7 @@
 INCLUDE_DIRECTORIES(include)
 
 LIST(APPEND MODULE_SRC src/Timepix3Event2StdEventConverter.cc)
+MESSAGE(STATUS "Timepix3 StandardEvent converter will be built")
 
 IF(SPIDR_FOUND)
   LIST(APPEND MODULE_SRC src/Timepix3Config.cxx src/Timepix3Producer.cxx)
@@ -14,7 +15,6 @@ IF(SPIDR_FOUND)
 ELSE()
   MESSAGE(WARNING "Timepix3 Producer NOT built: SPIDR, ROOT and/or Xerces-C are missing")
 ENDIF()
-MESSAGE(STATUS "Timepix3 StandardEvent converter will be built")
 
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_LCIO_LIBRARY} ${EXT_LIBRARIES})

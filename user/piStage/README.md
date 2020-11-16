@@ -36,9 +36,21 @@ The producer has to be correctly initialized with the following parameters.
 - ```linStageTypeX``` Used stage for x-axis (M-521.DD1 or M-511.DD1).
 - ```linStageTypeY``` Used stage for y-axis (M-521.DD1 or M-511.DD1).
 - ```rotStageType```  Used stage for rotation (M-060.DG).
-The configuration file needs the following up to three elements
+The configuration file needs the following up to 12 elements
+- ```velocityX``` Velocity of x-axis
+- ```velocityY``` Velocity of y-axis
+- ```velocityRot``` Velocity of rot-axis
+- ```negativeLimitX``` Negative limit of the x-axis
+- ```positiveLimitX``` Positive limit of the x-axis
+- ```negativeLimitY``` Negative limit of the y-axis
+- ```positiveLimitY``` Positive limit of the y-axis
+- ```negativeLimitRot``` Negative limit of the rotation axis
+- ```positiveLimitRot``` Positive limit of the rotation axis
 - ```positionX```Desired new position for x-axis. If not defined, no movement can be done.
 - ```positionY```Desired new position for y-axis. If not defined, no movement can be done.
 - ```positionRot```Desired new position for rot-axis. If not defined, no movement can be done.
+- ```keepServoOnX``` Keep the x servo switch on after moving. Avoids slipping down of the stages. defaults to 1 ==true
+- ```keepServoOnY``` Keep the y servo switch on after moving. Avoids slipping down of the stages. defaults to 1 ==true
+- ```keepServoOnRot``` Keep the rot servo switch on after moving. Avoids slipping down of the stages. defaults to 1 ==true
 
 

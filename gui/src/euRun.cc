@@ -649,8 +649,17 @@ void RunControlGUI::nextStep()
         updateInfos();
         std::cout << "Ready for next step"<<std::endl;
 
-        std::this_thread::sleep_for(std::chrono::seconds(3));
         on_btnStart_clicked();
+        while(!allConnectionsInState(eudaq::Status::STATE_RUNNING)){
+            updateInfos();
+            QCoreApplication::processEvents();
+            std::this_thread::sleep_for (std::chrono::seconds(1));
+            std::cout << "Waiting until all components are running"<<std::endl;
+
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        updateInfos();
+
         if(m_scan.scanIsTimeBased())
         {
             m_scanningTimer.start(1000*m_scan.timePerStep());
@@ -671,7 +680,7 @@ void RunControlGUI::nextStep()
 }
 /**
  * @brief RunControlGUI::allConnectionsInState
- * @param state to be cheked
+ * @param state to be checked
  * @return true if all connections are in state, false otherwise
  */
 bool RunControlGUI::allConnectionsInState(eudaq::Status::State state){

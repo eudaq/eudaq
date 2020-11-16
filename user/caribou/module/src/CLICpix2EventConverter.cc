@@ -111,10 +111,12 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   bool full_shutter = false;
   uint64_t shutter_open = 0, shutter_close = 0;
   for(auto& timestamp : timestamps) {
-    if((timestamp >> 48) == 3) {
+    auto signal_pattern = (timestamp >> 48) & 0x3F;
+
+    if(signal_pattern == 3) {
       shutter_open = (timestamp & 0xffffffffffff) * 10.;
       shutterOpen = true;
-    } else if((timestamp >> 48) == 1 && shutterOpen == true) {
+    } else if(signal_pattern == 1 && shutterOpen == true) {
       shutter_close = (timestamp & 0xffffffffffff) * 10.;
       shutterOpen = false;
       full_shutter = true;
@@ -127,17 +129,17 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
-  // Check for a sane shutter:
-  if(shutter_open > shutter_close) {
-    EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
-    return false;
-  }
-
   // Check if there was a T0:
   if(last_shutter_open_ > shutter_open) {
       t0_seen_++;
   }
   last_shutter_open_ = shutter_open;
+
+  // Check for a sane shutter:
+  if(shutter_open > shutter_close) {
+    EUDAQ_WARN("Frame with shutter close before shutter open: " + std::to_string(ev->GetEventNumber()));
+    return false;
+  }
 
   // FIXME - hardcoded configuration:
   bool drop_before_t0 = true;
@@ -145,10 +147,9 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   if(drop_before_t0 && (t0_seen_==0)) {
     return false;
   }
-  // drop everything after second t0 has been seen:
+  // throw exception when T0 occurs more than once:
   if(t0_seen_>1) {
-      EUDAQ_WARN("Detected T0 " + std::to_string(t0_seen_) + " times.");
-      return false;
+      throw DataInvalid("Detected T0 " + std::to_string(t0_seen_) + " times.");
   }
 
   // Decode the data:

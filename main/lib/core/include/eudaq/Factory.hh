@@ -61,7 +61,7 @@ namespace eudaq{
       return nullptr;
     }
     return (it->second)(std::forward<ARGS>(args)...);
-  };
+  }
 
   template <typename BASE>
   template <typename ...ARGS>
@@ -90,7 +90,7 @@ namespace eudaq{
       init=false;
     }
     return m;
-  };
+  }
     
   template <typename BASE>
   template <typename DERIVED, typename... ARGS>
@@ -105,7 +105,7 @@ namespace eudaq{
     //   std::cout<<e.first<<"  ";
     // std::cout<<std::endl;
     return reinterpret_cast<std::uintptr_t>(&ins);
-  };
+  }
 
 }
 
