@@ -57,6 +57,9 @@ private:
   bool m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
 
+  // Flag to send BORE:
+  std::once_flag bore_flag_;
+
   // Add one mutex to protect calls to pxarCore:
   std::mutex m_mutex;
   pxar::pxarCore *m_api;

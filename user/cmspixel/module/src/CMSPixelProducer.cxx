@@ -27,8 +27,7 @@ static const std::string EVENT_TYPE_QUAD = "CMSPixelQUAD";
 
 CMSPixelProducer::CMSPixelProducer(const std::string name,
                                    const std::string &runcontrol)
-    : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_ev_filled(0),
-      m_ev_runningavg_filled(0), m_tlu_waiting_time(4000), m_roc_resetperiod(0),
+    : eudaq::Producer(name, runcontrol), m_run(0), m_tlu_waiting_time(4000), m_roc_resetperiod(0),
       m_nplanes(1), m_channels(1), m_running(false),
       m_api(NULL), m_verbosity("WARNING"), m_trimmingFromConf(false),
       m_pattern_delay(0), m_trigger_is_pg(false), m_fout(0), m_foutName(""),
@@ -335,38 +334,6 @@ void CMSPixelProducer::DoStartRun() {
 
     std::cout << "Start Run" << std::endl;
 
-    auto bore = eudaq::Event::MakeUnique(m_event_type);
-    bore->SetBORE();
-    bore->SetTriggerN(m_ev, true);
-    bore->SetEventN(m_ev);
-
-    // Set the TBM & ROC type for decoding:
-    bore->SetTag("ROCTYPE", m_roctype);
-    bore->SetTag("TBMTYPE", m_tbmtype);
-
-    // Set the number of planes (ROCs):
-    bore->SetTag("PLANES", m_nplanes);
-
-    // Store all DAC settings in one BORE tag:
-    bore->SetTag("DACS", m_alldacs);
-
-    // Set the PCB mount type for correct coordinate transformation:
-    bore->SetTag("PCBTYPE", m_pcbtype);
-
-    // Set the detector for correct plane assignment:
-    bore->SetTag("DETECTOR", m_detector);
-
-    // Store the pxarCore version this has been recorded with:
-    bore->SetTag("PXARCORE", m_api->getVersion());
-    // Store eudaq library version:
-    bore->SetTag("EUDAQ", PACKAGE_VERSION);
-
-    // Send the event out:
-    SendEvent(std::move(bore));
-
-    std::cout << "BORE with detector " << m_detector << " (event type "
-              << m_event_type << ") and ROC type " << m_roctype << std::endl;
-
     // Start the Data Acquisition:
     m_api->daqStart();
 
@@ -460,6 +427,36 @@ void CMSPixelProducer::RunLoop() {
         std::to_string(event_id) + ")");
       }*/
 
+      // If this is the first event, let's add the BORE flag:
+      std::call_once(bore_flag_, [&]() {
+        ev->SetBORE();
+
+        // Set the TBM & ROC type for decoding:
+        ev->SetTag("ROCTYPE", m_roctype);
+        ev->SetTag("TBMTYPE", m_tbmtype);
+
+        // Set the number of planes (ROCs):
+        ev->SetTag("PLANES", m_nplanes);
+
+        // Store all DAC settings in one BORE tag:
+        ev->SetTag("DACS", m_alldacs);
+
+        // Set the PCB mount type for correct coordinate transformation:
+        ev->SetTag("PCBTYPE", m_pcbtype);
+
+        // Set the detector for correct plane assignment:
+        ev->SetTag("DETECTOR", m_detector);
+
+        // Store the pxarCore version this has been recorded with:
+        ev->SetTag("PXARCORE", m_api->getVersion());
+        // Store eudaq library version:
+        ev->SetTag("EUDAQ", PACKAGE_VERSION);
+
+        std::cout << "BORE with detector " << m_detector << " (event type "
+        << m_event_type << ") and ROC type " << m_roctype << std::endl;
+      });
+
+
       SendEvent(std::move(ev));
       event_id++;
       // Analog: Events with pixel data have more than 4 words for TBM
@@ -502,71 +499,72 @@ void CMSPixelProducer::RunLoop() {
 
   std::cout << "Exiting run loop." << std::endl;
 
-  // If running with PG, halt the loop:
-  if (m_trigger_is_pg) {
-    m_api->daqTriggerLoopHalt();
-    triggering = false;
-  }
-
-  // Wait before we stop the DAQ because TLU takes some time to pick up the
-  // OnRunStop signal
-  // otherwise the last triggers get lost.
-  eudaq::mSleep(m_tlu_waiting_time);
-
-  // Stop the Data Acquisition:
-  m_api->daqStop();
-
-  EUDAQ_INFO("Switching Sensor Bias HV OFF.");
-  m_api->HVoff();
-
   try {
-    // Read the rest of events from DTB buffer:
-    std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
-    std::cout << "CMSPixel " << m_detector << " Post run read-out, sending "
-    << daqEvents.size() << " evt." << std::endl;
-    for (size_t i = 0; i < daqEvents.size(); i++) {
-      auto ev = eudaq::Event::MakeUnique(m_event_type);
-      ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvents.at(i).data[0]),
-      sizeof(daqEvents.at(i).data[0]) *
-      daqEvents.at(i).data.size());
-      SendEvent(std::move(ev));
-      if (daqEvents.at(i).data.size() > (4 * m_channels + m_nplanes)) {
-        ev_filled++;
-      }
-      event_id++;
+    // If running with PG, halt the loop:
+    if (m_trigger_is_pg) {
+      m_api->daqTriggerLoopHalt();
+      triggering = false;
     }
-  } catch (pxar::DataNoEvent &) {
-    // No event available in derandomize buffers (DTB RAM),
+
+    // Wait before we stop the DAQ because TLU takes some time to pick up the
+    // OnRunStop signal
+    // otherwise the last triggers get lost.
+    eudaq::mSleep(m_tlu_waiting_time);
+
+    // Stop the Data Acquisition:
+    m_api->daqStop();
+
+    EUDAQ_INFO("Switching Sensor Bias HV OFF.");
+    m_api->HVoff();
+
+    try {
+      // Read the rest of events from DTB buffer:
+      std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
+      std::cout << "CMSPixel " << m_detector << " Post run read-out, sending "
+      << daqEvents.size() << " evt." << std::endl;
+      for (size_t i = 0; i < daqEvents.size(); i++) {
+        auto ev = eudaq::Event::MakeUnique(m_event_type);
+        ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvents.at(i).data[0]),
+        sizeof(daqEvents.at(i).data[0]) *
+        daqEvents.at(i).data.size());
+        SendEvent(std::move(ev));
+        if (daqEvents.at(i).data.size() > (4 * m_channels + m_nplanes)) {
+          ev_filled++;
+        }
+        event_id++;
+      }
+    } catch (pxar::DataNoEvent &) {
+      // No event available in derandomize buffers (DTB RAM),
+    }
+
+    // Sending the final end-of-run event:
+    auto eore = eudaq::Event::MakeUnique(m_event_type);
+    eore->SetEORE();
+    SendEvent(std::move(eore));
+    std::cout << "CMSPixel " << m_detector << " Post run read-out finished."
+    << std::endl;
+    std::cout << "Stopped" << std::endl;
+
+    // Output information for the logbook:
+    std::cout << "RUN " << m_run << " CMSPixel " << m_detector << std::endl
+    << "\t Total triggers:   \t" << event_id << std::endl
+    << "\t Total filled evt: \t" << ev_filled << std::endl;
+    std::cout << "\t " << m_detector << " yield: \t"
+    << (event_id > 0 ? std::to_string(100 * ev_filled / event_id) : "(inf)")
+    << "%" << std::endl;
+    EUDAQ_USER(
+      string("Run " + std::to_string(m_run) + ", detector " + m_detector +
+      " yield: " +
+      (event_id > 0 ? std::to_string(100 * ev_filled / event_id) : "(inf)") +
+      "% (" + std::to_string(ev_filled) + "/" +
+      std::to_string(event_id) + ")"));
+    } catch (const std::exception &e) {
+      EUDAQ_ERROR(string("While Stopping: Caught exception: ") + string(e.what()));
+      throw;
+    } catch (...) {
+      EUDAQ_ERROR("While Stopping: Unknown exception");
+      throw;
+    }
+
+    std::cout << "Finalized stopping." << std::endl;
   }
-
-  // Sending the final end-of-run event:
-  auto eore = eudaq::Event::MakeUnique(m_event_type);
-  eore->SetEORE();
-  SendEvent(std::move(eore));
-  std::cout << "CMSPixel " << m_detector << " Post run read-out finished."
-  << std::endl;
-  std::cout << "Stopped" << std::endl;
-
-  // Output information for the logbook:
-  std::cout << "RUN " << m_run << " CMSPixel " << m_detector << std::endl
-  << "\t Total triggers:   \t" << event_id << std::endl
-  << "\t Total filled evt: \t" << ev_filled << std::endl;
-  std::cout << "\t " << m_detector << " yield: \t"
-  << (event_id > 0 ? std::to_string(100 * ev_filled / event_id) : "(inf)")
-  << "%" << std::endl;
-  EUDAQ_USER(
-    string("Run " + std::to_string(m_run) + ", detector " + m_detector +
-    " yield: " +
-    (event_id > 0 ? std::to_string(100 * ev_filled / event_id) : "(inf)") +
-    "% (" + std::to_string(ev_filled) + "/" +
-    std::to_string(event_id) + ")"));
-  } catch (const std::exception &e) {
-    EUDAQ_ERROR(string("While Stopping: Caught exception: ") + string(e.what()));
-    throw;
-  } catch (...) {
-    EUDAQ_ERROR("While Stopping: Unknown exception");
-    throw;
-  }
-
-  std::cout << "Finalized stopping." << std::endl;
-}
