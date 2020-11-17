@@ -74,6 +74,11 @@ void CMSPixelProducer::DoConfigure() {
   auto config = GetConfiguration();
   std::cout << "Configuring: " << config->Name() << std::endl;
 
+  int shift_trigger_id = config->Get("shift_trigger_id", 0);
+  if(shift_trigger_id != 0) {
+    EUDAQ_WARN("Will be shifting the trigger ID for CMSPixel by " + std::to_string(shift_trigger_id));
+  }
+
   bool confTrimming(false), confDacs(false);
   // declare config vectors
   std::vector<std::pair<std::string, uint8_t>> sig_delays;
@@ -389,7 +394,8 @@ void CMSPixelProducer::RunLoop() {
   std::cout << "Starting run loop..." << std::endl;
   unsigned ev_runningavg_filled = 0;
   unsigned ev_filled = 0;
-  unsigned event_id = 0;
+  int event_id = 0 + shift_trigger_id;
+
   // Acquire lock for pxarCore object access:
   std::lock_guard<std::mutex> lck(m_mutex);
 
@@ -410,6 +416,12 @@ void CMSPixelProducer::RunLoop() {
       // is available:
       try {
         pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
+
+        // Do not send events while we still have a negative event ID - simply drop this event and move on:
+        if(event_id < 0) {
+          event_id++;
+          continue;
+        }
 
         auto ev = eudaq::Event::MakeUnique(m_event_type);
         ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvent.data[0]),

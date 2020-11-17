@@ -57,6 +57,8 @@ private:
   bool m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
 
+  int shift_trigger_id{0};
+
   // Flag to send BORE:
   std::once_flag bore_flag_;
 
