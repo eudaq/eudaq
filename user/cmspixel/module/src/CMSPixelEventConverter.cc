@@ -81,6 +81,9 @@ bool CMSPixelBaseConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventS
 
   d2->SetEventN(d1->GetEventN());
   d2->SetTriggerN(d1->GetTriggerN());
+
+  // Identify the detetor type
+  d2->SetDetectorType("CMSPixel");
   return true;
 }
 
