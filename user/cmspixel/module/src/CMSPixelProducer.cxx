@@ -29,10 +29,9 @@ CMSPixelProducer::CMSPixelProducer(const std::string name,
                                    const std::string &runcontrol)
     : eudaq::Producer(name, runcontrol), m_run(0), m_tlu_waiting_time(4000), m_roc_resetperiod(0),
       m_nplanes(1), m_channels(1), m_running(false),
-      m_api(NULL), m_verbosity("WARNING"), m_trimmingFromConf(false),
-      m_pattern_delay(0), m_trigger_is_pg(false), m_fout(0), m_foutName(""),
-      triggering(false), m_roctype(""), m_pcbtype(""), m_usbId(""),
-      m_producerName(name), m_detector(""), m_event_type(""), m_alldacs("") {
+      m_api(nullptr), m_verbosity("WARNING"), m_trimmingFromConf(false),
+      m_pattern_delay(0), m_trigger_is_pg(false),
+      triggering(false), m_roctype(""), m_pcbtype(""), m_producerName(name), m_detector(""), m_event_type(""), m_alldacs("") {
   if (m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
     m_event_type = EVENT_TYPE_REF;
@@ -53,18 +52,18 @@ void CMSPixelProducer::DoInitialise(){
   auto ini = GetInitConfiguration();
 
   try {
-    if (m_api != NULL) {
+    if (m_api != nullptr) {
       delete m_api;
     }
 
-    m_usbId = ini->Get("usbId", "*");
-    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+    std::string usbId = ini->Get("usbId", "*");
+    EUDAQ_USER("Trying to connect to USB id: " + usbId + "\n");
 
     // Allow overwriting of verbosity level via command line:
     m_verbosity = ini->Get("verbosity", m_verbosity);
 
     // Get a new pxar instance:
-    m_api = new pxar::pxarCore(m_usbId, m_verbosity);
+    m_api = new pxar::pxarCore(usbId, m_verbosity);
   } catch (...) {
     EUDAQ_ERROR("Error occurred in initialization phase of CMSPixelProducer");
     throw;
@@ -317,9 +316,9 @@ void CMSPixelProducer::DoReset() {
   std::lock_guard<std::mutex> lck(m_mutex);
 
   // If we already have a pxarCore instance, shut it down cleanly:
-  if (m_api != NULL) {
+  if (m_api != nullptr) {
     delete m_api;
-    m_api = NULL;
+    m_api = nullptr;
   }
 }
 
@@ -376,9 +375,9 @@ void CMSPixelProducer::DoTerminate() {
   std::lock_guard<std::mutex> lck(m_mutex);
 
   // If we already have a pxarCore instance, shut it down cleanly:
-  if (m_api != NULL) {
+  if (m_api != nullptr) {
     delete m_api;
-    m_api = NULL;
+    m_api = nullptr;
   }
 
   std::cout << "CMSPixelProducer " << m_producerName << " terminated."
