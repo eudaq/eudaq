@@ -5,6 +5,9 @@
 By default the cmake-flag is activated ```USER_TLU_BUILD=ON```.
 This builds the converter module for a standard event, for the online monitor for example.
 
+To build only the converters the cmake-flag
+```USER_BUILD_TLU_ONLY_CONVERTER``` can be set to ON.
+
 If cmake finds the EUDET TLU or the AIDA TLU dependencies, these producers are automatically build (by switching on the flags ```USER_TLU_BUILD_EUDET``` or ```USER_TLU_BUILD_AIDA```).
 
 ## EUDET TLU producer and dependencies
