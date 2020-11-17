@@ -3,7 +3,7 @@
 
 namespace py = pybind11;
 
-class PyStatus : public eudaq::Status {
+class PybindStatus : public eudaq::Status {
 public:
   using eudaq::Status::Status;
   void Print(std::ostream& os, size_t offset) const override {
