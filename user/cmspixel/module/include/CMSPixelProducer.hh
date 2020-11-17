@@ -48,7 +48,7 @@ private:
 
   std::string prepareFilename(std::string filename, std::string n);
 
-  unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
+  unsigned m_run;
   unsigned m_tlu_waiting_time;
   unsigned m_roc_resetperiod;
   unsigned m_nplanes, m_channels;

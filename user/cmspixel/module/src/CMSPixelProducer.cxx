@@ -325,9 +325,6 @@ void CMSPixelProducer::DoReset() {
 }
 
 void CMSPixelProducer::DoStartRun() {
-  m_ev = 0;
-  m_ev_filled = 0;
-  m_ev_runningavg_filled = 0;
 
   try {
     // Acquire lock for pxarCore instance:
@@ -402,75 +399,6 @@ void CMSPixelProducer::DoStopRun() {
   m_running = false;
   std::cout << "Stopping Run" << std::endl;
 
-  try {
-    // Acquire lock for pxarCore instance:
-    std::lock_guard<std::mutex> lck(m_mutex);
-
-    // If running with PG, halt the loop:
-    if (m_trigger_is_pg) {
-      m_api->daqTriggerLoopHalt();
-      triggering = false;
-    }
-
-    // Wait before we stop the DAQ because TLU takes some time to pick up the
-    // OnRunStop signal
-    // otherwise the last triggers get lost.
-    eudaq::mSleep(m_tlu_waiting_time);
-
-    // Stop the Data Acquisition:
-    m_api->daqStop();
-
-    EUDAQ_INFO("Switching Sensor Bias HV OFF.");
-    m_api->HVoff();
-
-    try {
-      // Read the rest of events from DTB buffer:
-      std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
-      std::cout << "CMSPixel " << m_detector << " Post run read-out, sending "
-                << daqEvents.size() << " evt." << std::endl;
-      for (size_t i = 0; i < daqEvents.size(); i++) {
-        auto ev = eudaq::Event::MakeUnique(m_event_type);
-        ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvents.at(i).data[0]),
-                    sizeof(daqEvents.at(i).data[0]) *
-                        daqEvents.at(i).data.size());
-        SendEvent(std::move(ev));
-        if (daqEvents.at(i).data.size() > (4 * m_channels + m_nplanes)) {
-          m_ev_filled++;
-        }
-        m_ev++;
-      }
-    } catch (pxar::DataNoEvent &) {
-      // No event available in derandomize buffers (DTB RAM),
-    }
-
-    // Sending the final end-of-run event:
-    auto eore = eudaq::Event::MakeUnique(m_event_type);
-    eore->SetEORE();
-    SendEvent(std::move(eore));
-    std::cout << "CMSPixel " << m_detector << " Post run read-out finished."
-              << std::endl;
-    std::cout << "Stopped" << std::endl;
-
-    // Output information for the logbook:
-    std::cout << "RUN " << m_run << " CMSPixel " << m_detector << std::endl
-              << "\t Total triggers:   \t" << m_ev << std::endl
-              << "\t Total filled evt: \t" << m_ev_filled << std::endl;
-    std::cout << "\t " << m_detector << " yield: \t"
-              << (m_ev > 0 ? std::to_string(100 * m_ev_filled / m_ev) : "(inf)")
-              << "%" << std::endl;
-    EUDAQ_USER(
-        string("Run " + std::to_string(m_run) + ", detector " + m_detector +
-               " yield: " +
-               (m_ev > 0 ? std::to_string(100 * m_ev_filled / m_ev) : "(inf)") +
-               "% (" + std::to_string(m_ev_filled) + "/" +
-               std::to_string(m_ev) + ")"));
-  } catch (const std::exception &e) {
-    EUDAQ_ERROR(string("While Stopping: Caught exception: ") + string(e.what()));
-    throw;
-  } catch (...) {
-    EUDAQ_ERROR("While Stopping: Unknown exception");
-    throw;
-  }
 }
 
 void CMSPixelProducer::DoTerminate() {
@@ -493,7 +421,9 @@ void CMSPixelProducer::DoTerminate() {
 void CMSPixelProducer::RunLoop() {
 
   std::cout << "Starting run loop..." << std::endl;
-
+  unsigned ev_runningavg_filled = 0;
+  unsigned ev_filled = 0;
+  unsigned event_id = 0;
   // Acquire lock for pxarCore object access:
   std::lock_guard<std::mutex> lck(m_mutex);
 
@@ -520,48 +450,48 @@ void CMSPixelProducer::RunLoop() {
         sizeof(daqEvent.data[0]) * daqEvent.data.size());
 
         // Use event counter as event ID as well as trigger ID
-        ev->SetTriggerN(m_ev, true);
-        ev->SetEventN(m_ev);
+        ev->SetTriggerN(event_id, true);
+        ev->SetEventN(event_id);
 
         // Compare event ID with TBM trigger counter:
-        /*if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (m_ev%256)) {
+        /*if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (event_id%256)) {
         EUDAQ_ERROR("Unexpected trigger number: " +
         std::to_string((daqEvent.data[0] & 0xff)) + " (expecting " +
-        std::to_string(m_ev) + ")");
+        std::to_string(event_id) + ")");
       }*/
 
       SendEvent(std::move(ev));
-      m_ev++;
+      event_id++;
       // Analog: Events with pixel data have more than 4 words for TBM
       // header/trailer and 3 for each ROC header:
       if (m_roctype == "psi46v2") {
         if (daqEvent.data.size() > (4 * m_channels + 3 * m_nplanes)) {
-          m_ev_filled++;
-          m_ev_runningavg_filled++;
+          ev_filled++;
+          ev_runningavg_filled++;
         }
       }
       // Events with pixel data have more than 4 words for TBM header/trailer
       // and 1 for each ROC header:
       else if (daqEvent.data.size() > (4 * m_channels + m_nplanes)) {
-        m_ev_filled++;
-        m_ev_runningavg_filled++;
+        ev_filled++;
+        ev_runningavg_filled++;
       }
 
       // Print every 1k evt:
-      if (m_ev % 1000 == 0) {
+      if (event_id % 1000 == 0) {
         uint8_t filllevel = 0;
         m_api->daqStatus(filllevel);
-        std::cout << "CMSPixel " << m_detector << " EVT " << m_ev << " / "
-        << m_ev_filled << " w/ px" << std::endl;
+        std::cout << "CMSPixel " << m_detector << " EVT " << event_id << " / "
+        << ev_filled << " w/ px" << std::endl;
         std::cout << "\t Total average:  \t"
-        << (m_ev > 0 ? std::to_string(100 * m_ev_filled / m_ev)
+        << (event_id > 0 ? std::to_string(100 * ev_filled / event_id)
         : "(inf)") << "%" << std::endl;
         std::cout << "\t 1k Trg average: \t"
-        << (100 * m_ev_runningavg_filled / 1000) << "%"
+        << (100 * ev_runningavg_filled / 1000) << "%"
         << std::endl;
         std::cout << "\t RAM fill level: \t" << static_cast<int>(filllevel)
         << "%" << std::endl;
-        m_ev_runningavg_filled = 0;
+        ev_runningavg_filled = 0;
       }
     } catch (pxar::DataNoEvent &) {
       // No event available in derandomize buffers (DTB RAM), return to
@@ -571,4 +501,72 @@ void CMSPixelProducer::RunLoop() {
   }
 
   std::cout << "Exiting run loop." << std::endl;
+
+  // If running with PG, halt the loop:
+  if (m_trigger_is_pg) {
+    m_api->daqTriggerLoopHalt();
+    triggering = false;
+  }
+
+  // Wait before we stop the DAQ because TLU takes some time to pick up the
+  // OnRunStop signal
+  // otherwise the last triggers get lost.
+  eudaq::mSleep(m_tlu_waiting_time);
+
+  // Stop the Data Acquisition:
+  m_api->daqStop();
+
+  EUDAQ_INFO("Switching Sensor Bias HV OFF.");
+  m_api->HVoff();
+
+  try {
+    // Read the rest of events from DTB buffer:
+    std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
+    std::cout << "CMSPixel " << m_detector << " Post run read-out, sending "
+    << daqEvents.size() << " evt." << std::endl;
+    for (size_t i = 0; i < daqEvents.size(); i++) {
+      auto ev = eudaq::Event::MakeUnique(m_event_type);
+      ev->AddBlock(0, reinterpret_cast<const char *>(&daqEvents.at(i).data[0]),
+      sizeof(daqEvents.at(i).data[0]) *
+      daqEvents.at(i).data.size());
+      SendEvent(std::move(ev));
+      if (daqEvents.at(i).data.size() > (4 * m_channels + m_nplanes)) {
+        ev_filled++;
+      }
+      event_id++;
+    }
+  } catch (pxar::DataNoEvent &) {
+    // No event available in derandomize buffers (DTB RAM),
+  }
+
+  // Sending the final end-of-run event:
+  auto eore = eudaq::Event::MakeUnique(m_event_type);
+  eore->SetEORE();
+  SendEvent(std::move(eore));
+  std::cout << "CMSPixel " << m_detector << " Post run read-out finished."
+  << std::endl;
+  std::cout << "Stopped" << std::endl;
+
+  // Output information for the logbook:
+  std::cout << "RUN " << m_run << " CMSPixel " << m_detector << std::endl
+  << "\t Total triggers:   \t" << event_id << std::endl
+  << "\t Total filled evt: \t" << ev_filled << std::endl;
+  std::cout << "\t " << m_detector << " yield: \t"
+  << (event_id > 0 ? std::to_string(100 * ev_filled / event_id) : "(inf)")
+  << "%" << std::endl;
+  EUDAQ_USER(
+    string("Run " + std::to_string(m_run) + ", detector " + m_detector +
+    " yield: " +
+    (event_id > 0 ? std::to_string(100 * ev_filled / event_id) : "(inf)") +
+    "% (" + std::to_string(ev_filled) + "/" +
+    std::to_string(event_id) + ")"));
+  } catch (const std::exception &e) {
+    EUDAQ_ERROR(string("While Stopping: Caught exception: ") + string(e.what()));
+    throw;
+  } catch (...) {
+    EUDAQ_ERROR("While Stopping: Unknown exception");
+    throw;
+  }
+
+  std::cout << "Finalized stopping." << std::endl;
 }
