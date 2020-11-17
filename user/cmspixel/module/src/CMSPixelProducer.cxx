@@ -338,6 +338,13 @@ void CMSPixelProducer::DoStartRun() {
 
     std::cout << "Start Run" << std::endl;
 
+    // Try to read left-over events from buffer:
+    try {
+      pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
+    } catch(pxar::pxarException& e) {
+      EUDAQ_WARN(std::string("pxar reports: ") + e.what());
+    }
+
     // Start the Data Acquisition:
     m_api->daqStart();
 
@@ -396,6 +403,8 @@ void CMSPixelProducer::RunLoop() {
   unsigned ev_filled = 0;
   int event_id = 0 + shift_trigger_id;
 
+  bool bore_sent = false;
+  
   // Acquire lock for pxarCore object access:
   std::lock_guard<std::mutex> lck(m_mutex);
 
@@ -436,10 +445,10 @@ void CMSPixelProducer::RunLoop() {
         EUDAQ_ERROR("Unexpected trigger number: " +
         std::to_string((daqEvent.data[0] & 0xff)) + " (expecting " +
         std::to_string(event_id) + ")");
-      }*/
+        }*/
 
       // If this is the first event, let's add the BORE flag:
-      std::call_once(bore_flag_, [&]() {
+      if(!bore_sent) {
         ev->SetBORE();
 
         // Set the TBM & ROC type for decoding:
@@ -465,7 +474,9 @@ void CMSPixelProducer::RunLoop() {
 
         std::cout << "BORE with detector " << m_detector << " (event type "
         << m_event_type << ") and ROC type " << m_roctype << std::endl;
-      });
+	EUDAQ_USER("Sent BORE with event ID " + std::to_string(event_id));
+	bore_sent = true;
+      };
 
 
       SendEvent(std::move(ev));
@@ -505,7 +516,9 @@ void CMSPixelProducer::RunLoop() {
       // No event available in derandomize buffers (DTB RAM), return to
       // scheduler:
       sched_yield();
-    }
+      } catch(const pxar::DataException &e) {
+	EUDAQ_WARN(std::string("Data issue detected: ") + e.what());
+      }
   }
 
   std::cout << "Exiting run loop." << std::endl;
