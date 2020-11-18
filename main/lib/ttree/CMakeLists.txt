@@ -49,15 +49,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       ${EUDAQ_INSTALL_PREFIX}/extern/lib/libttree.so
       CACHE INTERNAL "external ttree library")
   endif()
-
- if((CMAKE_COMPILER_IS_GNUCC) AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0))
-   set_property(TARGET ${EUDAQ_COMPONENT} PROPERTY CXX_STANDARD 14)
 endif()
 
-
 target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
-
-
 
 install(TARGETS ${EUDAQ_COMPONENT}
   RUNTIME DESTINATION bin
