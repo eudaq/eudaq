@@ -3,10 +3,6 @@ if(WIN32)
   return()
 endif()
 
-set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-set(ROOT_DIR $ENV{ROOTSYS}/cmake)
-find_package(ROOT)
-
 cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "lib/ttree library (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
@@ -28,10 +24,6 @@ set (TTREE_LIBRARIES ${TTREE_LIBRARIES} CACHE INTERNAL "external ttree library")
     CACHE INTERNAL "directory of eudaq include")
 include_directories(${EUDAQ_INCLUDE_DIRS})	
 include_directories(${ROOT_INCLUDE_DIR})
-
-if(ROOT_USE_FILE)
-  include(${ROOT_USE_FILE})
-endif()
 
 include_directories(. include)
 include_directories(${CMAKE_BINARY_DIR})
