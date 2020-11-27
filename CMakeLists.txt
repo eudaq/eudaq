@@ -10,6 +10,7 @@ include(CMakeDependentOption)
 if(COMMAND CMAKE_POLICY)
   if(${CMAKE_VERSION} VERSION_GREATER "3.13")
     cmake_policy(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
+    cmake_policy(SET CMP0077 NEW) # allow overwriting options with normal variables    
   endif()
 endif(COMMAND CMAKE_POLICY)
 
