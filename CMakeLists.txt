@@ -6,7 +6,6 @@ set(${PROJECT_NAME}_VERSION_PATCH 0 )
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
-
 if(COMMAND CMAKE_POLICY)
   if(${CMAKE_VERSION} VERSION_GREATER "3.13")
     cmake_policy(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
@@ -126,33 +125,31 @@ include(PrintSystemInformation)
 
 export(PACKAGE eudaq)
 
-
 if(DEFINED EUDAQ_CORE_LIBRARY)
-  list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_CORE_LIBRARY})
+  list(APPEND CONF_LIBRARIES eudaq_${EUDAQ_CORE_LIBRARY})
 endif()
 
 if(DEFINED EUDAQ_LCIO_LIBRARY)
-  list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_LCIO_LIBRARY})
+  list(APPEND CONF_LIBRARIES eudaq_${EUDAQ_LCIO_LIBRARY})
 endif()
 
 if(DEFINED EUDAQ_ROOT_MONITOR_LIBRARY)
-  list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_ROOT_MONITOR_LIBRARY})
+  list(APPEND CONF_LIBRARIES eudaq_${EUDAQ_ROOT_MONITOR_LIBRARY})
 endif()
 
 if(DEFINED EUDAQ_TTREE_LIBRARY)
-  list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_TTREE_LIBRARY})
+  list(APPEND CONF_LIBRARIES eudaq_${EUDAQ_TTREE_LIBRARY})
 endif()
 
-set(CONF_INCLUDE_DIRS "\${EUDAQ_INSTALL_DIR}/include \${EUDAQ_INSTALL_DIR}/extern/include")
-set(EUDAQ_INCLUDE_DIRS "include")
-set(EUDAQ_LIBRARIES_DIRS "lib")
+get_directory_property (INCLUDE_DIRECTORIES INCLUDE_DIRECTORIES)
+set(CONF_INCLUDE_DIRS \${EUDAQ_INSTALL_DIR}/include \${EUDAQ_INSTALL_DIR}/extern/include include ${INCLUDE_DIRECTORIES})
+set(CONF_LIBRARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/main/lib lib)
 
 include(CMakePackageConfigHelpers)
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in
+configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in
                               ${CMAKE_CURRENT_BINARY_DIR}/eudaqConfig.cmake
                               INSTALL_DESTINATION cmake
-                              PATH_VARS EUDAQ_INCLUDE_DIRS EUDAQ_LIBRARIES_DIRS
-                              )
+  )
 
 write_basic_package_version_file(eudaqConfigVersion.cmake
                                  VERSION ${PROJECT_VERSION}
