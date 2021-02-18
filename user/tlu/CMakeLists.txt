@@ -27,21 +27,23 @@ include_directories(${EUDAQ_INCLUDE_DIRS})
 
 # if we only want to built the converters we do not need to check for hardware libs
 if(NOT USER_BUILD_TLU_ONLY_CONVERTER)
-    # for the AIDA TLU
-find_package(CACTUS)
-cmake_dependent_option(USER_TLU_BUILD_AIDA "build user/eudet AIDA TLU" ON
-  "CACTUS_FOUND" OFF)
-
-# for the EUDET TLU
+  # for the AIDA TLU
+  find_package(CACTUS)
+  cmake_dependent_option(USER_TLU_BUILD_AIDA "build user/eudet AIDA TLU" ON
+    "CACTUS_FOUND" OFF)
+  
+  # for the EUDET TLU
+  if(NOT ZestSC1_FOUND)
     find_package(ZestSC1)
-    find_package(LIBUSB)
-    find_package(TLUFirmware)
+  endif()
+  find_package(LIBUSB)
+  find_package(TLUFirmware)
 endif()
-    cmake_dependent_option(USER_TLU_BUILD_EUDET "build user/eudet EUDET TLU" ON
+cmake_dependent_option(USER_TLU_BUILD_EUDET "build user/eudet EUDET TLU" ON
   "LIBUSB_FOUND;ZESTSC1_FOUND;TLUFIRMWARE_FOUND" OFF)
 
 if(USER_TLU_BUILD_AIDA OR USER_TLU_BUILD_EUDET)
-    set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
+  set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
 endif()
 
 
