@@ -60,8 +60,10 @@ install(FILES ${INC_FILES} DESTINATION include/eudaq)
 
 # set the path to which we will install later: default project home, can be changed using
 set(EUDAQ_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
-set(CMAKE_INSTALL_PREFIX "${EUDAQ_INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/extern)
+if(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
+  set(CMAKE_INSTALL_PREFIX "${EUDAQ_INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+endif()
+list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/extern)
 
 # Set the correct build type and allow command line options:
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -142,7 +144,7 @@ if(DEFINED EUDAQ_TTREE_LIBRARY)
 endif()
 
 get_directory_property (INCLUDE_DIRECTORIES INCLUDE_DIRECTORIES)
-set(CONF_INCLUDE_DIRS \${EUDAQ_INSTALL_DIR}/include \${EUDAQ_INSTALL_DIR}/extern/include include ${INCLUDE_DIRECTORIES})
+set(CONF_INCLUDE_DIRS \${CMAKE_INSTALL_PREFIX}/include \${CMAKE_INSTALL_PREFIX}/extern/include include ${INCLUDE_DIRECTORIES})
 set(CONF_LIBRARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/main/lib lib)
 
 include(CMakePackageConfigHelpers)
