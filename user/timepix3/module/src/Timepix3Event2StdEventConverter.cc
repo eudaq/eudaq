@@ -81,17 +81,18 @@ bool Timepix3TrigEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::
 
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime(0);
 uint64_t Timepix3RawEvent2StdEventConverter::m_syncTime_prev(0);
+uint64_t Timepix3RawEvent2StdEventConverter::m_delta_t0(1e6);
 bool Timepix3RawEvent2StdEventConverter::m_clearedHeader(false);
 bool Timepix3RawEvent2StdEventConverter::m_first_time(true);
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtot;
 std::vector<std::vector<float>> Timepix3RawEvent2StdEventConverter::vtoa;
 
 bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-  uint64_t delta_t0 = 1e6; // default: 1sec
+
   // Read from configuration:
   if(m_first_time) {
-      delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
-      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(delta_t0) + "ns.");
+      m_delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
+      EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(m_delta_t0) + "us.");
       m_first_time = false;
 
       if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
@@ -187,9 +188,11 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
         // Hence, if the current timestamp is more than 20us earlier than the previous timestamp, we can assume that
         // a 2nd T0 has occured. With some safety margin, set delta_t0 = 1e6 (1s, default).
         // This implies we cannot detect a 2nd T0 within the first "delta_t0" microseconds after the initial T0.
-        } else if ((m_syncTime + delta_t0 * 4096 * 40) < m_syncTime_prev) { // delta_t0 on left side to avoid neg. difference between uint64_t
+        } else if ((m_syncTime + m_delta_t0 * 4096 * 40) < m_syncTime_prev) { // delta_t0 on left side to avoid neg. difference between uint64_t
           throw DataInvalid("Timepix3: Detected second T0 signal. Time jumps back by " + to_string((m_syncTime_prev - m_syncTime) / 4096 / 40) + "us.");
         }
+        EUDAQ_DEBUG("ST = " + to_string(m_syncTime) + " STPrev = " + to_string(m_syncTime_prev) + " " + to_string(m_syncTime < m_syncTime_prev));
+
         m_syncTime_prev = m_syncTime;
       }
     }
