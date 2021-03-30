@@ -40,6 +40,8 @@ namespace eudaq {
     // Modify this to match your actual event type (from the Producer)
     static const std::string EVENT_TYPE = "Yarr";
 
+    // A variable to store the sensor layout
+    std::map<unsigned int, std::string> layout_DUT;
 
     //Set correct width (number of columns) of the sensor, based on the layout
     static int sensorWidth(std::string layout){
@@ -117,6 +119,21 @@ namespace eudaq {
 #ifndef WIN32 // some linux Stuff //$$change
                 (void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
+		    
+               // Read the sensor layouts from the file
+               std::ifstream infile;
+               infile.open("./sensor_layout.txt");
+               std::string layout;
+               int DUT_id;
+
+               while(true){
+                  infile >> DUT_id >> layout;
+                     if (infile.eof()) {
+                        break;
+                     }
+                  layout_DUT[DUT_id]=layout;
+               }
+		    
             }
 
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
