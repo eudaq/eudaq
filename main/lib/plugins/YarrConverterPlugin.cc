@@ -47,8 +47,11 @@ namespace eudaq {
         return 800;
       else if (layout=="25_100_odd" or layout=="25_100_even")
         return 200;
-      else
+      else if (layout=="50_50")
         return 400;
+      else {
+        throw std::invalid_argument( "YARR Converter Plugin Error: '"+layout+"' unexistent sensor layout." );
+      }
     }
 
     //Set correct height (number of rows) of the sensor, based on the layout
@@ -57,8 +60,11 @@ namespace eudaq {
         return 96;
       else if (layout=="25_100_odd" or layout=="25_100_even")
         return 384;
-      else
+      else if (layout=="50_50")
         return 192;
+      else {
+        throw std::invalid_argument( "YARR Converter Plugin Error: '"+layout+"' unexistent sensor layout." );
+      }
     }
 
     // Mapping columns from RD53 to Sensor Geometry
@@ -125,20 +131,11 @@ namespace eudaq {
                 std::string sensortype = "Rd53a";
                 // Create a StandardPlane representing one sensor plane
                 int base_id = 110;
-                //int width = 800, height = 96;
-
-
-                //std::string layout_dut0, layout_dut1;
-                //std::string sensorLayout;
-
-                //Possible sensor layouts
-                std::string possible_layouts[5] = {"100_25_odd", "100_25_even", "25_100_odd", "25_100_even", "50_50"};
                 // Read the sensor layouts from the file
                 std::ifstream infile;
                 infile.open("./sensor_layout.txt");
 
                 std::map<unsigned int, std::string> layout_DUT;
-                std::map<unsigned int, bool> correct_layout;
                 std::string layout;
                 int DUT_id;
 
@@ -148,10 +145,8 @@ namespace eudaq {
                             break;
                         }
                         layout_DUT[DUT_id]=layout;
-                        correct_layout[DUT_id]=false;
                     }
-
-
+		    
                 const RawDataEvent & my_ev = dynamic_cast<const RawDataEvent &>(ev);
                 int ev_id = my_ev.GetTag("EventNumber", -1);
 
@@ -160,20 +155,8 @@ namespace eudaq {
                     int plane_id = base_id + my_ev.GetID(i);
 
                     if (layout_DUT[plane_id].empty()){
-                      throw std::invalid_argument( "DUT ID does not exist in the setup." );
+                      throw std::invalid_argument( "Yarr Converter Plugin Error: DUT ID does not exist in the setup." );
                     }
-
-                    for (unsigned int i=0; i<5; i++){
-                      if (layout_DUT[plane_id]==possible_layouts[i]){
-                        correct_layout[plane_id] = true;
-                      }
-                    }
-
-                    if (correct_layout[plane_id]==false){
-                      throw std::invalid_argument( "Incorrect sensor layout." );
-                    }
-
-
 
                     StandardPlane plane(plane_id, EVENT_TYPE, sensortype);
 
