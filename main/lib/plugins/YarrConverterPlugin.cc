@@ -157,7 +157,7 @@ namespace eudaq {
                     int plane_id = base_id + my_ev.GetID(i);
 
                     if (layout_DUT[plane_id].empty()){
-                      throw std::invalid_argument( "Yarr Converter Plugin Error: '"+layout_DUT[plane_id]+"' DUT ID does not exist in the setup." );
+                      throw std::invalid_argument( "Yarr Converter Plugin Error: DUT ID does not exist in the setup." );
                     }
 
                     StandardPlane plane(plane_id, EVENT_TYPE, sensortype);
