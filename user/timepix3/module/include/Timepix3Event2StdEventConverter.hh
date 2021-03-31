@@ -14,6 +14,7 @@ namespace eudaq {
   private:
     static uint64_t m_syncTime;
     static uint64_t m_syncTime_prev;
+    static uint64_t m_delta_t0;
     static bool m_clearedHeader;
     static bool m_first_time;
     static std::vector<std::vector<float>> vtot;
