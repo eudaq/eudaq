@@ -91,11 +91,12 @@ bool Timepix3RawEvent2StdEventConverter::Converting(eudaq::EventSPC ev, eudaq::S
 
   // Read from configuration:
   if(m_first_time) {
-      m_delta_t0 = conf->Get("delta_t0", 1e6); // default: 1sec
+      m_delta_t0 = (conf ? conf->Get("delta_t0", 1e6) : 1e6); // default: 1sec
+
       EUDAQ_INFO("Will detect 2nd T0 indirectly if timestamp jumps back by more than " + to_string(m_delta_t0) + "us.");
       m_first_time = false;
 
-      if(conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
+      if(conf && conf->Has("calibration_path_tot") && conf->Has("calibration_path_toa")) {
           std::string calibrationPathToT = conf->Get("calibration_path_tot","");
           std::string calibrationPathToA = conf->Get("calibration_path_toa","");
 
