@@ -77,6 +77,15 @@ void PIStageProducer::DoInitialise(){
   double initX      = ini->Get("initX",0.0);
   double initY      = ini->Get("initY",0.0);
   double initRot    = ini->Get("initRot",0.0);
+  double velocityX  = ini->Get("velocityX",5.0);
+  double velocityY  = ini->Get("velocityY",5.0);
+  double velocityRot= ini->Get("velocityRot",2.5);
+  double negLimitX  = ini->Get("negativeLimitX",-100.0);
+  double posLimitX  = ini->Get("positiveLimitX",100.0);
+  double negLimitY  = ini->Get("negativeLimitY",-100.0);
+  double posLimitY  = ini->Get("positiveLimitY",100.0);
+  double negLimitRot  = ini->Get("negativeLimitRot",-360.0);
+  double posLimitRot  = ini->Get("positiveLimitRot",360.0);
 
   std::string linStageX  = ini->Get("linStageTypeX","no_type");
   std::string linStageY  = ini->Get("linStageTypeY","no_type");
@@ -91,9 +100,9 @@ void PIStageProducer::DoInitialise(){
   if ( m_connected_Rot && !(rotStage=="no_type") && !m_controller->initializeStage(m_axis_Rot.c_str(), rotStage.c_str()))
       EUDAQ_THROW("Failed to initialize rotational stage M-060.DG");
   // setup stages - movements are limited to avoid damage of hardware
-  if(m_connected_X)  setupStage(m_axis_X,initX,-100,100,5);
-  if(m_connected_Y)  setupStage(m_axis_Y,initY,-100,100,5);
-  if(m_connected_Rot)setupStage(m_axis_Rot,initRot,-100,100,2);
+  if(m_connected_X)  setupStage(m_axis_X,initX,negLimitX,posLimitX,velocityX);
+  if(m_connected_Y)  setupStage(m_axis_Y,initY,negLimitY,posLimitY,velocityY);
+  if(m_connected_Rot)setupStage(m_axis_Rot,initRot,negLimitRot,posLimitRot,velocityRot);
 
   // init stages
   if (m_connected_X && !m_controller->reference(m_axis_X.c_str(), &forceInit))
@@ -116,6 +125,9 @@ void PIStageProducer::DoConfigure(){
   double pX     = conf->Get("positionX",-10000);
   double pY     = conf->Get("positionY",-10000);
   double pRot   = conf->Get("positionRot",-10000);
+  bool servoX   = conf->Get("keepServoOnX",1);
+  bool servoY   = conf->Get("keepServoOnY",1);
+  bool servoRot = conf->Get("keepServoOnRot",1);
 
   if(pX == -10000 && m_connected_X)
          EUDAQ_THROW("No movement position given for X");
@@ -124,9 +136,9 @@ void PIStageProducer::DoConfigure(){
   if(pRot == -10000 && m_connected_Rot)
          EUDAQ_THROW("No movement position given for Rot");
 
-  if(m_connected_X)     if(!m_controller->move(m_axis_X.c_str(),pX)) EUDAQ_THROW("X Movement failed");
-  if(m_connected_Y)     if(!m_controller->move(m_axis_Y.c_str(),pY)) EUDAQ_THROW("X Movement failed");
-  if(m_connected_Rot)   if(!m_controller->move(m_axis_Rot.c_str(),pRot)) EUDAQ_THROW("X Movement failed");
+  if(m_connected_X)     if(!m_controller->move(m_axis_X.c_str(),pX,servoX)) EUDAQ_THROW("X Movement failed");
+  if(m_connected_Y)     if(!m_controller->move(m_axis_Y.c_str(),pY,servoY)) EUDAQ_THROW("Y Movement failed");
+  if(m_connected_Rot)   if(!m_controller->move(m_axis_Rot.c_str(),pRot,servoRot)) EUDAQ_THROW("Rotation Movement failed");
 
 }
 

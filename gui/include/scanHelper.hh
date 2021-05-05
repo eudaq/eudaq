@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <cstdlib>
+
 #include "eudaq/Config.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/RunControl.hh"

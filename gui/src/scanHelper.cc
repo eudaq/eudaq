@@ -1,5 +1,6 @@
 #include "scanHelper.hh"
 
+#include <cmath>
 
 
 inline bool file_exists(std::string name) {
@@ -29,9 +30,9 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
         if(scanConf->HasSection(std::to_string(i))) {
             scanConf->SetSection(std::to_string(i));
             bool nested     = scanConf->Get("nested",false) && m_allow_nested_scan;
-            double start    = scanConf->Get("start",-123456789);
-            double step     = scanConf->Get("step",-123456789);
-            double stop     = scanConf->Get("stop",-123456789);
+            double start    = scanConf->Get("start",std::numeric_limits<double>::min());
+            double step     = scanConf->Get("step",std::numeric_limits<double>::min());
+            double stop     = scanConf->Get("stop",std::numeric_limits<double>::min());
             double defaultV = scanConf->Get("default",start);
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
@@ -40,7 +41,9 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             if(!m_scan_is_time_based && Counter == "wrongPara")
                 return scanError("To run a scan based on a number of events, \"eventCounter\" needs to be specified in section"+std::to_string(i));
             if(name == "wrongPara" || param == "wrongPara"
-               || start == -123456789 || stop == -123456789 || step == -123456789)
+               || (std::numeric_limits<double>::epsilon()>std::abs(start - std::numeric_limits<double>::min()))
+               || (std::numeric_limits<double>::epsilon()>std::abs(stop - std::numeric_limits<double>::min()))
+               || (std::numeric_limits<double>::epsilon()>std::abs(step - std::numeric_limits<double>::min())))
                 return scanError("Scan section "+std::to_string(i)+" is incomplete -> Please check");
 
             defaultConf->SetSection("");
@@ -74,30 +77,35 @@ void Scan::createConfigs(unsigned condition, eudaq::ConfigurationSP conf,std::ve
     if(condition == sec.size())
         return;
     auto confsBefore = m_config_files.size();
-    auto it = sec.at(condition).start;
-    while(it<=sec.at(condition).stop) {
+
+    // We can scan in both directions:
+    bool decreasing = (sec.at(condition).start > sec.at(condition).stop);
+    auto value = sec.at(condition).start;
+    auto steps = std::abs(sec.at(condition).start-sec.at(condition).stop)/sec.at(condition).step;
+    for(int nStep=0; nStep<steps; ++nStep)
+    {
         // if the scan is nested, all other data points from before need to be
         // redone with each point of current scan
         if(sec.at(condition).nested) {
             for(unsigned i =0; i < confsBefore;++i) {
                 eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
                 tmpConf->SetSection(sec.at(condition).name);
-                tmpConf->Set(sec.at(condition).parameter, it);
+                tmpConf->Set(sec.at(condition).parameter, value);
                 storeConfigFile(tmpConf);
                 addSection(sec.at(condition));
             }
         } else {
             conf->SetSection(sec.at(condition).name);
-            conf->Set(sec.at(condition).parameter, it);
+            conf->Set(sec.at(condition).parameter, value);
             storeConfigFile(conf);
-            EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(it));
+            EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
             addSection(sec.at(condition));
         }
-        it+= sec.at(condition).step;
+        value+= (decreasing? -1: 1) *sec.at(condition).step;
     }
     conf->SetSection(sec.at(condition).name);
     conf->Set(sec.at(condition).parameter, sec.at(condition).defaultV);
-    EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(it));
+    EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
     createConfigs(condition+1,conf,sec);
 }
 

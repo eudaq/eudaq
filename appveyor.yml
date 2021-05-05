@@ -36,8 +36,8 @@ environment:
       USER_EUDET_BUILD_NI: ON
       USER_EUDET_BUILD_TLU: ON
       USER_EXAMPLE_BUILD: ON
-      USER_ITKSTRIP_BUILD: ON
-      USER_ITKSTRIP_BUILD_ITSROOT: ON
+      USER_ITKSTRIP_BUILD: OFF
+      USER_ITKSTRIP_BUILD_ITSROOT: OFF
       EUDAQ_BUILD_ONLINE_ROOT_MONITOR: ON
       PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6.5" 
@@ -58,8 +58,8 @@ environment:
       USER_EUDET_BUILD_NI: ON
       USER_EUDET_BUILD_TLU: ON
       USER_EXAMPLE_BUILD: ON
-      USER_ITKSTRIP_BUILD: ON
-      USER_ITKSTRIP_BUILD_ITSROOT: ON
+      USER_ITKSTRIP_BUILD: OFF
+      USER_ITKSTRIP_BUILD_ITSROOT: OFF
       EUDAQ_BUILD_ONLINE_ROOT_MONITOR: ON
       PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6.5" 
@@ -123,7 +123,7 @@ install:
 - "%CMD_IN_ENV% python -m pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
-- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.36.win32.vc12.zip'; 7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\; 
+- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern/download/root_v6.22.06.win32.vc16.zip' -storageLocation 'C:\\root_v6.22.06.win32.vc16.zip'; 7z -y x C:\\root_v6.22.06.win32.vc16.zip -oC:\; 
 
 - ps: appveyor\install_afs.ps1;
 

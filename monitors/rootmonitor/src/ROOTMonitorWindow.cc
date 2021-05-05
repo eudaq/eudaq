@@ -6,6 +6,7 @@
 #include "TGFileDialog.h"
 #include "TCanvas.h"
 #include "TKey.h"
+#include "TObjString.h"
 
 // required for object-specific "clear"
 #include "TGraph.h"
