@@ -183,24 +183,17 @@ void Timepix3Producer::timestamp_thread() {
         usleep(200000);
         // request full timestamps
         for (int device_nr=0; device_nr<m_active_devices; device_nr++){
-          std::cout << "t lock ctrl" << std::endl;
           std::lock_guard<std::mutex> lock{controller_mutex_};
           if( !spidrctrl->getTimer(0, &timer_lo1, &timer_hi1) ) {
   		        EUDAQ_ERROR("getTimer: " + spidrctrl->errorString());
-          //} else {
-          //  std::cout << "Device no. " << device_nr << ", full timer: 0x" << to_hex_string(timer_hi1, 4) << to_hex_string(timer_lo1, 8) << std::endl;
           }
-          std::cout << "t release ctrl" << std::endl;
         }
         usleep(200000);
         usleep(200000);
         if ( !(cnt & 0xFF) ) {
           // update temperature every 16th cycle only
-          std::cout << "t lock ctrl" << std::endl;
           std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
           getTpx3Temperature(0);
-          //std::cout << "Tpx3Temp: " << Tpx3Temp << " °C" << std::endl;
-          std::cout << "t release ctrl" << std::endl;
         } else {
           // sleep when no temperature measurement is done,
           // because getTpx3Temperature() contains 2x 100 ms sleep
@@ -849,8 +842,6 @@ void Timepix3Producer::DoStartRun() {
   EUDAQ_DEBUG("DoStartRun: Locking mutex...");
 
   // Create SpidrDaq
-  std::cout << "lock ctrl" << std::endl;
-  std::cout << "lock daq" << std::endl;
   std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
   std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if (m_running) {
@@ -898,8 +889,6 @@ void Timepix3Producer::DoStartRun() {
   m_running = true;
 
   EUDAQ_USER("Timepix3Producer started run.");
-  std::cout << "release ctrl" << std::endl;
-  std::cout << "release daq" << std::endl;
 } // DoStartRun()
 
 //----------------------------------------------------------
@@ -916,7 +905,6 @@ void Timepix3Producer::RunLoop() {
     sleep(1);
   }
 
-  std::cout << "lock daq" << std::endl;
   std::lock_guard<std::mutex> lock{daq_mutex_};
   EUDAQ_USER("Timepix3Producer starting run loop...");
 
@@ -1008,7 +996,6 @@ void Timepix3Producer::RunLoop() {
   // show header statitstics
   //std::cout << "Headers: " << listVector(header_counter) << endl;
   EUDAQ_USER("Timepix3Producer exiting run loop.");
-  std::cout << "release daq" << std::endl;
 } // RunLoop()
 
 //----------------------------------------------------------
@@ -1020,7 +1007,6 @@ void Timepix3Producer::DoStopRun() {
 
   // Log mutex for SPIDR Controller - inside scope to release afterwards in case another thread depends on it.
   {
-    std::cout << "lock ctrl" << std::endl;
     std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
     // Close the shutter
     if( !spidrctrl->closeShutter() ) {
@@ -1055,14 +1041,12 @@ void Timepix3Producer::DoStopRun() {
     } else {
       EUDAQ_DEBUG( "getShutterEnd: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
     }
-    std::cout << "release ctrl" << std::endl;
   }
 
   sleep(1);
   m_running = false;
 
   // wait for RunLoop() to finish
-  std::cout << "lock daq" << std::endl;
   std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if(spidrdaq) {
     delete spidrdaq;
@@ -1071,5 +1055,4 @@ void Timepix3Producer::DoStopRun() {
     EUDAQ_WARN("DoStopRun: There was no spidrdaq instance. This is weird. Was there really a run to stop?");
   }
   EUDAQ_USER("Timepix3Producer stopped run.");
-  std::cout << "release daq" << std::endl;
 } // DoStopRun()
