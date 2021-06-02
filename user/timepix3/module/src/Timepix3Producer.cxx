@@ -279,7 +279,7 @@ void Timepix3Producer::DoInitialise() {
 
   auto config = GetInitConfiguration();
 
-  EUDAQ_USER("Timepix3Producer initializing with: " + config->Name());
+  EUDAQ_USER("Timepix3Producer initializing with configuration: " + config->Name());
 
 
   // SPIDR IP & PORT
@@ -381,7 +381,9 @@ void Timepix3Producer::DoConfigure() {
 
   auto config = GetConfiguration();
   EUDAQ_USER("Timepix3Producer configuring: " + config->Name());
+
   // Configuration file values are accessible as config->Get(name, default)
+  config->Print();
 
   // sleep for 1 second, to make sure the TLU clock is already present
   sleep (1);
@@ -524,6 +526,10 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_DEBUG("Did not find configuration entry for \"XMLConfig_dev" + std::to_string(device_nr) + "\". Trying to use \"XMLConfig\".");
       m_xmlfileName = config->Get( "XMLConfig", "" );
     }
+    if (m_xmlfileName.empty()) {
+      EUDAQ_THROW("Timepix3Producer: Empty XML configuration file name.");
+    }
+    
     myTimepix3Config->ReadXMLConfig( m_xmlfileName );
     EUDAQ_INFO("Reading configuration file " + m_xmlfileName );
     std::string conftime = myTimepix3Config->getTime();

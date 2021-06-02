@@ -8,7 +8,9 @@ Timepix3Config::Timepix3Config() {
 
 void Timepix3Config::ReadXMLConfig( string configFileName ) {
 
+  std::cout << "Timepix3Config" << std::endl;
   std::cout << "Timepix3 XML config file is: " << configFileName << std::endl;
+  std::cout << "reading XML..." << std::endl;
   
   // Initialize xerces
   try { XMLPlatformUtils::Initialize(); }
