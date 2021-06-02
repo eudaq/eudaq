@@ -194,6 +194,7 @@ void Timepix3Producer::timestamp_thread() {
         usleep(200000);
         if ( !(cnt & 0xFF) ) {
           // update temperature every 16th cycle only
+          std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
           getTpx3Temperature(0);
           //std::cout << "Tpx3Temp: " << Tpx3Temp << " °C" << std::endl;
         } else {
