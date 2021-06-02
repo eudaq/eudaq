@@ -41,7 +41,8 @@ private:
   Timepix3Config *myTimepix3Config;
   SpidrController *spidrctrl = nullptr;
   SpidrDaq *spidrdaq = nullptr;
-  std::mutex device_mutex_;
+  std::mutex controller_mutex_;
+  std::mutex daq_mutex_;
 
   int m_supported_devices = 0;
   int m_active_devices;
@@ -128,11 +129,12 @@ Timepix3Producer::~Timepix3Producer() {
   // force run stop
   m_running = false;
   // wait for all to finish
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
   if(spidrctrl) {
     delete spidrctrl;
     spidrctrl = nullptr;
   }
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if(spidrdaq) {
     delete spidrdaq;
     spidrdaq = nullptr;
@@ -181,6 +183,7 @@ void Timepix3Producer::timestamp_thread() {
         usleep(200000);
         // request full timestamps
         for (int device_nr=0; device_nr<m_active_devices; device_nr++){
+          std::lock_guard<std::mutex> lock{controller_mutex_};
           if( !spidrctrl->getTimer(0, &timer_lo1, &timer_hi1) ) {
   		        EUDAQ_ERROR("getTimer: " + spidrctrl->errorString());
           //} else {
@@ -249,7 +252,8 @@ void Timepix3Producer::DoReset() {
   // stop the run, if it is still running
   m_running = false;
   // wait for other functions to finish
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   m_init = false;
   m_config = false;
 
@@ -274,7 +278,6 @@ void Timepix3Producer::DoInitialise() {
     EUDAQ_WARN("Timepix3Producer: Initializing while it is already in initialized state. Performing reset first...");
     DoReset();
   }
-  std::lock_guard<std::mutex> lock{device_mutex_};
 
   auto config = GetInitConfiguration();
 
@@ -290,6 +293,7 @@ void Timepix3Producer::DoInitialise() {
   m_spidrPort = config->Get( "SPIDR_Port", 50000 );
 
   // Open a control connection to SPIDR-TPX3 module
+  std::lock_guard<std::mutex> lock{controller_mutex_};
   spidrctrl = new SpidrController( ip[0], ip[1], ip[2], ip[3], m_spidrPort );
 
   // reset SPIDR
@@ -370,8 +374,8 @@ void Timepix3Producer::DoConfigure() {
     EUDAQ_WARN("DoConfigure: Trying to configure a running module. Trying to stop it first.");
     m_running = false;
   }
-  std::lock_guard<std::mutex> lock{device_mutex_};
 
+  std::lock_guard<std::mutex> lock{controller_mutex_};
   if (!spidrctrl) {
     EUDAQ_THROW("DoConfigure: spidrctrl was not initialized. Can not configure it.");
     return;
@@ -840,7 +844,8 @@ void Timepix3Producer::DoStartRun() {
   EUDAQ_DEBUG("DoStartRun: Locking mutex...");
 
   // Create SpidrDaq
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if (m_running) {
     EUDAQ_ERROR("DoStartRun: Oh no, the producer is running again, although I just stopped it. Something is really wrong here. I'm giving it up.");
     return;
@@ -902,7 +907,7 @@ void Timepix3Producer::RunLoop() {
     sleep(1);
   }
 
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock{daq_mutex_};
   EUDAQ_USER("Timepix3Producer starting run loop...");
 
   // create a thread to periodically ask for full timestamps, temperatures and others
@@ -1004,6 +1009,7 @@ void Timepix3Producer::DoStopRun() {
 
 
   // Close the shutter
+  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
   if( !spidrctrl->closeShutter() ) {
     EUDAQ_ERROR( "Could not close the shutter: " + spidrctrl->errorString());
   } else {
@@ -1041,7 +1047,7 @@ void Timepix3Producer::DoStopRun() {
   m_running = false;
 
   // wait for RunLoop() to finish
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if(spidrdaq) {
     delete spidrdaq;
     spidrdaq = nullptr;
