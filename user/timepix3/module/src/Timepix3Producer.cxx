@@ -1018,41 +1018,44 @@ void Timepix3Producer::DoStopRun() {
   EUDAQ_USER("Timepix3Producer stopping run...");
   // Set a flag to signal to the polling loop that the run is over
 
+  // Log mutex for SPIDR Controller - inside scope to release afterwards in case another thread depends on it.
+  {
+    std::cout << "lock ctrl" << std::endl;
+    std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
+    // Close the shutter
+    if( !spidrctrl->closeShutter() ) {
+      EUDAQ_ERROR( "Could not close the shutter: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "closeShutter: OK");
+    }
+    // Stop Timepix3 readout
+    if( !spidrctrl->pauseReadout() ) {
+      EUDAQ_ERROR( "Could not stop data readout: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "pauseReadout: OK");
+    }
 
-  // Close the shutter
-  std::cout << "lock ctrl" << std::endl;
-  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
-  if( !spidrctrl->closeShutter() ) {
-    EUDAQ_ERROR( "Could not close the shutter: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "closeShutter: OK");
-  }
-  // Stop Timepix3 readout
-  if( !spidrctrl->pauseReadout() ) {
-    EUDAQ_ERROR( "Could not stop data readout: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "pauseReadout: OK");
-  }
+    // Get some info
+    int dataread;
+    unsigned int timer_hi, timer_lo;
+    if( !spidrctrl->getShutterCounter(&dataread) ) {
+      EUDAQ_ERROR( "getShutterCounter: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "getShutterCounter: " + std::to_string(dataread));
+    }
 
-  // Get some info
-  int dataread;
-  unsigned int timer_hi, timer_lo;
-  if( !spidrctrl->getShutterCounter(&dataread) ) {
-    EUDAQ_ERROR( "getShutterCounter: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "getShutterCounter: " + std::to_string(dataread));
-  }
+    if( !spidrctrl->getShutterStart( 0, &timer_lo, &timer_hi ) ) {
+      EUDAQ_ERROR( "getShutterStart: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "getShutterStart: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+    }
 
-  if( !spidrctrl->getShutterStart( 0, &timer_lo, &timer_hi ) ) {
-    EUDAQ_ERROR( "getShutterStart: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "getShutterStart: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
-  }
-
-  if( !spidrctrl->getShutterEnd( 0, &timer_lo, &timer_hi ) ) {
-    EUDAQ_ERROR( "getShutterEnd: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "getShutterEnd: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+    if( !spidrctrl->getShutterEnd( 0, &timer_lo, &timer_hi ) ) {
+      EUDAQ_ERROR( "getShutterEnd: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "getShutterEnd: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+    }
+    std::cout << "release ctrl" << std::endl;
   }
 
   sleep(1);
@@ -1068,6 +1071,5 @@ void Timepix3Producer::DoStopRun() {
     EUDAQ_WARN("DoStopRun: There was no spidrdaq instance. This is weird. Was there really a run to stop?");
   }
   EUDAQ_USER("Timepix3Producer stopped run.");
-  std::cout << "release ctrl" << std::endl;
   std::cout << "release daq" << std::endl;
 } // DoStopRun()
