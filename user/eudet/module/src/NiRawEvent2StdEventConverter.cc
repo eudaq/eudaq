@@ -10,7 +10,7 @@ class NiRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
   void DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
-		   const uint8_t *const d, const size_t l32) const;
+           const uint8_t *const d, const size_t l32, bool fix_pivot = false) const;
   static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawDataEvent");
 };
   
@@ -45,6 +45,8 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     EUDAQ_WARN("Ignoring bad event " + std::to_string(rawev.GetEventNumber()));
     return false;
   }
+  auto use_all_hits = bool(conf->Get("use_all_hits",0));
+  //std::cout <<"set to: "<< int(use_all_hits)<<std::endl;
 
   const std::vector<uint8_t> &data0 = rawev.GetBlock(0);
   const std::vector<uint8_t> &data1 = rawev.GetBlock(1);
@@ -94,8 +96,8 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     plane.SetSizeZS(1152, 576, 0, 2, eudaq::StandardPlane::FLAG_WITHPIVOT |
 		    eudaq::StandardPlane::FLAG_DIFFCOORDS);
     plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
-    DecodeFrame(plane, 0, &it0[8], len0);
-    DecodeFrame(plane, 1, &it1[8], len1);
+    DecodeFrame(plane, 0, &it0[8], len0, use_all_hits);
+    DecodeFrame(plane, 1, &it1[8], len1, use_all_hits);
     d2->AddPlane(plane);
 
     bool advance_one_block_0 = false;
@@ -128,7 +130,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 }
 
 void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
-					       const uint8_t *const d, const size_t l32) const{
+                           const uint8_t *const d, const size_t l32, bool fix_pivot) const{
   std::vector<uint16_t> vec;
   for (size_t i = 0; i < l32; ++i) {
     vec.push_back(eudaq::getlittleendian<uint16_t>(d+i*4));
@@ -142,7 +144,7 @@ void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, cons
     if (i+1+numstates > lvec){ //offset+ [row] + [column......]
       break;
     }
-    bool pivot = (row >= (plane.PivotPixel() / 16));
+    bool pivot = (fix_pivot ? 1-fm_n : (row >= (plane.PivotPixel() / 16)));
     for (uint16_t s = 0; s < numstates; ++s) {
       uint16_t v = vec.at(++i);
       uint16_t column = v >> 2 & 0x7ff;
