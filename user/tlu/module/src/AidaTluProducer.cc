@@ -136,7 +136,6 @@ void AidaTluProducer::DoInitialise(){
   std::string uhal_node;
   uhal_conn = ini->Get("ConnectionFile", uhal_conn);
   uhal_node = ini->Get("DeviceName",uhal_node);
-  EUDAQ_INFO(uhal_conn);
   m_tlu = std::unique_ptr<tlu::AidaTluController>(new tlu::AidaTluController(uhal_conn, uhal_node));
 
   if( ini->Get("skipini", false) ){
@@ -144,7 +143,7 @@ void AidaTluProducer::DoInitialise(){
   }
   else{
 
-    m_verbose = 1;//abs(ini->Get("verbose", 0));
+    m_verbose = abs(ini->Get("verbose", 0));
     EUDAQ_INFO("TLU VERBOSITY SET TO: " + std::to_string(m_verbose));
 
     // Define constants
