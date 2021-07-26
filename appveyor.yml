@@ -123,7 +123,7 @@ install:
 - "%CMD_IN_ENV% python -m pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
-- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern/download/root_v6.22.06.win32.vc16.zip' -storageLocation 'C:\\root_v6.22.06.win32.vc16.zip'; 7z -y x C:\\root_v6.22.06.win32.vc16.zip -oC:\; 
+- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern/download/root_v6.22.08.win32.vc16.zip' -storageLocation 'C:\\root_v6.22.08.win32.vc16.zip'; 7z -y x C:\\root_v6.22.08.win32.vc16.zip -oC:\;
 
 - ps: appveyor\install_afs.ps1;
 
