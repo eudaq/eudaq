@@ -46,7 +46,6 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     return false;
   }
   auto use_all_hits = bool(conf->Get("use_all_hits",0));
-  //std::cout <<"set to: "<< int(use_all_hits)<<std::endl;
 
   const std::vector<uint8_t> &data0 = rawev.GetBlock(0);
   const std::vector<uint8_t> &data1 = rawev.GetBlock(1);
