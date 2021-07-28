@@ -13,16 +13,16 @@ public:
            const uint8_t *const d, const size_t l32, bool fix_pivot = false) const;
   static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawDataEvent");
 };
-  
+
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
     Register<NiRawEvent2StdEventConverter>(NiRawEvent2StdEventConverter::m_id_factory);
-}  
+}
 
 bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-  
+
   static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5};
-  //TODO: number of telescope plane may be less than 6. Decode additional tags 
+  //TODO: number of telescope plane may be less than 6. Decode additional tags
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   if(!ev)
     return false;
@@ -38,14 +38,14 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
     d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
   }
-    
+
   auto &rawev = *ev;
   if (rawev.NumBlocks() < 2 || rawev.GetBlock(0).size() < 20 ||
       rawev.GetBlock(1).size() < 20) {
     EUDAQ_WARN("Ignoring bad event " + std::to_string(rawev.GetEventNumber()));
     return false;
   }
-  auto use_all_hits = bool(conf->Get("use_all_hits",0));
+  auto use_all_hits = (conf != nullptr ? bool(conf->Get("use_all_hits",0)) : false);
 
   const std::vector<uint8_t> &data0 = rawev.GetBlock(0);
   const std::vector<uint8_t> &data1 = rawev.GetBlock(1);
@@ -69,7 +69,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 		 std::to_string(len0) + ", " + std::to_string(len0_h) +
 		 ")");
       len0 = std::max(len0, len0_h);
-    }    
+    }
     if (len1 != len1_h) {
       EUDAQ_WARN("Mismatched lengths decoding second frame (" +
 		 std::to_string(len1) + ", " + std::to_string(len1_h) +
@@ -83,7 +83,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 		 ")");
       break;
     }
-    
+
     if (len1 * 4 + 12 > data1.end() - it1) {
       EUDAQ_WARN("Bad length in second frame,  len1 * 4 + 12 > data1.end()-it1 ("+
 		 std::to_string(len1 * 4 + 12)+" > "+ std::to_string(data1.end()-it1)+
@@ -153,5 +153,5 @@ void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, cons
       }
     }
   }
-      
+
 }
