@@ -1,8 +1,18 @@
 # Determine platform- and compiler-specific settings
 
 # demand c++14 support
-set (CMAKE_CXX_STANDARD 14)
-set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
+# target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
+if(NOT DEFINED CMAKE_CXX_STANDARD) 
+  set (CMAKE_CXX_STANDARD 14)
+  set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
+  MESSAGE(WARNING "Setting C++ standard to 14" )  
+endif()
+
+if(${CMAKE_CXX_STANDARD} LESS 14)
+  set (CMAKE_CXX_STANDARD 14)
+  set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
+  MESSAGE(WARNING "Setting C++ standard to 14" )  
+endif()
 
 # position independent code on instead of setting -fPIC directly
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
