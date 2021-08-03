@@ -2,9 +2,9 @@
 # LaTeX target to compile the PDF user manual #
 ###############################################
 # Information and the manual on the UseLATEX.cmake package can be found here
-# http://www.cmake.org/Wiki/CMakeUserUseLATEX
+# https://gitlab.kitware.com/kmorel/UseLATEX
 # The code resides here:
-# https://github.com/kmorel/UseLATEX
+# https://gitlab.kitware.com/kmorel/UseLATEX
 
 OPTION(EUDAQ_BUILD_MANUAL "doc/manual code documentation (requires Latex)" OFF)
 if(NOT EUDAQ_BUILD_MANUAL)
