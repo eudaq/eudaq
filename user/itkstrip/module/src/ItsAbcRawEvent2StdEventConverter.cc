@@ -134,7 +134,7 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 							if (strN<2){
 								superplane.PushPixel(i, 1-strN, 1);
 							} else {
-								superplane.PushPixel(i, strN, 1);
+								superplane.PushPixel(1279-i, strN, 1);
 								    //plane.PushPixel(1, i , 1);//ss
 							}
 						}

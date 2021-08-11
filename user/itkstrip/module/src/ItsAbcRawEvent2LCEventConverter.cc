@@ -155,7 +155,7 @@ bool ItsAbcRawEvent2LCEventConverter::Converting(eudaq::EventSPC d1, eudaq::LCEv
               if (strN<2){
               	addHit(superFrame, i, 1-strN);
               } else {
-              	addHit(superFrame, i, strN);
+              	addHit(superFrame, 1279-i, strN);
               }
             }
           }
