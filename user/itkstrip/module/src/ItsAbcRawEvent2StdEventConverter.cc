@@ -54,7 +54,7 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 	if (deviceId < 300 ) {
 		superplane.SetSizeZS(282, 1, 0);//r0
 	} else {
-		superplane.SetSizeZS(1280, 4, 0);//r0
+		superplane.SetSizeZS(1408, 4, 0);//r0
 	}
 	for(auto &block_n: block_n_list){
 		std::vector<uint8_t> block = raw->GetBlock(block_n);
