@@ -50,7 +50,7 @@ bool ItsAbcRawEvent2LCEventConverter::Converting(eudaq::EventSPC d1, eudaq::LCEv
   if (!raw){
     EUDAQ_THROW("dynamic_cast error: from eudaq::Event to eudaq::RawEvent");
   }
-  
+
   std::string block_dsp = raw->GetTag("ABC_EVENT", "");
   if(block_dsp.empty()){
     return true;
@@ -59,7 +59,7 @@ bool ItsAbcRawEvent2LCEventConverter::Converting(eudaq::EventSPC d1, eudaq::LCEv
 
   uint32_t deviceId = d1->GetStreamN();
 //  std::cout << "deviceId ABC\t" <<  deviceId << std::endl;
-//block_map for the ITk strip timing plane                                                                                                                    
+//block_map for the ITk strip timing plane
   ItsAbc::ItsAbcBlockMap AbcBlocks(block_dsp);
   std::map<uint32_t, std::pair<uint32_t, uint32_t>> block_map = AbcBlocks.getBlockMap();
 
@@ -76,9 +76,9 @@ bool ItsAbcRawEvent2LCEventConverter::Converting(eudaq::EventSPC d1, eudaq::LCEv
     d2->addCollection(zsDataCollection, "zsdata_strip");
   }
 
-  lcio::CellIDEncoder<lcio::TrackerDataImpl> superDataEncoder("sensorID:7,sparsePixelType:2", zsDataCollection);
+  lcio::CellIDEncoder<lcio::TrackerDataImpl> superDataEncoder("sensorID:7,sparsePixelType:5", zsDataCollection);
   superDataEncoder["sensorID"] = 19+AbcBlocks.getOffset();
-  //zsDataEncoder["sparsePixelType"] = 2; Fixed in initial instatiation
+  superDataEncoder["sparsePixelType"] = 2; // Can this be fixed in initial instatiation
   auto superFrame = new lcio::TrackerDataImpl;
   superDataEncoder.setCellID(superFrame);
   std::vector<int> timingplane(282);
@@ -112,9 +112,9 @@ bool ItsAbcRawEvent2LCEventConverter::Converting(eudaq::EventSPC d1, eudaq::LCEv
       } else {
         std::vector<bool> channels;
         eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
-        lcio::CellIDEncoder<lcio::TrackerDataImpl> zsDataEncoder("sensorID:7,sparsePixelType:2", zsDataCollection);
+        lcio::CellIDEncoder<lcio::TrackerDataImpl> zsDataEncoder("sensorID:7,sparsePixelType:5", zsDataCollection);
         zsDataEncoder["sensorID"] = plane_id;
-        //zsDataEncoder["sparsePixelType"] = 2; Fixed in initial instatiation
+        zsDataEncoder["sparsePixelType"] = 2; // Can this be fixed in initial instatiation
         auto zsFrame = new lcio::TrackerDataImpl;
         zsDataEncoder.setCellID(zsFrame);
         if (deviceId <300) {
