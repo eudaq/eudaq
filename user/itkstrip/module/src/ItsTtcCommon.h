@@ -45,12 +45,11 @@ namespace ItsTtc {
             break;
           }
           case 0x0:
-            char temp[200];
-            sprintf(temp, "[SCTConvertPlugin:] TTC type 0x00: maybe de-sync on deviceId: %3d", deviceId);
-            EUDAQ_WARN(std::string(temp));
             break;
           default:
-            EUDAQ_WARN("unknown data type");
+            char temp[200];
+            sprintf(temp, " [TtcEventConverter] TTC type unknown on deviceId: %4d, data: 0x%016lx", deviceId, data);
+            EUDAQ_WARN(std::string(temp));
             break;
           }
         }
