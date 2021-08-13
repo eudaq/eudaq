@@ -44,8 +44,6 @@ namespace ItsTtc {
             //Desync edits ends here------------------------------------- 
             break;
           }
-          case 0x0:
-            break;
           default:
             char temp[200];
             sprintf(temp, " [TtcEventConverter] TTC type unknown on deviceId: %4d, data: 0x%016lx", deviceId, data);
