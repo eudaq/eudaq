@@ -1,18 +1,26 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 
+#include "ItsAbcCommon.h"
+
 #include <regex>
 
 class ItsAbcRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
-  bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("ITS_ABC");
-  static const uint32_t PLANE_ID_OFFSET_ABC = 10;
+	bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
+	static const uint32_t m_id_factory = eudaq::cstr2hash("ITS_ABC");
+	static const uint32_t m_id1_factory = eudaq::cstr2hash("ITS_ABC_DUT");
+	static const uint32_t m_id2_factory = eudaq::cstr2hash("ITS_ABC_Timing");
+	static const uint32_t PLANE_ID_OFFSET_ABC = 10;
 };
 
 namespace{
-  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
-    Register<ItsAbcRawEvent2StdEventConverter>(ItsAbcRawEvent2StdEventConverter::m_id_factory);
+	auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
+	Register<ItsAbcRawEvent2StdEventConverter>(ItsAbcRawEvent2StdEventConverter::m_id_factory);
+	auto dummy1 = eudaq::Factory<eudaq::StdEventConverter>::
+	Register<ItsAbcRawEvent2StdEventConverter>(ItsAbcRawEvent2StdEventConverter::m_id1_factory);
+	auto dummy2 = eudaq::Factory<eudaq::StdEventConverter>::
+	Register<ItsAbcRawEvent2StdEventConverter>(ItsAbcRawEvent2StdEventConverter::m_id2_factory);
 }
 
 typedef std::map<uint32_t, std::pair<uint32_t, uint32_t>> BlockMap;
@@ -20,113 +28,130 @@ typedef std::map<uint32_t, std::pair<uint32_t, uint32_t>> BlockMap;
 static std::map<uint32_t, std::unique_ptr<BlockMap>> map_registry;
 
 bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2,
-						  eudaq::ConfigSPC conf) const{
-  auto raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  if (!raw){
-    EUDAQ_THROW("dynamic_cast error: from eudaq::Event to eudaq::RawEvent");
-  }  
+	eudaq::ConfigSPC conf) const{
+	auto raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+	if (!raw){
+		EUDAQ_THROW("dynamic_cast error: from eudaq::Event to eudaq::RawEvent");
+	}  
 
-  std::string block_dsp = raw->GetTag("ABC_EVENT", "");
-  if(block_dsp.empty()){
-    return true;
-  }
-
-#if 0
-  // Enable different block mappings, not tested
-  //  Immediate problem is can't find std library when it loads!
-  //  (try) ldd -r libeudaq_module_itkstrip.so
-  uint32_t block_key = eudaq::str2hash(block_dsp);
-
-  if(!map_registry[block_key]) {
-    std::regex matcher("([0-9]:[0-9]*:[0-9r])");
-    std::regex matcher2("([0-9]):([0-9]*)):([0-9r])");
-    auto i_begin = std::sregex_iterator(block_dsp.begin(), block_dsp.end(), matcher);
-    auto i_end = std::sregex_iterator();
-    std::unique_ptr<BlockMap> new_map(new BlockMap);
-    for(auto i=i_begin; i!=i_end; i++) {
-      std::smatch match_result;
-      std::regex_match(i->str(), match_result, matcher2);
-      uint32_t p1 = std::stoi(match_result[0]);
-      uint32_t p2 = std::stoi(match_result[1]);
-      uint32_t p3;
-      if(match_result[2] == "r") {
-	p3 = 4;
-      } else {
-	p3 = std::stoi(match_result[2]);
-      }
-      (*new_map)[p1] = std::make_pair(p2, p3);
-    }
-    map_registry[block_key] = std::move(new_map);
-  }
-
-  BlockMap block_map = *map_registry[block_key];
-#else
-  std::map<uint32_t, std::pair<uint32_t, uint32_t>> 
-    block_map={{0,{0,1}},
-	       {1,{1,1}},
-	       {2,{0,0}},
-	       {3,{1,0}},
-	       {4,{0,2}},
-	       {5,{1,2}},
-	       {6,{2,1}},
-	       {7,{3,1}},
-	       {8,{2,0}},
-	       {9,{3,0}},
-	       {10,{2,2}},
-	       {11,{3,2}},
-	       {12,{0,4}},
-	       {13,{1,4}},
-	       {14,{2,4}},
-	       {15,{3,4}}};
-#endif
-
-  auto block_n_list = raw->GetBlockNumList();
-  for(auto &block_n: block_n_list){
-    auto it = block_map.find(block_n);
-    if(it == block_map.end())
-      continue;
-    if(it->second.second<3){
-      uint32_t strN = it->second.first;
-      uint32_t bcN = it->second.second;
-      uint32_t plane_id = PLANE_ID_OFFSET_ABC + bcN*10 + strN; 
-      std::vector<uint8_t> block = raw->GetBlock(block_n);
-      std::vector<bool> channels;
-      eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
-      eudaq::StandardPlane plane(plane_id, "ITS_ABC", "ABC");
-      // plane.SetSizeZS(channels.size(), 1, 0);//r0
-      plane.SetSizeZS(1,channels.size(), 0);//ss
-      for(size_t i = 0; i < channels.size(); ++i) {
-	if(channels[i]){
-	  // plane.PushPixel(i, 1 , 1);//r0
-	  plane.PushPixel(1, i , 1);//ss
+	std::string block_dsp = raw->GetTag("ABC_EVENT", "");
+	if(block_dsp.empty()){
+		return true;
 	}
-      }
-      d2->AddPlane(plane);
-    }
-    else{
-#if 0
-      //Raw
-      uint32_t strN = it->second.first;
-      uint32_t plane_id = PLANE_ID_OFFSET_ABC + 90 + strN; 
-      std::vector<uint8_t> block_data = raw->GetBlock(block_n);
-      // But our data is 64bit
-      const uint64_t *block = reinterpret_cast<const uint64_t *>(&block_data[0]);
-      eudaq::StandardPlane plane(plane_id, "ITS_ABC", "ABC/Raw");
-      // X-axis is size, Y-axis is first L0ID
-      plane.SetSizeZS(100, 256, 0);
 
-      if(block_data.size() > 8) {
-	// Need at least one 64-bit word
-	//   (data_64 >> 42) & 0xff;
-	unsigned int l0id = (block[1] >> 41) & 0xff;
 
-	plane.PushPixel(block_data.size()/8, l0id, 1);
-      } else {
-	plane.PushPixel(block_data.size()/8, 0, 1);
-      }
-      d2->AddPlane(plane);
-#endif
-    }
-  }
-  return true;
+	uint32_t PLANE_ID_OFFSET_DUT = 0;
+	uint32_t deviceId = d1->GetStreamN();
+//  std::cout << "deviceId ABC\t" <<  deviceId << std::endl;
+
+	ItsAbc::ItsAbcBlockMap AbcBlocks(block_dsp);
+	std::map<uint32_t, std::pair<uint32_t, uint32_t>> block_map = AbcBlocks.getBlockMap();
+
+	auto block_n_list = raw->GetBlockNumList();
+	eudaq::StandardPlane superplane(19+AbcBlocks.getOffset(), "ITS_ABC", "ABC");
+	std::vector<int> timingplane(282);
+	for (unsigned int i=0; i<282; i++) timingplane.push_back(0);
+	if (deviceId < 300 ) {
+		superplane.SetSizeZS(282, 1, 0);//r0
+	} else {
+		superplane.SetSizeZS(1408, 4, 0);//r0
+	}
+	for(auto &block_n: block_n_list){
+		std::vector<uint8_t> block = raw->GetBlock(block_n);
+
+		auto it = block_map.find(block_n);
+		if(it == block_map.end()) {
+			continue;
+		}
+		if(it->second.second<5){
+			uint32_t strN = it->second.first;
+			uint32_t bcN = it->second.second;
+			uint32_t plane_id = PLANE_ID_OFFSET_ABC + bcN*10 + strN + AbcBlocks.getOffset(); 
+			if(bcN==4){//only because im lazy and i dont want to remove the condition 
+				// This block contains the Raw HCCStar packet
+				ItsAbc::RawInfo info(block);
+				if(info.valid) {
+					if(deviceId==301 && block_n == 6){  //only for LS star for now
+						//	    std::cout << raw->GetEventN() << "   " << block_n << "   " << BCID << "   " << parity << "    " << L0ID << std::endl;
+						//	    std::cout << raw->GetEventN() << "   " <<  L0ID << std::endl;
+						d2->SetTag("DUT.RAWBCID", info.BCID); //ABCStar -- needed for desync correction
+						d2->SetTag("DUT.RAWparity", info.BCID_parity); //ABCStar
+						d2->SetTag("DUT.RAWL0ID", info.L0ID); //ABCStar
+					}
+					if(deviceId==201 && block_n == 2){  //only for LS star for now
+						//	    std::cout << raw->GetEventN() << "   " << block_n << "   " << BCID << "   " << parity << "    " << L0ID << std::endl;
+						//	    std::cout << raw->GetEventN() << "   " <<  L0ID << std::endl;
+						d2->SetTag("TIMING.RAWBCID", info.BCID); //ABCStar -- needed for desync correction
+						d2->SetTag("TIMING.RAWparity", info.BCID_parity); //ABCStar
+						d2->SetTag("TIMING.RAWL0ID", info.L0ID); //ABCStar
+					}
+				}
+			} else {
+				// Normal hit information
+				std::vector<bool> channels;
+				eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
+				eudaq::StandardPlane plane(plane_id, "ITS_ABC", "ABC");
+				plane.SetSizeZS(channels.size(), 1, 0);//r0
+				//plane.SetSizeZS(1,channels.size(), 0);//ss
+				if (deviceId <300) {
+					if (strN == 0) {
+						for(size_t i = 406; i < 681; ++i) {
+							if(channels[i]) {
+								if(i < 494) {
+									if(i > 480) {
+										timingplane[i-2*(i%2)-406] = 1;
+									} else {
+										timingplane[i-406] = 1;
+									}
+								}
+								if(i >= 494 && i<= 511) {
+									timingplane[i-2*(i%2)-406] = 1;
+								}
+								if(i>= 577){
+									timingplane[i-399] = 1;
+								}
+							}
+
+						}
+					} else {
+						for(size_t i = 513; i < 616; ++i) {
+							if(channels[i]) {
+								timingplane[i-425] = 1; //+19 in index
+							}
+						}
+
+					}
+					for(size_t i = 0; i < channels.size(); ++i) {
+						if(channels[i]){
+							plane.PushPixel(i, 0, 1);//r0
+						}
+					}
+
+				} else {
+					for(size_t i = 0; i < channels.size(); ++i) {
+						if(channels[i]){
+							plane.PushPixel(i, 0 , 1);//r0
+							if (strN<2){
+								superplane.PushPixel(i, 1-strN, 1);
+							} else {
+								superplane.PushPixel(1279-i, strN, 1);
+								    //plane.PushPixel(1, i , 1);//ss
+							}
+						}
+					}
+				}
+				d2->AddPlane(plane);
+			}
+		}
+
+	}
+	if(deviceId < 300) {
+		for (unsigned int i=0; i<timingplane.size(); i++) {
+			if (timingplane[i]) {
+				superplane.PushPixel(i, 0, 1);
+			}
+		}
+	}
+	d2->AddPlane(superplane);
+	return true;
 }
