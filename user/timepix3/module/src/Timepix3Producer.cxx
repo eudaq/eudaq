@@ -38,7 +38,6 @@ private:
   void timestamp_thread();
   bool checkPixelBits(int *cnt_mask, int *cnt_test, int *cnt_thrs);
 
-  Timepix3Config *myTimepix3Config;
   SpidrController *spidrctrl = nullptr;
   SpidrDaq *spidrdaq = nullptr;
   std::mutex controller_mutex_;
@@ -121,9 +120,7 @@ namespace{
 }
 
 Timepix3Producer::Timepix3Producer(const std::string name, const std::string &runcontrol)
-: eudaq::Producer(name, runcontrol), m_running(false) {
-  myTimepix3Config = new Timepix3Config();
-}
+: eudaq::Producer(name, runcontrol), m_running(false) {}
 
 Timepix3Producer::~Timepix3Producer() {
   // force run stop
@@ -373,6 +370,9 @@ void Timepix3Producer::DoConfigure() {
     m_running = false;
   }
 
+  auto myTimepix3Config = new Timepix3Config();
+
+
   std::lock_guard<std::mutex> lock{controller_mutex_};
   if (!spidrctrl) {
     EUDAQ_THROW("DoConfigure: spidrctrl was not initialized. Can not configure it.");
@@ -529,7 +529,7 @@ void Timepix3Producer::DoConfigure() {
     if (m_xmlfileName.empty()) {
       EUDAQ_THROW("Timepix3Producer: Empty XML configuration file name.");
     }
-    
+
     myTimepix3Config->ReadXMLConfig( m_xmlfileName );
     EUDAQ_INFO("Reading configuration file " + m_xmlfileName );
     std::string conftime = myTimepix3Config->getTime();
