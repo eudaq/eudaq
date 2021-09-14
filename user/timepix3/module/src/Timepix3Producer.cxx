@@ -296,7 +296,7 @@ void Timepix3Producer::DoInitialise() {
   if( !spidrctrl->reset( &errstat ) ) {
     EUDAQ_ERROR("reset ERROR: " + spidrctrl->errorString());
     serious_error = true;
-  } else if (errstat) {
+  } else if (errstat && errstat != 0x6000) {
     EUDAQ_ERROR("reset not complete, error code: 0x" + to_hex_string(errstat));
   } else {
     EUDAQ_EXTRA("reset: OK" );
