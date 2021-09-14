@@ -917,41 +917,36 @@ void Timepix3Producer::RunLoop() {
   // create a thread to periodically ask for full timestamps, temperatures and others
   ts_thread = std::thread(&Timepix3Producer::timestamp_thread, this);
 
-  //int device_nr = 0;
-  //std::map<int, int> header_counter;
+  std::map<int, int> header_counter;
 
   // set sampling parameters
   spidrdaq->setSampleAll( true );
   // Sample pixel data
   spidrdaq->setSampling( true );
-  //spidrdaq->startRecording( "test.dat", 123, "This is test data" );
 
   while(m_running) {
 
-    bool next_sample = true;
     if(spidrdaq->bufferFullOccurred()) {
       EUDAQ_WARN("Buffer overflow");
     }
 
     // Get a sample of pixel data packets, with timeout in ms
     const unsigned int BUF_SIZE = 8*1024*1024;
-    next_sample = spidrdaq->getSample(BUF_SIZE, 3000);
+    bool next_sample = spidrdaq->getSample(BUF_SIZE, 300);
 
     if(next_sample) {
       auto size = spidrdaq->sampleSize();
-      //std::cout << "Got a sample of a size " << size << std::endl;
       // look inside sample buffer...
       std::vector<eudaq::EventSPC> data_buffer;
-      while(m_running) {
-        uint64_t data = spidrdaq->nextPacket();
 
-        // ...until the sample buffer is empty
-        if(!data) break;
+      // ...until the sample buffer is empty
+      while(uint64_t data = spidrdaq->nextPacket()) {
+
+        // Break if we're supposed to stop:
+        if(!m_running) break;
 
         uint64_t header = (data & 0xF000000000000000) >> 60;
-        //header_counter[header]++;
-
-        //std::cout << "Data is: 0x" << to_hex_string(data) << std::dec << std::endl;
+        header_counter[header]++;
 
         // it's TDC counter
         if(header == 0x6) {
@@ -961,8 +956,6 @@ void Timepix3Producer::RunLoop() {
             evup->AddSubEvent(subevt);
           }
           SendEvent(std::move(evup));
-          //std::cout << "Sending 2 events with headers: " << listVector(header_counter) << endl;
-          //header_counter.clear();
           data_buffer.clear();
 
           // Create and send new trigger event
@@ -986,8 +979,6 @@ void Timepix3Producer::RunLoop() {
           evup->AddSubEvent(subevt);
         }
         SendEvent(std::move(evup));
-        //std::cout << "Sending event with headers: " << listVector(header_counter) << endl;
-        //header_counter.clear();
         data_buffer.clear();
       }
     } // Sample available
@@ -1000,7 +991,7 @@ void Timepix3Producer::RunLoop() {
   ts_thread.join();
   ts_thread.~thread();
   // show header statitstics
-  //std::cout << "Headers: " << listVector(header_counter) << endl;
+  std::cout << "Headers: " << listVector(header_counter) << endl;
   EUDAQ_USER("Timepix3Producer exiting run loop.");
 } // RunLoop()
 
