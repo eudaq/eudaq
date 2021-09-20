@@ -46,8 +46,9 @@ else
 	#workaround as openafs in the normal is broken in the moment - kernel module does not compile
 	sudo add-apt-repository -y ppa:openafs/stable
 	sudo apt-get -qq update
+	sudo apt install init-system-helpers/bionic-backports
 	
-	sudo apt-get install --force-yes -y linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5	
+	sudo apt-get install --allow-unauthenticated --allow-downgrades  -y linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5	
 	
 	touch ~/ThisCell
 	echo "cern.ch" >> ~/ThisCell

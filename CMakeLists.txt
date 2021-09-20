@@ -10,6 +10,7 @@ include(CMakeDependentOption)
 if(COMMAND CMAKE_POLICY)
   if(${CMAKE_VERSION} VERSION_GREATER "3.13")
     cmake_policy(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
+    cmake_policy(SET CMP0077 NEW) # allow overwriting options with normal variables    
   endif()
 endif(COMMAND CMAKE_POLICY)
 
@@ -84,6 +85,9 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+
+
+
 add_subdirectory(main)
 add_subdirectory(extra)
 add_subdirectory(doc)
@@ -139,16 +143,16 @@ if(DEFINED EUDAQ_TTREE_LIBRARY)
   list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_TTREE_LIBRARY})
 endif()
 
-set(CONF_INCLUDE_DIRS "\${EUDAQ_INSTALL_DIR}/include")
+set(CONF_INCLUDE_DIRS "\${EUDAQ_INSTALL_DIR}/include \${EUDAQ_INSTALL_DIR}/extern/include")
 set(EUDAQ_INCLUDE_DIRS "include")
 set(EUDAQ_LIBRARIES_DIRS "lib")
-set(EUDAQ_CMAKE_DIR "cmake")
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eudaqConfig.cmake.in
                               ${CMAKE_CURRENT_BINARY_DIR}/eudaqConfig.cmake
-                              INSTALL_DESTINATION ${EUDAQ_CMAKE_DIR}
-                              PATH_VARS EUDAQ_INCLUDE_DIRS EUDAQ_LIBRARIES_DIRS)
+                              INSTALL_DESTINATION cmake
+                              PATH_VARS EUDAQ_INCLUDE_DIRS EUDAQ_LIBRARIES_DIRS
+                              )
 
 write_basic_package_version_file(eudaqConfigVersion.cmake
                                  VERSION ${PROJECT_VERSION}
@@ -157,16 +161,13 @@ write_basic_package_version_file(eudaqConfigVersion.cmake
 # Install the export set for use with the install-tree
 install(EXPORT eudaqTargets
   NAMESPACE eudaq::
-  DESTINATION ${PROJECT_BINARY_DIR}
+  DESTINATION cmake
   COMPONENT dev)
-
-file(GLOB TARGET_FILES "${PROJECT_BINARY_DIR}/eudaqTarget*.cmake")
 
 install(FILES
   "${PROJECT_BINARY_DIR}/eudaqConfig.cmake"
   "${PROJECT_BINARY_DIR}/eudaqConfigVersion.cmake"
-  ${TARGET_FILES}
-  DESTINATION ${EUDAQ_CMAKE_DIR}
+  DESTINATION cmake
   COMPONENT dev)
 
 message(STATUS "Check your configuration/flags with: cmake -L")

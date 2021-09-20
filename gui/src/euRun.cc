@@ -349,8 +349,8 @@ void RunControlGUI::onCustomContextMenu(const QPoint &point)
     QModelIndex index = viewConn->indexAt(point);
     if(index.isValid()) {
     QMenu *contextMenu = new QMenu(viewConn);
-
-    if(!m_rc->GetInitConfiguration()){
+    // load an eventually updated ini file
+    if(m_rc){
     loadInitFile();
     }
     if(m_rc->GetInitConfiguration()){
@@ -359,7 +359,8 @@ void RunControlGUI::onCustomContextMenu(const QPoint &point)
     contextMenu->addAction(initialiseAction);
     }
 
-    if(!m_rc->GetConfiguration()){
+    // load an eventually updated config file
+    if(m_rc){
     loadConfigFile();
     }
     if(m_rc->GetConfiguration()){

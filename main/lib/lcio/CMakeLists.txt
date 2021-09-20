@@ -15,7 +15,7 @@ if(NOT EUDAQ_LIBRARY_BUILD_LCIO)
 endif()
 message(STATUS "lib/lcio library is to be built (EUDAQ_LIBRARY_BUILD_LCIO=ON)")
 
-find_package(LCIO)
+find_package(LCIO PATHS ${EUDAQ_INSTALL_PREFIX}/extern ${EUDAQ_INSTALL_PREFIX} NO_DEFAULT_PATH)
 
 add_definitions("-DEUDAQ_CORE_EXPORTS")
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
@@ -69,8 +69,13 @@ else()
 endif()
 
 target_link_libraries(${EUDAQ_COMPONENT} PUBLIC ${EUDAQ_CORE_LIBRARY})
-target_link_libraries(${EUDAQ_COMPONENT} PRIVATE ${LCIO_LIBRARIES})
-target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
+target_link_libraries(${EUDAQ_COMPONENT} PUBLIC ${LCIO_LIBRARIES})
+target_include_directories(${EUDAQ_COMPONENT}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  $<INSTALL_INTERFACE:extern/include>
+  )
 
 install(TARGETS ${EUDAQ_COMPONENT}
   EXPORT eudaqTargets

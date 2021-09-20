@@ -41,28 +41,28 @@ std::string CMSPixelProducer::prepareFilename(std::string filename,
 }
 
 std::vector<std::pair<std::string, uint8_t>>
-CMSPixelProducer::GetConfDACs(int16_t i2c, bool tbm) {
+CMSPixelProducer::GetConfDACs(eudaq::ConfigurationSPC config, int16_t i2c, bool tbm) {
 
   std::string regname = (tbm ? "TBM" : "DAC");
 
   std::string filename;
   // Read TBM register file, Core A:
   if (tbm && i2c < 1) {
-    filename = prepareFilename(m_config.Get("tbmFile", ""), "0a");
+    filename = prepareFilename(config->Get("tbmFile", ""), "0a");
   }
   // Read TBM register file, Core B:
   else if (tbm && i2c >= 1) {
-    filename = prepareFilename(m_config.Get("tbmFile", ""), "0b");
+    filename = prepareFilename(config->Get("tbmFile", ""), "0b");
   }
   // Read ROC DAC file, no I2C address indicator is given, assuming filename is
   // correct "as is":
   else if (i2c < 0) {
-    filename = m_config.Get("dacFile", "");
+    filename = config->Get("dacFile", "");
   }
   // Read ROC DAC file, I2C address is given, appending a "_Cx" with x = I2C:
   else {
     filename =
-        prepareFilename(m_config.Get("dacFile", ""), std::to_string(i2c));
+        prepareFilename(config->Get("dacFile", ""), std::to_string(i2c));
   }
 
   std::vector<std::pair<std::string, uint8_t>> dacs;
@@ -109,9 +109,9 @@ CMSPixelProducer::GetConfDACs(int16_t i2c, bool tbm) {
 
       // Check if this DAC is overwritten by directly specifying it in the
       // config file:
-      if (m_config.Get(name, -1) != -1) {
+      if (config->Get(name, -1) != -1) {
         std::cout << "Overwriting DAC " << name << " from file: " << value;
-        value = m_config.Get(name, -1);
+        value = config->Get(name, -1);
         std::cout << " -> " << value << std::endl;
         overwritten_dacs++;
       }
@@ -139,12 +139,12 @@ CMSPixelProducer::GetConfDACs(int16_t i2c, bool tbm) {
   return dacs;
 }
 
-std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfMaskBits() {
+std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfMaskBits(eudaq::ConfigurationSPC config) {
 
   // Read in the mask bits:
   std::vector<pxar::pixelConfig> maskbits;
 
-  std::string filename = m_config.Get("maskFile", "");
+  std::string filename = config->Get("maskFile", "");
   if (filename == "") {
     EUDAQ_INFO(string("No mask file specified. Not masking anything.\n"));
     return maskbits;
@@ -177,24 +177,24 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfMaskBits() {
   }
 
   EUDAQ_USER(string("Found ") + std::to_string(maskbits.size()) +
-             string(" masked pixels in ") + m_config.Name() + string(": \"") +
+             string(" masked pixels in ") + config->Name() + string(": \"") +
              string(filename) + string("\"\n"));
   return maskbits;
 }
 
 std::vector<pxar::pixelConfig>
-CMSPixelProducer::GetConfTrimming(std::vector<pxar::pixelConfig> maskbits,
+CMSPixelProducer::GetConfTrimming(eudaq::ConfigurationSPC config, std::vector<pxar::pixelConfig> maskbits,
                                   int16_t i2c) {
 
   std::string filename;
   // No I2C address indicator is given, assuming filename is correct "as is":
   if (i2c < 0) {
-    filename = m_config.Get("trimFile", "");
+    filename = config->Get("trimFile", "");
   }
   // I2C address is given, appending a "_Cx" with x = I2C:
   else {
     filename =
-        prepareFilename(m_config.Get("trimFile", ""), std::to_string(i2c));
+        prepareFilename(config->Get("trimFile", ""), std::to_string(i2c));
   }
 
   std::vector<pxar::pixelConfig> pixels;
@@ -224,21 +224,20 @@ CMSPixelProducer::GetConfTrimming(std::vector<pxar::pixelConfig> maskbits,
   }
 
   // Process the mask bit list:
-  for (std::vector<pxar::pixelConfig>::iterator px = pixels.begin();
-       px != pixels.end(); px++) {
+  for (auto& px : pixels) {
 
     // Check if this pixel is part of the maskbit vector:
     std::vector<pxar::pixelConfig>::iterator maskpx =
         std::find_if(maskbits.begin(), maskbits.end(),
-                     findPixelXY(px->column(), px->row(), i2c < 0 ? 0 : i2c));
+                     findPixelXY(px.column(), px.row(), i2c < 0 ? 0 : i2c));
     // Pixel is part of mask vector, set the mask bit:
     if (maskpx != maskbits.end()) {
-      px->setMask(true);
+      px.setMask(true);
     }
   }
 
   if (m_trimmingFromConf) {
-    EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() +
+    EUDAQ_USER(string("Trimming successfully read from ") + config->Name() +
                string(": \"") + string(filename) + string("\"\n"));
   }
   return pixels;

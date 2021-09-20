@@ -12,15 +12,15 @@ The virtual function Exec() can optionally be implemented in the user Producer. 
 
 \subsection{Example Source Code: Dummy Event Producer}\label{sec:Ex0Producer_cc}
 \subsubsection{Declaration}
-Here we outline an example implementation of a user Producer. The full source code is available at file path user/example/module/src/Ex0Producer.cc.  \autoref{ls:ex0producerdef}, below, is the declaration part. There are six command related functions, a constructor function and a \texttt{Mainloop} function. \\
+Here we outline an example implementation of a user Producer. The full source code is available at file path user/example/module/src/Ex0Producer.cc. There are six command related functions, a constructor function and a \texttt{Mainloop} function in the declaration part: \\
 
-\lstinputlisting[label=ls:ex0producerdef, style=cpp, linerange=BEG*DEC-END*DEC]{../../user/example/module/src/Ex0Producer.cc}
+\lstinputlisting[label=ls:ex0producerdef_declaration, style=cpp, linerange=BEG*DEC-END*DEC]{../../user/example/module/src/Ex0Producer.cc}
 
 The line \lstinline[style=cpp]{static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Producer")}, defines a static number which is a hash from the name string. This number will be used later as a ID to register this \lstinline[style=cpp]{Ex0Producer} to the EUDAQ runtime environment.
 
 \subsubsection{Register to Factory}
 To make the EUDAQ framework know of the existence of \lstinline[style=cpp]{Ex0Producer}, this Producer should be registered to \lstinline[style=cpp]{eudaq::Factory<eudaq::Producer>} with its static ID number. The input parameter types of the constructor function are also provided to the Register function. See the example code:
-\lstinputlisting[label=ls:ex0producerdef, style=cpp, linerange=BEG*REG-END*REG]{../../user/example/module/src/Ex0Producer.cc}
+\lstinputlisting[label=ls:ex0producerdef_factory, style=cpp, linerange=BEG*REG-END*REG]{../../user/example/module/src/Ex0Producer.cc}
 
 \subsubsection{Constructor}
 The Constructor function takes in two parameters, the runtime name of the instance of the Producer and the address of the RunControl. 
@@ -82,7 +82,7 @@ event.SetTag("Temperature", 42);
 The value corresponding to the tag can be set as an arbitrary type (in this case an integer),
 it will be converted to a STL string internally.
 
-\subsubsection{Error}\label{sec:Tags}
+\subsubsection{Error}\label{sec:Error}
 In the case when the Producer fails to run a command function an exception like this will be produced \\
 \lstinline[style=cpp]{EUDAQ_THROW("dummy data file (" + m_dummy_data_path +") can not open for writing")}\\
 An error message is then sent to the RunControl.

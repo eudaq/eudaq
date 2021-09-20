@@ -263,6 +263,10 @@ void AidaTluProducer::DoConfigure() {
     if(m_verbose > 0) EUDAQ_INFO(" -DEFINE TRIGGER MASK");
     m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
+    // Set triggerPolarity
+    if(m_verbose > 0) EUDAQ_INFO(" -DEFINE TRIGGER POLARITY");
+    m_tlu->SetTriggerPolarity( (uint64_t)(conf->Get("trigPol", 0x003F)));
+
     // Set PMT power
     if(m_verbose > 0) EUDAQ_INFO(" -PMT OUTPUT VOLTAGES");
     m_tlu->pwrled_setVoltages(conf->Get("PMT1_V", 0.0), conf->Get("PMT2_V", 0.0), conf->Get("PMT3_V", 0.0), conf->Get("PMT4_V", 0.0), m_verbose);
