@@ -3,7 +3,7 @@
 
 namespace py = pybind11;
 
-class PyStatus : public eudaq::Status {
+class Status : public eudaq::Status {
 public:
   using eudaq::Status::Status;
   void Print(std::ostream& os, size_t offset) const override {
@@ -19,10 +19,11 @@ public:
 void  init_pybind_status(py::module &m){
   py::class_<eudaq::Status, eudaq::StatusSP> status_(m, "Status");
   py::enum_<eudaq::Status::State>(status_, "State")
-    .value("STATE_ERROR", eudaq::Status::State::STATE_ERROR)
-    .value("STATE_UNINIT", eudaq::Status::State::STATE_UNINIT)
-    .value("STATE_UNCONF", eudaq::Status::State::STATE_UNCONF)
-    .value("STATE_CONF", eudaq::Status::State::STATE_CONF)
+    .value("STATE_ERROR"  , eudaq::Status::State::STATE_ERROR  )
+    .value("STATE_UNINIT" , eudaq::Status::State::STATE_UNINIT )
+    .value("STATE_UNCONF" , eudaq::Status::State::STATE_UNCONF )
+    .value("STATE_CONF"   , eudaq::Status::State::STATE_CONF   )
+    .value("STATE_STOPPED", eudaq::Status::State::STATE_STOPPED)
     .value("STATE_RUNNING", eudaq::Status::State::STATE_RUNNING)
     .export_values();
   

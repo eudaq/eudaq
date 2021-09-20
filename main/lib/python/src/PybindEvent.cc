@@ -1,4 +1,5 @@
 #include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
 #include "eudaq/Event.hh"
 
 namespace py = pybind11;
@@ -103,8 +104,13 @@ void  init_pybind_event(py::module &m){
   event_.def("GetTimestampEnd", &eudaq::Event::GetTimestampEnd);
   event_.def("GetDescription", &eudaq::Event::GetDescription);
   
-  event_.def("GetBlock", &eudaq::Event::GetBlock,
-	     "Get block", py::arg("n"));
+  event_.def("GetBlock",
+	     [](const eudaq::EventSP ev,uint32_t n){
+	        std::vector<uint8_t> block=ev->GetBlock(n);
+	        return py::bytes((const char*)block.data(),block.size());
+             },
+     	     "Get block", py::arg("n"));
+
   event_.def("GetNumBlock", &eudaq::Event::GetNumBlock);
   event_.def("GetNumBlockList", &eudaq::Event::GetBlockNumList);
   event_.def("AddBlock",

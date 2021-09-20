@@ -5,6 +5,7 @@ namespace py = pybind11;
 void init_pybind_event(py::module &);
 void init_pybind_status(py::module &);
 void init_pybind_connection(py::module &);
+void init_pybind_configuration(py::module &);
 void init_pybind_producer(py::module &);
 void init_pybind_datacollector(py::module &);
 void init_pybind_runcontrol(py::module &);
@@ -23,4 +24,5 @@ PYBIND11_MODULE(pyeudaq, m){
   init_pybind_monitor(m);
   init_pybind_filereader(m);
   init_pybind_filewriter(m);
+  init_pybind_configuration(m);
 }
