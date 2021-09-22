@@ -9,56 +9,65 @@ namespace {
 
 bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eudaq::StandardEventSP pStdEvent, eudaq::ConfigurationSPC conf) const
 {
-
   // No event
   if(!pEvent || pEvent->GetNumSubEvent() < 1) {
     return false;
   }
-  //Create one StandardPlane for each block of data
-  auto cSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(0));
-  
+
+  //Get first SubEvent of the full Event
+  auto cFirstSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(0));
+  //Create Standard Plane container 
   std::vector<eudaq::StandardPlane*> cPlanes;  
-  uint32_t  cNFrames = pEvent->GetSubEvents().size();
-  for(uint32_t cBlockId = 0; cBlockId<cSubEventRaw->GetBlockNumList().size(); cBlockId++){
-    eudaq::StandardPlane *cPlane = new eudaq::StandardPlane(cBlockId+30, "CMSPhase2StdEvent", "CMSPhase2" ); 
-    cPlane->SetSizeZS(1016, 2, 0, cNFrames); // 3 values per hit, 2 uint8t words per uint16t word, 1 for header
+  //loop over First SubEvent blocks and fill Standard Plane container
+  //Get number of SubEvent data blocks
+  uint16_t cNFrames = pEvent->GetSubEvents().size();
+  uint8_t cNSensors = cFirstSubEventRaw->GetBlockNumList().size();
+  for(uint32_t cSensorId = 0; cSensorId < cNSensors; cSensorId++){
+    auto *cPlane = new eudaq::StandardPlane(cSensorId+30, "CMSPhase2StdEvent", "CMSPhase2" ); 
+    //Extract sensor matrix dimensions
+    auto cFirstSubEventRawData = cFirstSubEventRaw->GetBlock(cSensorId);
+    uint16_t cNRows = (cFirstSubEventRawData[1] << 8) | (cFirstSubEventRawData[0] << 0);
+    uint16_t cNColumns = (cFirstSubEventRawData[3] << 8) | (cFirstSubEventRawData[2] << 0);
+    //Set Standard Plane dimensions
+    cPlane->SetSizeZS(cNRows, cNColumns, 0, cNFrames); // 3 values per hit, 2 uint8t words per uint16t word, 1 for header
+    //Push Standard Plane in container
     cPlanes.push_back(cPlane);
-  }
-  for(uint32_t cFrameId=0; cFrameId<cNFrames ; cFrameId++){
-    cSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(cFrameId));
+  }//end of loop over First SubEvent blocks
+  
+  //Loop of over SubEvents (frames) and fill Standard Plane data
+  for(uint32_t cFrameId=0; cFrameId < cNFrames ; cFrameId++){
+    auto cSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(cFrameId)); 
+    for(uint32_t cSensorId = 0; cSensorId < cNSensors; cSensorId++){
+      AddFrameToPlane(cPlanes.at(cSensorId), cSubEventRaw->GetBlock(cSensorId), cFrameId, cNFrames ); 
+    }//end of loop over SubEvents blocks
+  }//end of loop over SubEvents (frames)
 
-    // Ste trigger ID tag is only set on the subevents containing the different trigger multiplicities
-    pStdEvent->SetTriggerN(std::stol(cSubEventRaw->GetTag("TLU_TRIGGER_ID", "0")));
-
-    for(uint32_t cBlockId=0; cBlockId < cSubEventRaw->GetBlockNumList().size(); cBlockId++){
-      AddFrameToPlane(cPlanes.at(cBlockId), cSubEventRaw->GetBlock(cBlockId), cFrameId, cNFrames ); 
-    }
-  }
-  for(auto cPlane : cPlanes ){
-    pStdEvent->AddPlane(*cPlane);
-  } 
+  //Add planes to StandardEvent
+  for(auto cPlane : cPlanes) pStdEvent->AddPlane(*cPlane); 
 
   return true;
 }
 
-void CMSPhase2RawEvent2StdEventConverter::AddFrameToPlane(eudaq::StandardPlane *pPlane, const std::vector<uint8_t> &data, uint32_t pFrame, uint32_t pNFrames) const{
-
-  // get width and height
-  uint32_t width = (((uint32_t)data[1]) << 8) | (uint32_t)data[0];
-  uint32_t height = (((uint32_t)data[3]) << 8) | (uint32_t)data[2];
-
-  // set size
-  uint32_t nhits = data.size()/6 - 1;
-
+void CMSPhase2RawEvent2StdEventConverter::AddFrameToPlane(eudaq::StandardPlane *pPlane, const std::vector<uint8_t> &pData, uint32_t pFrameId) const
+{
+  //Get number of hits 
+  //#FIXME still need to decide which way to pick but should be the same
+  //uint16_t cNHits = pData.size()/6 - 1;
+  uint16_t cNHits = (pData[5] << 8) | (pData[4] << 0);
   // process data
-  for(size_t i = 0; i < nhits; i++){    
+  for(size_t cHitId = 0; cHitId < cNHits; cHitId++)
+  {    
     // column, row, tot, ?, lvl1
-    pPlane->PushPixel(getHitVal(data, i, 0), getHitVal(data, i, 1), getHitVal(data, i, 2), false, pFrame);  
+    uint16_t cHitRow = getHitVal(pData, cHitId, 0);
+    uint16_t cHitColumn = getHitVal(pData, cHitId, 1);
+    uint16_t cHitToT = getHitVal(pData, cHitId, 2);
+    pPlane->PushPixel(cHitRow, cHitColumn, cHitToT, false, pFrameId);  
   }
 }
 
-uint16_t CMSPhase2RawEvent2StdEventConverter::getHitVal(const std::vector<uint8_t>& data, size_t hit_id, size_t value_id) const
+uint16_t CMSPhase2RawEvent2StdEventConverter::getHitVal(const std::vector<uint8_t>& pData, size_t pHitId, size_t pValueId) const
 {
-  uint32_t word_index = 6 + hit_id*6 + value_id*2;
-  return (((uint16_t)data[word_index + 1]) << 8) | (uint16_t)data[word_index];
+  uint8_t cHeaderShift = 6;
+  uint16_t cHitData = cHeaderShift + (pHitId * 6) + (pValueId * 2);
+  return ((pData[cHitData + 1] << 8) | (pData[cHitData] << 0));
 }
