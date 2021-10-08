@@ -33,6 +33,11 @@ bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eud
     for(uint32_t cBlockId=0; cBlockId < cSubEventRaw->GetBlockNumList().size(); cBlockId++){
       AddFrameToPlane(cPlanes.at(cBlockId), cSubEventRaw->GetBlock(cBlockId), cFrameId, cNFrames ); 
     }
+
+    const std::map<std::string, std::string> cRawTags = cSubEventRaw->GetTags();
+    for(auto item : cRawTags) {
+      pStdEvent->SetTag(item.first, item.second);
+    }
   }
   for(auto cPlane : cPlanes ){
     pStdEvent->AddPlane(*cPlane);
