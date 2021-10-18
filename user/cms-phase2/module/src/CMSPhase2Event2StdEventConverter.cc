@@ -53,7 +53,7 @@ void CMSPhase2RawEvent2StdEventConverter::AddFrameToPlane(eudaq::StandardPlane *
   //Get number of hits 
   //#FIXME still need to decide which way to pick but should be the same
   //uint16_t cNHits = pData.size()/6 - 1;
-  uint16_t cNHits = (pData[5] << 8) | (pData[4] << 0);
+  uint16_t cNHits = ((uint16_t)pData[5] << 8) | ((uint16_t)pData[4] << 0);
   // process data
   for(size_t cHitId = 0; cHitId < cNHits; cHitId++)
   {    
@@ -69,5 +69,5 @@ uint16_t CMSPhase2RawEvent2StdEventConverter::getHitVal(const std::vector<uint8_
 {
   uint8_t cHeaderShift = 6;
   uint16_t cHitData = cHeaderShift + (pHitId * 6) + (pValueId * 2);
-  return ((pData[cHitData + 1] << 8) | (pData[cHitData] << 0));
+  return (((uint16_t)pData[cHitData + 1] << 8) | ((uint16_t)pData[cHitData] << 0));
 }
