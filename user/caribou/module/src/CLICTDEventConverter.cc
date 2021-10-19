@@ -35,7 +35,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Data containers:
   std::vector<uint64_t> timestamps;
-  std::vector<uint32_t> rawdata;
+  caribou::pearyRawData rawdata;
 
   // Retrieve data from event
   if(ev->NumBlocks() == 1) {
@@ -228,7 +228,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   // Decode the data:
-  auto data = decoder.decodeFrame(rawdata);
+  auto data = decoder.decodeFrame<uintptr_t>(rawdata);
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "Caribou", "CLICTD");
