@@ -83,9 +83,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // FIXME load from config file
   // integration window for pedestal and waveform
   double pedestalStartTime = -200; //[ns]
-  double pedestalEndTime =  -50;
-  double amplitudeStartTime =    0;
-  double amplitudeEndTime =  100;
+  double pedestalEndTime =    -50;
+  double amplitudeStartTime =   0;
+  double amplitudeEndTime =   100;
   
   
   // No event
@@ -95,7 +95,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // Data containers:
   std::vector<uint64_t> timestamps;
-  caribou::pearyRawData rawdata;
   // internal containers
   std::vector<double> time;
   std::vector<std::vector<double>> waves;
@@ -128,9 +127,19 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     memcpy(&block_words, &datablock[0], sizeof(uint64_t));
     memcpy(&pream_words, &datablock[8], sizeof(uint64_t));
     memcpy(&chann_words, &datablock[8*(pream_words+2)], sizeof(uint64_t));
-    LOG(DEBUG) << "        " << block_words << " words per waveform\n";
-    LOG(DEBUG) << "        " << pream_words << " words per preamble\n";
-    LOG(DEBUG) << "        " << chann_words << " words per channel data\n";
+    std::cout  << "        " << block_words << " words per waveform\n";
+    std::cout  << "        " << pream_words << " words per preamble\n";
+    std::cout  << "        " << chann_words << " words per channel data\n";
+    
+    // Finn thinking loud: pearyRawData is a vector of words, which are uintptr_t with a size of 8 byte, uint64_t also has a size of 8 byte
+    // Do we need to memcpy datablock into pearyRawData of the corresponding length and then get the words from this vector and process these?
+    std::cout << sizeof(datablock[1]) << "  " << datablock.size() << "  " << sizeof(uintptr_t) << std::endl;
+    caribou::pearyRawData rawdata( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) ); // sizeof(uintptr_t) = size of words in 
+    std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
+    std::cout << (uint64_t)rawdata[0] << "  " << (uint64_t)rawdata[1] << std::endl;
+    
+    
+    
     
     // loop 4 channels
     for( uint64_t nch = 0; nch < 4; nch++ ){
@@ -217,7 +226,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         avg.at(0) += waves.at(0).at(i);
         avg.at(1) += waves.at(1).at(i);
         avg.at(2) += waves.at(2).at(i);
-        avg.at(3) += waves.at(3).at(i);\
+        avg.at(3) += waves.at(3).at(i);
         //Just getting the maximum amplitude point for each channel
         if( amp.at(0) < waves.at(0).at(i) ) amp.at(0) = waves.at(0).at(i);
         if( amp.at(1) < waves.at(1).at(i) ) amp.at(1) = waves.at(1).at(i);
