@@ -187,9 +187,9 @@ namespace eudaq {
     try{
       if(ev->IsBORE()){
 	if(GetConfiguration())
-	  ev->SetTag("EUDAQ_CONFIG", to_string(*GetConfiguration()));
+	  ev->SetTag("EUDAQ_CONFIG_DC", to_string(*GetConfiguration()));
 	if(GetInitConfiguration())
-	  ev->SetTag("EUDAQ_CONFIG_INIT", to_string(*GetInitConfiguration()));
+	  ev->SetTag("EUDAQ_CONFIG_INIT_DC", to_string(*GetInitConfiguration()));
       }
       
       ev->SetRunN(GetRunNumber());
