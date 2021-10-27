@@ -7,7 +7,6 @@ namespace eudaq{
   Factory<StdEventConverter>::Instance<>();
   
   bool StdEventConverter::Convert(EventSPC d1, StdEventSP d2, ConfigurationSPC conf){
-
     if(d1->IsFlagFake()){
       return true;
     }

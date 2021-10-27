@@ -95,6 +95,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // Data containers:
   std::vector<uint64_t> timestamps;
+  caribou::pearyRawData rawdata;
   // internal containers
   std::vector<double> time;
   std::vector<std::vector<double>> waves;
@@ -118,48 +119,49 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     LOG(DEBUG) << "DSO9254A frame with "<< datablock.size()<<" entries";
 
     // Number of timestamps: first word of data
+    
+    // Calulate positions and length of data blocks:
+    // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit word - but there is no guarantee in the endianness here and you might end up having the wrong one. Also, there is no guarantee for all four channels to have the same preamble and data length - theu should, but better check...
+    
+    
+    rawdata.resize( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) );
+    std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
+    
     uint64_t block_words;
     uint64_t pream_words;
     uint64_t chann_words;
     
-    // Calulate positions and length of data blocks:
-    // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit word - but there is no guarantee in the endianness here and you might end up having the wrong one. Also, there is no guarantee for all four channels to have the same preamble and data length - theu should, but better check...
-    memcpy(&block_words, &datablock[0], sizeof(uint64_t));
-    memcpy(&pream_words, &datablock[8], sizeof(uint64_t));
-    memcpy(&chann_words, &datablock[8*(pream_words+2)], sizeof(uint64_t));
-    std::cout  << "        " << block_words << " words per waveform\n";
-    std::cout  << "        " << pream_words << " words per preamble\n";
-    std::cout  << "        " << chann_words << " words per channel data\n";
-    
-    // Finn thinking loud: pearyRawData is a vector of words, which are uintptr_t with a size of 8 byte, uint64_t also has a size of 8 byte
-    // Do we need to memcpy datablock into pearyRawData of the corresponding length and then get the words from this vector and process these?
-    std::cout << sizeof(datablock[1]) << "  " << datablock.size() << "  " << sizeof(uintptr_t) << std::endl;
-    caribou::pearyRawData rawdata( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) ); // sizeof(uintptr_t) = size of words in 
-    std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
-    std::cout << (uint64_t)rawdata[0] << "  " << (uint64_t)rawdata[1] << std::endl;
-    
-    
-    
-    
     // loop 4 channels
     for( uint64_t nch = 0; nch < 4; nch++ ){
+      
+      std::cout << "Reading channel " << nch << std::endl;
       
       // container for one waveform
       std::vector<double> wave;
       
+      block_words = rawdata[0 + nch * (block_words + 1 )];
+      pream_words = rawdata[1 + nch * (block_words + 1 )];
+      chann_words = rawdata[2 + nch * (block_words + 1 ) + pream_words ];
+      std::cout << "        " << block_words << " words per waveform\n";
+      std::cout << "        " << pream_words << " words per preamble\n";
+      std::cout << "        " << chann_words << " words per channel data\n";
+      std::cout << "        " << rawdata.size() << " size of data rawdata\n";
+      
+    
+      
       // read preamble:
-      // FIXME can this be slimmer?
-      char c;
+      // is this better?
+      // in fetch_channel_data we memcpy a dataVector_type? but the querry does return a string...
+      // I did not manage to get the entire string though
       std::string preamble = "";
-      for(int i =16 + nch * 8 * (block_words+1); 
-              i <16 + nch * 8 * (block_words+1) + 8*pream_words;
-         i+=8){
-        memcpy(&c, &datablock[i], sizeof(char));
-        preamble += c;
+      for(int i=2 + nch * (block_words+1); 
+              i<2 + nch * (block_words+1) + pream_words;
+              i++ ){
+        preamble += (char)rawdata[i];
       }
       LOG(DEBUG) << preamble;
       std::cout << preamble << std::endl;
-    
+        
       // parse preamble to vector of strings
       std::string s;
       std::vector<std::string> vals;
@@ -168,11 +170,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         vals.push_back(s);
       }
       
-      // might still help for online sync
-      //if( nch == 1 ){
-      //  std::cout << "Event time: " << vals[16] << std::endl;
-      //}
-      //Time
+      // Time might still help for online sync
       date.push_back(vals[15]);
       clockTime.push_back(vals[16]);
       timeSinceStart.push_back(getTimeSinceStart(date[nch], clockTime[nch]));
@@ -187,15 +185,14 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // read channel data
       int16_t word;
       int16_t wfi = 0;
-      for(int i =(8*(pream_words+3+nch*(block_words+1))); 
-              i <(8*(pream_words+3+nch*(block_words+1)))+8000;i+=2){
-        memcpy(&word, &datablock[i], sizeof(int16_t));
-        if(word!=0x0){
-          if( nch == 0 ){ // this we need only once
-            time.push_back( wfi * dx.at(nch) + x0.at(nch) );
-          }
-          wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
+      for(int i=pream_words+3+nch*(block_words+1); 
+              i<pream_words+3+nch*(block_words+1)+chann_words;
+              i++){
+        memcpy(&word, &rawdata[i], sizeof(int16_t));
+        if( nch == 0 ){ // this we need only once
+          time.push_back( wfi * dx.at(nch) + x0.at(nch) );
         }
+        wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
         wfi++;
       } // for data block
       
@@ -206,7 +203,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     
     } // for channel
     
-  } // for numblock
+  } // if numblock
   
   // re-iterate waveforms
   std::ofstream file( "waveforms.txt");

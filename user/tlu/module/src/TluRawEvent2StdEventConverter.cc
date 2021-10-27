@@ -57,6 +57,13 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     return false;
   }
 
+  //std::cout << "Triggers fired: " << std::to_string(triggersFired) << std::endl;
+  if(triggersFired == 1) {
+    return false;
+  } else {
+    std::cout << "Triggers fired: " << std::to_string(triggersFired) << std::endl;
+  }
+
   // try/catch for std::stoi()
   try {
     // Subtract delay from fine timestamp:
