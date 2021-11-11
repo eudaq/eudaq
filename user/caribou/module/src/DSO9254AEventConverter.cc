@@ -20,9 +20,14 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
   // FIXME load from config file
+  //auto test = conf->Get("test", 1 );
+  //std::cout << "banana " << test << std::endl;
+
   // integration window for pedestal and waveform
-  double pedestalStartTime = -70; //[ns]
-  double pedestalEndTime =   -20;
+  double pedStartTime =  -70; //[ns]
+  double pedEndTime =    -20;
+  double ampStartTime =   0;
+  double ampEndTime =   100;
     
   
   // No event
@@ -54,7 +59,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     LOG(ERROR) << "ERROR: " << histoFile->GetName() << " can not be opened";
     return false;
   }
-
+  
   
   // Retrieve data from event
   if(ev->NumBlocks() == 1) {
@@ -63,13 +68,14 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     auto datablock = ev->GetBlock(0);
     LOG(DEBUG) << "DSO9254A frame with "<< datablock.size()<<" entries";
 
-      
+    
     // Calulate positions and length of data blocks:
     // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit word - but there is no guarantee in the endianness here and you might end up having the wrong one. Also, there is no guarantee for all four channels to have the same preamble and data length - theu should, but better check...
     
     
     rawdata.resize( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) );
     std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
+
     
     uint64_t block_words;
     uint64_t pream_words;
@@ -82,7 +88,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       
       // container for one waveform
       std::vector<double> wave;
-      
+
+
+      //FIXME this fails if the blocks have different size... need to add not multiply
       block_words = rawdata[0 + nch * (block_words + 1 )];
       pream_words = rawdata[1 + nch * (block_words + 1 )];
       chann_words = rawdata[2 + nch * (block_words + 1 ) + pream_words ];
@@ -113,10 +121,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         vals.push_back(s);
       }
       
-      // Time might still help for online sync
-      date.push_back(vals[15]);
-      clockTime.push_back(vals[16]);
-      timeSinceStart.push_back(getTimeSinceStart(date[nch], clockTime[nch]));
+
+      // FIXME get timestamps right
+      //date.push_back(vals[15]);
+      //clockTime.push_back(vals[16]);
+      
       
       // pick preamble elements
       np.push_back( stoi( vals[2]) );
@@ -188,17 +197,15 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     } // for channel
     
   } // if numblock
-  
-  
+
   
   // re-iterate waveforms
-  std::ofstream file( "waveforms.txt");
   for( int i = 0; i < time.size(); i++ ) {
     
     try{
 
       // calculate pedestal
-      if( time.at(i) >= pedestalStartTime && time.at(i) < pedestalEndTime ){
+      if( time.at(i) >= pedStartTime && time.at(i) < pedEndTime ){
         ped.at(0) += waves.at(0).at(i);
         ped.at(1) += waves.at(1).at(i);
         ped.at(2) += waves.at(2).at(i);
@@ -206,7 +213,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
 
       // get maximum amplitude in range
-      if( time.at(i) >= amplitudeStartTime && time.at(i) < amplitudeEndTime ){
+      if( time.at(i) >= ampStartTime && time.at(i) < ampEndTime ){
         if( amp.at(0) < waves.at(0).at(i) ) amp.at(0) = waves.at(0).at(i);
         if( amp.at(1) < waves.at(1).at(i) ) amp.at(1) = waves.at(1).at(i);
         if( amp.at(2) < waves.at(2).at(i) ) amp.at(2) = waves.at(2).at(i);
@@ -221,21 +228,27 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
 
   } // time bins
-  
+
 
   // Create a StandardPlane representing one sensor plane
-  eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
-  plane.SetSizeZS(2, 2, 0);
-  plane.PushPixel( 1, 1, amp.at(0), 0 ); // FIXME 0 -> propper time stamp
-  plane.PushPixel( 1, 0, amp.at(1), 0 );
-  plane.PushPixel( 0, 0, amp.at(2), 0 );
-  plane.PushPixel( 0, 1, amp.at(3), 0 );
-  // Add the plane to the StandardEvent
-  d2->AddPlane(plane);
-  // Identify the detetor type
-  d2->SetDetectorType("DSO9254A");
-
-
+  if( time.size() > 0 ){
+    eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
+    plane.SetSizeZS(2, 2, 0);
+    plane.PushPixel( 1, 1, amp.at(0), uint32_t(0) ); // FIXME 0 -> propper time stamp
+    plane.PushPixel( 1, 0, amp.at(1), uint32_t(0) );
+    plane.PushPixel( 0, 0, amp.at(2), uint32_t(0) );
+    plane.PushPixel( 0, 1, amp.at(3), uint32_t(0) );
+    // Add the plane to the StandardEvent
+    d2->AddPlane(plane);
+    // Identify the detetor type
+    d2->SetDetectorType("DSO9254A");
+  }
+  else{
+    std::cout << "Warning: No scope data in event " << ev->GetEventN() << std::endl;
+    return false;
+  }
+  
+  
   // write histograms
   histoFile->Close();
   LOG(INFO) << "Histograms written to " << histoFile->GetName();
@@ -244,7 +257,3 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Indicate that data were successfully converted
   return true;
 }
-
-
-
-
