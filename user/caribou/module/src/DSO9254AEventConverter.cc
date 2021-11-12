@@ -17,24 +17,23 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-
-
-  // FIXME load from config file
-  //auto test = conf->Get("test", 1 );
-  //std::cout << "banana " << test << std::endl;
-
-  // integration window for pedestal and waveform
-  double pedStartTime =  -70; //[ns]
-  double pedEndTime =    -20;
-  double ampStartTime =   0;
-  double ampEndTime =   100;
-    
-  
   // No event
   if(!ev) {
     return false;
   }
 
+
+  // load parameters from config file
+  double pedStartTime =  conf->Get("pedStartTime", 0 ); // integration windows in [ns]
+  double pedEndTime   =  conf->Get("pedEndTime"  , 0 );
+  double ampStartTime =  conf->Get("ampStartTime", 0 );
+  double ampEndTime   =  conf->Get("ampEndTime"  , 0 );
+  std::cout << "Loaded parameters from configuration file '" << conf->Name() << "'" << std::endl
+	    << "  pedStartTime = " << pedStartTime << std::endl
+	    << "  pedEndTime   = " << pedEndTime   << std::endl
+	    << "  ampStartTime = " << ampStartTime << std::endl
+	    << "  ampEndTime   = " << ampEndTime   << std::endl;
+  
 
   // Data container:
   caribou::pearyRawData rawdata;

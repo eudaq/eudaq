@@ -35,18 +35,23 @@ int main(int /*argc*/, const char **argv) {
   bool not_all_zero = eventl_v||eventh_v||triggerl_v||triggerh_v||timestampl_v||timestamph_v;
 
 
+  // load configuration
+    // empty configuration object, prevents crash if no config file given
+  eudaq::Configuration eu_cfg( "", "" );
   std::ifstream conffile( file_conf.Value() );
-  eudaq::ConfigurationSPC config_spc = nullptr;
   if( conffile ){
-    eudaq::Configuration eu_cfg( conffile, std::string("euCliReader") );
-    const eudaq::Configuration const_eu_cfg = eu_cfg;
-    config_spc = std::make_shared<const eudaq::Configuration>(eu_cfg);
+    eu_cfg.Load( conffile, std::string("euCliReader") );
   }
-  else if ( file_conf.Value().empty() ){} // just prevent error if no config file given
-  else{
-    std::cout << "ERROR, config file " << file_conf.Value() << " not found!" << std::endl;
-    return 1;
-  }
+  // prevent warning if no config file name given
+  else if ( file_conf.Value().empty() ){}
+  // but warn if attempt failed
+  else{ 
+    std::cout << "WARNING, config file '" << file_conf.Value() << "' not found!" << std::endl;
+  }    
+  // build shared pointer
+  const eudaq::Configuration const_eu_cfg = eu_cfg;
+  eudaq::ConfigurationSPC config_spc = std::make_shared<const eudaq::Configuration>(eu_cfg);
+  
 
   eudaq::FileReaderUP reader;
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
