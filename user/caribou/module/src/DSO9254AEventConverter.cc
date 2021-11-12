@@ -79,6 +79,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     uint64_t block_words;
     uint64_t pream_words;
     uint64_t chann_words;
+    uint64_t block_posit = 0;
     
     // loop 4 channels
     for( int nch = 0; nch < 4; nch++ ){
@@ -90,9 +91,13 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
       //FIXME this fails if the blocks have different size... need to add not multiply
-      block_words = rawdata[0 + nch * (block_words + 1 )];
-      pream_words = rawdata[1 + nch * (block_words + 1 )];
-      chann_words = rawdata[2 + nch * (block_words + 1 ) + pream_words ];
+      //block_words = rawdata[0 + nch * (block_words + 1 )];
+      //pream_words = rawdata[1 + nch * (block_words + 1 )];
+      //chann_words = rawdata[2 + nch * (block_words + 1 ) + pream_words ];
+      block_words = rawdata[block_posit + 0];
+      pream_words = rawdata[block_posit + 1];
+      chann_words = rawdata[block_posit + 2 + pream_words];
+      std::cout << "        " << block_posit << " current position in block\n";
       std::cout << "        " << block_words << " words per waveform\n";
       std::cout << "        " << pream_words << " words per preamble\n";
       std::cout << "        " << chann_words << " words per channel data\n";
@@ -104,8 +109,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // in fetch_channel_data we memcpy a dataVector_type? but the querry does return a string...
       // I did not manage to get the entire string though
       std::string preamble = "";
-      for(int i=2 + nch * (block_words+1); 
-              i<2 + nch * (block_words+1) + pream_words;
+      //for(int i=2 + nch * (block_words+1); 
+      //        i<2 + nch * (block_words+1) + pream_words;
+      //        i++ ){
+      for(int i=block_posit + 2;
+              i<block_posit + 2 + pream_words;
               i++ ){
         preamble += (char)rawdata[i];
       }
@@ -158,8 +166,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       words.resize(points_per_words); // rawdata contains 8 byte words, scope sends 2 byte words 
       int16_t wfi = 0;
       // loop waveform part of the data block
-      for(int i=pream_words+3+nch*(block_words+1); 
-              i<pream_words+3+nch*(block_words+1)+chann_words;
+      //for(int i=pream_words+3+nch*(block_words+1); 
+      //        i<pream_words+3+nch*(block_words+1)+chann_words;
+      //        i++){
+      for(int i=block_posit + 3 + pream_words;
+              i<block_posit + 3 + pream_words+ + chann_words;
               i++){
 
 	// coppy channel data from whole data block
@@ -192,7 +203,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       
       // vector of histograms needs explicit write commad
       hist->Write();
-      
+
+
+      // update position for next iteration
+      block_posit += block_words+1;
     } // for channel
     
   } // if numblock
