@@ -3,7 +3,7 @@
 #include "CLICTDFrameDecoder.hpp"
 #include "TFile.h"
 #include "TH1D.h"
-
+#include "time.h"
 
 using namespace eudaq;
 
@@ -12,6 +12,7 @@ namespace{
   Register<DSO9254AEvent2StdEventConverter>(DSO9254AEvent2StdEventConverter::m_id_factory);
 }
 
+uint64_t timeConverter( std::string date, std::string time );
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
   
@@ -53,11 +54,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   
   // FIXME this should become optional at some point
-  TFile * histoFile = new TFile( "waveforms.root", "UPDATE" ); // UPDATE?
-  if(!histoFile) {
-    LOG(ERROR) << "ERROR: " << histoFile->GetName() << " can not be opened";
-    return false;
-  }
+  //TFile * histoFile = new TFile( "waveforms.root", "UPDATE" ); // UPDATE?
+  //if(!histoFile) {
+  //  LOG(ERROR) << "ERROR: " << histoFile->GetName() << " can not be opened";
+  //  return false;
+  //}
 						       
   
   // Retrieve data from event
@@ -121,9 +122,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       
 
       // FIXME get timestamps right
-      //date.push_back(vals[15]);
-      //clockTime.push_back(vals[16]);
-      
+      uint64_t timestamp = timeConverter( vals[15], vals[16] );
+
       
       // Pick needed preamble elements
       np.push_back( stoi( vals[2]) );
@@ -151,10 +151,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       
       for( int s=0; s<sgmnt_count; s++){ // loop semgents
 
-	// container for one waveform
+     	// container for one waveform
 	std::vector<double> wave;
 	
 	// prepare histogram with corresponding binning
+	/*
 	TH1D* hist = new TH1D(
 			      Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
 				    nch, s ),
@@ -166,7 +167,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 			      );
 	hist->GetXaxis()->SetTitle("time [ns]");
 	hist->GetYaxis()->SetTitle("signal [V]");
-      
+	*/
       
 	// read channel data
 	std::vector<int16_t> words;
@@ -183,15 +184,15 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 	  for( auto word : words ){
 	    
 	    // fill vectors with time bins and waveform
-	    if( nch == 0 && s == 1 ){ // this we need only once
+	    if( nch == 0 && s == 0 ){ // this we need only once
 	      time.push_back( wfi * dx.at(nch) + x0.at(nch) );
 	    }
 	    wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
 	    
 	    
 	    // fill histogram
-	    hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
-				  (double)word * dy.at(nch) + y0.at(nch) );
+	    //hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
+	    //			  (double)word * dy.at(nch) + y0.at(nch) );
 	    
 	    wfi++;
 	    
@@ -205,7 +206,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 	ped.push_back( 0. );
 	amp.push_back( 0. );
 	// vector of histograms needs explicit write commad
-	hist->Write();
+	//hist->Write();
 
 	
       } // segments
@@ -259,7 +260,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       } // points
 
       
-      /*
+      
       // check:
       for( int c = 0; c<peds.size(); c++ ){
 	std::cout << "  CHECK: channel " << c << " segment " << s << std::endl 
@@ -267,7 +268,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 		  << "         pedestl " << peds.at(c).at(s) << std::endl
 		  << "         ampli   " << amps.at(c).at(s) << std::endl;
       }
-      */
+      
 
       
     } // segments
@@ -286,19 +287,74 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // Identify the detetor type
     d2->SetDetectorType("DSO9254A");
     
-  }
-  
+  }  
   else{
     std::cout << "Warning: No scope data in event " << ev->GetEventN() << std::endl;
     return false;
   }
-  
-  
-  // write histograms
-  histoFile->Close();
-  LOG(INFO) << "Histograms written to " << histoFile->GetName();
 
+
+  // write histograms
+  //histoFile->Close();
+  //LOG(INFO) << "Histograms written to " << histoFile->GetName();
+  timeConverter( "\"15 NOV 2021\"", "\"17:38:00:00\"" );
   
   // Indicate that data were successfully converted
   return true;
+}
+
+uint64_t timeConverter( std::string date, std::string time ){
+
+  // needed for month conversion
+  std::map<std::string, int> monthToNum {
+    {"JAN",  1},
+    {"FEB",  2},
+    {"MAR",  3},
+    {"APR",  4},
+    {"MAI",  5},
+    {"JUN",  6},
+    {"JUL",  7},
+    {"AUG",  8},
+    {"SEP",  9},
+    {"OCT", 10},
+    {"NOV", 11},
+    {"DEC", 12},
+  };
+  
+  // delete leading and tailing "
+  date.erase( 0, 1);
+  date.erase( date.size()-1, 1 );
+  time.erase( 0, 1);
+  time.erase( time.size()-1, 1 );
+
+  // get day, month ... in one vector of strings
+  std::string s;
+  std::istringstream s_date( date );
+  std::istringstream s_time( time );
+  std::vector<std::string> parts;
+  while(std::getline(s_date,s,' ')) parts.push_back(s);
+  while(std::getline(s_time,s,':')) parts.push_back(s);
+  for( auto part : parts ) std::cout << part << " ";
+  std::cout << std::endl;
+
+  // fill time structure
+  struct std::tm build_time = {0};
+  build_time.tm_mday = stoi( parts.at(0) );       // day in month 1-31
+  build_time.tm_year = stoi( parts.at(2) )-1900;  // years since 1900
+  build_time.tm_hour = stoi( parts.at(3) );       // hours since midnight 0-23
+  build_time.tm_min  = stoi( parts.at(4) );       // minutes 0-59
+  build_time.tm_sec  = stoi( parts.at(5) );       // seconds 0-59
+  build_time.tm_mon  = monthToNum[parts.at(1)]-1; // month 0-11
+  if( monthToNum[parts.at(1)]==0 ){ // failed conversion
+    std::cout << "ERROR in timeConverter, month " << parts.at(1) << " not defined!" << std::endl;
+  }
+
+  // now convert to unix timestamp and finally to pico seconds
+  std::time_t tunix;
+  tunix = std::mktime( &build_time );
+  uint64_t result = tunix * 1e9;                // [   s->ps]
+  uint64_t mill10 = stoi( parts.at(6) ) * 1e7 ; // [10ms->ps]
+  result += mill10;
+   
+  return result;
 }
