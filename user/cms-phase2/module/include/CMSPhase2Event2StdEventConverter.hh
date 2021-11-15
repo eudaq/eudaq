@@ -1,6 +1,7 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
+#include <boost/algorithm/string.hpp>
 
 /**
 * CMS Phase2 event converter, converting from raw detector data to EUDAQ StandardEvent format
