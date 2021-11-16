@@ -25,15 +25,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
   // load parameters from config file
-  double pedStartTime =  conf->Get("pedStartTime", 0 ); // integration windows in [ns]
-  double pedEndTime   =  conf->Get("pedEndTime"  , 0 );
-  double ampStartTime =  conf->Get("ampStartTime", 0 );
-  double ampEndTime   =  conf->Get("ampEndTime"  , 0 );
-  std::cout << "Loaded parameters from configuration file '" << conf->Name() << "'" << std::endl
+  double pedStartTime = conf->Get("pedStartTime", 0 ); // integration windows in [ns]
+  double pedEndTime   = conf->Get("pedEndTime"  , 0 );
+  double ampStartTime = conf->Get("ampStartTime", 0 );
+  double ampEndTime   = conf->Get("ampEndTime"  , 0 );
+  bool generateRoot   = conf->Get("generateRoot", 0 ); 
+  std::cout << "Loaded parameters from configuration file." << std::endl
 	    << "  pedStartTime = " << pedStartTime << std::endl
 	    << "  pedEndTime   = " << pedEndTime   << std::endl
 	    << "  ampStartTime = " << ampStartTime << std::endl
-	    << "  ampEndTime   = " << ampEndTime   << std::endl;
+	    << "  ampEndTime   = " << ampEndTime   << std::endl
+	    << "  generateRoot = " << generateRoot << std::endl << std::endl;
   
 
   // Data container:
@@ -54,12 +56,15 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   std::vector<double> y0;
 
   
-  // FIXME this should become optional at some point
-  //TFile * histoFile = new TFile( "waveforms.root", "UPDATE" ); // UPDATE?
-  //if(!histoFile) {
-  //  LOG(ERROR) << "ERROR: " << histoFile->GetName() << " can not be opened";
-  //  return false;
-  //}
+  // generate rootfile to write waveforms as TH1D
+  TFile * histoFile = nullptr;
+  if( generateRoot ){
+    histoFile = new TFile( "waveforms.root", "UPDATE" ); // UPDATE?
+    if(!histoFile) {
+      LOG(ERROR) << "ERROR: " << histoFile->GetName() << " can not be opened";
+      return false;
+    }
+  }
 						       
   
   // Retrieve data from event
@@ -97,11 +102,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       block_words = rawdata[block_posit + 0];
       pream_words = rawdata[block_posit + 1];
       chann_words = rawdata[block_posit + 2 + pream_words];
-      std::cout << "        " << block_posit << " current position in block\n";
-      std::cout << "        " << block_words << " words per segment\n";
-      std::cout << "        " << pream_words << " words per preamble\n";
-      std::cout << "        " << chann_words << " words per channel data\n";
-      std::cout << "        " << rawdata.size() << " size of data rawdata\n";
+      std::cout << "  " << block_posit << " current position in block\n";
+      std::cout << "  " << block_words << " words per segment\n";
+      std::cout << "  " << pream_words << " words per preamble\n";
+      std::cout << "  " << chann_words << " words per channel data\n";
+      std::cout << "  " << rawdata.size() << " size of data rawdata\n";
            
 
       // read preamble:
@@ -112,7 +117,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         preamble += (char)rawdata[i];
       }
       LOG(DEBUG) << preamble;
-      std::cout << "Preamble: \n" << preamble << std::endl;  
+      std::cout << "Preamble: \n  " << preamble << std::endl;  
       // parse preamble to vector of strings
       std::string s;
       std::vector<std::string> vals;
@@ -156,7 +161,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 	std::vector<double> wave;
 	
 	// prepare histogram with corresponding binning
-	/*
 	TH1D* hist = new TH1D(
 			      Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
 				    nch, s ),
@@ -168,7 +172,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 			      );
 	hist->GetXaxis()->SetTitle("time [ns]");
 	hist->GetYaxis()->SetTitle("signal [V]");
-	*/
       
 	// read channel data
 	std::vector<int16_t> words;
@@ -192,8 +195,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 	    
 	    
 	    // fill histogram
-	    //hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
-	    //			  (double)word * dy.at(nch) + y0.at(nch) );
+	    hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
+	    			  (double)word * dy.at(nch) + y0.at(nch) );
 	    
 	    wfi++;
 	    
@@ -206,8 +209,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 	waves.push_back( wave );
 	ped.push_back( 0. );
 	amp.push_back( 0. );
-	// vector of histograms needs explicit write commad
-	//hist->Write();
+
+	// write and delete
+	if( generateRoot ){
+	  hist->Write();
+	}
+	delete hist;
 
 	
       } // segments
@@ -229,12 +236,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // process waveform data
   if( time.size() > 0 ){ // only if there are waveform data
   
+
     // re-iterate waveforms
     // wavess.at(channel).at(segment).at(point)
     // ped   .at(channel).at(segment)
     for( int s = 0; s<peds.at(0).size(); s++ ){
       for( int p = 0; p<time.size(); p++ ) {      	
-
 	
 	//try{ // hotfix in case off incomplete waveforms
 	  
@@ -268,8 +275,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 		  << "         timestp " << timestamp << std::endl;
       }
       */
-
-      
+  
     } // segments
     
     
@@ -285,18 +291,29 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     d2->AddPlane(plane);
     // Identify the detetor type
     d2->SetDetectorType("DSO9254A");
+
+    
+    // close rootfile
+    if( generateRoot ){
+      histoFile->Close();
+      std::cout << "Histograms written to " << histoFile->GetName() << std::endl;
+    }
     
   }  
   else{
+    
+    // close rootfile anyway
+    if( generateRoot ){
+      histoFile->Close();
+      std::cout << "Histograms written to " << histoFile->GetName() << std::endl;
+    }
+
+    
     std::cout << "Warning: No scope data in event " << ev->GetEventN() << std::endl;
     return false;
   }
 
 
-  // write histograms
-  //histoFile->Close();
-  //LOG(INFO) << "Histograms written to " << histoFile->GetName();
-  
   
   // Indicate that data were successfully converted
   return true;
