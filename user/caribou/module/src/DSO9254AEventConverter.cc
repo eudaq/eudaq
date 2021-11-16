@@ -44,6 +44,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   std::vector<std::vector<double>> peds;
   std::vector<std::vector<double>> amps;
   std::vector<double> time;
+  uint64_t timestamp;
 
   // waveform parameters
   std::vector<uint64_t> np;
@@ -111,7 +112,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         preamble += (char)rawdata[i];
       }
       LOG(DEBUG) << preamble;
-      std::cout << preamble << std::endl;  
+      std::cout << "Preamble: \n" << preamble << std::endl;  
       // parse preamble to vector of strings
       std::string s;
       std::vector<std::string> vals;
@@ -121,8 +122,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
       
 
-      // FIXME get timestamps right
-      uint64_t timestamp = timeConverter( vals[15], vals[16] );
+      // getting timestamps from preamble which is rather imprecise
+      timestamp = timeConverter( vals[15], vals[16] );
 
       
       // Pick needed preamble elements
@@ -136,12 +137,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
       int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
       if( np.at(nch)%chann_words/sgmnt_count ) LOG(WARNING) << "incomplete waveform";
-      
+      /*
       std::cout << "  dx " << dx.at(nch) << std::endl
 		<< "  x0 " << x0.at(nch) << std::endl
 		<< "  dy " << dy.at(nch) << std::endl
 		<< "  y0 " << y0.at(nch) << std::endl;
-
+      */
 
       // need once per channel
       std::vector<double> ped;
@@ -233,42 +234,40 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // ped   .at(channel).at(segment)
     for( int s = 0; s<peds.at(0).size(); s++ ){
       for( int p = 0; p<time.size(); p++ ) {      	
-	
-	try{
-	  
-	  // calculate pedestal
-	  if( time.at(p) >= pedStartTime && time.at(p) < pedEndTime ){
-	    for( int c = 0; c<peds.size(); c++ ) 
-	      peds.at(c).at(s) += wavess.at(c).at(s).at(p);
-	  }
-	  
-	  // get maximum amplitude in range
-	  if( time.at(p) >= ampStartTime && time.at(p) < ampEndTime ){
-	    for( int c = 0; c<peds.size(); c++ ){ 
-	      if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) )
-		amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
-	    }
-	  }
 
-	}catch(...){
+	
+	//try{ // hotfix in case off incomplete waveforms
 	  
-	  // FIXME why are some data blocks shorter than the preamble suggests?
-	  std::cout << "Am I still needed?" << std::endl; 
-	  
-	} 
+	// calculate pedestal
+	if( time.at(p) >= pedStartTime && time.at(p) < pedEndTime ){
+	  for( int c = 0; c<peds.size(); c++ ) 
+	    peds.at(c).at(s) += wavess.at(c).at(s).at(p);
+	}
+	
+	// get maximum amplitude in range
+	if( time.at(p) >= ampStartTime && time.at(p) < ampEndTime ){
+	  for( int c = 0; c<peds.size(); c++ ){ 
+	    if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) )
+	      amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
+	  }
+	}
+
+	//}catch(...){} 
 	
       } // points
-
       
       
       // check:
+      /*
+      std::cout << std::endl;
       for( int c = 0; c<peds.size(); c++ ){
 	std::cout << "  CHECK: channel " << c << " segment " << s << std::endl 
 	          << "         points  " << wavess.at(c).at(s).size() << std::endl
 		  << "         pedestl " << peds.at(c).at(s) << std::endl
-		  << "         ampli   " << amps.at(c).at(s) << std::endl;
+		  << "         ampli   " << amps.at(c).at(s) << std::endl
+		  << "         timestp " << timestamp << std::endl;
       }
-      
+      */
 
       
     } // segments
@@ -278,10 +277,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // FIXME For now pushing just the first segment... need to decide how to treat several of them
     eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
     plane.SetSizeZS(2, 2, 0);
-    plane.PushPixel( 1, 1, amps.at(0).at(0), uint32_t(0) ); // FIXME uint32_t(0) -> propper time stamp
-    plane.PushPixel( 1, 0, amps.at(1).at(0), uint32_t(0) );
-    plane.PushPixel( 0, 0, amps.at(2).at(0), uint32_t(0) );
-    plane.PushPixel( 0, 1, amps.at(3).at(0), uint32_t(0) );
+    plane.PushPixel( 1, 1, amps.at(0).at(0), timestamp );
+    plane.PushPixel( 1, 0, amps.at(1).at(0), timestamp );
+    plane.PushPixel( 0, 0, amps.at(2).at(0), timestamp );
+    plane.PushPixel( 0, 1, amps.at(3).at(0), timestamp );
     // Add the plane to the StandardEvent
     d2->AddPlane(plane);
     // Identify the detetor type
@@ -297,11 +296,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // write histograms
   //histoFile->Close();
   //LOG(INFO) << "Histograms written to " << histoFile->GetName();
-  timeConverter( "\"15 NOV 2021\"", "\"17:38:00:00\"" );
+  
   
   // Indicate that data were successfully converted
   return true;
 }
+
 
 uint64_t timeConverter( std::string date, std::string time ){
 
@@ -334,8 +334,8 @@ uint64_t timeConverter( std::string date, std::string time ){
   std::vector<std::string> parts;
   while(std::getline(s_date,s,' ')) parts.push_back(s);
   while(std::getline(s_time,s,':')) parts.push_back(s);
-  for( auto part : parts ) std::cout << part << " ";
-  std::cout << std::endl;
+  //for( auto part : parts ) std::cout << part << " ";
+  //std::cout << std::endl;
 
   // fill time structure
   struct std::tm build_time = {0};
@@ -349,7 +349,7 @@ uint64_t timeConverter( std::string date, std::string time ){
     std::cout << "ERROR in timeConverter, month " << parts.at(1) << " not defined!" << std::endl;
   }
 
-  // now convert to unix timestamp and finally to pico seconds
+  // now convert to unix timestamp, to pico seconds and add sub-second information from scope
   std::time_t tunix;
   tunix = std::mktime( &build_time );
   uint64_t result = tunix * 1e9;                // [   s->ps]
