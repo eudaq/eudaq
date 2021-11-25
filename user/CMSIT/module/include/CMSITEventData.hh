@@ -10,8 +10,8 @@
 
 #include <cstdint>
 #include <ctime>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace CMSITEventData
 {
