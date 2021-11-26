@@ -56,7 +56,7 @@ int TheConverter::ChargeConverter(const int row, const int col, const int ToT, c
 
 bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, ConfigurationSPC conf) const
 {
-    if(ev->IsEORE() == true) { return true; }
+    if(ev->IsEORE() == true) return true;
 
     CMSITEventData::EventData theEvent;
     if(CMSITConverterPlugin::Deserialize(ev, theEvent) == true)
