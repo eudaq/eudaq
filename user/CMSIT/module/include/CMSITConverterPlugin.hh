@@ -29,7 +29,7 @@ namespace eudaq
 // ######################
 // # Internal constants #
 // ######################
-static constexpr char   EVENT_TYPE[] = "CMSIT";
+static constexpr char    EVENT_TYPE[] = "CMSIT";
 static const std::string SENSORTYPE("RD53A");
 static const int         NROWS = 192, NCOLS = 400;
 static const int         MAXFRAMES = 32;
@@ -120,8 +120,8 @@ class CMSITConverterPlugin : public StdEventConverter
 
     static bool                                                       exitIfOutOfSync;
     static int                                                        theTLUtriggerId_previous;
-    static std::map<std::string, TheConverter::calibrationParameters> calibMap;
     static std::shared_ptr<Configuration>                             theConfigFromFile;
+    static std::map<std::string, TheConverter::calibrationParameters> calibMap;
 };
 
 } // namespace eudaq
