@@ -29,8 +29,8 @@ namespace eudaq
 // ######################
 // # Internal constants #
 // ######################
-static constexpr char*   EVENT_TYPE = "CMSIT";
-static const std::string SENSORTYPE = "RD53A";
+static constexpr char   EVENT_TYPE[] = "CMSIT";
+static const std::string SENSORTYPE("RD53A");
 static const int         NROWS = 192, NCOLS = 400;
 static const int         MAXFRAMES = 32;
 static const int         MAXHYBRID = 9, MAXCHIPID = 7;
