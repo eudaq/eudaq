@@ -146,7 +146,7 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     _mon->getOnlineMon()->registerHisto(
         tree, getHitmapHistos(p.getName(), p.getID())->getClusterMapHisto(),
         "COLZ", 0);
-    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4)) {
+    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4) || (p.is_RD53A)) {
       sprintf(tree, "%s/Sensor %i/LVL1Distr", p.getName().c_str(), p.getID());
       _mon->getOnlineMon()->registerTreeItem(tree);
       _mon->getOnlineMon()->registerHisto(

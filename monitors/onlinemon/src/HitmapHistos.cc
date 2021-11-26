@@ -17,7 +17,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
       _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL),
       _clusterYWidth(NULL), _nbadHits(NULL), _nHotPixels(NULL),
       _hitmapSections(NULL), is_MIMOSA26(false), is_APIX(false),
-      is_USBPIX(false), is_USBPIXI4(false) {
+      is_USBPIX(false), is_USBPIXI4(false), is_RD53A(false) {
   char out[1024], out2[1024];
 
   _mon = mon;
@@ -30,6 +30,8 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     is_USBPIX = true;
   } else if ((_sensor == std::string("USBPIXI4")) || (_sensor.find("USBPIXI4-") == std::string::npos)) {
     is_USBPIXI4 = true;
+  } else if (_sensor == std::string("RD53A")) {
+    is_RD53A = true;
   } else if (_sensor.find("USBPIXI4B") != std::string::npos) {
     is_USBPIXI4 = true;
   }
@@ -65,7 +67,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i LVL1 Pixel Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1_%s_%i", _sensor.c_str(), _id);
-    _lvl1Distr = new TH1I(out2, out, 16, 0, 16);
+    _lvl1Distr = new TH1I(out2, out, 16, 0, 32);
 
     sprintf(out, "%s %i LVL1 Cluster Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1cluster_%s_%i", _sensor.c_str(), _id);
@@ -77,7 +79,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i TOT Single Pixels", _sensor.c_str(), _id);
     sprintf(out2, "h_totsingle_%s_%i", _sensor.c_str(), _id);
-    if (p.is_USBPIXI4) {
+    if (p.is_USBPIXI4 || p.is_RD53A) {
       _totSingle = new TH1I(out2, out, 16, 0, 15);
     } else if (p.is_DEPFET) {
       _totSingle = new TH1I(out2, out, 255, -127, 127);
@@ -92,7 +94,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i TOT Clusters", _sensor.c_str(), _id);
     sprintf(out2, "h_totcluster_%s_%i", _sensor.c_str(), _id);
-    if (p.is_USBPIXI4)
+    if (p.is_USBPIXI4 || p.is_RD53A)
       _totCluster = new TH1I(out2, out, 80, 0, 79);
     else
       _totCluster = new TH1I(out2, out, 256, 0, 255);
@@ -257,7 +259,7 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
   if ((pixel_x < _maxX) && (pixel_y < _maxY)) {
     plane_map_array[pixel_x][pixel_y] = plane_map_array[pixel_x][pixel_y] + 1;
   }
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_DEPFET)) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_DEPFET) || (is_RD53A)) {
     if (_totSingle != NULL)
       _totSingle->Fill(hit.getTOT());
     if (_lvl1Distr != NULL)
@@ -313,7 +315,7 @@ void HitmapHistos::Fill(const SimpleStandardCluster &cluster) {
     }
   }
 
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4)) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_RD53A)) {
     if (_lvl1Width != NULL)
       _lvl1Width->Fill(cluster.getLVL1Width());
     if (_totCluster != NULL)
