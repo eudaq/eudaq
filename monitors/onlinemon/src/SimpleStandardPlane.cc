@@ -58,6 +58,7 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id)
   is_USBPIXI4 = false;
   is_FORTIS = false;
   is_EXPLORER = false;
+  is_RD53A = false;
   is_UNKNOWN = true; // per default we don't know this plane
   isRotated = false;
   setPixelType(name); // set the pixel type
