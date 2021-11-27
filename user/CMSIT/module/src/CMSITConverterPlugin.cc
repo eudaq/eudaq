@@ -113,7 +113,7 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                                 int charge = hit.tot;
                                 theConverter(row, col, charge, theEvent.chipData[j].chipLane, theCalibPar, chargeCut);
                                 if((chargeCut >= 0) && (charge < 0)) continue;
-                                plane.PushPixel(col, row, charge, false, triggerId);
+                                plane.PushPixel((uint32_t)col, (uint32_t)row, charge, (uint32_t)triggerId);
                             }
 
                         triggerId++;
@@ -258,9 +258,9 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto)
 bool CMSITConverterPlugin::Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const
 {
     // Make sure the event is of class RawDataEvent
-    if(auto rev = std::dynamic_pointer_cast<const RawDataEvent>(ev))
+    if(auto rev = static_cast<const RawDataEvent*>(ev.get()))
     {
-        if((rev->NumBlocks() > 0) && (rev->GetBlock(0).size() >= 0))
+        if((rev->NumBlocks() > 0) && (rev->GetBlock(0).size() > 0))
         {
             std::istringstream              theSerialized(std::string((char*)rev->GetBlock(0).data(), rev->GetBlock(0).size()));
             boost::archive::binary_iarchive theArchive(theSerialized);
