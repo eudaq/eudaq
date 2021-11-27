@@ -59,7 +59,7 @@ void HitmapCollection::Write(TFile *file) {
     cout << "HitmapCollection::Write File pointer is NULL"<<endl;
     exit(-1);
   }
-  if (gDirectory != NULL) // check if this pointer exists
+  if (gDirectory) // check if this pointer exists
   {
     gDirectory->mkdir("Hitmaps");
     gDirectory->cd("Hitmaps");
