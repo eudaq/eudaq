@@ -6,7 +6,6 @@ set(${PROJECT_NAME}_VERSION_PATCH 0 )
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
-
 if(COMMAND CMAKE_POLICY)
   if(${CMAKE_VERSION} VERSION_GREATER "3.13")
     cmake_policy(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
@@ -22,6 +21,8 @@ set(CMAKE_SHARED_LIBRARY_PREFIX libeudaq_)
 set(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
 set(EUDAQ_CORE_LIBRARY core)
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
+
+message("-- C++ STANDARD set to: ${CMAKE_CXX_STANDARD}")
 
 include_directories(main/lib/core/include)
 include_directories(extern/include)
@@ -85,9 +86,6 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-
-
-
 add_subdirectory(main)
 add_subdirectory(extra)
 add_subdirectory(doc)
@@ -104,7 +102,6 @@ if(NOT TARGET uninstall)
   add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()
-
 
 # Python-based regression tests (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
 # enable_testing()
@@ -125,7 +122,6 @@ include(PrintSystemInformation)
 # eudaqConfig.cmake
 
 export(PACKAGE eudaq)
-
 
 if(DEFINED EUDAQ_CORE_LIBRARY)
   list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_CORE_LIBRARY})
