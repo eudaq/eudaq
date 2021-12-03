@@ -22,6 +22,10 @@ set(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
 set(EUDAQ_CORE_LIBRARY core)
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
 
+################
+# C++ STANDARD #
+################
+set(CMAKE_CXX_STANDARD 14)
 message("-- C++ STANDARD set to: ${CMAKE_CXX_STANDARD}")
 
 include_directories(main/lib/core/include)
