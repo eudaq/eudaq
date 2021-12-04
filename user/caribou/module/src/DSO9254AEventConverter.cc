@@ -59,7 +59,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // generate rootfile to write waveforms as TH1D
   TFile * histoFile = nullptr;
   if( generateRoot ){
-    histoFile = new TFile( "waveforms.root", "UPDATE" ); // UPDATE?
+    histoFile = new TFile( Form( "waveforms_run%i.root", ev->GetRunN() ), "RECREATE" );
     if(!histoFile) {
       LOG(ERROR) << "ERROR: " << histoFile->GetName() << " can not be opened";
       return false;
