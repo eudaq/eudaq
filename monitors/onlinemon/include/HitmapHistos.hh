@@ -118,6 +118,7 @@ private:
   bool is_USBPIXI4;
   bool is_DEPFET;
   bool is_RD53A;
+  bool is_REF;
 };
 
 #ifdef __CINT__
