@@ -41,9 +41,6 @@ root_generate_dictionary(${THISMON}_ROOT include/OnlineMonWindow.hh)
 aux_source_directory(src THISMON_SRC)
 add_executable(${THISMON} ${THISMON_SRC} ${THISMON_DICT_CXX})
 
-if(CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0))
-  set_property(TARGET ${THISMON} PROPERTY CXX_STANDARD 14)
-endif()
 target_link_libraries(${THISMON} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
 
 install(TARGETS ${THISMON}
