@@ -297,7 +297,14 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // Identify the detetor type
     d2->SetDetectorType("DSO9254A");
 
-    
+
+    // forcing corry to fall back on trigger IDs
+    // FIXME is this needed? the right way to do it?
+    d2->SetTimeBegin(0);
+    d2->SetTimeEnd(0);
+    d2->SetTriggerN(ev->GetEventN());
+
+
     // close rootfile
     if( generateRoot ){
       histoFile->Close();
