@@ -242,7 +242,7 @@ void CaribouProducer::RunLoop() {
         data_buffer.clear();
       }
 
-      //LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev;
+      LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev;
     } catch(caribou::NoDataAvailable&) {
         continue;
     } catch(caribou::DataException& e) {
