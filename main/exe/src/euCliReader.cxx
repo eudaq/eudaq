@@ -97,8 +97,7 @@ int main(int /*argc*/, const char **argv) {
       ev->Print(std::cout);
       if(stdev_v){
         auto evstd = eudaq::StandardEvent::MakeShared();
-        //eudaq::StdEventConverter::Convert(ev, evstd, nullptr);
-	eudaq::StdEventConverter::Convert(ev, evstd, config_spc);
+        eudaq::StdEventConverter::Convert(ev, evstd, config_spc);
         std::cout<< ">>>>>"<< evstd->NumPlanes() <<"<<<<"<<std::endl;
       }
     }
