@@ -15,7 +15,7 @@ namespace{
 uint64_t timeConverter( std::string date, std::string time );
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-  
+
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   // No event
@@ -40,7 +40,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   EUDAQ_DEBUG( "  chargeScale  = " + to_string( chargeScale ) + " a.u." );
   EUDAQ_DEBUG( "  chargeCut    = " + to_string( chargeCut ) + " a.u." );
   EUDAQ_DEBUG( "  generateRoot = " + to_string( generateRoot ) + " ns" );
- 
+
 
   // Data container:
   caribou::pearyRawData rawdata;
@@ -59,7 +59,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   std::vector<double> dy;
   std::vector<double> y0;
 
-  
+
   // generate rootfile to write waveforms as TH1D
   TFile * histoFile = nullptr;
   if( generateRoot ){
@@ -69,26 +69,26 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       return false;
     }
   }
-						       
-  
+
+
   // Retrieve data from event
   if(ev->NumBlocks() == 1) {
 
-    
+
     // all four scope channels in one data block
     auto datablock = ev->GetBlock(0);
     EUDAQ_DEBUG("DSO9254A frame with " + to_string(datablock.size()) + " entries");
 
-    
+
     // Calulate positions and length of data blocks:
     // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit
     //                             word - but there is no guarantee in the endianness here and you
-    //                             might end up having the wrong one. 
-    // Finn: I am not sure if I actually solved this issue! Lets discuss.    
+    //                             might end up having the wrong one.
+    // Finn: I am not sure if I actually solved this issue! Lets discuss.
     rawdata.resize( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) );
     std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
 
-    
+
     // needed per event
     uint64_t block_words;
     uint64_t pream_words;
@@ -96,9 +96,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     uint64_t block_posit = 0;
     uint64_t sgmnt_count = 1;
 
-    
+
     // loop 4 channels
-    for( int nch = 0; nch < 4; nch++ ){      
+    for( int nch = 0; nch < 4; nch++ ){
 
       EUDAQ_DEBUG( "Reading channel " + to_string(nch));
 
@@ -111,7 +111,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
       EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
       EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + "size of data rawdata");
-           
+
 
       // read preamble:
       std::string preamble = "";
@@ -129,12 +129,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       while(std::getline(stream,s,',')){
         vals.push_back(s);
       }
-      
+
 
       // getting timestamps from preamble which is rather imprecise
       timestamp = timeConverter( vals[15], vals[16] );
 
-      
+
       // Pick needed preamble elements
       np.push_back( stoi( vals[2]) );
       dx.push_back( stod( vals[4]) * 1e9 );
@@ -142,80 +142,80 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       dy.push_back( stod( vals[7]) );
       y0.push_back( stod( vals[8]) );
       if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
-	sgmnt_count = stoi( vals[24] );
+        sgmnt_count = stoi( vals[24] );
       }
       int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
       if( np.at(nch)%chann_words/sgmnt_count ) EUDAQ_WARN("incomplete waveform");
-      
+
 
       // need once per channel
       std::vector<double> ped;
       std::vector<double> amp;
       std::vector<std::vector<double>> waves;
-      
-      
+
+
       for( int s=0; s<sgmnt_count; s++){ // loop semgents
 
      	// container for one waveform
-	std::vector<double> wave;
-	
-	// prepare histogram with corresponding binning
-	TH1D* hist = new TH1D(
-			      Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
-				    nch, s ),
-			      Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
-				    nch, s ),
-			      np.at(nch),
-			      x0.at(nch) - dx.at(nch)/2.,
-			      x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
-			      );
-	hist->GetXaxis()->SetTitle("time [ns]");
-	hist->GetYaxis()->SetTitle("signal [V]");
-      
-	// read channel data
-	std::vector<int16_t> words;
-	words.resize(points_per_words); // rawdata contains 8 byte words, scope sends 2 byte words 
-	int16_t wfi = 0;
-	for(int i=block_posit + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
+        std::vector<double> wave;
+
+        // prepare histogram with corresponding binning
+        TH1D* hist = new TH1D(
+                              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
+                                    nch, s ),
+                              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
+                                    nch, s ),
+                              np.at(nch),
+                              x0.at(nch) - dx.at(nch)/2.,
+                              x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
+                              );
+        hist->GetXaxis()->SetTitle("time [ns]");
+        hist->GetYaxis()->SetTitle("signal [V]");
+
+        // read channel data
+        std::vector<int16_t> words;
+        words.resize(points_per_words); // rawdata contains 8 byte words, scope sends 2 byte words
+        int16_t wfi = 0;
+        for(int i=block_posit + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
 	        i<block_posit + 3 + pream_words + (s+1)*chann_words/sgmnt_count;
-	      //i<block_posit + 3 + pream_words+chann_words;
+            //i<block_posit + 3 + pream_words+chann_words;
 	        i++){
-	  
-	  // coppy channel data from whole data block
-	  memcpy(&words.front(), &rawdata[i], points_per_words*sizeof(int16_t));
-	  
-	  for( auto word : words ){
-	    
-	    // fill vectors with time bins and waveform
-	    if( nch == 0 && s == 0 ){ // this we need only once
-	      time.push_back( wfi * dx.at(nch) + x0.at(nch) );
-	    }
-	    wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
-	    
-	    
-	    // fill histogram
-	    hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
-	    			  (double)word * dy.at(nch) + y0.at(nch) );
-	    
-	    wfi++;
-	    
-	  } // words
-	  
-	} // waveform
 
-	
-	// store waveform vector and create vector entries for pedestal and amplitude
-	waves.push_back( wave );
-	ped.push_back( 0. );
-	amp.push_back( 0. );
+          // coppy channel data from whole data block
+          memcpy(&words.front(), &rawdata[i], points_per_words*sizeof(int16_t));
 
-	// write and delete
-	if( generateRoot ){
-	  hist->Write();
-	}
-	delete hist;
+          for( auto word : words ){
 
-	
+            // fill vectors with time bins and waveform
+            if( nch == 0 && s == 0 ){ // this we need only once
+              time.push_back( wfi * dx.at(nch) + x0.at(nch) );
+            }
+            wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
+
+
+            // fill histogram
+            hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
+                                  (double)word * dy.at(nch) + y0.at(nch) );
+
+            wfi++;
+
+          } // words
+
+        } // waveform
+
+
+        // store waveform vector and create vector entries for pedestal and amplitude
+        waves.push_back( wave );
+        ped.push_back( 0. );
+        amp.push_back( 0. );
+
+        // write and delete
+        if( generateRoot ){
+          hist->Write();
+        }
+        delete hist;
+
+
       } // segments
 
 
@@ -223,18 +223,20 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       wavess.push_back( waves );
       peds.push_back( ped );
       amps.push_back( amp );
-	
+
 
       // update position for next iteration
       block_posit += block_words+1;
+
+
     } // for channel
-    
+
   } // if numblock
 
 
   // process waveform data
   if( time.size() > 0 ){ // only if there are waveform data
-  
+
 
     // re-iterate waveforms
     // wavess.at(channel).at(segment).at(point)
@@ -242,39 +244,38 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     for( int s = 0; s<peds.at(0).size(); s++ ){
       for( int c = 0; c<peds.size(); c++ ){
 
-	// calculate pedestal
-	int i_pedStart = (pedStartTime - time.at(0))/dx.at(c);
-	int i_pedEnd = (pedEndTime - time.at(0))/dx.at(c);
-	int n_ped = (pedEndTime-pedStartTime)/dx.at(c);
-	for( int p = i_pedStart; p<i_pedEnd; p++ ){
-	  peds.at(c).at(s) += wavess.at(c).at(s).at(p) / n_ped;
-	}
+        // calculate pedestal
+        int i_pedStart = (pedStartTime - time.at(0))/dx.at(c);
+        int i_pedEnd = (pedEndTime - time.at(0))/dx.at(c);
+        int n_ped = (pedEndTime-pedStartTime)/dx.at(c);
+        for( int p = i_pedStart; p<i_pedEnd; p++ ){
+          peds.at(c).at(s) += wavess.at(c).at(s).at(p) / n_ped;
+        }
 
-	// calculate maximum amplitude in range
-	int i_ampStart = (ampStartTime - time.at(0))/dx.at(c);
-	int i_ampEnd = (ampEndTime - time.at(0))/dx.at(c);
-	for( int p = i_ampStart; p<i_ampEnd; p++ ){
-	  if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
-	    amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
-	  }
-	}
-	
-      } // points
-      
-      
+        // calculate maximum amplitude in range
+        int i_ampStart = (ampStartTime - time.at(0))/dx.at(c);
+        int i_ampEnd = (ampEndTime - time.at(0))/dx.at(c);
+        for( int p = i_ampStart; p<i_ampEnd; p++ ){
+          if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
+            amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
+          }
+        }
+
+      } // channels
+
       // check:
       for( int c = 0; c<peds.size(); c++ ){
-        EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s)); 
+        EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s));
         EUDAQ_DEBUG("  points  " + to_string(wavess.at(c).at(s).size()));
         EUDAQ_DEBUG("  pedestl " + to_string(peds.at(c).at(s)));
         EUDAQ_DEBUG("  ampli   " + to_string(amps.at(c).at(s)));
         EUDAQ_DEBUG("  timestp " + to_string(timestamp));
       }
-      
-  
+
+
     } // segments
-    
-    
+
+
     // Create a StandardPlane representing one sensor plane
     // FIXME For now pushing just the first segment... need to decide how to treat several of them
     eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
@@ -290,7 +291,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     plane.SetSizeZS(2, 2, 0);
     for( int c = 0; c<peds.size(); c++ ){
       if( amps.at(c).at(0)*chargeScale > chargeCut ){
-	plane.PushPixel( chanToPix[c].at(0), chanToPix[c].at(1), amps.at(c).at(0)*1e4, timestamp );
+        plane.PushPixel( chanToPix[c].at(0), chanToPix[c].at(1), amps.at(c).at(0)*1e4, timestamp );
       }
     }
     d2->AddPlane(plane);
@@ -310,10 +311,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       histoFile->Close();
       EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
     }
-    
-  }  
+
+  }
   else{
-    
+
     // close rootfile anyway
     if( generateRoot ){
       histoFile->Close();
@@ -348,7 +349,7 @@ uint64_t timeConverter( std::string date, std::string time ){
     {"NOV", 11},
     {"DEC", 12},
   };
-  
+
   // delete leading and tailing "
   date.erase( 0, 1);
   date.erase( date.size()-1, 1 );
@@ -362,7 +363,7 @@ uint64_t timeConverter( std::string date, std::string time ){
   std::vector<std::string> parts;
   while(std::getline(s_date,s,' ')) parts.push_back(s);
   while(std::getline(s_time,s,':')) parts.push_back(s);
-  
+
   // fill time structure
   struct std::tm build_time = {0};
   build_time.tm_mday = stoi( parts.at(0) );       // day in month 1-31
@@ -381,6 +382,6 @@ uint64_t timeConverter( std::string date, std::string time ){
   uint64_t result = tunix * 1e9;                // [   s->ps]
   uint64_t mill10 = stoi( parts.at(6) ) * 1e7 ; // [10ms->ps]
   result += mill10;
-   
+
   return result;
 }
