@@ -30,13 +30,15 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   double ampStartTime = conf->Get("ampStartTime", 0 );
   double ampEndTime   = conf->Get("ampEndTime"  , 0 );
   bool generateRoot   = conf->Get("generateRoot", 0 ); 
-  std::cout << "Loaded parameters from configuration file." << std::endl
-	    << "  pedStartTime = " << pedStartTime << std::endl
-	    << "  pedEndTime   = " << pedEndTime   << std::endl
-	    << "  ampStartTime = " << ampStartTime << std::endl
-	    << "  ampEndTime   = " << ampEndTime   << std::endl
-	    << "  generateRoot = " << generateRoot << std::endl << std::endl;
-  
+  EUDAQ_DEBUG( "Loaded parameters from configuration file." );
+  EUDAQ_DEBUG( "  pedStartTime = " + to_string( pedStartTime ) + " ns" );
+  EUDAQ_DEBUG( "  pedEndTime   = " + to_string( pedEndTime ) + " ns" );
+  EUDAQ_DEBUG( "  ampStartTime = " + to_string( ampStartTime ) + " ns" );
+  EUDAQ_DEBUG( "  ampEndTime   = " + to_string( ampEndTime ) + " ns" );
+  EUDAQ_DEBUG( "  chargeScale  = " + to_string( chargeScale ) + " a.u." );
+  EUDAQ_DEBUG( "  chargeCut    = " + to_string( chargeCut ) + " a.u." );
+  EUDAQ_DEBUG( "  generateRoot = " + to_string( generateRoot ) + " ns" );
+ 
 
   // Data container:
   caribou::pearyRawData rawdata;
@@ -61,7 +63,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   if( generateRoot ){
     histoFile = new TFile( Form( "waveforms_run%i.root", ev->GetRunN() ), "UPDATE" );
     if(!histoFile) {
-      LOG(ERROR) << "ERROR: " << histoFile->GetName() << " can not be opened";
+      EUDAQ_ERROR(to_string(histoFile->GetName()) + " can not be opened");
       return false;
     }
   }
@@ -73,7 +75,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     
     // all four scope channels in one data block
     auto datablock = ev->GetBlock(0);
-    LOG(DEBUG) << "DSO9254A frame with "<< datablock.size()<<" entries";
+    EUDAQ_DEBUG("DSO9254A frame with " + to_string(datablock.size()) + " entries");
 
     
     // Calulate positions and length of data blocks:
@@ -96,17 +98,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // loop 4 channels
     for( int nch = 0; nch < 4; nch++ ){      
 
-      std::cout << "Reading channel " << nch << std::endl;
+      EUDAQ_DEBUG( "Reading channel " + to_string(nch));
 
       // Obtaining Data Stucture
       block_words = rawdata[block_posit + 0];
       pream_words = rawdata[block_posit + 1];
       chann_words = rawdata[block_posit + 2 + pream_words];
-      std::cout << "  " << block_posit << " current position in block\n";
-      std::cout << "  " << block_words << " words per segment\n";
-      std::cout << "  " << pream_words << " words per preamble\n";
-      std::cout << "  " << chann_words << " words per channel data\n";
-      std::cout << "  " << rawdata.size() << " size of data rawdata\n";
+      EUDAQ_DEBUG( "  " + to_string(block_posit) + " current position in block");
+      EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
+      EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
+      EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
+      EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + "size of data rawdata");
            
 
       // read preamble:
@@ -116,8 +118,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
               i++ ){
         preamble += (char)rawdata[i];
       }
-      LOG(DEBUG) << preamble;
-      std::cout << "Preamble: \n  " << preamble << std::endl;  
+      EUDAQ_DEBUG("Preamble");
+      EUDAQ_DEBUG("  " + preamble);
       // parse preamble to vector of strings
       std::string s;
       std::vector<std::string> vals;
@@ -141,13 +143,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 	sgmnt_count = stoi( vals[24] );
       }
       int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
-      if( np.at(nch)%chann_words/sgmnt_count ) LOG(WARNING) << "incomplete waveform";
-      /*
-      std::cout << "  dx " << dx.at(nch) << std::endl
-		<< "  x0 " << x0.at(nch) << std::endl
-		<< "  dy " << dy.at(nch) << std::endl
-		<< "  y0 " << y0.at(nch) << std::endl;
-      */
+      if( np.at(nch)%chann_words/sgmnt_count ) EUDAQ_WARN("incomplete waveform");
+      
 
       // need once per channel
       std::vector<double> ped;
@@ -243,8 +240,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     for( int s = 0; s<peds.at(0).size(); s++ ){
       for( int p = 0; p<time.size(); p++ ) {      	
 	
-	//try{ // hotfix in case off incomplete waveforms
-	  
 	// calculate pedestal
 	if( time.at(p) >= pedStartTime && time.at(p) < pedEndTime ){
 	  for( int c = 0; c<peds.size(); c++ ) 
@@ -258,23 +253,19 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 	      amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
 	  }
 	}
-
-	//}catch(...){} 
 	
       } // points
       
       
       // check:
-      /*
-      std::cout << std::endl;
       for( int c = 0; c<peds.size(); c++ ){
-	std::cout << "  CHECK: channel " << c << " segment " << s << std::endl 
-	          << "         points  " << wavess.at(c).at(s).size() << std::endl
-		  << "         pedestl " << peds.at(c).at(s) << std::endl
-		  << "         ampli   " << amps.at(c).at(s) << std::endl
-		  << "         timestp " << timestamp << std::endl;
+        EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s)); 
+        EUDAQ_DEBUG("  points  " + to_string(wavess.at(c).at(s).size()));
+        EUDAQ_DEBUG("  pedestl " + to_string(peds.at(c).at(s)));
+        EUDAQ_DEBUG("  ampli   " + to_string(amps.at(c).at(s)));
+        EUDAQ_DEBUG("  timestp " + to_string(timestamp));
       }
-      */
+      
   
     } // segments
     
@@ -296,7 +287,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // close rootfile
     if( generateRoot ){
       histoFile->Close();
-      std::cout << "Histograms written to " << histoFile->GetName() << std::endl;
+      EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
     }
     
   }  
@@ -305,16 +296,15 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // close rootfile anyway
     if( generateRoot ){
       histoFile->Close();
-      std::cout << "Histograms written to " << histoFile->GetName() << std::endl;
+      EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
     }
 
-    
-    std::cout << "Warning: No scope data in event " << ev->GetEventN() << std::endl;
+
+    EUDAQ_WARN("Warning: No scope data in event " + to_string(ev->GetEventN()));
     return false;
   }
 
 
-  
   // Indicate that data were successfully converted
   return true;
 }
@@ -351,9 +341,7 @@ uint64_t timeConverter( std::string date, std::string time ){
   std::vector<std::string> parts;
   while(std::getline(s_date,s,' ')) parts.push_back(s);
   while(std::getline(s_time,s,':')) parts.push_back(s);
-  //for( auto part : parts ) std::cout << part << " ";
-  //std::cout << std::endl;
-
+  
   // fill time structure
   struct std::tm build_time = {0};
   build_time.tm_mday = stoi( parts.at(0) );       // day in month 1-31
@@ -363,7 +351,7 @@ uint64_t timeConverter( std::string date, std::string time ){
   build_time.tm_sec  = stoi( parts.at(5) );       // seconds 0-59
   build_time.tm_mon  = monthToNum[parts.at(1)]-1; // month 0-11
   if( monthToNum[parts.at(1)]==0 ){ // failed conversion
-    std::cout << "ERROR in timeConverter, month " << parts.at(1) << " not defined!" << std::endl;
+    EUDAQ_ERROR(" in timeConverter, month " + to_string(parts.at(1)) + " not defined!");
   }
 
   // now convert to unix timestamp, to pico seconds and add sub-second information from scope
