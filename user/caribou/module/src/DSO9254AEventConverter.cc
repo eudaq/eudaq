@@ -29,7 +29,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   double pedEndTime   = conf->Get("pedEndTime"  , 0 );
   double ampStartTime = conf->Get("ampStartTime", 0 );
   double ampEndTime   = conf->Get("ampEndTime"  , 0 );
-  bool generateRoot   = conf->Get("generateRoot", 0 ); 
+  double chargeScale  = conf->Get("chargeScale" , 0 );
+  double chargeCut    = conf->Get("chargeCut"   , 0 );
+  bool generateRoot   = conf->Get("generateRoot", 0 );
   EUDAQ_DEBUG( "Loaded parameters from configuration file." );
   EUDAQ_DEBUG( "  pedStartTime = " + to_string( pedStartTime ) + " ns" );
   EUDAQ_DEBUG( "  pedEndTime   = " + to_string( pedEndTime ) + " ns" );
@@ -238,19 +240,22 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // wavess.at(channel).at(segment).at(point)
     // ped   .at(channel).at(segment)
     for( int s = 0; s<peds.at(0).size(); s++ ){
-      for( int p = 0; p<time.size(); p++ ) {      	
-	
+      for( int c = 0; c<peds.size(); c++ ){
+
 	// calculate pedestal
-	if( time.at(p) >= pedStartTime && time.at(p) < pedEndTime ){
-	  for( int c = 0; c<peds.size(); c++ ) 
-	    peds.at(c).at(s) += wavess.at(c).at(s).at(p);
+	int i_pedStart = (pedStartTime - time.at(0))/dx.at(c);
+	int i_pedEnd = (pedEndTime - time.at(0))/dx.at(c);
+	int n_ped = (pedEndTime-pedStartTime)/dx.at(c);
+	for( int p = i_pedStart; p<i_pedEnd; p++ ){
+	  peds.at(c).at(s) += wavess.at(c).at(s).at(p) / n_ped;
 	}
-	
-	// get maximum amplitude in range
-	if( time.at(p) >= ampStartTime && time.at(p) < ampEndTime ){
-	  for( int c = 0; c<peds.size(); c++ ){ 
-	    if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) )
-	      amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
+
+	// calculate maximum amplitude in range
+	int i_ampStart = (ampStartTime - time.at(0))/dx.at(c);
+	int i_ampEnd = (ampEndTime - time.at(0))/dx.at(c);
+	for( int p = i_ampStart; p<i_ampEnd; p++ ){
+	  if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
+	    amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
 	  }
 	}
 	
@@ -273,12 +278,21 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // Create a StandardPlane representing one sensor plane
     // FIXME For now pushing just the first segment... need to decide how to treat several of them
     eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
+
+    // this scope has only 4 channels
+    std::map<int,std::vector<int>> chanToPix;
+    chanToPix[0] = {1,1};
+    chanToPix[1] = {1,0};
+    chanToPix[2] = {0,0};
+    chanToPix[3] = {0,1};
+
+    // fill plane
     plane.SetSizeZS(2, 2, 0);
-    plane.PushPixel( 1, 1, amps.at(0).at(0), timestamp );
-    plane.PushPixel( 1, 0, amps.at(1).at(0), timestamp );
-    plane.PushPixel( 0, 0, amps.at(2).at(0), timestamp );
-    plane.PushPixel( 0, 1, amps.at(3).at(0), timestamp );
-    // Add the plane to the StandardEvent
+    for( int c = 0; c<peds.size(); c++ ){
+      if( amps.at(c).at(0)*chargeScale > chargeCut ){
+	plane.PushPixel( chanToPix[c].at(0), chanToPix[c].at(1), amps.at(c).at(0)*1e4, timestamp );
+      }
+    }
     d2->AddPlane(plane);
     // Identify the detetor type
     d2->SetDetectorType("DSO9254A");
