@@ -13,6 +13,16 @@ namespace{
 }
 
 
+bool   DSO9254AEvent2StdEventConverter::m_configured(0);
+double DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
+double DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
+double DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
+double DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
+double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
+double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
+bool   DSO9254AEvent2StdEventConverter::m_generateRoot(0);
+
+
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
 
@@ -22,23 +32,47 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
-
   // load parameters from config file
-  double pedStartTime = conf->Get("pedStartTime", 0 ); // integration windows in [ns]
-  double pedEndTime   = conf->Get("pedEndTime"  , 0 );
-  double ampStartTime = conf->Get("ampStartTime", 0 );
-  double ampEndTime   = conf->Get("ampEndTime"  , 0 );
-  double chargeScale  = conf->Get("chargeScale" , 0 );
-  double chargeCut    = conf->Get("chargeCut"   , 0 );
-  bool generateRoot   = conf->Get("generateRoot", 0 );
-  EUDAQ_DEBUG( "Loaded parameters from configuration file." );
-  EUDAQ_DEBUG( "  pedStartTime = " + to_string( pedStartTime ) + " ns" );
-  EUDAQ_DEBUG( "  pedEndTime   = " + to_string( pedEndTime ) + " ns" );
-  EUDAQ_DEBUG( "  ampStartTime = " + to_string( ampStartTime ) + " ns" );
-  EUDAQ_DEBUG( "  ampEndTime   = " + to_string( ampEndTime ) + " ns" );
-  EUDAQ_DEBUG( "  chargeScale  = " + to_string( chargeScale ) + " a.u." );
-  EUDAQ_DEBUG( "  chargeCut    = " + to_string( chargeCut ) + " a.u." );
-  EUDAQ_DEBUG( "  generateRoot = " + to_string( generateRoot ) + " ns" );
+  if( !m_configured ){
+
+    m_pedStartTime = conf->Get("pedStartTime", 0 ); // integration windows in [ns]
+    m_pedEndTime   = conf->Get("pedEndTime"  , 0 );
+    m_ampStartTime = conf->Get("ampStartTime", 0 );
+    m_ampEndTime   = conf->Get("ampEndTime"  , 0 );
+    m_chargeScale  = conf->Get("chargeScale" , 0 );
+    m_chargeCut    = conf->Get("chargeCut"   , 0 );
+    m_generateRoot   = conf->Get("generateRoot", 0 );
+
+    EUDAQ_DEBUG( "Loaded parameters from configuration file." );
+    EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
+    EUDAQ_DEBUG( "  pedEndTime   = " + to_string( m_pedEndTime ) + " ns" );
+    EUDAQ_DEBUG( "  ampStartTime = " + to_string( m_ampStartTime ) + " ns" );
+    EUDAQ_DEBUG( "  ampEndTime   = " + to_string( m_ampEndTime ) + " ns" );
+    EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
+    EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
+    EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
+
+    // check configuration
+    bool noData = false;
+    bool noHist = false;
+    if( m_pedStartTime == 0 &&
+        m_pedEndTime   == 0 &&
+        m_ampStartTime == 0 &&
+        m_ampEndTime   == 0 ){
+      EUDAQ_WARN( "pedStartTime, pedEndTime, ampStartTime and ampEndTime are unconfigured. Converter returns no data. Introduce configuration file with these values!" );
+      noData = true;
+    }
+    if( !m_generateRoot ){
+      EUDAQ_WARN( "No waveform file generated!" );
+      noHist = true;
+    }
+    if( noData && noHist ){
+      EUDAQ_ERROR( "Writing no output data and no root file... Abort");
+      return false;
+    }
+    m_configured = true;
+
+  } // configure
 
 
   // Data container:
@@ -61,7 +95,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // generate rootfile to write waveforms as TH1D
   TFile * histoFile = nullptr;
-  if( generateRoot ){
+  if( m_generateRoot ){
     histoFile = new TFile( Form( "waveforms_run%i.root", ev->GetRunN() ), "UPDATE" );
     if(!histoFile) {
       EUDAQ_ERROR(to_string(histoFile->GetName()) + " can not be opened");
@@ -208,7 +242,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         amp.push_back( 0. );
 
         // write and delete
-        if( generateRoot ){
+        if( m_generateRoot ){
           hist->Write();
         }
         delete hist;
@@ -243,16 +277,16 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       for( int c = 0; c<peds.size(); c++ ){
 
         // calculate pedestal
-        int i_pedStart = (pedStartTime - time.at(0))/dx.at(c);
-        int i_pedEnd = (pedEndTime - time.at(0))/dx.at(c);
-        int n_ped = (pedEndTime-pedStartTime)/dx.at(c);
+        int i_pedStart = (m_pedStartTime - time.at(0))/dx.at(c);
+        int i_pedEnd = (m_pedEndTime - time.at(0))/dx.at(c);
+        int n_ped = (m_pedEndTime-m_pedStartTime)/dx.at(c);
         for( int p = i_pedStart; p<i_pedEnd; p++ ){
           peds.at(c).at(s) += wavess.at(c).at(s).at(p) / n_ped;
         }
 
         // calculate maximum amplitude in range
-        int i_ampStart = (ampStartTime - time.at(0))/dx.at(c);
-        int i_ampEnd = (ampEndTime - time.at(0))/dx.at(c);
+        int i_ampStart = (m_ampStartTime - time.at(0))/dx.at(c);
+        int i_ampEnd = (m_ampEndTime - time.at(0))/dx.at(c);
         for( int p = i_ampStart; p<i_ampEnd; p++ ){
           if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
             amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
@@ -288,8 +322,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // fill plane
     plane.SetSizeZS(2, 2, 0);
     for( int c = 0; c<peds.size(); c++ ){
-      if( amps.at(c).at(0)*chargeScale > chargeCut ){
-        plane.PushPixel( chanToPix[c].at(0), chanToPix[c].at(1), amps.at(c).at(0)*1e4, timestamp );
+      if( amps.at(c).at(0)*m_chargeScale > m_chargeCut ){
+        plane.PushPixel( chanToPix[c].at(0), chanToPix[c].at(1), amps.at(c).at(0)*m_chargeScale, timestamp );
       }
     }
     d2->AddPlane(plane);
@@ -305,7 +339,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
     // close rootfile
-    if( generateRoot ){
+    if( m_generateRoot ){
       histoFile->Close();
       EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
     }
@@ -314,7 +348,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   else{
 
     // close rootfile anyway
-    if( generateRoot ){
+    if( m_generateRoot ){
       histoFile->Close();
       EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
     }

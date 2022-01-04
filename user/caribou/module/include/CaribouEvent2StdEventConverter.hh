@@ -53,6 +53,15 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static uint64_t timeConverter( std::string date, std::string time );
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
+  private:
+    static bool m_configured;
+    static double m_pedStartTime;
+    static double m_pedEndTime;
+    static double m_ampStartTime;
+    static double m_ampEndTime;
+    static double m_chargeScale;
+    static double m_chargeCut;
+    static bool m_generateRoot;
   };
 
   class ATLASPixEvent2StdEventConverter: public eudaq::StdEventConverter{
