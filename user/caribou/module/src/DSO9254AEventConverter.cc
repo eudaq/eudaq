@@ -12,7 +12,6 @@ namespace{
   Register<DSO9254AEvent2StdEventConverter>(DSO9254AEvent2StdEventConverter::m_id_factory);
 }
 
-uint64_t timeConverter( std::string date, std::string time );
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -132,7 +131,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
       // getting timestamps from preamble which is rather imprecise
-      timestamp = timeConverter( vals[15], vals[16] );
+      timestamp = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
 
 
       // Pick needed preamble elements
@@ -178,7 +177,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         int16_t wfi = 0;
         for(int i=block_posit + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
 	        i<block_posit + 3 + pream_words + (s+1)*chann_words/sgmnt_count;
-            //i<block_posit + 3 + pream_words+chann_words;
 	        i++){
 
           // coppy channel data from whole data block
@@ -332,7 +330,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 }
 
 
-uint64_t timeConverter( std::string date, std::string time ){
+uint64_t DSO9254AEvent2StdEventConverter::timeConverter( std::string date, std::string time ){
 
   // needed for month conversion
   std::map<std::string, int> monthToNum {

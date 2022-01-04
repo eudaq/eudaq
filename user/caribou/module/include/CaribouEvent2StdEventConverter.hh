@@ -51,6 +51,7 @@ namespace eudaq {
   class DSO9254AEvent2StdEventConverter: public eudaq::StdEventConverter{
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static uint64_t timeConverter( std::string date, std::string time );
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
   };
 
