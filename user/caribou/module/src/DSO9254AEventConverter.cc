@@ -195,18 +195,20 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // container for one waveform
       std::vector<double> wave;
 
-      // prepare histogram with corresponding binning
-      TH1D* hist = new TH1D(
-                            Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
-                                  nch, s ),
-                            Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
-                                  nch, s ),
-                            np.at(nch),
-                            x0.at(nch) - dx.at(nch)/2.,
-                            x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
-                            );
-      hist->GetXaxis()->SetTitle("time [ns]");
-      hist->GetYaxis()->SetTitle("signal [V]");
+      // prepare histogram with corresponding binning if root file is created
+      TH1D* hist = nullptr;
+      if( m_generateRoot ){
+        TH1D* hist_init = new TH1D(
+              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(), nch, s ),
+              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(), nch, s ),
+              np.at(nch),
+              x0.at(nch) - dx.at(nch)/2.,
+              x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
+        );
+        hist = hist_init;
+        hist->GetXaxis()->SetTitle("time [ns]");
+        hist->GetYaxis()->SetTitle("signal [V]");
+      }
 
       // read channel data
       std::vector<int16_t> words;
@@ -229,8 +231,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
           // fill histogram
-          hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
-                                (double)word * dy.at(nch) + y0.at(nch) );
+          if( m_generateRoot ){
+            hist->SetBinContent( hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
+                                 (double)word * dy.at(nch) + y0.at(nch) );
+          }
 
           wfi++;
 
