@@ -93,6 +93,13 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   std::vector<double> y0;
 
 
+  // Bad event
+  if(ev->NumBlocks() != 1) {
+    EUDAQ_WARN("Ignoring bad packet " + std::to_string(ev->GetEventNumber()));
+    return false;
+  }
+
+
   // generate rootfile to write waveforms as TH1D
   TFile * histoFile = nullptr;
   if( m_generateRoot ){
@@ -104,166 +111,160 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   }
 
 
-  // Retrieve data from event
-  if(ev->NumBlocks() == 1) {
+  // all four scope channels in one data block
+  auto datablock = ev->GetBlock(0);
+  EUDAQ_DEBUG("DSO9254A frame with " + to_string(datablock.size()) + " entries");
 
 
-    // all four scope channels in one data block
-    auto datablock = ev->GetBlock(0);
-    EUDAQ_DEBUG("DSO9254A frame with " + to_string(datablock.size()) + " entries");
+  // Calulate positions and length of data blocks:
+  // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit
+  //                             word - but there is no guarantee in the endianness here and you
+  //                             might end up having the wrong one.
+  // Finn: I am not sure if I actually solved this issue! Lets discuss.
+  rawdata.resize( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) );
+  std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
 
 
-    // Calulate positions and length of data blocks:
-    // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit
-    //                             word - but there is no guarantee in the endianness here and you
-    //                             might end up having the wrong one.
-    // Finn: I am not sure if I actually solved this issue! Lets discuss.
-    rawdata.resize( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) );
-    std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
+  // needed per event
+  uint64_t block_words;
+  uint64_t pream_words;
+  uint64_t chann_words;
+  uint64_t block_posit = 0;
+  uint64_t sgmnt_count = 1;
 
 
-    // needed per event
-    uint64_t block_words;
-    uint64_t pream_words;
-    uint64_t chann_words;
-    uint64_t block_posit = 0;
-    uint64_t sgmnt_count = 1;
+  // loop 4 channels
+  for( int nch = 0; nch < 4; nch++ ){
+
+    EUDAQ_DEBUG( "Reading channel " + to_string(nch));
+
+    // Obtaining Data Stucture
+    block_words = rawdata[block_posit + 0];
+    pream_words = rawdata[block_posit + 1];
+    chann_words = rawdata[block_posit + 2 + pream_words];
+    EUDAQ_DEBUG( "  " + to_string(block_posit) + " current position in block");
+    EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
+    EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
+    EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
+    EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + "size of data rawdata");
 
 
-    // loop 4 channels
-    for( int nch = 0; nch < 4; nch++ ){
+    // read preamble:
+    std::string preamble = "";
+    for(int i=block_posit + 2;
+        i<block_posit + 2 + pream_words;
+        i++ ){
+      preamble += (char)rawdata[i];
+    }
+    EUDAQ_DEBUG("Preamble");
+    EUDAQ_DEBUG("  " + preamble);
+    // parse preamble to vector of strings
+    std::string s;
+    std::vector<std::string> vals;
+    std::istringstream stream(preamble);
+    while(std::getline(stream,s,',')){
+      vals.push_back(s);
+    }
 
-      EUDAQ_DEBUG( "Reading channel " + to_string(nch));
 
-      // Obtaining Data Stucture
-      block_words = rawdata[block_posit + 0];
-      pream_words = rawdata[block_posit + 1];
-      chann_words = rawdata[block_posit + 2 + pream_words];
-      EUDAQ_DEBUG( "  " + to_string(block_posit) + " current position in block");
-      EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
-      EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
-      EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
-      EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + "size of data rawdata");
+    // getting timestamps from preamble which is rather imprecise
+    timestamp = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
 
 
-      // read preamble:
-      std::string preamble = "";
-      for(int i=block_posit + 2;
-              i<block_posit + 2 + pream_words;
-              i++ ){
-        preamble += (char)rawdata[i];
+    // Pick needed preamble elements
+    np.push_back( stoi( vals[2]) );
+    dx.push_back( stod( vals[4]) * 1e9 );
+    x0.push_back( stod( vals[5]) * 1e9 );
+    dy.push_back( stod( vals[7]) );
+    y0.push_back( stod( vals[8]) );
+    if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
+      sgmnt_count = stoi( vals[24] );
+    }
+    int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
+    if( np.at(nch)%chann_words/sgmnt_count ) EUDAQ_WARN("incomplete waveform");
+
+
+    // need once per channel
+    std::vector<double> ped;
+    std::vector<double> amp;
+    std::vector<std::vector<double>> waves;
+
+
+    for( int s=0; s<sgmnt_count; s++){ // loop semgents
+
+      // container for one waveform
+      std::vector<double> wave;
+
+      // prepare histogram with corresponding binning
+      TH1D* hist = new TH1D(
+                            Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
+                                  nch, s ),
+                            Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
+                                  nch, s ),
+                            np.at(nch),
+                            x0.at(nch) - dx.at(nch)/2.,
+                            x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
+                            );
+      hist->GetXaxis()->SetTitle("time [ns]");
+      hist->GetYaxis()->SetTitle("signal [V]");
+
+      // read channel data
+      std::vector<int16_t> words;
+      words.resize(points_per_words); // rawdata contains 8 byte words, scope sends 2 byte words
+      int16_t wfi = 0;
+      for(int i=block_posit + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
+          i<block_posit + 3 + pream_words + (s+1)*chann_words/sgmnt_count;
+          i++){
+
+        // coppy channel data from whole data block
+        memcpy(&words.front(), &rawdata[i], points_per_words*sizeof(int16_t));
+
+        for( auto word : words ){
+
+          // fill vectors with time bins and waveform
+          if( nch == 0 && s == 0 ){ // this we need only once
+            time.push_back( wfi * dx.at(nch) + x0.at(nch) );
+          }
+          wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
+
+
+          // fill histogram
+          hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
+                                (double)word * dy.at(nch) + y0.at(nch) );
+
+          wfi++;
+
+        } // words
+
+      } // waveform
+
+
+      // store waveform vector and create vector entries for pedestal and amplitude
+      waves.push_back( wave );
+      ped.push_back( 0. );
+      amp.push_back( 0. );
+
+      // write and delete
+      if( m_generateRoot ){
+        hist->Write();
       }
-      EUDAQ_DEBUG("Preamble");
-      EUDAQ_DEBUG("  " + preamble);
-      // parse preamble to vector of strings
-      std::string s;
-      std::vector<std::string> vals;
-      std::istringstream stream(preamble);
-      while(std::getline(stream,s,',')){
-        vals.push_back(s);
-      }
+      delete hist;
 
 
-      // getting timestamps from preamble which is rather imprecise
-      timestamp = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
-
-
-      // Pick needed preamble elements
-      np.push_back( stoi( vals[2]) );
-      dx.push_back( stod( vals[4]) * 1e9 );
-      x0.push_back( stod( vals[5]) * 1e9 );
-      dy.push_back( stod( vals[7]) );
-      y0.push_back( stod( vals[8]) );
-      if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
-        sgmnt_count = stoi( vals[24] );
-      }
-      int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
-      if( np.at(nch)%chann_words/sgmnt_count ) EUDAQ_WARN("incomplete waveform");
-
-
-      // need once per channel
-      std::vector<double> ped;
-      std::vector<double> amp;
-      std::vector<std::vector<double>> waves;
-
-
-      for( int s=0; s<sgmnt_count; s++){ // loop semgents
-
-     	// container for one waveform
-        std::vector<double> wave;
-
-        // prepare histogram with corresponding binning
-        TH1D* hist = new TH1D(
-                              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
-                                    nch, s ),
-                              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(),
-                                    nch, s ),
-                              np.at(nch),
-                              x0.at(nch) - dx.at(nch)/2.,
-                              x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
-                              );
-        hist->GetXaxis()->SetTitle("time [ns]");
-        hist->GetYaxis()->SetTitle("signal [V]");
-
-        // read channel data
-        std::vector<int16_t> words;
-        words.resize(points_per_words); // rawdata contains 8 byte words, scope sends 2 byte words
-        int16_t wfi = 0;
-        for(int i=block_posit + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
-	        i<block_posit + 3 + pream_words + (s+1)*chann_words/sgmnt_count;
-	        i++){
-
-          // coppy channel data from whole data block
-          memcpy(&words.front(), &rawdata[i], points_per_words*sizeof(int16_t));
-
-          for( auto word : words ){
-
-            // fill vectors with time bins and waveform
-            if( nch == 0 && s == 0 ){ // this we need only once
-              time.push_back( wfi * dx.at(nch) + x0.at(nch) );
-            }
-            wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
-
-
-            // fill histogram
-            hist->SetBinContent(  hist->FindBin( wfi * dx.at(nch) + x0.at(nch) ),
-                                  (double)word * dy.at(nch) + y0.at(nch) );
-
-            wfi++;
-
-          } // words
-
-        } // waveform
-
-
-        // store waveform vector and create vector entries for pedestal and amplitude
-        waves.push_back( wave );
-        ped.push_back( 0. );
-        amp.push_back( 0. );
-
-        // write and delete
-        if( m_generateRoot ){
-          hist->Write();
-        }
-        delete hist;
-
-
-      } // segments
+    } // segments
 
 
       // not only for each semgent but for each channel
-      wavess.push_back( waves );
-      peds.push_back( ped );
-      amps.push_back( amp );
+    wavess.push_back( waves );
+    peds.push_back( ped );
+    amps.push_back( amp );
 
 
-      // update position for next iteration
-      block_posit += block_words+1;
+    // update position for next iteration
+    block_posit += block_words+1;
 
 
-    } // for channel
-
-  } // if numblock
+  } // for channel
 
 
   // process waveform data
