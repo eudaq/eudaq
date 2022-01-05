@@ -271,6 +271,22 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   } // for channel
 
 
+  // close rootfile
+  if( m_generateRoot ){
+    histoFile->Close();
+    EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
+  }
+
+
+  // declare map between scope channel number and 2D pixel index
+  // TODO make this configurable
+  std::map<int,std::vector<int>> chanToPix;
+  chanToPix[0] = {1,1};
+  chanToPix[1] = {1,0};
+  chanToPix[2] = {0,0};
+  chanToPix[3] = {0,1};
+
+
   // process waveform data
   if( time.size() > 0 ){ // only if there are waveform data
 
@@ -310,9 +326,55 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
 
 
+      /********************************************************************************************
+      Treating segments
+      - Create a sub-event(event type) for each segment
+      - Add plane to each sub-event
+      - Add sub event to d2
+        - I guess here I need to be carefull to make it some SP
+        - eudaq::StandardEventSP d2
+      - this seems to be working, at least for single segments...
+      - Try multi segment run
+      ********************************************************************************************/
+
+      // create sub-event
+      auto sub_event = eudaq::StandardEvent::MakeShared();
+
+      // Create a StandardPlane representing one sensor plane
+      eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
+
+      // fill plane
+      plane.SetSizeZS(2, 2, 0);
+      for( int c = 0; c<peds.size(); c++ ){
+        if( amps.at(c).at(s)*m_chargeScale > m_chargeCut ){
+          plane.PushPixel( chanToPix[c].at(0),
+                           chanToPix[c].at(1),
+                           amps.at(c).at(s)*m_chargeScale, timestamp );
+        }
+      }
+
+      sub_event->AddPlane(plane);
+
+      sub_event->SetDetectorType("DSO9254A");
+      // forcing corry to fall back on trigger IDs
+      sub_event->SetTimeBegin(0);
+      sub_event->SetTimeEnd(0);
+      // The event number labels the blocks of segments. Translate to trigger number
+      EUDAQ_DEBUG( to_string(ev->GetEventN()) + " " +
+                   to_string(peds.at(0).size()) + " " + to_string(s) );
+      sub_event->SetTriggerN( ev->GetEventN() * peds.at(0).size() + s );
+      // FIXME is this needed? the right way to do it?
+
+      // add sub event to StandardEventSP for output to corry
+      d2->AddSubEvent( sub_event );
+
     } // segments
 
+    EUDAQ_DEBUG( "Number of sub events " + to_string(d2->GetNumSubEvent()) );
 
+    d2->SetDetectorType("DSO9254A");
+
+    /*
     // Create a StandardPlane representing one sensor plane
     // FIXME For now pushing just the first segment... need to decide how to treat several of them
     eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
@@ -341,24 +403,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     d2->SetTimeBegin(0);
     d2->SetTimeEnd(0);
     d2->SetTriggerN(ev->GetEventN());
-
-
-    // close rootfile
-    if( m_generateRoot ){
-      histoFile->Close();
-      EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
-    }
+    */
 
   }
   else{
-
-    // close rootfile anyway
-    if( m_generateRoot ){
-      histoFile->Close();
-      EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
-    }
-
-
     EUDAQ_WARN("Warning: No scope data in event " + to_string(ev->GetEventN()));
     return false;
   }
