@@ -161,11 +161,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG("Preamble");
     EUDAQ_DEBUG("  " + preamble);
     // parse preamble to vector of strings
-    std::string s;
+    std::string val;
     std::vector<std::string> vals;
     std::istringstream stream(preamble);
-    while(std::getline(stream,s,',')){
-      vals.push_back(s);
+    while(std::getline(stream,val,',')){
+      vals.push_back(val);
     }
 
 
@@ -187,7 +187,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       sgmnt_count = stoi( vals[24] );
     }
     int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
-    if( np.at(nch)%chann_words/sgmnt_count ) EUDAQ_WARN("incomplete waveform");
+    if( np.at(nch) % (chann_words/sgmnt_count) ){ // check
+      EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
+                 + ", channel " + to_string(nch) );
+    }
 
 
     // need once per channel
