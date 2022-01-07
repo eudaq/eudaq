@@ -55,6 +55,7 @@ namespace eudaq {
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
   private:
     static bool m_configured;
+    static int64_t m_runStartTime;
     static double m_pedStartTime;
     static double m_pedEndTime;
     static double m_ampStartTime;

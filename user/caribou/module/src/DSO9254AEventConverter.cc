@@ -13,14 +13,15 @@ namespace{
 }
 
 
-bool   DSO9254AEvent2StdEventConverter::m_configured(0);
-double DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
-double DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
-double DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
-double DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
-double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
-double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
-bool   DSO9254AEvent2StdEventConverter::m_generateRoot(0);
+bool    DSO9254AEvent2StdEventConverter::m_configured(0);
+int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
+double  DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
+double  DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
+double  DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
+double  DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
+double  DSO9254AEvent2StdEventConverter::m_chargeScale(0);
+double  DSO9254AEvent2StdEventConverter::m_chargeCut(0);
+bool    DSO9254AEvent2StdEventConverter::m_generateRoot(0);
 
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
@@ -35,6 +36,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // load parameters from config file
   if( !m_configured ){
 
+    // read from config file
     m_pedStartTime = conf->Get("pedStartTime", 0 ); // integration windows in [ns]
     m_pedEndTime   = conf->Get("pedEndTime"  , 0 );
     m_ampStartTime = conf->Get("ampStartTime", 0 );
@@ -167,8 +169,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
 
 
-    // getting timestamps from preamble which is rather imprecise
-    timestamp = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
+    // set run start time to 0 ms, using  timestamps from preamble which are 10 ms precision
+    if( m_runStartTime < 0 ){
+      m_runStartTime = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
+    }
+    timestamp = ( DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] )
+                  - m_runStartTime ) * 1e9; // ms to ps
 
 
     // Pick needed preamble elements
@@ -326,18 +332,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
 
 
-      /********************************************************************************************
-      Treating segments
-      - Create a sub-event(event type) for each segment
-      - Add plane to each sub-event
-      - Add sub event to d2
-        - I guess here I need to be carefull to make it some SP
-        - eudaq::StandardEventSP d2
-      - this seems to be working, at least for single segments...
-      - Try multi segment run
-      ********************************************************************************************/
-
-      // create sub-event
+      // create sub-event for segments
       auto sub_event = eudaq::StandardEvent::MakeShared();
 
       // Create a StandardPlane representing one sensor plane
@@ -361,8 +356,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       sub_event->SetTimeEnd(0);
       // The event number labels the blocks of segments. Translate to trigger number
       EUDAQ_DEBUG( to_string(ev->GetEventN()) + " " +
-                   to_string(peds.at(0).size()) + " " + to_string(s) );
-      sub_event->SetTriggerN( ev->GetEventN() * peds.at(0).size() + s );
+                   to_string(peds.at(0).size()) + " " + to_string(s) + " -> " +
+                   to_string( (ev->GetEventN()-1) * peds.at(0).size() + s ) );
+      sub_event->SetTriggerN( (ev->GetEventN()-1) * peds.at(0).size() + s );
       // FIXME is this needed? the right way to do it?
 
       // add sub event to StandardEventSP for output to corry
@@ -373,38 +369,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "Number of sub events " + to_string(d2->GetNumSubEvent()) );
 
     d2->SetDetectorType("DSO9254A");
-
-    /*
-    // Create a StandardPlane representing one sensor plane
-    // FIXME For now pushing just the first segment... need to decide how to treat several of them
-    eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
-
-    // this scope has only 4 channels
-    std::map<int,std::vector<int>> chanToPix;
-    chanToPix[0] = {1,1};
-    chanToPix[1] = {1,0};
-    chanToPix[2] = {0,0};
-    chanToPix[3] = {0,1};
-
-    // fill plane
-    plane.SetSizeZS(2, 2, 0);
-    for( int c = 0; c<peds.size(); c++ ){
-      if( amps.at(c).at(0)*m_chargeScale > m_chargeCut ){
-        plane.PushPixel( chanToPix[c].at(0), chanToPix[c].at(1), amps.at(c).at(0)*m_chargeScale, timestamp );
-      }
-    }
-    d2->AddPlane(plane);
-    // Identify the detetor type
-    d2->SetDetectorType("DSO9254A");
-
-
-    // forcing corry to fall back on trigger IDs
-    // FIXME is this needed? the right way to do it?
-    d2->SetTimeBegin(0);
-    d2->SetTimeEnd(0);
-    d2->SetTriggerN(ev->GetEventN());
-    */
-
   }
   else{
     EUDAQ_WARN("Warning: No scope data in event " + to_string(ev->GetEventN()));
@@ -461,11 +425,11 @@ uint64_t DSO9254AEvent2StdEventConverter::timeConverter( std::string date, std::
     EUDAQ_ERROR(" in timeConverter, month " + to_string(parts.at(1)) + " not defined!");
   }
 
-  // now convert to unix timestamp, to pico seconds and add sub-second information from scope
+  // now convert to unix timestamp, to milli seconds and add sub-second information from scope
   std::time_t tunix;
   tunix = std::mktime( &build_time );
-  uint64_t result = tunix * 1e9;                // [   s->ps]
-  uint64_t mill10 = stoi( parts.at(6) ) * 1e7 ; // [10ms->ps]
+  uint64_t result = static_cast<uint64_t>( tunix ) * 1e3;               // [   s->ms]
+  uint64_t mill10 = static_cast<uint64_t>( stoi( parts.at(6) ) ) * 1e1; // [10ms->ms]
   result += mill10;
 
   return result;
