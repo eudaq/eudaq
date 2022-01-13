@@ -14,6 +14,7 @@ bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eud
     return false;
   }
 
+  pStdEvent->SetTriggerN(pEvent->GetSubEvent(0)->GetTriggerN());
   //Get first SubEvent of the full Event
   auto cFirstSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(0));
   //Create Standard Plane container 
