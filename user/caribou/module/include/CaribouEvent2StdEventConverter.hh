@@ -1,6 +1,8 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
+#include "EventTime.hh"
+#include <set>
 
 /**
  * Caribou event converter, converting from raw detector data to EUDAQ StandardEvent format
@@ -63,6 +65,8 @@ namespace eudaq {
     static double m_chargeScale;
     static double m_chargeCut;
     static bool m_generateRoot;
+    // container for time sorted pairs of alpide event numbers and time stamps
+    static std::set<EventTime> m_eventTimesAlpide;
   };
 
   class ATLASPixEvent2StdEventConverter: public eudaq::StdEventConverter{

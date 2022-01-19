@@ -23,6 +23,8 @@ double  DSO9254AEvent2StdEventConverter::m_chargeScale(0);
 double  DSO9254AEvent2StdEventConverter::m_chargeCut(0);
 bool    DSO9254AEvent2StdEventConverter::m_generateRoot(0);
 
+std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesAlpide;
+
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
