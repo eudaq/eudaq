@@ -7,7 +7,16 @@ public:
   bool Converting(eudaq::EventSPC rawev,eudaq::StdEventSP stdev,eudaq::ConfigSPC conf) const override;
 private:
   void Dump(const std::vector<uint8_t> &data,size_t i) const;
+  static bool m_configured;
+  static bool m_printTimeStamps;
+  static int64_t m_runStartTime;
+  static std::string m_timeStampFileName;
 };
+
+bool ALPIDERawEvent2StdEventConverter::m_configured(0);
+bool ALPIDERawEvent2StdEventConverter::m_printTimeStamps(0);
+int64_t ALPIDERawEvent2StdEventConverter::m_runStartTime(-1);
+std::string ALPIDERawEvent2StdEventConverter::m_timeStampFileName("");
 
 #define REGISTER_CONVERTER(name) namespace{auto dummy##name=eudaq::Factory<eudaq::StdEventConverter>::Register<ALPIDERawEvent2StdEventConverter>(eudaq::cstr2hash(#name));}
 REGISTER_CONVERTER(ALPIDE_plane_0)
@@ -32,6 +41,33 @@ REGISTER_CONVERTER(ALPIDE_plane_18)
 REGISTER_CONVERTER(ALPIDE_plane_19)
 
 bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdEventSP out,eudaq::ConfigSPC conf) const{
+
+
+
+  // load configuration for time stamp output
+  std::ofstream outfileTimestamps;
+  if( !m_configured ){
+    // read from config file
+    m_timeStampFileName = conf->Get("timestamp_file_name", "empty" );
+    // set flag and prepare output file if file name is given
+    if(m_timeStampFileName.compare("empty")){
+      m_printTimeStamps = true;
+      // need to strip quotation marks?
+      if(!m_timeStampFileName.substr(0,1).compare("\"")){
+        m_timeStampFileName = m_timeStampFileName.substr( 1, m_timeStampFileName.length()-2 );
+      }
+      outfileTimestamps.open(m_timeStampFileName.c_str(), std::ios_base::trunc); // recreate
+      if(outfileTimestamps.is_open()){
+        EUDAQ_DEBUG( "writing time stamps to " + m_timeStampFileName );
+      }
+      else{
+        EUDAQ_ERROR( "Failed to open " + m_timeStampFileName );
+      }
+      outfileTimestamps.close();
+    }
+    m_configured = true;
+  }
+
   auto rawev=std::dynamic_pointer_cast<const eudaq::RawEvent>(in);
   std::vector<uint8_t> data=rawev->GetBlock(0); // FIXME: copy?
   eudaq::StandardPlane plane(rawev->GetDeviceN(),"ITS3DAQ","ALPIDE");
@@ -47,12 +83,24 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
   for (int j=0;j<4;++j) iev|=((uint32_t)data[i+4+j])<<(j*8);
   for (int j=0;j<8;++j) tev|=((uint64_t)data[i+8+j])<<(j*8);
   tev*=12500; // 80Mhz clks to 1ps
-  
+
+  // write timestamps to file
+  if(m_printTimeStamps && rawev->GetDeviceN() == 0){ // only for plane 0
+    // store run start time to shift time stamps to zero
+    if(m_runStartTime < 0){
+      m_runStartTime = tev;
+    }
+    // need to re-open, each time we want to fill
+    outfileTimestamps.open(m_timeStampFileName.c_str(), std::ios_base::app);
+    outfileTimestamps << iev << " " << tev-m_runStartTime << std::endl;
+    outfileTimestamps.close();
+  }
+
   // forcing corry to fall back on trigger IDs
   out->SetTimeBegin(0);
   out->SetTimeEnd(0);
   out->SetTriggerN(iev);
-  
+
   i+=16;
   uint8_t reg;
   if((data[i]&0xF0)==0xE0) {// chip empty frame
@@ -102,7 +150,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
           Dump(data,i);
           return false;
         }
-      } 
+      }
     }
   else {
     EUDAQ_WARN("BAD WORD. No event start? Skipping raw event.");
@@ -113,7 +161,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
     EUDAQ_WARN("BAD WORD. Bad/no event trailer? Skipping raw event.");
     Dump(data,i);
     return false;
-  }  
+  }
   out->AddPlane(plane);
   return true;
 }
@@ -124,7 +172,7 @@ void ALPIDERawEvent2StdEventConverter::Dump(const std::vector<uint8_t> &data,siz
   for (size_t j=0;j<data.size();++j) {
     if (i==j)
       sprintf(buf,"%06X: %02X <-- problem around here?",j,data[j]);
-    else 
+    else
       sprintf(buf,"%06X: %02X",j,data[j]);
     EUDAQ_WARN(buf);
   }
