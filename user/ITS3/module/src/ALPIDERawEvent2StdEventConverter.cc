@@ -42,8 +42,6 @@ REGISTER_CONVERTER(ALPIDE_plane_19)
 
 bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdEventSP out,eudaq::ConfigSPC conf) const{
 
-
-
   // load configuration for time stamp output
   std::ofstream outfileTimestamps;
   if( !m_configured ){
