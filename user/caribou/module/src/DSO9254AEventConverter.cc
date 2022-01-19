@@ -23,7 +23,8 @@ double  DSO9254AEvent2StdEventConverter::m_chargeScale(0);
 double  DSO9254AEvent2StdEventConverter::m_chargeCut(0);
 bool    DSO9254AEvent2StdEventConverter::m_generateRoot(0);
 
-std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesAlpide;
+std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimes("");
+std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimes;
 
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
@@ -45,7 +46,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_ampEndTime   = conf->Get("ampEndTime"  , 0 );
     m_chargeScale  = conf->Get("chargeScale" , 0 );
     m_chargeCut    = conf->Get("chargeCut"   , 0 );
-    m_generateRoot   = conf->Get("generateRoot", 0 );
+    m_generateRoot = conf->Get("generateRoot", 0 );
+    m_fileNameEventTimes = conf->Get("fileNameEventTimes", "empty" );
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
     EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
@@ -55,6 +57,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
     EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
     EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
+    EUDAQ_DEBUG( "  fileNameEventTimes = " + m_fileNameEventTimes );
 
     // check configuration
     bool noData = false;
@@ -74,6 +77,16 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       EUDAQ_ERROR( "Writing no output data and no root file... Abort");
       return false;
     }
+
+    // read event numbers and time stamps from filename if filename is given
+    if(m_fileNameEventTimes.compare("empty")){
+      // need to strip quotation marks?
+      if(!m_fileNameEventTimes.substr(0,1).compare("\"")){
+        m_fileNameEventTimes = m_fileNameEventTimes.substr(1, m_fileNameEventTimes.length()-2);
+      }
+      readEventTimeFile(m_fileNameEventTimes, &m_eventTimes);
+    }
+
     m_configured = true;
 
   } // configure
@@ -438,4 +451,43 @@ uint64_t DSO9254AEvent2StdEventConverter::timeConverter( std::string date, std::
   result += mill10;
 
   return result;
-}
+} // timeConverter
+
+void DSO9254AEvent2StdEventConverter::readEventTimeFile(std::string filename,
+                                                        std::set<EventTime>* eventtime){
+
+  // open
+  std::ifstream infileTimestamps;
+  infileTimestamps.open(filename.c_str(), std::ios_base::in);
+  if(infileTimestamps.is_open()){
+    EUDAQ_DEBUG("Reading time stamps from " + filename);
+  }
+  else{
+    EUDAQ_ERROR("Failed to open " + filename);
+  }
+
+  // parse to EventTime set
+  while(!infileTimestamps.eof()){
+
+    uint64_t iev, tev;
+
+    std::string line_string;
+    std::getline(infileTimestamps, line_string);
+    std::stringstream line_stream(line_string);
+    line_stream >> iev;
+    line_stream >> tev;
+    EventTime et(iev, tev);
+
+    // check if there is already a time stamp with the same value and event number
+    if(eventtime->find(et)->iev==iev) continue;
+
+    // make entry otherwise
+    eventtime->insert(et);
+
+  } // file good
+
+  // close
+  infileTimestamps.close();
+
+  return;
+} // readEventTimeFile

@@ -64,10 +64,13 @@ namespace eudaq {
     static double m_chargeScale;
     static double m_chargeCut;
     static bool m_generateRoot;
+    static std::string m_fileNameEventTimes;
     // container for time sorted pairs of alpide event numbers and time stamps
-    static std::set<EventTime> m_eventTimesAlpide;
-    // functions
-    static uint64_t timeConverter( std::string date, std::string time );
+    static std::set<EventTime> m_eventTimes;
+    // covert scope ascii time stamps
+    static uint64_t timeConverter(std::string date, std::string time);
+    // parse event number, time stamp pairs from file to EventTime set
+    static void readEventTimeFile(std::string filename, std::set<EventTime>* eventtime);
   };
 
   class ATLASPixEvent2StdEventConverter: public eudaq::StdEventConverter{
