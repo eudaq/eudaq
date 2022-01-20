@@ -14,17 +14,24 @@ namespace{
 
 
 bool    DSO9254AEvent2StdEventConverter::m_configured(0);
-int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
-double  DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
-double  DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
-double  DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
-double  DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
-double  DSO9254AEvent2StdEventConverter::m_chargeScale(0);
-double  DSO9254AEvent2StdEventConverter::m_chargeCut(0);
-bool    DSO9254AEvent2StdEventConverter::m_generateRoot(0);
 
-std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimes("");
-std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimes;
+int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
+double DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
+double DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
+double DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
+double DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
+double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
+double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
+
+bool DSO9254AEvent2StdEventConverter::m_generateRoot(0);
+
+bool DSO9254AEvent2StdEventConverter::m_printTimeStamps(0);
+std::string DSO9254AEvent2StdEventConverter::m_timeStampFileName("");
+
+std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimesExt("");
+std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimesInt("");
+std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesExt;
+std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesInt;
 
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
@@ -37,17 +44,20 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   }
 
   // load parameters from config file
+  std::ofstream outfileTimestamps;
   if( !m_configured ){
 
     // read from config file
-    m_pedStartTime = conf->Get("pedStartTime", 0 ); // integration windows in [ns]
-    m_pedEndTime   = conf->Get("pedEndTime"  , 0 );
-    m_ampStartTime = conf->Get("ampStartTime", 0 );
-    m_ampEndTime   = conf->Get("ampEndTime"  , 0 );
-    m_chargeScale  = conf->Get("chargeScale" , 0 );
-    m_chargeCut    = conf->Get("chargeCut"   , 0 );
-    m_generateRoot = conf->Get("generateRoot", 0 );
-    m_fileNameEventTimes = conf->Get("fileNameEventTimes", "empty" );
+    m_pedStartTime = conf->Get("pedStartTime", 0); // integration windows in [ns]
+    m_pedEndTime   = conf->Get("pedEndTime"  , 0);
+    m_ampStartTime = conf->Get("ampStartTime", 0);
+    m_ampEndTime   = conf->Get("ampEndTime"  , 0);
+    m_chargeScale  = conf->Get("chargeScale" , 0);
+    m_chargeCut    = conf->Get("chargeCut"   , 0);
+    m_generateRoot = conf->Get("generateRoot", 0);
+    m_timeStampFileName = conf->Get("timestamp_file_name", "empty");
+    m_fileNameEventTimesExt = conf->Get("fileNameEventTimesExt", "empty");
+    m_fileNameEventTimesInt = conf->Get("fileNameEventTimesInt", "empty");
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
     EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
@@ -57,7 +67,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
     EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
     EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
-    EUDAQ_DEBUG( "  fileNameEventTimes = " + m_fileNameEventTimes );
+    EUDAQ_DEBUG( "  timestamp_file_name = " + m_timeStampFileName);
+    EUDAQ_DEBUG( "  fileNameEventTimesExt = " + m_fileNameEventTimesExt);
+    EUDAQ_DEBUG( "  fileNameEventTimesInt = " + m_fileNameEventTimesInt);
 
     // check configuration
     bool noData = false;
@@ -78,13 +90,42 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       return false;
     }
 
-    // read event numbers and time stamps from filename if filename is given
-    if(m_fileNameEventTimes.compare("empty")){
+    // set flag and prepare output file if file name is given
+    if(m_timeStampFileName.compare("empty")){
+      m_printTimeStamps = true;
       // need to strip quotation marks?
-      if(!m_fileNameEventTimes.substr(0,1).compare("\"")){
-        m_fileNameEventTimes = m_fileNameEventTimes.substr(1, m_fileNameEventTimes.length()-2);
+      if(!m_timeStampFileName.substr(0,1).compare("\"")){
+        m_timeStampFileName = m_timeStampFileName.substr( 1, m_timeStampFileName.length()-2 );
       }
-      readEventTimeFile(m_fileNameEventTimes, &m_eventTimes);
+      outfileTimestamps.open(m_timeStampFileName.c_str(), std::ios_base::trunc); // recreate
+      if(outfileTimestamps.is_open()){
+        EUDAQ_DEBUG( "writing time stamps to " + m_timeStampFileName );
+      }
+      else{
+        EUDAQ_ERROR( "Failed to open " + m_timeStampFileName );
+      }
+      outfileTimestamps.close();
+    }
+
+    // read event numbers and time stamps from filename if filename is given
+    // this needs to be done twice
+    // for this detector (Int)
+    // for reference detector (Ext)
+    if(m_fileNameEventTimesExt.compare("empty")){
+      // need to strip quotation marks?
+      if(!m_fileNameEventTimesExt.substr(0,1).compare("\"")){
+        m_fileNameEventTimesExt =
+          m_fileNameEventTimesExt.substr(1, m_fileNameEventTimesExt.length()-2);
+      }
+      readEventTimeFile(m_fileNameEventTimesExt, &m_eventTimesExt);
+    }
+    if(m_fileNameEventTimesInt.compare("empty")){
+      // need to strip quotation marks?
+      if(!m_fileNameEventTimesInt.substr(0,1).compare("\"")){
+        m_fileNameEventTimesInt =
+          m_fileNameEventTimesInt.substr(1, m_fileNameEventTimesInt.length()-2);
+      }
+      readEventTimeFile(m_fileNameEventTimesInt, &m_eventTimesInt);
     }
 
     m_configured = true;
@@ -190,6 +231,55 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
     timestamp = ( DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] )
                   - m_runStartTime ) * 1e9; // ms to ps
+
+
+    // print time stamps to file
+    if(m_printTimeStamps && nch == 0){ // once per event
+      // need to re-open, each time we want to fill
+      outfileTimestamps.open(m_timeStampFileName.c_str(), std::ios_base::app);
+      outfileTimestamps << ev->GetEventN() << " " << timestamp << std::endl;
+      outfileTimestamps.close();
+    }
+
+    // if there are two time stamp files we can try to resync
+    if(m_eventTimesInt.size() > 0 && m_eventTimesExt.size() > 0 &&
+       nch == 0){ // time stamps are identical for all channels
+
+      EventTime findme(ev->GetEventN(),timestamp);
+
+      // get scope time stamps for this and the next block
+      auto thisBlockTimeInt = m_eventTimesInt.find(findme);
+      auto nextBlockTimeInt = thisBlockTimeInt;
+      nextBlockTimeInt++;
+
+      if(nextBlockTimeInt==m_eventTimesInt.end()){
+        // TODO discard this block
+      }
+      else{
+        // get next larger time stamps from reference detector
+        auto thisBlockTimeExt = m_eventTimesExt.upper_bound(*thisBlockTimeInt);
+        auto nextBlockTimeExt = m_eventTimesExt.upper_bound(*nextBlockTimeInt);
+
+        // find end of block events
+        // TODO can we somehow reuse one of the former iterators?
+        auto thisBlockTime = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockTimeExt,
+                                                                        thisBlockTimeInt);
+        auto nextBlockTime = DSO9254AEvent2StdEventConverter::getBlockEnd(nextBlockTimeExt,
+                                                                        nextBlockTimeInt);
+
+        std::cout << "  time stamps " << thisBlockTime.time
+                  << " " << nextBlockTime.time << std::endl;
+        std::cout << "  event numbers " << thisBlockTime.iev
+                  << " " << nextBlockTime.iev << std::endl;
+        std::cout << "  event number difference "
+                  << nextBlockTime.iev - thisBlockTime.iev << std::endl;
+
+        //TODO
+        //make use of the calculated event number difference
+
+      }
+
+    } // have time stamp files
 
 
     // Pick needed preamble elements
@@ -491,3 +581,55 @@ void DSO9254AEvent2StdEventConverter::readEventTimeFile(std::string filename,
 
   return;
 } // readEventTimeFile
+
+EventTime DSO9254AEvent2StdEventConverter::getBlockEnd(std::set<EventTime>::iterator external,
+                                                      std::set<EventTime>::iterator internal){
+
+  // FIXME not using internal
+  // this might need some fine tuning. right now it is searching for the largest gap
+  // within +- 5 events around the external event.
+  // might want to try something like closest gap larger than e.g. 0.5 s
+
+  // cout << "alpide event " << external->iev << " time " << external->time << endl;
+
+  Long64_t largeGap = 0;
+  EventTime blockEnd(0,0);
+
+  // check gaps in preceeding alpide time stamps
+  for(int prev = 0; prev < 5; prev++){
+
+    Long64_t gap = (external)->time - (--external)->time;
+    // cout << " alpide event " << external->iev << " time " << external->time;
+    // cout << "  prev gap " << gap << endl;
+
+    // update gap lenght and event
+    if(gap > largeGap){
+      largeGap = gap;
+      blockEnd = *external;
+    }
+
+  }
+  std::advance(external,5);// reset iterator
+
+  // check gaps in following alpide time stamps
+  for(int next = 0; next < 5; next++){
+
+    // cout << " alpide event " << external->iev << " time " << external->time;
+    Long64_t gap = -(external->time) + (++external)->time;
+    // cout << "  prev gap " << gap << endl;
+
+    // update gap length and event
+    if(gap > largeGap){
+      largeGap = gap;
+      external--; // blockEnd should be the one with the lower timestamp
+      blockEnd = *external;
+      external++;
+    }
+  }
+  std::advance(external,-5); // reset iterator
+
+  // cout << "    block end event " << blockEnd.iev << " time " << blockEnd.time
+  //      << " gap " << largeGap << endl;
+
+  return blockEnd;
+} // getBlockEnd
