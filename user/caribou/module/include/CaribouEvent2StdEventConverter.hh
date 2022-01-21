@@ -76,8 +76,8 @@ namespace eudaq {
     // parse event number, time stamp pairs from file to EventTime set
     static void readEventTimeFile(std::string filename, std::set<EventTime>* eventtime);
     // find external time stamps marking the end of a data block
-    static EventTime getBlockEnd( std::set<EventTime>::iterator external,
-                                  std::set<EventTime>::iterator internal);
+    static std::set<EventTime>::iterator getBlockEnd(std::set<EventTime>::iterator external,
+                                                     std::set<EventTime>::iterator internal);
   };
 
   class ATLASPixEvent2StdEventConverter: public eudaq::StdEventConverter{

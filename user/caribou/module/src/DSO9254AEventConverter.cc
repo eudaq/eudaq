@@ -245,6 +245,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     if(m_eventTimesInt.size() > 0 && m_eventTimesExt.size() > 0 &&
        nch == 0){ // time stamps are identical for all channels
 
+      EUDAQ_DEBUG("Compare time stamps");
       EventTime findme(ev->GetEventN(),timestamp);
 
       // get scope time stamps for this and the next block
@@ -262,20 +263,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
         // find end of block events
         // TODO can we somehow reuse one of the former iterators?
-        auto thisBlockTime = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockTimeExt,
+        thisBlockTimeExt = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockTimeExt,
                                                                         thisBlockTimeInt);
-        auto nextBlockTime = DSO9254AEvent2StdEventConverter::getBlockEnd(nextBlockTimeExt,
+        nextBlockTimeExt = DSO9254AEvent2StdEventConverter::getBlockEnd(nextBlockTimeExt,
                                                                         nextBlockTimeInt);
 
-        std::cout << "  time stamps " << thisBlockTime.time
-                  << " " << nextBlockTime.time << std::endl;
-        std::cout << "  event numbers " << thisBlockTime.iev
-                  << " " << nextBlockTime.iev << std::endl;
-        std::cout << "  event number difference "
-                  << nextBlockTime.iev - thisBlockTime.iev << std::endl;
+        uint64_t deltaIev = nextBlockTimeExt->iev - thisBlockTimeExt->iev;
 
-        //TODO
-        //make use of the calculated event number difference
+        EUDAQ_DEBUG("  Reference event numbers " +
+                    to_string(thisBlockTimeExt->iev) + " " +
+                    to_string(nextBlockTimeExt->iev) + " difference " +
+                    to_string(deltaIev));
 
       }
 
@@ -582,54 +580,45 @@ void DSO9254AEvent2StdEventConverter::readEventTimeFile(std::string filename,
   return;
 } // readEventTimeFile
 
-EventTime DSO9254AEvent2StdEventConverter::getBlockEnd(std::set<EventTime>::iterator external,
-                                                      std::set<EventTime>::iterator internal){
-
-  // FIXME not using internal
-  // this might need some fine tuning. right now it is searching for the largest gap
-  // within +- 5 events around the external event.
-  // might want to try something like closest gap larger than e.g. 0.5 s
-
-  // cout << "alpide event " << external->iev << " time " << external->time << endl;
+// FIXME not using internal
+// this might need some fine tuning. right now it is searching for the largest gap
+// within +- 5 events around the external event.
+// might want to try something like closest gap larger than e.g. 0.5 s
+std::set<EventTime>::iterator DSO9254AEvent2StdEventConverter::getBlockEnd(
+  std::set<EventTime>::iterator external, std::set<EventTime>::iterator internal){
 
   Long64_t largeGap = 0;
-  EventTime blockEnd(0,0);
+  std::set<EventTime>::iterator blockEnd;
 
   // check gaps in preceeding alpide time stamps
   for(int prev = 0; prev < 5; prev++){
-
     Long64_t gap = (external)->time - (--external)->time;
-    // cout << " alpide event " << external->iev << " time " << external->time;
-    // cout << "  prev gap " << gap << endl;
-
     // update gap lenght and event
     if(gap > largeGap){
       largeGap = gap;
-      blockEnd = *external;
+      blockEnd = external;
     }
-
   }
   std::advance(external,5);// reset iterator
 
   // check gaps in following alpide time stamps
   for(int next = 0; next < 5; next++){
-
-    // cout << " alpide event " << external->iev << " time " << external->time;
     Long64_t gap = -(external->time) + (++external)->time;
-    // cout << "  prev gap " << gap << endl;
-
     // update gap length and event
     if(gap > largeGap){
       largeGap = gap;
       external--; // blockEnd should be the one with the lower timestamp
-      blockEnd = *external;
+      blockEnd = external;
       external++;
     }
   }
   std::advance(external,-5); // reset iterator
 
-  // cout << "    block end event " << blockEnd.iev << " time " << blockEnd.time
-  //      << " gap " << largeGap << endl;
+  EUDAQ_DEBUG("  getBlockEnd: Internal event " + to_string(internal->iev) +
+              " time " + to_string(internal->time));
+  EUDAQ_DEBUG("  getBlockEnd: External event " + to_string(blockEnd->iev) +
+              " time " + to_string(blockEnd->time));
+
 
   return blockEnd;
 } // getBlockEnd
