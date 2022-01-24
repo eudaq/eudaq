@@ -591,7 +591,9 @@ void DSO9254AEvent2StdEventConverter::readEventTimeFile(std::string filename,
     EventTime et(iev, tev);
 
     // check if there is already a time stamp with the same value and event number
-    if(eventtime->find(et)->iev==iev) continue;
+    if(!eventtime->empty() && eventtime->find(et)->iev==iev){
+      continue;
+    }
 
     // make entry otherwise
     eventtime->insert(et);
