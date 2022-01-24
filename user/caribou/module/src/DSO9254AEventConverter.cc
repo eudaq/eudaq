@@ -280,6 +280,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
         uint64_t deltaIev = thisBlockStart->iev - thisBlockEnd->iev;
         thisBlockMissed = sgmnt_count - (deltaIev+1);
+        m_nMissedEvents += thisBlockMissed;
 
         EUDAQ_DEBUG("  Reference event numbers " +
                     to_string(thisBlockStart->iev) + " " +
@@ -411,8 +412,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
   // process waveform data
-  if( time.size() > 0 ){ // only if there are waveform data
-
+  if(time.size() > 0 &&      // only if there are waveform data
+     thisBlockMissed == 0 ){ // and if we are not missing events in external detector
 
     // re-iterate waveforms
     // wavess.at(channel).at(segment).at(point)
@@ -465,18 +466,26 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         }
       }
 
-      sub_event->AddPlane(plane);
-
-      sub_event->SetDetectorType("DSO9254A");
-      // forcing corry to fall back on trigger IDs
-      sub_event->SetTimeBegin(0);
-      sub_event->SetTimeEnd(0);
       // The event number labels the blocks of segments. Translate to trigger number
       EUDAQ_DEBUG( to_string(ev->GetEventN()) + " " +
                    to_string(peds.at(0).size()) + " " + to_string(s) + " -> " +
                    to_string( (ev->GetEventN()-1) * peds.at(0).size() + s ) );
       sub_event->SetTriggerN( (ev->GetEventN()-1) * peds.at(0).size() + s );
-      // FIXME is this needed? the right way to do it?
+
+      // derive trigger number from block number
+      // take missed events into account
+      int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s - m_nMissedEvents;
+      EUDAQ_DEBUG("Block number " + to_string(ev->GetEventN()) + " " +
+                  " block size " + to_string(peds.at(0).size()) +
+                  " segments, segment number " + to_string(s) +
+                  " subtracting missed " + to_string(m_nMissedEvents) +
+                  " trigger number " + to_string( (ev->GetEventN()-1) * peds.at(0).size() + s ) );
+
+      sub_event->AddPlane(plane);
+      sub_event->SetDetectorType("DSO9254A");
+      sub_event->SetTimeBegin(0); // forcing corry to fall back on trigger IDs
+      sub_event->SetTimeEnd(0);
+      sub_event->SetTriggerN(triggerN);
 
       // add sub event to StandardEventSP for output to corry
       d2->AddSubEvent( sub_event );
@@ -487,8 +496,13 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     d2->SetDetectorType("DSO9254A");
   }
+  else if( thisBlockMissed != 0 ){
+    EUDAQ_DEBUG("Missed " + to_string(thisBlockMissed) +
+                " events in block " + to_string(ev->GetEventN()));
+    return false;
+    }
   else{
-    EUDAQ_WARN("Warning: No scope data in event " + to_string(ev->GetEventN()));
+    EUDAQ_WARN("No scope data in block " + to_string(ev->GetEventN()));
     return false;
   }
 
