@@ -577,6 +577,7 @@ void DSO9254AEvent2StdEventConverter::readEventTimeFile(std::string filename,
   }
   else{
     EUDAQ_ERROR("Failed to open " + filename);
+    return;
   }
 
   // parse to EventTime set
