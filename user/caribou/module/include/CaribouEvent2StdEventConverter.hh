@@ -68,6 +68,7 @@ namespace eudaq {
     static std::string m_timeStampFileName;
     static std::string m_fileNameEventTimesExt;
     static std::string m_fileNameEventTimesInt;
+    static int m_nMissedEvents;
     // container for time sorted pairs of alpide event numbers and time stamps
     static std::set<EventTime> m_eventTimesExt;
     static std::set<EventTime> m_eventTimesInt;

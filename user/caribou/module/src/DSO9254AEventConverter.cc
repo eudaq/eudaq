@@ -32,7 +32,7 @@ std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimesExt("");
 std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimesInt("");
 std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesExt;
 std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesInt;
-
+int DSO9254AEvent2StdEventConverter::m_nMissedEvents(0);
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -150,6 +150,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   std::vector<double> dy;
   std::vector<double> y0;
 
+  // number of missed events for re-sync
+  int thisBlockMissed = 0;
+
 
   // Bad event
   if(ev->NumBlocks() != 1) {
@@ -253,27 +256,35 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       auto nextBlockTimeInt = thisBlockTimeInt;
       nextBlockTimeInt++;
 
+      // we have no scope timestamp to mark the end of the last block
+      // we can not know if it is complete or not -> discard
       if(nextBlockTimeInt==m_eventTimesInt.end()){
-        // TODO discard this block
+        thisBlockMissed = 1;
       }
       else{
         // get next larger time stamps from reference detector
-        auto thisBlockTimeExt = m_eventTimesExt.upper_bound(*thisBlockTimeInt);
-        auto nextBlockTimeExt = m_eventTimesExt.upper_bound(*nextBlockTimeInt);
+        auto thisBlockStart = m_eventTimesExt.upper_bound(*thisBlockTimeInt);
+        auto thisBlockEnd   = m_eventTimesExt.upper_bound(*nextBlockTimeInt);
 
-        // find end of block events
-        // TODO can we somehow reuse one of the former iterators?
-        thisBlockTimeExt = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockTimeExt,
+        // find first and last event of block
+        if(thisBlockTimeInt->time > 0){ // do not go ealier than run start
+          thisBlockStart = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockStart,
                                                                         thisBlockTimeInt);
-        nextBlockTimeExt = DSO9254AEvent2StdEventConverter::getBlockEnd(nextBlockTimeExt,
-                                                                        nextBlockTimeInt);
+          thisBlockStart++; // blockend++ ~ blockstart
+        }
+        else{ // first
+          thisBlockStart = m_eventTimesExt.begin();
+        }
+        thisBlockEnd = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockEnd,
+                                                                    nextBlockTimeInt);
 
-        uint64_t deltaIev = nextBlockTimeExt->iev - thisBlockTimeExt->iev;
+        uint64_t deltaIev = thisBlockStart->iev - thisBlockEnd->iev;
+        thisBlockMissed = sgmnt_count - (deltaIev+1);
 
         EUDAQ_DEBUG("  Reference event numbers " +
-                    to_string(thisBlockTimeExt->iev) + " " +
-                    to_string(nextBlockTimeExt->iev) + " difference " +
-                    to_string(deltaIev));
+                    to_string(thisBlockStart->iev) + " " +
+                    to_string(thisBlockEnd->iev) + " this block misses " +
+                    to_string(thisBlockMissed));
 
       }
 
