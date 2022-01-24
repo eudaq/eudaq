@@ -227,6 +227,21 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       vals.push_back(val);
     }
 
+    // Pick needed preamble elements
+    np.push_back( stoi( vals[2]) );
+    dx.push_back( stod( vals[4]) * 1e9 );
+    x0.push_back( stod( vals[5]) * 1e9 );
+    dy.push_back( stod( vals[7]) );
+    y0.push_back( stod( vals[8]) );
+    if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
+      sgmnt_count = stoi( vals[24] );
+    }
+    int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
+    if( np.at(nch) % (chann_words/sgmnt_count) ){ // check
+      EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
+                 + ", channel " + to_string(nch) );
+    }
+
 
     // set run start time to 0 ms, using  timestamps from preamble which are 10 ms precision
     if( m_runStartTime < 0 ){
@@ -278,34 +293,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         thisBlockEnd = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockEnd,
                                                                     nextBlockTimeInt);
 
-        uint64_t deltaIev = thisBlockStart->iev - thisBlockEnd->iev;
+        uint64_t deltaIev = thisBlockEnd->iev - thisBlockStart->iev;
         thisBlockMissed = sgmnt_count - (deltaIev+1);
         m_nMissedEvents += thisBlockMissed;
 
-        EUDAQ_DEBUG("  Reference event numbers " +
-                    to_string(thisBlockStart->iev) + " " +
-                    to_string(thisBlockEnd->iev) + " this block misses " +
-                    to_string(thisBlockMissed));
+        EUDAQ_DEBUG("  Reference event numbers " + to_string(thisBlockStart->iev) +
+                    " " + to_string(thisBlockEnd->iev) +
+                    " this block misses " + to_string(thisBlockMissed));
 
       }
 
     } // have time stamp files
-
-
-    // Pick needed preamble elements
-    np.push_back( stoi( vals[2]) );
-    dx.push_back( stod( vals[4]) * 1e9 );
-    x0.push_back( stod( vals[5]) * 1e9 );
-    dy.push_back( stod( vals[7]) );
-    y0.push_back( stod( vals[8]) );
-    if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
-      sgmnt_count = stoi( vals[24] );
-    }
-    int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
-    if( np.at(nch) % (chann_words/sgmnt_count) ){ // check
-      EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
-                 + ", channel " + to_string(nch) );
-    }
 
 
     // need once per channel
