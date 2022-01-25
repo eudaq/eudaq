@@ -263,7 +263,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     if(m_eventTimesInt.size() > 0 && m_eventTimesExt.size() > 0 &&
        nch == 0){ // time stamps are identical for all channels
 
-      EUDAQ_DEBUG("Compare time stamps");
+      EUDAQ_DEBUG("Compare time stamps event " + to_string(ev->GetEventN()) +
+                  " timestamp " + to_string(timestamp));
       EventTime findme(ev->GetEventN(),timestamp);
 
       // get scope time stamps for this and the next block
@@ -281,23 +282,21 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         auto thisBlockStart = m_eventTimesExt.upper_bound(*thisBlockTimeInt);
         auto thisBlockEnd   = m_eventTimesExt.upper_bound(*nextBlockTimeInt);
 
-        // find first and last event of block
-        if(thisBlockTimeInt->time > 0){ // do not go ealier than run start
-          thisBlockStart = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockStart,
-                                                                        thisBlockTimeInt);
-          thisBlockStart++; // blockend++ ~ blockstart
-        }
-        else{ // first
+
+        // try without using getBlockEnd
+        // might still improve things... see commit 706a5d12
+        if(thisBlockTimeInt->time == 0){ // get the start right
+          EUDAQ_DEBUG("set to first");
           thisBlockStart = m_eventTimesExt.begin();
         }
-        thisBlockEnd = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockEnd,
-                                                                    nextBlockTimeInt);
+        thisBlockEnd--; // otherwise is next block start
 
+        // calculate number of missed events
         uint64_t deltaIev = thisBlockEnd->iev - thisBlockStart->iev;
         thisBlockMissed = sgmnt_count - (deltaIev+1);
         m_nMissedEvents += thisBlockMissed;
 
-        EUDAQ_DEBUG("  Reference event numbers " + to_string(thisBlockStart->iev) +
+        EUDAQ_DEBUG("  Reference event numbers range" + to_string(thisBlockStart->iev) +
                     " " + to_string(thisBlockEnd->iev) +
                     " this block misses " + to_string(thisBlockMissed));
 
@@ -464,12 +463,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         }
       }
 
-      // The event number labels the blocks of segments. Translate to trigger number
-      EUDAQ_DEBUG( to_string(ev->GetEventN()) + " " +
-                   to_string(peds.at(0).size()) + " " + to_string(s) + " -> " +
-                   to_string( (ev->GetEventN()-1) * peds.at(0).size() + s ) );
-      sub_event->SetTriggerN( (ev->GetEventN()-1) * peds.at(0).size() + s );
-
       // derive trigger number from block number
       // take missed events into account
       int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s - m_nMissedEvents;
@@ -477,7 +470,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
                   " block size " + to_string(peds.at(0).size()) +
                   " segments, segment number " + to_string(s) +
                   " subtracting missed " + to_string(m_nMissedEvents) +
-                  " trigger number " + to_string( (ev->GetEventN()-1) * peds.at(0).size() + s ) );
+                  " trigger number " + to_string(triggerN));
 
       sub_event->AddPlane(plane);
       sub_event->SetDetectorType("DSO9254A");
