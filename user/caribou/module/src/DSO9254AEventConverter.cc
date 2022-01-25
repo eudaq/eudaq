@@ -282,8 +282,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         auto thisBlockStart = m_eventTimesExt.upper_bound(*thisBlockTimeInt);
         auto thisBlockEnd   = m_eventTimesExt.upper_bound(*nextBlockTimeInt);
 
-
-        // try without using getBlockEnd
+        // without using getBlockEnd for now
         // might still improve things... see commit 706a5d12
         if(thisBlockTimeInt->time == 0){ // get the start right
           EUDAQ_DEBUG("set to first");
@@ -466,6 +465,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // derive trigger number from block number
       // take missed events into account
       int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s - m_nMissedEvents;
+      // why is this necessary?
+      if(ev->GetEventN()==1 && to_string(peds.at(0).size()) > 1){
+        triggerN++;
+      }
+
       EUDAQ_DEBUG("Block number " + to_string(ev->GetEventN()) + " " +
                   " block size " + to_string(peds.at(0).size()) +
                   " segments, segment number " + to_string(s) +
