@@ -33,6 +33,7 @@ std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimesInt("");
 std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesExt;
 std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesInt;
 int DSO9254AEvent2StdEventConverter::m_nMissedEvents(0);
+int DSO9254AEvent2StdEventConverter::m_nMissedBlocks(0);
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -491,9 +492,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     d2->SetDetectorType("DSO9254A");
   }
-  else if( thisBlockMissed != 0 ){
+  else if(thisBlockMissed != 0){
     EUDAQ_DEBUG("Missed " + to_string(thisBlockMissed) +
                 " events in block " + to_string(ev->GetEventN()));
+    m_nMissedBlocks++;
     return false;
     }
   else{
@@ -501,6 +503,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
+  // print resync yield
+  if(!m_eventTimesExt.empty() && !m_eventTimesInt.empty()){ // are we even trying
+    EUDAQ_INFO("Resync yield: " + to_string(1-(double)m_nMissedBlocks/(double)ev->GetEventN()));
+  }
 
   // Indicate that data were successfully converted
   return true;
