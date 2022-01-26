@@ -283,13 +283,18 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         auto thisBlockStart = m_eventTimesExt.upper_bound(*thisBlockTimeInt);
         auto thisBlockEnd   = m_eventTimesExt.upper_bound(*nextBlockTimeInt);
 
-        // without using getBlockEnd for now
-        // might still improve things... see commit 706a5d12
-        if(thisBlockTimeInt->time == 0){ // get the start right
-          EUDAQ_DEBUG("set to first");
+        // using getBlockEnd, trying to find the gap in cases where the time stamps are off
+        // see commit e5a3193e for version without
+        if(thisBlockTimeInt->time > 0){ // do not go ealier than run start
+          thisBlockStart = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockStart,
+                                                                        thisBlockTimeInt);
+          thisBlockStart++; // blockend++ ~ blockstart
+        }
+        else{ // first
           thisBlockStart = m_eventTimesExt.begin();
         }
-        thisBlockEnd--; // otherwise is next block start
+        thisBlockEnd = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockEnd,
+                                                                    nextBlockTimeInt);
 
         // calculate number of missed events
         uint64_t deltaIev = thisBlockEnd->iev - thisBlockStart->iev;
