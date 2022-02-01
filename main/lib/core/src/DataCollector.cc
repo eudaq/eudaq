@@ -204,7 +204,7 @@ namespace eudaq {
       std::unique_lock<std::mutex> lk(m_mtx_sender);
       auto senders = m_senders;
       lk.unlock();
-      if(m_evt_c%m_fraction != 0){
+      if(m_evt_c%m_fraction != 0 && m_evt_c!=1){
 	return;
       }
       for(auto &e: senders){
