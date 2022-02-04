@@ -41,7 +41,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       ${EUDAQ_INSTALL_PREFIX}/extern/lib/libttree.so
       CACHE INTERNAL "external ttree library")
   endif()
-endif()
 
 target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
 
