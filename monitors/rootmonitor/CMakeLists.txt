@@ -37,8 +37,12 @@ include_directories(${CMAKE_BINARY_DIR})
 
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
-root_generate_dictionary(R_ROOTMonitor eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh LINKDEF include/LinkDef.h)
-list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/R_ROOTMonitor.cxx)
+root_generate_dictionary(rootmonitorDict eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh
+  LINKDEF include/LinkDef.h
+    MODULE
+    rootmonitor        
+  )
+list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/rootmonitorDict.cxx)
 add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
 
 target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES})
@@ -50,8 +54,8 @@ install(TARGETS ${EUDAQ_COMPONENT}
   ARCHIVE DESTINATION lib)
 
 if(ROOT_VERSION_MAJOR GREATER 5)
-  set(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_R_ROOTMonitor_rdict.pcm)
-  set(ROOTProducer_MAP ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_R_ROOTMonitor.rootmap)
+  set(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_rootmonitor_rdict.pcm)
+  set(ROOTProducer_MAP ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_rootmonitor.rootmap)
   install(FILES
     ${ROOTProducer_PCM}
     ${ROOTProducer_MAP}

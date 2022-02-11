@@ -51,6 +51,11 @@ install(TARGETS ${EUDAQ_CORE_LIBRARY}
   # PUBLIC_HEADER DESTINATION include/eudaq
   )
 
+# Also install the dictionary objects
+INSTALL(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/libcore_rdict.pcm
+    ${CMAKE_CURRENT_BINARY_DIR}/libcore.rootmap
+    DESTINATION lib)
 
 file(GLOB INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/eudaq/*.hh")
 install(FILES ${INC_FILES} DESTINATION include/eudaq)
