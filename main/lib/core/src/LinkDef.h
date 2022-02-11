@@ -14,7 +14,7 @@
 #pragma link C++ nestedclass;
 #pragma link C++ nestedtypedef;
 
-#pragma link C++ namespace corryvreckan;
+#pragma link C++ namespace eudaq;
 #pragma link C++ class eudaq::Exception - !;
 #pragma link C++ class eudaq::LoggedException - !;
 
