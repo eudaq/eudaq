@@ -7,11 +7,30 @@ set(EUDAQ_INCLUDE_DIRS
   ${CMAKE_CURRENT_LIST_DIR}/include/eudaq
   CACHE INTERNAL "directory of eudaq include")
 
+# generate the dictionary source code
+ROOT_GENERATE_DICTIONARY(eudaqCoreDict
+    include/eudaq/Exception.hh
+    LINKDEF
+    src/LinkDef.h
+    OPTIONS
+    -inlineInputHeader
+    -I${CMAKE_CURRENT_SOURCE_DIR}
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src
+    MODULE
+    ${EUDAQ_CORE_LIBRARY} 
+)
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/eudaqCoreDict.cxx
+  PROPERTIES
+  GENERATED TRUE
+  COMPILE_FLAGS "-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}"
+)    
+
+
 include_directories(include)
 include_directories(include/eudaq)
 
 aux_source_directory(src CORE_SRC)
-add_library(${EUDAQ_CORE_LIBRARY} SHARED ${CORE_SRC})
+add_library(${EUDAQ_CORE_LIBRARY} SHARED ${CORE_SRC} ${CMAKE_CURRENT_BINARY_DIR}/eudaqCoreDict.cxx)
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES DEFINE_SYMBOL "core_EXPORTS" )
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR})
 
@@ -20,6 +39,7 @@ if(CMAKE_COMPILER_IS_GNUCXX AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.3)
 endif()
 
 list(APPEND ADDITIONAL_LIBRARIES ${CMAKE_DL_LIBS})
+list(APPEND ADDITIONAL_LIBRARIES ${ROOT_LIBRARIES})
 target_link_libraries(${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
 
