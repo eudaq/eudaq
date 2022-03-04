@@ -2,6 +2,7 @@
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 #include "EventTime.hh"
+
 #include <set>
 
 /**
@@ -55,26 +56,35 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
   private:
+
     static bool m_configured;
-    static int64_t m_runStartTime;
-    static double m_pedStartTime;
+
+    // waveform parameters
+		static double m_pedStartTime;
     static double m_pedEndTime;
     static double m_ampStartTime;
     static double m_ampEndTime;
     static double m_chargeScale;
     static double m_chargeCut;
+
+    // root output
     static bool m_generateRoot;
+
+    // time stamps
+    static int64_t m_runStartTime;
     static bool m_printTimeStamps;
     static std::string m_timeStampFileName;
+		// covert scope ascii time stamps
+    static uint64_t timeConverter(std::string date, std::string time);
+
+    // resync
     static std::string m_fileNameEventTimesExt;
     static std::string m_fileNameEventTimesInt;
     static int m_nMissedEvents;
     static int m_nMissedBlocks;
-    // container for time sorted pairs of alpide event numbers and time stamps
+    // container for time sorted pairs of event numbers and time stamps
     static std::set<EventTime> m_eventTimesExt;
     static std::set<EventTime> m_eventTimesInt;
-    // covert scope ascii time stamps
-    static uint64_t timeConverter(std::string date, std::string time);
     // parse event number, time stamp pairs from file to EventTime set
     static void readEventTimeFile(std::string filename, std::set<EventTime>* eventtime);
     // find external time stamps marking the end of a data block

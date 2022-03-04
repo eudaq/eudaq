@@ -109,7 +109,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
 
     // read event numbers and time stamps from filename if filename is given
-    // this needs to be done twice
+    // this needs to be done twice:
     // for this detector (Int)
     // for reference detector (Ext)
     if(m_fileNameEventTimesExt.compare("empty")){
@@ -228,7 +228,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       vals.push_back(val);
     }
 
-    // Pick needed preamble elements
+    // pick needed preamble elements
     np.push_back( stoi( vals[2]) );
     dx.push_back( stod( vals[4]) * 1e9 );
     x0.push_back( stod( vals[5]) * 1e9 );
@@ -455,7 +455,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // create sub-event for segments
       auto sub_event = eudaq::StandardEvent::MakeShared();
 
-      // Create a StandardPlane representing one sensor plane
+      // create a StandardPlane representing one sensor plane
       eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
 
       // fill plane
@@ -477,10 +477,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
 
       EUDAQ_DEBUG("Block number " + to_string(ev->GetEventN()) + " " +
-                  " block size " + to_string(peds.at(0).size()) +
-                  " segments, segment number " + to_string(s) +
-                  " subtracting missed " + to_string(m_nMissedEvents) +
-                  " trigger number " + to_string(triggerN));
+                  "  block size " + to_string(peds.at(0).size()) +
+                  "  segments, segment number " + to_string(s) +
+                  "  subtracting missed " + to_string(m_nMissedEvents) +
+                  "  trigger number " + to_string(triggerN));
 
       sub_event->AddPlane(plane);
       sub_event->SetDetectorType("DSO9254A");
@@ -513,7 +513,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_INFO("Resync yield: " + to_string(1-(double)m_nMissedBlocks/(double)ev->GetEventN()));
   }
 
-  // Indicate that data were successfully converted
+  // indicate that data were successfully converted
   return true;
 }
 
@@ -614,9 +614,9 @@ void DSO9254AEvent2StdEventConverter::readEventTimeFile(std::string filename,
   return;
 } // readEventTimeFile
 
-// FIXME not using internal
+
 // this might need some fine tuning. right now it is searching for the largest gap
-// within +- 5 events around the external event.
+// within +- 5 events around the external event. Not using `internal`.
 // might want to try something like closest gap larger than e.g. 0.5 s
 std::set<EventTime>::iterator DSO9254AEvent2StdEventConverter::getBlockEnd(
   std::set<EventTime>::iterator external, std::set<EventTime>::iterator internal){

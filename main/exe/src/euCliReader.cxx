@@ -18,6 +18,7 @@ int main(int /*argc*/, const char **argv) {
   eudaq::OptionFlag stdev(op, "std", "stdevent", "enable converter of StdEvent");
 
   op.Parse(argv);
+
   std::string infile_path = file_input.Value();
   std::string type_in = infile_path.substr(infile_path.find_last_of(".")+1);
   if(type_in=="raw")

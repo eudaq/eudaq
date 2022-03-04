@@ -93,12 +93,12 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
     outfileTimestamps << iev << " " << tev-m_runStartTime << std::endl;
     outfileTimestamps.close();
   }
-
+  
   // forcing corry to fall back on trigger IDs
   out->SetTimeBegin(0);
   out->SetTimeEnd(0);
   out->SetTriggerN(iev);
-
+  
   i+=16;
   uint8_t reg;
   if((data[i]&0xF0)==0xE0) {// chip empty frame
@@ -148,7 +148,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
           Dump(data,i);
           return false;
         }
-      }
+      } 
     }
   else {
     EUDAQ_WARN("BAD WORD. No event start? Skipping raw event.");
@@ -159,7 +159,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
     EUDAQ_WARN("BAD WORD. Bad/no event trailer? Skipping raw event.");
     Dump(data,i);
     return false;
-  }
+  }  
   out->AddPlane(plane);
   return true;
 }
@@ -170,7 +170,7 @@ void ALPIDERawEvent2StdEventConverter::Dump(const std::vector<uint8_t> &data,siz
   for (size_t j=0;j<data.size();++j) {
     if (i==j)
       sprintf(buf,"%06X: %02X <-- problem around here?",j,data[j]);
-    else
+    else 
       sprintf(buf,"%06X: %02X",j,data[j]);
     EUDAQ_WARN(buf);
   }
