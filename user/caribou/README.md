@@ -70,11 +70,11 @@ The following parameters can be passed in the configuration in order to influenc
 
 Using a DSO9254A-like oscilloscope to read out pixelated devices. The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
-* `m_pedStartTime`: Start of the gate to derive the pedestal. To be given in ns. Defaults to 0.
-* `m_pedEndTime`: End of the gate to derive the pedestal. To be given in ns. Defaults to 0.
-* `m_ampStartTime`: Start of the gate to search for the peak amplitude. To be given in ns.  Defaults to 0.
-* `m_ampEndTime`: End of the gate to search for the peak amplitude. To be given in ns. Defaults to 0.
-* `m_chargeScale`: Scaling parameter for the amplitude. Defaults to 0.
-* `m_chargeCut`: Pixels with an scaled amplitude smaller than `m_chargeCut` are discarded. Defaults to 0.
-* `m_generateRoot`: The waveforms are written to a root file for independent waveform analysis if `true`. Defaults to `false`.
-* `m_timeStampFileName`: The time stamps (in ps) from the preamble of the oscilloscope output data are written to file, if a filename is given.
+* `pedStartTime`: Start of the gate to derive the pedestal. To be given in ns. Defaults to 0.
+* `pedEndTime`: End of the gate to derive the pedestal. To be given in ns. Defaults to 0.
+* `ampStartTime`: Start of the gate to search for the peak amplitude. To be given in ns.  Defaults to 0.
+* `ampEndTime`: End of the gate to search for the peak amplitude. To be given in ns. Defaults to 0.
+* `chargeScale`: Scaling parameter for the amplitude. Defaults to 1.
+* `chargeCut`: Pixels with an scaled amplitude smaller than `m_chargeCut` are discarded. Defaults to 0.
+* `generateRoot`: The waveforms are written to a root file for independent waveform analysis if `true`. Defaults to `false`.
+* `timeStampFileName`: The time stamps (in ps) from the preamble of the oscilloscope output data are written to file, if a filename is given.

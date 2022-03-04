@@ -20,7 +20,7 @@ double DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
 double DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
 double DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
 double DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
-double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
+double DSO9254AEvent2StdEventConverter::m_chargeScale(1);
 double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
 
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(0);
@@ -53,7 +53,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_pedEndTime   = conf->Get("pedEndTime"  , 0);
     m_ampStartTime = conf->Get("ampStartTime", 0);
     m_ampEndTime   = conf->Get("ampEndTime"  , 0);
-    m_chargeScale  = conf->Get("chargeScale" , 0);
+    m_chargeScale  = conf->Get("chargeScale" , 1);
     m_chargeCut    = conf->Get("chargeCut"   , 0);
     m_generateRoot = conf->Get("generateRoot", 0);
     m_timeStampFileName = conf->Get("timestamp_file_name", "empty");
