@@ -12,7 +12,7 @@ namespace eudaq {
                                      size_t buffersize)
     : m_filename(fname), m_file(0), m_faileof(faileof), m_buf(buffersize), m_start(&m_buf[0]),
         m_stop(m_start) {
-    m_file = fopen(fname.c_str(), "rb");
+    m_file = fopen(m_filename.c_str(), "rb");
     if (!m_file)
       EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
     // check if the file actually contains data. otherwise it will hang
