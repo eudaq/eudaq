@@ -23,7 +23,7 @@ class PIStageProducer : public eudaq::Producer {
   static const uint32_t m_id_factory = eudaq::cstr2hash("PIStageProducer");
 private:
   // Setting up the stage relies on he fact, that the PI stage copmmand set GCS holds for the device, tested with C-863 and c-884
-  bool setupStage(std::string axisname, double refPos, double rangeNegative, double rangePositive, double Speed = 1);
+  void setupStage(std::string axisname, double refPos, double rangeNegative, double rangePositive, double Speed = 1);
   bool m_flag_ts;
   bool m_flag_tg;
   bool m_connected_X, m_connected_Y, m_connected_Rot;
@@ -161,7 +161,7 @@ void PIStageProducer::RunLoop(){
 }
 
 
-bool PIStageProducer::setupStage(std::string axisname, double refPos, double rangeNegative, double rangePositive, double Speed)
+void PIStageProducer::setupStage(std::string axisname, double refPos, double rangeNegative, double rangePositive, double Speed)
 {
     const unsigned int *ref_val_parameteraddress = new unsigned int(22);
     const double *ref_val_parametervalue = new double(refPos);

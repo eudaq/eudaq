@@ -15,14 +15,6 @@ class PyDataCollector : public eudaq::DataCollector {
 public:
   using eudaq::DataCollector::DataCollector;
   
-  static eudaq::DataCollectorSP Make(const std::string &code_name, const std::string &name, const std::string &runctrl){
-    if(code_name != "PyDataCollector"){
-      EUDAQ_THROW("The code_name of Python datacollector is not PyDataCollector.");
-    }
-    return eudaq::DataCollector::Make(code_name, name, runctrl);
-  };
-
-  
   void DoInitialise() override {
     PYBIND11_OVERLOAD(void, /* Return type */
 		      eudaq::DataCollector,
@@ -59,6 +51,12 @@ public:
 		      DoTerminate
 		      );
   }
+  void DoStatus() override {
+    PYBIND11_OVERLOAD(void, /* Return type */
+		      eudaq::DataCollector,
+		      DoStatus
+		      );
+  }
   void DoConnect(eudaq::ConnectionSPC id) override {
     PYBIND11_OVERLOAD(void, /* Return type */
 		      eudaq::DataCollector,
@@ -87,17 +85,18 @@ public:
 void init_pybind_datacollector(py::module &m){
   py::class_<eudaq::DataCollector, PyDataCollector, std::shared_ptr<eudaq::DataCollector>>
     datacollector_(m, "DataCollector");
-  datacollector_.def(py::init(&eudaq::DataCollector::Make, &PyDataCollector::Make));
-  datacollector_.def("DoInitialise", &eudaq::DataCollector::DoInitialise);
-  datacollector_.def("DoConfigure", &eudaq::DataCollector::DoConfigure);
-  datacollector_.def("DoStartRun", &eudaq::DataCollector::DoStartRun);
-  datacollector_.def("DoStopRun", &eudaq::DataCollector::DoStopRun);
-  datacollector_.def("DoReset", &eudaq::DataCollector::DoReset);
-  datacollector_.def("DoTerminate", &eudaq::DataCollector::DoTerminate);
-  datacollector_.def("DoConnect", &eudaq::DataCollector::DoConnect,
-		     "Called when a producer is connecting", py::arg("id"));
-  datacollector_.def("DoDisconnect", &eudaq::DataCollector::DoDisconnect,
-		     "Called when a producer is disconnecting", py::arg("id"));
+  datacollector_.def(py::init([](const std::string &name,const std::string &runctrl){return PyDataCollector::Make("PyDataCollector", name, runctrl);}));
+//  datacollector_.def("DoInitialise", &eudaq::DataCollector::DoInitialise);
+//  datacollector_.def("DoConfigure", &eudaq::DataCollector::DoConfigure);
+//  datacollector_.def("DoStartRun", &eudaq::DataCollector::DoStartRun);
+//  datacollector_.def("DoStopRun", &eudaq::DataCollector::DoStopRun);
+//  datacollector_.def("DoReset", &eudaq::DataCollector::DoReset);
+//  datacollector_.def("DoTerminate", &eudaq::DataCollector::DoTerminate);
+//  datacollector_.def("DoConnect", &eudaq::DataCollector::DoConnect,
+//		     "Called when a producer is connecting", py::arg("id"));
+//  datacollector_.def("DoDisconnect", &eudaq::DataCollector::DoDisconnect,
+//		    "Called when a producer is disconnecting", py::arg("id"));
+  datacollector_.def("SetStatusTag", &eudaq::DataCollector::SetStatusTag);
   datacollector_.def("DoReceive", &eudaq::DataCollector::DoReceive,
 		     "Called when an event is recievied", py::arg("id"), py::arg("ev"));
   datacollector_.def("WriteEvent", &eudaq::DataCollector::WriteEvent,
@@ -106,10 +105,7 @@ void init_pybind_datacollector(py::module &m){
 		     "Set port of the data listening", py::arg("addr"));
   datacollector_.def("Connect", &eudaq::DataCollector::Connect);
   datacollector_.def("IsConnected", &eudaq::DataCollector::IsConnected);
-  datacollector_.def("GetConfigItem", &eudaq::DataCollector::GetConfigItem,
-		     "Get an item from datacollector's config section", py::arg("key"));
-  datacollector_.def("GetInitItem", &eudaq::DataCollector::GetInitItem,
-		     "Get an item from datacollector's init section", py::arg("key")
-		     );
+  datacollector_.def("GetConfiguration", &eudaq::DataCollector::GetConfiguration);
+  datacollector_.def("GetInitConfiguration", &eudaq::DataCollector::GetInitConfiguration);
 
 }
