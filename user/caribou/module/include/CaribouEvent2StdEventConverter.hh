@@ -28,6 +28,16 @@ namespace eudaq {
     }
     return stream.str();
   }
+  class AD9249Event2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouAD9249Event");
+  private:
+    static size_t t0_seen_;
+    static bool t0_is_high_;
+    static uint64_t last_shutter_open_;
+  };
+
 
   class CLICTDEvent2StdEventConverter: public eudaq::StdEventConverter{
   public:
