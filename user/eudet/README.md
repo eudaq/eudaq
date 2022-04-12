@@ -35,6 +35,16 @@ Mixed mode data taking synchronising by Trigger ID:
 The synchronisation by timestamps will be developed and can be in usage if a (quasi)-continous read-out of the Mimosa data stream is available. 
 This can happen with a new Mimosa DAQ, like the MMC3 board which is currently under development: https://github.com/SiLab-Bonn/pymosa
 
+
+### NiRaw2StdEventConverter
+Tool to convert raw mimosa data to StandardPlanes in a StandardEvent. Since
+two data frames are copied in the default mode, only data behind (before) the pivot
+pixel in the earlier (later) frame is copied. Converting all recorded hits can
+done via the configuration
+```
+use_all_hits =1
+```
 ## User Manual
 
 Wiki-Pages for operating EUDET-type beam telescopes: https://telescopes.desy.de/User_manual
+

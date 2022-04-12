@@ -350,12 +350,21 @@ namespace eudaq {
       }
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    for(auto &conn :conn_to_stop){
-      if(conn->GetType() == "DataCollector"){
-	SendCommand("STOP", "", conn);
+    for(auto &conn :conn_to_stop)
+      if(conn->GetType() == "Producer" &&
+	 conn->GetName() != producer_first_stop){
+        while(1){
+          auto st =  GetConnectionStatus(conn)->GetState();
+          if (st != Status::STATE_RUNNING) break;
+          if(std::chrono::steady_clock::now() > tp_timeout) 
+            EUDAQ_ERROR("Timesout waiting stopping status from "+ conn->GetName());
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
       }
-    }
+
+    for(auto &conn :conn_to_stop)
+      if(conn->GetType() == "DataCollector")
+	SendCommand("STOP", "", conn);
 
     //TODO: make sure datacollector is stoped after producer. waiting. check status
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -427,7 +436,7 @@ namespace eudaq {
 	EUDAQ_INFO(std::string("Connect:    ") + con->GetName());
 	std::string msg = "OK EUDAQ CMD RunControl " + con->GetRemote();
         m_cmdserver->SendPacket(msg.c_str(), *con, true);
-	m_conn_status[con].reset();
+	m_conn_status[con].reset(new Status());
       } else {
 	EUDAQ_INFO(std::string("Refused connect:    ") + con->GetName());
         m_cmdserver->SendPacket("ERROR EUDAQ CMD Not accepting new connections",

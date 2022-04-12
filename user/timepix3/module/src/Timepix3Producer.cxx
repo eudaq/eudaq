@@ -38,10 +38,10 @@ private:
   void timestamp_thread();
   bool checkPixelBits(int *cnt_mask, int *cnt_test, int *cnt_thrs);
 
-  Timepix3Config *myTimepix3Config;
   SpidrController *spidrctrl = nullptr;
   SpidrDaq *spidrdaq = nullptr;
-  std::mutex device_mutex_;
+  std::mutex controller_mutex_;
+  std::mutex daq_mutex_;
 
   int m_supported_devices = 0;
   int m_active_devices;
@@ -120,19 +120,18 @@ namespace{
 }
 
 Timepix3Producer::Timepix3Producer(const std::string name, const std::string &runcontrol)
-: eudaq::Producer(name, runcontrol), m_running(false) {
-  myTimepix3Config = new Timepix3Config();
-}
+: eudaq::Producer(name, runcontrol), m_running(false) {}
 
 Timepix3Producer::~Timepix3Producer() {
   // force run stop
   m_running = false;
   // wait for all to finish
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
   if(spidrctrl) {
     delete spidrctrl;
     spidrctrl = nullptr;
   }
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if(spidrdaq) {
     delete spidrdaq;
     spidrdaq = nullptr;
@@ -181,18 +180,17 @@ void Timepix3Producer::timestamp_thread() {
         usleep(200000);
         // request full timestamps
         for (int device_nr=0; device_nr<m_active_devices; device_nr++){
+          std::lock_guard<std::mutex> lock{controller_mutex_};
           if( !spidrctrl->getTimer(0, &timer_lo1, &timer_hi1) ) {
   		        EUDAQ_ERROR("getTimer: " + spidrctrl->errorString());
-          //} else {
-          //  std::cout << "Device no. " << device_nr << ", full timer: 0x" << to_hex_string(timer_hi1, 4) << to_hex_string(timer_lo1, 8) << std::endl;
           }
         }
         usleep(200000);
         usleep(200000);
         if ( !(cnt & 0xFF) ) {
           // update temperature every 16th cycle only
+          std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
           getTpx3Temperature(0);
-          //std::cout << "Tpx3Temp: " << Tpx3Temp << " °C" << std::endl;
         } else {
           // sleep when no temperature measurement is done,
           // because getTpx3Temperature() contains 2x 100 ms sleep
@@ -249,7 +247,8 @@ void Timepix3Producer::DoReset() {
   // stop the run, if it is still running
   m_running = false;
   // wait for other functions to finish
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   m_init = false;
   m_config = false;
 
@@ -274,11 +273,10 @@ void Timepix3Producer::DoInitialise() {
     EUDAQ_WARN("Timepix3Producer: Initializing while it is already in initialized state. Performing reset first...");
     DoReset();
   }
-  std::lock_guard<std::mutex> lock{device_mutex_};
 
   auto config = GetInitConfiguration();
 
-  EUDAQ_USER("Timepix3Producer initializing with: " + config->Name());
+  EUDAQ_USER("Timepix3Producer initializing with configuration: " + config->Name());
 
 
   // SPIDR IP & PORT
@@ -290,6 +288,7 @@ void Timepix3Producer::DoInitialise() {
   m_spidrPort = config->Get( "SPIDR_Port", 50000 );
 
   // Open a control connection to SPIDR-TPX3 module
+  std::lock_guard<std::mutex> lock{controller_mutex_};
   spidrctrl = new SpidrController( ip[0], ip[1], ip[2], ip[3], m_spidrPort );
 
   // reset SPIDR
@@ -297,7 +296,7 @@ void Timepix3Producer::DoInitialise() {
   if( !spidrctrl->reset( &errstat ) ) {
     EUDAQ_ERROR("reset ERROR: " + spidrctrl->errorString());
     serious_error = true;
-  } else if (errstat) {
+  } else if (errstat && errstat != 0x6000) {
     EUDAQ_ERROR("reset not complete, error code: 0x" + to_hex_string(errstat));
   } else {
     EUDAQ_EXTRA("reset: OK" );
@@ -370,8 +369,11 @@ void Timepix3Producer::DoConfigure() {
     EUDAQ_WARN("DoConfigure: Trying to configure a running module. Trying to stop it first.");
     m_running = false;
   }
-  std::lock_guard<std::mutex> lock{device_mutex_};
 
+  auto myTimepix3Config = new Timepix3Config();
+
+
+  std::lock_guard<std::mutex> lock{controller_mutex_};
   if (!spidrctrl) {
     EUDAQ_THROW("DoConfigure: spidrctrl was not initialized. Can not configure it.");
     return;
@@ -379,7 +381,9 @@ void Timepix3Producer::DoConfigure() {
 
   auto config = GetConfiguration();
   EUDAQ_USER("Timepix3Producer configuring: " + config->Name());
+
   // Configuration file values are accessible as config->Get(name, default)
+  config->Print();
 
   // sleep for 1 second, to make sure the TLU clock is already present
   sleep (1);
@@ -522,6 +526,10 @@ void Timepix3Producer::DoConfigure() {
       EUDAQ_DEBUG("Did not find configuration entry for \"XMLConfig_dev" + std::to_string(device_nr) + "\". Trying to use \"XMLConfig\".");
       m_xmlfileName = config->Get( "XMLConfig", "" );
     }
+    if (m_xmlfileName.empty()) {
+      EUDAQ_THROW("Timepix3Producer: Empty XML configuration file name.");
+    }
+
     myTimepix3Config->ReadXMLConfig( m_xmlfileName );
     EUDAQ_INFO("Reading configuration file " + m_xmlfileName );
     std::string conftime = myTimepix3Config->getTime();
@@ -840,7 +848,8 @@ void Timepix3Producer::DoStartRun() {
   EUDAQ_DEBUG("DoStartRun: Locking mutex...");
 
   // Create SpidrDaq
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if (m_running) {
     EUDAQ_ERROR("DoStartRun: Oh no, the producer is running again, although I just stopped it. Something is really wrong here. I'm giving it up.");
     return;
@@ -902,47 +911,42 @@ void Timepix3Producer::RunLoop() {
     sleep(1);
   }
 
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock{daq_mutex_};
   EUDAQ_USER("Timepix3Producer starting run loop...");
 
   // create a thread to periodically ask for full timestamps, temperatures and others
   ts_thread = std::thread(&Timepix3Producer::timestamp_thread, this);
 
-  //int device_nr = 0;
-  //std::map<int, int> header_counter;
+  std::map<int, int> header_counter;
 
   // set sampling parameters
   spidrdaq->setSampleAll( true );
   // Sample pixel data
   spidrdaq->setSampling( true );
-  //spidrdaq->startRecording( "test.dat", 123, "This is test data" );
 
   while(m_running) {
 
-    bool next_sample = true;
     if(spidrdaq->bufferFullOccurred()) {
       EUDAQ_WARN("Buffer overflow");
     }
 
     // Get a sample of pixel data packets, with timeout in ms
     const unsigned int BUF_SIZE = 8*1024*1024;
-    next_sample = spidrdaq->getSample(BUF_SIZE, 3000);
+    bool next_sample = spidrdaq->getSample(BUF_SIZE, 300);
 
     if(next_sample) {
       auto size = spidrdaq->sampleSize();
-      //std::cout << "Got a sample of a size " << size << std::endl;
       // look inside sample buffer...
       std::vector<eudaq::EventSPC> data_buffer;
-      while(m_running) {
-        uint64_t data = spidrdaq->nextPacket();
 
-        // ...until the sample buffer is empty
-        if(!data) break;
+      // ...until the sample buffer is empty
+      while(uint64_t data = spidrdaq->nextPacket()) {
+
+        // Break if we're supposed to stop:
+        if(!m_running) break;
 
         uint64_t header = (data & 0xF000000000000000) >> 60;
-        //header_counter[header]++;
-
-        //std::cout << "Data is: 0x" << to_hex_string(data) << std::dec << std::endl;
+        header_counter[header]++;
 
         // it's TDC counter
         if(header == 0x6) {
@@ -952,8 +956,6 @@ void Timepix3Producer::RunLoop() {
             evup->AddSubEvent(subevt);
           }
           SendEvent(std::move(evup));
-          //std::cout << "Sending 2 events with headers: " << listVector(header_counter) << endl;
-          //header_counter.clear();
           data_buffer.clear();
 
           // Create and send new trigger event
@@ -977,8 +979,6 @@ void Timepix3Producer::RunLoop() {
           evup->AddSubEvent(subevt);
         }
         SendEvent(std::move(evup));
-        //std::cout << "Sending event with headers: " << listVector(header_counter) << endl;
-        //header_counter.clear();
         data_buffer.clear();
       }
     } // Sample available
@@ -991,7 +991,7 @@ void Timepix3Producer::RunLoop() {
   ts_thread.join();
   ts_thread.~thread();
   // show header statitstics
-  //std::cout << "Headers: " << listVector(header_counter) << endl;
+  std::cout << "Headers: " << listVector(header_counter) << endl;
   EUDAQ_USER("Timepix3Producer exiting run loop.");
 } // RunLoop()
 
@@ -1002,46 +1002,49 @@ void Timepix3Producer::DoStopRun() {
   EUDAQ_USER("Timepix3Producer stopping run...");
   // Set a flag to signal to the polling loop that the run is over
 
+  // Log mutex for SPIDR Controller - inside scope to release afterwards in case another thread depends on it.
+  {
+    std::lock_guard<std::mutex> lock_ctrl{controller_mutex_};
+    // Close the shutter
+    if( !spidrctrl->closeShutter() ) {
+      EUDAQ_ERROR( "Could not close the shutter: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "closeShutter: OK");
+    }
+    // Stop Timepix3 readout
+    if( !spidrctrl->pauseReadout() ) {
+      EUDAQ_ERROR( "Could not stop data readout: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "pauseReadout: OK");
+    }
 
-  // Close the shutter
-  if( !spidrctrl->closeShutter() ) {
-    EUDAQ_ERROR( "Could not close the shutter: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "closeShutter: OK");
-  }
-  // Stop Timepix3 readout
-  if( !spidrctrl->pauseReadout() ) {
-    EUDAQ_ERROR( "Could not stop data readout: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "pauseReadout: OK");
-  }
+    // Get some info
+    int dataread;
+    unsigned int timer_hi, timer_lo;
+    if( !spidrctrl->getShutterCounter(&dataread) ) {
+      EUDAQ_ERROR( "getShutterCounter: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "getShutterCounter: " + std::to_string(dataread));
+    }
 
-  // Get some info
-  int dataread;
-  unsigned int timer_hi, timer_lo;
-  if( !spidrctrl->getShutterCounter(&dataread) ) {
-    EUDAQ_ERROR( "getShutterCounter: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "getShutterCounter: " + std::to_string(dataread));
-  }
+    if( !spidrctrl->getShutterStart( 0, &timer_lo, &timer_hi ) ) {
+      EUDAQ_ERROR( "getShutterStart: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "getShutterStart: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+    }
 
-  if( !spidrctrl->getShutterStart( 0, &timer_lo, &timer_hi ) ) {
-    EUDAQ_ERROR( "getShutterStart: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "getShutterStart: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
-  }
-
-  if( !spidrctrl->getShutterEnd( 0, &timer_lo, &timer_hi ) ) {
-    EUDAQ_ERROR( "getShutterEnd: " + spidrctrl->errorString());
-  } else {
-    EUDAQ_DEBUG( "getShutterEnd: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+    if( !spidrctrl->getShutterEnd( 0, &timer_lo, &timer_hi ) ) {
+      EUDAQ_ERROR( "getShutterEnd: " + spidrctrl->errorString());
+    } else {
+      EUDAQ_DEBUG( "getShutterEnd: 0x" + to_hex_string(timer_hi,4) + to_hex_string(timer_lo,8));
+    }
   }
 
   sleep(1);
   m_running = false;
 
   // wait for RunLoop() to finish
-  std::lock_guard<std::mutex> lock{device_mutex_};
+  std::lock_guard<std::mutex> lock_daq{daq_mutex_};
   if(spidrdaq) {
     delete spidrdaq;
     spidrdaq = nullptr;

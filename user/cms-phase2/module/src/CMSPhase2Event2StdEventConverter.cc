@@ -14,6 +14,7 @@ bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eud
     return false;
   }
 
+  pStdEvent->SetTriggerN(pEvent->GetSubEvent(0)->GetTriggerN());
   //Get first SubEvent of the full Event
   auto cFirstSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(0));
   //Create Standard Plane container 
@@ -60,6 +61,12 @@ bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eud
       //std::cout << "SensorId      : " << +cSensorId << std::endl;
       AddFrameToPlane(cPlanes.at(cSensorId), cSubEventRaw->GetBlock(cSensorId), cFrameId); 
     }//end of loop over SubEvents blocks
+
+    //Adding tags to the standard event
+    const std::map<std::string, std::string> cRawTags = cSubEventRaw->GetTags();
+    for(auto item : cRawTags) {
+      pStdEvent->SetTag(item.first, item.second);
+    }
 /*
     //Extract stubs from tags, convert and fill stub seed plane
     auto cSubEventTags = cSubEventRaw->GetTags();
