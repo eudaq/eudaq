@@ -27,7 +27,8 @@ private:
   unsigned m_ev;
 
   DeviceManager* manager_;
-  Device* device_;
+  Device* device_{nullptr};
+  Device* secondary_device_{nullptr};
   std::string name_;
 
   std::mutex device_mutex_;
@@ -66,6 +67,8 @@ void CaribouProducer::DoReset() {
   // Delete all devices:
   std::lock_guard<std::mutex> lock{device_mutex_};
   manager_->clearDevices();
+  device_ = nullptr;
+  secondary_device_ = nullptr;
 }
 
 void CaribouProducer::DoInitialise() {
@@ -105,6 +108,17 @@ void CaribouProducer::DoInitialise() {
   size_t device_id = manager_->addDevice(name_, config);
   EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id) + ", fetching device...");
   device_ = manager_->getDevice(device_id);
+
+  // Add secondary device if it is configured:
+  if(ini->Has("secondary_device")) {
+    std::string secondary = ini->Get("secondary_device", std::string());
+    if(std::find(sections.begin(), sections.end(), secondary) != sections.end()) {
+      config.SetSection(secondary);
+    }
+    size_t device_id2 = manager_->addDevice(secondary, config);
+    EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id2) + ", fetching secondary device...");
+    secondary_device_ = manager_->getDevice(device_id2);
+  }
 }
 
 // This gets called whenever the DAQ is configured
@@ -118,13 +132,21 @@ void CaribouProducer::DoConfigure() {
   // Switch on the device power:
   device_->powerOn();
 
+  if(secondary_device_ != nullptr) {
+    secondary_device_->powerOn();
+  }
+
   // Wait for power to stabilize and for the TLU clock to be present
   eudaq::mSleep(1000);
 
   // Configure the device
   device_->configure();
 
+  if(secondary_device_ != nullptr) {
+    secondary_device_->configure();
+  }
   // Set additional registers from the configuration:
+
   if(config->Has("register_key") || config->Has("register_value")) {
     auto key = config->Get("register_key", "");
     auto value = config->Get("register_value", 0);
@@ -179,6 +201,8 @@ void CaribouProducer::DoStartRun() {
 
 void CaribouProducer::DoStopRun() {
 
+  LOG(INFO) << "Draining buffers...";
+  eudaq::mSleep(500);
   LOG(INFO) << "Stopping run...";
 
   // Set a flag to signal to the polling loop that the run is over
