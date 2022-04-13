@@ -9,48 +9,85 @@ namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
   Register<AD9249Event2StdEventConverter>(AD9249Event2StdEventConverter::m_id_factory);
 }
-bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-  auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
-  eudaq::StandardPlane plane(0, "Caribou", "AD9249");
-  plane.SetSizeZS(4, 4, 1);
+void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::vector<uint8_t>& data, size_t size, size_t offset, std::vector<std::vector<uint16_t>>& waveforms, uint64_t& timestamp) const {
 
+  // Timestamp index
+  size_t ts_i = 0;
+    
+  for(size_t i = offset; i < offset + size; i += 2) {
+    // Channel is ADC half times channels plus channel number within data block
+    size_t ch = adc * 8 + ((i - offset) / 2) % 8;
 
-// caribou::pearyRawData rawdata;
+    // Get waveform data
+    uint16_t val = data.at(i) + (static_cast<uint16_t>(data.at(i+1)) & 0x3F) << 8;
+    waveforms.at(ch).push_back(val);
 
-  auto datablock0 = ev->GetBlock(0);
+    // If we have a full timestamp, skip the rest:
+    if(ts_i >= 28) {
+      continue;
+    }
+    
+    // Treat timestamp data
+    uint8_t ts = (data.at(i+1) >> 6);
 
-  //auto datablock1 = ev->GetBlock(1);
-  uint32_t header =(uint32_t (datablock0.at(3))<<24)+(uint32_t (datablock0.at(2))<<16)+(uint32_t(datablock0.at(1))<<8)+(datablock0.at(0)<<0);
-
-
-  uint32_t size0 =(datablock0.at(7)<<24)+(datablock0.at(6)<<16)+(datablock0.at(5)<<8)+(datablock0.at(4)<<0);
-   std::cout <<std::hex<< header <<"\t" << size0<<std::endl;
-   if(16+size0*2>datablock0.size())
-       return false;
-   // get the time
-  uint64_t time = 0x0;
-  for(int i=0;i<8;++i){
-      auto val = ((datablock0.at(i+1) & 0xC0)>6) <<2*i;
-      //std::cout<<std::hex << val <<"("<<int(datablock0.at(i+1))<<")\t";
-      time+=val;//((datablock0.at(2*i+1) & 0xC0)>6) <<2*i;
+    // Channel 7 (or 15) have status bits only:
+    if(ch == adc * 8 + 7) {
+      // Check if this is a timestamp start - if not, reset timestamp index to zero:
+      if(ts_i < 7 && ts & 0x1 == 0) {
+	ts_i = 0;
+      }
+    } else {
+      timestamp += (ts << 2 * ts_i);
+      ts_i++;
+    }
   }
 
+  // Convert timestamp to picoseconds from the 65MHz clock (~15ns cycle):
+  timestamp *= static_cast<uint64_t>(1. / 65. * 1e6);
+}
+
+bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
+
+  auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+
+  const size_t header_offset = 8;
+  auto datablock0 = ev->GetBlock(0);
+
+  // Get configured burst length from header:
+  uint32_t burst_length = (static_cast<uint32_t>(datablock0.at(3)) << 8) | datablock0.at(2);
+
+  // Check total available data against expected event size:
+  if(datablock0.size() < burst_length * 128 * 2 * 16 + 16) {
+    // FIXME throw something at someone?
+    return false;
+  }
+
+  std::cout << "Burst: " << std::hex << burst_length << std::endl;
+  
+  // Read waveforms
   std::vector<std::vector<uint16_t>> waveforms;
   waveforms.resize(16);
 
+  uint32_t size_ADC0 = (static_cast<uint32_t>(datablock0.at(7)) << 24)
+                     + (static_cast<uint32_t>(datablock0.at(6)) << 16)
+                     + (static_cast<uint32_t>(datablock0.at(5)) << 8)
+                     + (datablock0.at(4) << 0);
+  uint32_t size_ADC1 = (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 7)) << 24)
+                     + (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 6)) << 16)
+                     + (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 5)) << 8)
+                     + (datablock0.at(header_offset + size_ADC0 + 4) << 0);
 
-  for(int w=8; w<8+size0;w+=2){
-        uint16_t val=datablock0.at(w)+((datablock0.at(w+1) &0x3F)<<8);
-              waveforms.at(((w-8)/2)%8).push_back(val);
-  }
-  uint32_t header2 =(uint32_t (datablock0.at(8+size0+3))<<24)+(uint32_t (datablock0.at(8+size0+2))<<16)+(uint32_t(datablock0.at(8+size0+1))<<8)+(datablock0.at(8+size0)<<0);
-  std::cout << header2 <<std::endl;
+  // Decode channels:
+  uint64_t timestamp0 = 0;
+  uint64_t timestamp1 = 0;
+  decodeChannel(0, datablock0, size_ADC0, header_offset, waveforms, timestamp0);
+  decodeChannel(1, datablock0, size_ADC1, 2 * header_offset + size_ADC0, waveforms, timestamp1);
 
-  for(int w=16+size0; w<16+size0*2;w+=2){
-        uint16_t val=datablock0.at(w)+((datablock0.at(w+1) &0x3F)<<8);
-              waveforms.at(8+((w-8)/2)%8).push_back(val);
-  }
+
+  // Prepare output plane:
+  eudaq::StandardPlane plane(0, "Caribou", "AD9249");
+  plane.SetSizeZS(4, 4, 1);
 
   // ch0+1 baseline 8k
   // ch2+8 baseline 3.5k
@@ -75,7 +112,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
         if((baseline.at(counter)+1000)<point){
 //        std::cout << int(point)<<", ";
             auto p = mapping.at(counter);
-        plane.PushPixel(3-p.first,p.second, point, time);
+        plane.PushPixel(3-p.first,p.second, point, timestamp0);
 
 //        std::cout << 3-p.first<<"\t"<<3-p.second<<std::endl;
   //      break;
@@ -87,20 +124,20 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
 
-
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
 
   // Store frame begin and end in picoseconds
 
-  d2->SetTimeBegin((time-1) * 1000);
-  d2->SetTimeEnd((time+1) * 1000);
-  //std::cout << time<<std::endl;
+  d2->SetTimeBegin(timestamp0);
+  d2->SetTimeEnd(timestamp0);
+
   // Identify the detetor type
   d2->SetDetectorType("AD9249");
   // Indicate that data was successfully converted
   return true;
 }
+
 /*
  *  Erics python reference
  *
