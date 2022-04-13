@@ -68,7 +68,7 @@ The above mentioned three components are sufficient for converting the basic par
 static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Raw");
 \end{listing}
 So if an event or sub-event announces itself with the tag \lstinline[style=cpp]{"Ex0Raw"}, it will be sent to this converter for adequate conversion. 
-\lstinputlisting[label=ls:ex0raw2std, style=cpp]{../../user/example/module/src/Ex0RawEvent2TTreeEventConverter.cc}
+\lstinputlisting[label=ls:ex0raw2ttree, style=cpp]{../../user/example/module/src/Ex0RawEvent2TTreeEventConverter.cc}
 
 In this example, the content of data blocks is a vector of integers while \lstinline[style=cpp]{block_id}s are also integers so they are simply stored to respective branches without any further treatment. One of the important things to consider at this point is that the number of blocks cannot be known beforehand and they may very event to event. Therefore it will not be possible to book the \lstinline[style=cpp]{TTree} branches in advance. Hence these branches are created on the go as the blocks are identified in the \lstinline[style=cpp]{raw} event. The converter checks if the branch is already there for a specific \lstinline[style=cpp]{block_id} and fills it. If the branch is not there, it creates it. For more complex type of data blocks, an optimized approach can be adopted to store the member variables in a list of branches, as leaves of a branch etc, according to suitability for the hardware data. 
 

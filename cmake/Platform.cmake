@@ -1,6 +1,42 @@
-set(CMAKE_CXX_STANDARD 14)
 set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Check for standard to use
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-std=c++17 SUPPORT_STD_CXX17)
+check_cxx_compiler_flag(-std=c++14 SUPPORT_STD_CXX14)
+
+# Check ROOT
+set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+set(ROOT_DIR $ENV{ROOTSYS}/cmake)
+find_package(ROOT QUIET)
+if(${ROOT_FOUND})
+  if(ROOT_USE_FILE)
+    include(${ROOT_USE_FILE})
+  endif()
+  # Downgrade to C++14 if ROOT is not build with C++17 support
+  IF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+1[7z].*")
+    IF(NOT SUPPORT_STD_CXX17)
+      MESSAGE(FATAL_ERROR "ROOT was built with C++17 support but current compiler doesn't support it")
+    ENDIF()
+  ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+1[14y].*")
+    SET(CMAKE_CXX_STANDARD 14)
+  ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std=c\\+\\+.*")
+    MESSAGE(FATAL_ERROR "ROOT was built with an unsupported C++ version: ${ROOT_CXX_FLAGS}")
+  ELSE()
+    MESSAGE(FATAL_ERROR "Could not deduce ROOT's C++ version from build flags: ${ROOT_CXX_FLAGS}")
+  ENDIF()
+else()
+  # Try activating the highest compiler standard available
+  if(SUPPORT_STD_CXX17)
+    set(CMAKE_CXX_STANDARD 17)
+  else()
+    if(SUPPORT_STD_CXX14)
+      set(CMAKE_CXX_STANDARD 14)
+    endif()
+  endif()
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(WIN32)
   if(NOT MSVC)

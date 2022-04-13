@@ -187,9 +187,9 @@ namespace eudaq {
     try{
       if(ev->IsBORE()){
 	if(GetConfiguration())
-	  ev->SetTag("EUDAQ_CONFIG", to_string(*GetConfiguration()));
+	  ev->SetTag("EUDAQ_CONFIG_DC", to_string(*GetConfiguration()));
 	if(GetInitConfiguration())
-	  ev->SetTag("EUDAQ_CONFIG_INIT", to_string(*GetInitConfiguration()));
+	  ev->SetTag("EUDAQ_CONFIG_INIT_DC", to_string(*GetInitConfiguration()));
       }
       
       ev->SetRunN(GetRunNumber());
@@ -204,7 +204,7 @@ namespace eudaq {
       std::unique_lock<std::mutex> lk(m_mtx_sender);
       auto senders = m_senders;
       lk.unlock();
-      if(m_evt_c%m_fraction != 0){
+      if(m_evt_c%m_fraction != 0 && m_evt_c!=1){
 	return;
       }
       for(auto &e: senders){

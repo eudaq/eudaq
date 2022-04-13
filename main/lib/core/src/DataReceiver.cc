@@ -211,7 +211,8 @@ namespace eudaq {
 	    m_fut_async_fwd.get();
 	  }
 	}
-	catch(...){
+	catch(std::exception &e){
+	  std::cerr<<e.what()<<std::endl;
 	  EUDAQ_WARN("DataReceiver: Connection execption at listening time");
 	}
       }

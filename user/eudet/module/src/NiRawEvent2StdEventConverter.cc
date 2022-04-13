@@ -10,19 +10,19 @@ class NiRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
   void DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
-		   const uint8_t *const d, const size_t l32) const;
+           const uint8_t *const d, const size_t l32, bool fix_pivot = false) const;
   static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawDataEvent");
 };
-  
+
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
     Register<NiRawEvent2StdEventConverter>(NiRawEvent2StdEventConverter::m_id_factory);
-}  
+}
 
 bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-  
+
   static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5};
-  //TODO: number of telescope plane may be less than 6. Decode additional tags 
+  //TODO: number of telescope plane may be less than 6. Decode additional tags
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   if(!ev)
     return false;
@@ -38,13 +38,14 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
     d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
   }
-    
+
   auto &rawev = *ev;
   if (rawev.NumBlocks() < 2 || rawev.GetBlock(0).size() < 20 ||
       rawev.GetBlock(1).size() < 20) {
     EUDAQ_WARN("Ignoring bad event " + std::to_string(rawev.GetEventNumber()));
     return false;
   }
+  auto use_all_hits = (conf != nullptr ? bool(conf->Get("use_all_hits",0)) : false);
 
   const std::vector<uint8_t> &data0 = rawev.GetBlock(0);
   const std::vector<uint8_t> &data1 = rawev.GetBlock(1);
@@ -68,7 +69,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 		 std::to_string(len0) + ", " + std::to_string(len0_h) +
 		 ")");
       len0 = std::max(len0, len0_h);
-    }    
+    }
     if (len1 != len1_h) {
       EUDAQ_WARN("Mismatched lengths decoding second frame (" +
 		 std::to_string(len1) + ", " + std::to_string(len1_h) +
@@ -82,7 +83,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 		 ")");
       break;
     }
-    
+
     if (len1 * 4 + 12 > data1.end() - it1) {
       EUDAQ_WARN("Bad length in second frame,  len1 * 4 + 12 > data1.end()-it1 ("+
 		 std::to_string(len1 * 4 + 12)+" > "+ std::to_string(data1.end()-it1)+
@@ -94,8 +95,8 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     plane.SetSizeZS(1152, 576, 0, 2, eudaq::StandardPlane::FLAG_WITHPIVOT |
 		    eudaq::StandardPlane::FLAG_DIFFCOORDS);
     plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
-    DecodeFrame(plane, 0, &it0[8], len0);
-    DecodeFrame(plane, 1, &it1[8], len1);
+    DecodeFrame(plane, 0, &it0[8], len0, use_all_hits);
+    DecodeFrame(plane, 1, &it1[8], len1, use_all_hits);
     d2->AddPlane(plane);
 
     bool advance_one_block_0 = false;
@@ -128,7 +129,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 }
 
 void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
-					       const uint8_t *const d, const size_t l32) const{
+                           const uint8_t *const d, const size_t l32, bool fix_pivot) const{
   std::vector<uint16_t> vec;
   for (size_t i = 0; i < l32; ++i) {
     vec.push_back(eudaq::getlittleendian<uint16_t>(d+i*4));
@@ -142,7 +143,7 @@ void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, cons
     if (i+1+numstates > lvec){ //offset+ [row] + [column......]
       break;
     }
-    bool pivot = (row >= (plane.PivotPixel() / 16));
+    bool pivot = (fix_pivot ? 1-fm_n : (row >= (plane.PivotPixel() / 16)));
     for (uint16_t s = 0; s < numstates; ++s) {
       uint16_t v = vec.at(++i);
       uint16_t column = v >> 2 & 0x7ff;
@@ -152,5 +153,5 @@ void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, cons
       }
     }
   }
-      
+
 }
