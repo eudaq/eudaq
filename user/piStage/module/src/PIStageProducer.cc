@@ -122,9 +122,9 @@ void PIStageProducer::DoConfigure(){
   if(!m_allow_changes)
       EUDAQ_THROW("Refusing to change position as the run is still ongoing");
 
-  double pX     = conf->Get("positionX",-10000);
-  double pY     = conf->Get("positionY",-10000);
-  double pRot   = conf->Get("positionRot",-10000);
+  double pX     = conf->Get("positionX",-10000.);
+  double pY     = conf->Get("positionY",-10000.);
+  double pRot   = conf->Get("positionRot",-10000.);
   bool servoX   = conf->Get("keepServoOnX",1);
   bool servoY   = conf->Get("keepServoOnY",1);
   bool servoRot = conf->Get("keepServoOnRot",1);
