@@ -59,10 +59,10 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   const size_t header_offset = 8;
   auto datablock0 = ev->GetBlock(0);
 
-  std::ofstream out;
-  out.open("/tmp/out.dat", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
-  out.write(reinterpret_cast<char*>(datablock0.data()), datablock0.size());
-  out.close();
+  // std::ofstream out;
+  // out.open("/tmp/out.dat", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+  // out.write(reinterpret_cast<char*>(datablock0.data()), datablock0.size());
+  // out.close();
 
   // Get configured burst length from header:
   uint32_t burst_length = (static_cast<uint32_t>(datablock0.at(3)) << 8) | datablock0.at(2);
