@@ -131,9 +131,12 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   d2->AddPlane(plane);
 
   // Store frame begin and end in picoseconds
+  // FIXME USE TRIGGERID
+  d2->SetTimeBegin(0);
+  d2->SetTimeEnd(0);
 
-  d2->SetTimeBegin(timestamp0);
-  d2->SetTimeEnd(timestamp0);
+  // Copy event numer to trigger number:
+  d2->SetTriggerN(ev->GetEventN());
 
   // Identify the detetor type
   d2->SetDetectorType("AD9249");
