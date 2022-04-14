@@ -66,8 +66,10 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   uint32_t burst_length = (static_cast<uint32_t>(datablock0.at(3)) << 8) | datablock0.at(2);
 
   // Check total available data against expected event size:
-  if(datablock0.size() < burst_length * 128 * 2 * 16 + 16) {
+  const size_t evt_length = burst_length * 128 * 2 * 16 + 16;
+  if(datablock0.size() < evt_length) {
     // FIXME throw something at someone?
+    std::cout << "Event length " << datablock0.size() << " not enough for full event, requires " << evt_length << std::endl;
     return false;
   }
 
