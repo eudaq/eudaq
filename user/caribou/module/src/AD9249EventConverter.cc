@@ -2,6 +2,8 @@
 
 
 #include "utils/log.hpp"
+
+#include<algorithm>
 #include <fstream>
 
 using namespace eudaq;
@@ -15,7 +17,7 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
 
   // Timestamp index
   size_t ts_i = 0;
-    
+
   for(size_t i = offset; i < offset + size; i += 2) {
     // Channel is ADC half times channels plus channel number within data block
     size_t ch = adc * 8 + ((i - offset) / 2) % 8;
@@ -28,7 +30,7 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
     if(ts_i >= 28) {
       continue;
     }
-    
+
     // Treat timestamp data
     uint8_t ts = (data.at(i+1) >> 6);
 
@@ -70,7 +72,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   std::cout << "Burst: " << std::hex << burst_length << std::endl;
-  
+
   // Read waveforms
   std::vector<std::vector<uint16_t>> waveforms;
   waveforms.resize(16);
