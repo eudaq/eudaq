@@ -2,6 +2,7 @@
 
 
 #include "utils/log.hpp"
+#include <fstream>
 
 using namespace eudaq;
 
@@ -20,7 +21,7 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
     size_t ch = adc * 8 + ((i - offset) / 2) % 8;
 
     // Get waveform data
-    uint16_t val = data.at(i) + (static_cast<uint16_t>(data.at(i+1)) & 0x3F) << 8;
+    uint16_t val = data.at(i) + ((static_cast<uint16_t>(data.at(i+1)) & 0x3F) << 8);
     waveforms.at(ch).push_back(val);
 
     // If we have a full timestamp, skip the rest:
@@ -47,12 +48,17 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
   timestamp *= static_cast<uint64_t>(1. / 65. * 1e6);
 }
 
-bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
+bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
   const size_t header_offset = 8;
   auto datablock0 = ev->GetBlock(0);
+
+  std::ofstream out;
+  out.open("/tmp/out.dat", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+  out.write(reinterpret_cast<char*>(datablock0.data()), datablock0.size());
+  out.close();
 
   // Get configured burst length from header:
   uint32_t burst_length = (static_cast<uint32_t>(datablock0.at(3)) << 8) | datablock0.at(2);
@@ -92,7 +98,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // ch0+1 baseline 8k
   // ch2+8 baseline 3.5k
   // all other 1k
-  std::vector<uint16_t> baseline = {8000,3500,1000,1000,
+  std::vector<uint16_t> baseline = {8500,3500,1000,1000,
                                     8000,1000,1000,1000,
                                     1000,1000,1000,1000,
                                     3500,1000,1000,1000};
@@ -100,27 +106,16 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
                                               {0,3},{0,1},{3,0},{2,2},
                                               {1,1},{0,0},{3,2},{2,3},
                                               {1,0},{2,0},{3,3},{1,3}};
-  int counter =0;
-  // identify channels as hit if 500 above baseline
+
   std::cout<<std::dec <<"_______________ Event __________"<<std::endl;
-  int val = 0;
-  for(auto &waveform : waveforms){
-      val=0;
-      std::cout <<"------------------------------" <<counter<<": "<<waveform.size()<<"-----";
-    for(auto &point : waveform){
-        if(point>val) val=point;
-        if((baseline.at(counter)+1000)<point){
-//        std::cout << int(point)<<", ";
-            auto p = mapping.at(counter);
-        plane.PushPixel(3-p.first,p.second, point, timestamp0);
 
-//        std::cout << 3-p.first<<"\t"<<3-p.second<<std::endl;
-  //      break;
-        }
+  for(size_t ch = 0; ch < waveforms.size(); ch++) {
+    auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
+    if(max > baseline.at(ch) + 1000) {
+      auto p = mapping.at(ch);
+      plane.PushPixel(3-p.first,p.second, max, timestamp0);
     }
-    std::cout << "\t "<<val<< std::endl;
-
-    counter++;
+    std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << '\n';
   }
 
 
