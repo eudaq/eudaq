@@ -34,6 +34,7 @@ namespace eudaq {
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouAD9249Event");
   private:
     void decodeChannel(const size_t adc, const std::vector<uint8_t>& data, size_t size, size_t offset, std::vector<std::vector<uint16_t>>& waveforms, uint64_t& timestamp) const;
+    static size_t trig_;
 };
 
 
