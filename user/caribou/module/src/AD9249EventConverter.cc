@@ -13,6 +13,7 @@ namespace{
   Register<AD9249Event2StdEventConverter>(AD9249Event2StdEventConverter::m_id_factory);
 }
 
+size_t AD9249Event2StdEventConverter::trig_(0);
 void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::vector<uint8_t>& data, size_t size, size_t offset, std::vector<std::vector<uint16_t>>& waveforms, uint64_t& timestamp) const {
 
   // Timestamp index
@@ -53,6 +54,7 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
 bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+  std::cout << "Decoding AD event " << ev->GetEventN() << " trig " << trig_ << std::endl;
 
   const size_t header_offset = 8;
   auto datablock0 = ev->GetBlock(0);
@@ -111,7 +113,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
                                               {0,3},{3,1},{0,1},{2,2},
                                               {0,0},{2,3},{2,0},{1,3}};
 
-  std::cout<<std::dec <<"_______________ Event __________"<<std::endl;
+  std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig " << trig_ << " __________"<<std::endl;
 
   for(size_t ch = 0; ch < waveforms.size(); ch++) {
     auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
@@ -136,7 +138,10 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   d2->SetTimeEnd(0);
 
   // Copy event numer to trigger number:
-  d2->SetTriggerN(ev->GetEventN());
+  //d2->SetTriggerN(ev->GetEventN());
+  // FIXME count our own trigger number - the data colelctor does weird stuff
+  d2->SetTriggerN(trig_);
+  trig_++;
 
   // Identify the detetor type
   d2->SetDetectorType("AD9249");
