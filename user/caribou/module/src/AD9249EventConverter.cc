@@ -39,7 +39,7 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
     if(ch == adc * 8 + 7) {
       // Check if this is a timestamp start - if not, reset timestamp index to zero:
       if(ts_i < 7 && ts & 0x1 == 0) {
-	ts_i = 0;
+        ts_i = 0;
       }
     } else {
       timestamp += (ts << 2 * ts_i);
@@ -101,17 +101,16 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   eudaq::StandardPlane plane(0, "Caribou", "AD9249");
   plane.SetSizeZS(4, 4, 0);
 
-  // ch0+1 baseline 8k
-  // ch2+8 baseline 3.5k
-  // all other 1k
-  std::vector<uint16_t> baseline = {8500,3500,1000,1000,
-                                    8000,1000,1000,1000,
-                                    1000,1000,1000,1000,
-                                    3500,1000,1000,1000};
-  std::vector<std::pair<uint,uint>> mapping ={{1,2},{2,1},{0,2},{3,0},
-                                              {1,1},{3,2},{1,0},{3,3},
-                                              {0,3},{3,1},{0,1},{2,2},
-                                              {0,0},{2,3},{2,0},{1,3}};
+  // Channels are sorted like ADC0: A1 C1 E1 ...
+  //                          ADC1: B1 D1 F1 ...
+  std::vector<std::pair<uint,uint>> mapping = {{1,2},{0,2},{1,1},{1,0},{0,3},{0,1},{0,0},{2,0},
+                                               {2,1},{3,0},{3,2},{3,3},{3,1},{2,2},{2,3},{1,3}};
+
+  // AD9249 channels to pixel matrix map:
+  // A2, H2, F2, H1
+  // C1, A1, D2, F1
+  // C2, E1, B1, B2
+  // E2, G1, G2, D1
 
   std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig " << trig_ << " __________"<<std::endl;
 
@@ -122,7 +121,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     bool hit = false;
     if(max - min > 1000) {
       auto p = mapping.at(ch);
-      plane.PushPixel(3-p.first,p.second, max - min, timestamp0);
+      plane.PushPixel(p.first,p.second, max - min, timestamp0);
       hit = true;
     }
     std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
