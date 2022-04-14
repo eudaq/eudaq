@@ -113,11 +113,15 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   for(size_t ch = 0; ch < waveforms.size(); ch++) {
     auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
-    if(max > baseline.at(ch) + 1000) {
+    auto min = *std::min_element(waveforms[ch].begin(), waveforms[ch].end());
+
+    bool hit = false;
+    if(max - min > 1000) {
       auto p = mapping.at(ch);
       plane.PushPixel(3-p.first,p.second, max, timestamp0);
+      hit = true;
     }
-    std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << '\n';
+    std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
   }
 
 
