@@ -120,7 +120,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
     bool hit = false;
     if(max - min > 1000) {
       auto p = mapping.at(ch);
-      plane.PushPixel(3-p.first,p.second, max, timestamp0);
+      plane.PushPixel(3-p.first,p.second, max - min, timestamp0);
       hit = true;
     }
     std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
