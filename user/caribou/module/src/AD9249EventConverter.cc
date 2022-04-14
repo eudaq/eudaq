@@ -97,7 +97,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Prepare output plane:
   eudaq::StandardPlane plane(0, "Caribou", "AD9249");
-  plane.SetSizeZS(4, 4, 1);
+  plane.SetSizeZS(4, 4, 0);
 
   // ch0+1 baseline 8k
   // ch2+8 baseline 3.5k
