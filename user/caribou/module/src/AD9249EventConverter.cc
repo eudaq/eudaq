@@ -1,46 +1,50 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
-
 #include "utils/log.hpp"
 
-#include<algorithm>
+#include <algorithm>
 #include <fstream>
 
 using namespace eudaq;
 
-namespace{
-  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
-  Register<AD9249Event2StdEventConverter>(AD9249Event2StdEventConverter::m_id_factory);
+namespace {
+  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
+      AD9249Event2StdEventConverter>(
+      AD9249Event2StdEventConverter::m_id_factory);
 }
 
 size_t AD9249Event2StdEventConverter::trig_(0);
-void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::vector<uint8_t>& data, size_t size, size_t offset, std::vector<std::vector<uint16_t>>& waveforms, uint64_t& timestamp) const {
+void AD9249Event2StdEventConverter::decodeChannel(
+    const size_t adc, const std::vector<uint8_t> &data, size_t size,
+    size_t offset, std::vector<std::vector<uint16_t>> &waveforms,
+    uint64_t &timestamp) const {
 
   // Timestamp index
   size_t ts_i = 0;
 
-  for(size_t i = offset; i < offset + size; i += 2) {
+  for (size_t i = offset; i < offset + size; i += 2) {
     // Channel is ADC half times channels plus channel number within data block
     size_t ch = adc * 8 + ((i - offset) / 2) % 8;
 
     // Get waveform data
-    uint16_t val = data.at(i) + ((static_cast<uint16_t>(data.at(i+1)) & 0x3F) << 8);
+    uint16_t val =
+        data.at(i) + ((static_cast<uint16_t>(data.at(i + 1)) & 0x3F) << 8);
     waveforms.at(ch).push_back(val);
 
     // If we have a full timestamp, skip the rest:
-    if(ts_i >= 28) {
+    if (ts_i >= 28) {
       continue;
     }
 
     // Treat timestamp data
-    uint8_t ts = (data.at(i+1) >> 6);
+    uint8_t ts = (data.at(i + 1) >> 6);
 
     // Channel 7 (or 15) have status bits only:
-    if(ch == adc * 8 + 7) {
-      // Check if this is a timestamp start - if not, reset timestamp index to zero:
-      if(ts_i < 7 && ts & 0x1 == 0) {
+    if (ch == adc * 8 + 7) {
+      // Check if this is a timestamp start - if not, reset timestamp index to
+      // zero:
+      if (ts_i < 7 && ts & 0x1 == 0) {
         ts_i = 0;
-
       }
     } else {
       timestamp += (ts << 2 * ts_i);
@@ -52,54 +56,63 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
   timestamp *= static_cast<uint64_t>(1. / 65. * 1e6);
 }
 
-bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
-  
-  auto threshold_trig = conf ?conf->Get("threshold_trig",1000) : 1000;
-  auto threshold_low = conf ? conf->Get("threshold_low",101) : 101;                                                                                                                                                                                               
+bool AD9249Event2StdEventConverter::Converting(
+    eudaq::EventSPC d1, eudaq::StandardEventSP d2,
+    eudaq::ConfigurationSPC conf) const {
+
+  auto threshold_trig = conf ? conf->Get("threshold_trig", 1000) : 1000;
+  auto threshold_low = conf ? conf->Get("threshold_low", 101) : 101;
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  //  std::cout << "Decoding AD event " << ev->GetEventN() << " trig " << trig_ << std::endl;
+  //  std::cout << "Decoding AD event " << ev->GetEventN() << " trig " << trig_
+  //  << std::endl;
 
   const size_t header_offset = 8;
   auto datablock0 = ev->GetBlock(0);
 
   // std::ofstream out;
-  // out.open("/tmp/out.dat", std::ofstream::out | std::ofstream::binary | std::ofstream::app);
-  // out.write(reinterpret_cast<char*>(datablock0.data()), datablock0.size());
-  // out.close();
+  // out.open("/tmp/out.dat", std::ofstream::out | std::ofstream::binary |
+  // std::ofstream::app); out.write(reinterpret_cast<char*>(datablock0.data()),
+  // datablock0.size()); out.close();
 
   // Get configured burst length from header:
-  uint32_t burst_length = (static_cast<uint32_t>(datablock0.at(3)) << 8) | datablock0.at(2);
+  uint32_t burst_length =
+      (static_cast<uint32_t>(datablock0.at(3)) << 8) | datablock0.at(2);
 
   // Check total available data against expected event size:
   const size_t evt_length = burst_length * 128 * 2 * 16 + 16;
-  if(datablock0.size() < evt_length) {
+  if (datablock0.size() < evt_length) {
     // FIXME throw something at someone?
-    //std::cout << "Event length " << datablock0.size() << " not enough for full event, requires " << evt_length << std::endl;
+    // std::cout << "Event length " << datablock0.size() << " not enough for
+    // full event, requires " << evt_length << std::endl;
     return false;
   }
 
-  //std::cout << "Burst: " << std::hex << burst_length << std::endl;
+  // std::cout << "Burst: " << std::hex << burst_length << std::endl;
 
   // Read waveforms
   std::vector<std::vector<uint16_t>> waveforms;
   waveforms.resize(16);
 
-  uint32_t size_ADC0 = (static_cast<uint32_t>(datablock0.at(7)) << 24)
-                     + (static_cast<uint32_t>(datablock0.at(6)) << 16)
-                     + (static_cast<uint32_t>(datablock0.at(5)) << 8)
-                     + (datablock0.at(4) << 0);
-  uint32_t size_ADC1 = (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 7)) << 24)
-                     + (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 6)) << 16)
-                     + (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 5)) << 8)
-                     + (datablock0.at(header_offset + size_ADC0 + 4) << 0);
+  uint32_t size_ADC0 = (static_cast<uint32_t>(datablock0.at(7)) << 24) +
+                       (static_cast<uint32_t>(datablock0.at(6)) << 16) +
+                       (static_cast<uint32_t>(datablock0.at(5)) << 8) +
+                       (datablock0.at(4) << 0);
+  uint32_t size_ADC1 =
+      (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 7))
+       << 24) +
+      (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 6))
+       << 16) +
+      (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 5))
+       << 8) +
+      (datablock0.at(header_offset + size_ADC0 + 4) << 0);
 
   // Decode channels:
   uint64_t timestamp0 = 0;
   uint64_t timestamp1 = 0;
   decodeChannel(0, datablock0, size_ADC0, header_offset, waveforms, timestamp0);
-  decodeChannel(1, datablock0, size_ADC1, 2 * header_offset + size_ADC0, waveforms, timestamp1);
-
+  decodeChannel(1, datablock0, size_ADC1, 2 * header_offset + size_ADC0,
+                waveforms, timestamp1);
 
   // Prepare output plane:
   eudaq::StandardPlane plane(0, "Caribou", "AD9249");
@@ -107,8 +120,9 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Channels are sorted like ADC0: A1 C1 E1 ...
   //                          ADC1: B1 D1 F1 ...
-  std::vector<std::pair<int,int>> mapping = {{1,2},{0,2},{1,1},{1,0},{0,3},{0,1},{0,0},{2,0},
-                                               {2,1},{3,0},{3,2},{3,3},{3,1},{2,2},{2,3},{1,3}};
+  std::vector<std::pair<int, int>> mapping = {
+      {1, 2}, {0, 2}, {1, 1}, {1, 0}, {0, 3}, {0, 1}, {0, 0}, {2, 0},
+      {2, 1}, {3, 0}, {3, 2}, {3, 3}, {3, 1}, {2, 2}, {2, 3}, {1, 3}};
 
   // AD9249 channels to pixel matrix map:
   // A2, H2, F2, H1
@@ -116,44 +130,50 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // C2, E1, B1, B2
   // E2, G1, G2, D1
 
-  //std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig " << trig_ << " __________"<<std::endl;
+  // std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig
+  // " << trig_ << " __________"<<std::endl;
 
-  std::map<std::pair<int,int>,std::pair<int,bool>> amplitudes;
-  for(size_t ch = 0; ch < waveforms.size(); ch++) {
+  std::map<std::pair<int, int>, std::pair<int, bool>> amplitudes;
+  for (size_t ch = 0; ch < waveforms.size(); ch++) {
     auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
     auto min = *std::min_element(waveforms[ch].begin(), waveforms[ch].end());
 
     bool hit = false;
-    amplitudes[mapping.at(ch)]=std::pair<int,bool>(max-min,false);
+    amplitudes[mapping.at(ch)] = std::pair<int, bool>(max - min, false);
     //    if(max - min > threshold_trig) {
     //  auto p = mapping.at(ch);
     //  plane.PushPixel(p.first,p.second, max - min, timestamp0);
     //  hit = true;
     // }
-    //std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
+    // std::cout << "------------------------------" << ch <<": "<<
+    // waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --")
+    // << '\n';
   }
-  for(auto & p : amplitudes){
-    if(p.second.first > threshold_trig){
+  for (auto &p : amplitudes) {
+    if (p.second.first > threshold_trig) {
       // add the seed pixel if not added
-      if(!p.second.second){
-	plane.PushPixel(p.first.first,p.first.second, p.second.first, timestamp0);
-	p.second.second=true;
+      if (!p.second.second) {
+        plane.PushPixel(p.first.first, p.first.second, p.second.first,
+                        timestamp0);
+        p.second.second = true;
       }
       // loop over all surrounding once
-      for(auto & pp : amplitudes){
-	if((std::abs(pp.first.first-p.first.first)<=1)
-	   && (std::abs(pp.first.second-p.first.second)<=1)){
-	  if(pp.second.first > threshold_low){
-	    if(!pp.second.second){                                                                                                                                                                                                                     
-	      plane.PushPixel(pp.first.first,pp.first.second, pp.second.first, timestamp0);                                                                                                                                                               
-	      pp.second.second=true;                                                                                                                                                                                                                     
-	    } 
-	  }
-
-	} 
+      for (auto &pp : amplitudes) {
+        if ((std::abs(pp.first.first - p.first.first) <= 1) &&
+            (std::abs(pp.first.second - p.first.second) <= 1)) {
+          if (pp.second.first > threshold_low) {
+            if (!pp.second.second) {
+              plane.PushPixel(pp.first.first, pp.first.second, pp.second.first,
+                              timestamp0);
+              pp.second.second = true;
+            }
+          }
+        }
       }
     }
-    // std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
+    // std::cout << "------------------------------" << ch <<": "<<
+    // waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --")
+    // << '\n';
   }
 
   // Add the plane to the StandardEvent
@@ -165,7 +185,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   d2->SetTimeEnd(0);
 
   // Copy event numer to trigger number:
-  //d2->SetTriggerN(ev->GetEventN());
+  // d2->SetTriggerN(ev->GetEventN());
   // FIXME count our own trigger number - the data colelctor does weird stuff
   d2->SetTriggerN(trig_);
   trig_++;
