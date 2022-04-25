@@ -64,8 +64,7 @@ bool AD9249Event2StdEventConverter::Converting(
   auto threshold_low = conf ? conf->Get("threshold_low", 101) : 101;
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  //  std::cout << "Decoding AD event " << ev->GetEventN() << " trig " << trig_
-  //  << std::endl;
+  EUDAQ_DEBUG("Decoding AD event " + to_string(ev->GetEventN()) " trig " + to_string(trig_));
 
   const size_t header_offset = 8;
   auto datablock0 = ev->GetBlock(0);
@@ -88,7 +87,7 @@ bool AD9249Event2StdEventConverter::Converting(
     return false;
   }
 
-  // std::cout << "Burst: " << std::hex << burst_length << std::endl;
+  EUDAQ_DEBUG("  Burst: " << to_string(std::hex << burst_length));
 
   // Read waveforms
   std::vector<std::vector<uint16_t>> waveforms;
@@ -130,8 +129,7 @@ bool AD9249Event2StdEventConverter::Converting(
   // C2, E1, B1, B2
   // E2, G1, G2, D1
 
-  // std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig
-  // " << trig_ << " __________"<<std::endl;
+  EUDAQ_DEBUG(("_______________ Event " + to_string(ev->GetEventN()) " trig " + to_string(trig_) + " __________");
 
   std::map<std::pair<int, int>, std::pair<int, bool>> amplitudes;
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
@@ -145,9 +143,7 @@ bool AD9249Event2StdEventConverter::Converting(
     //  plane.PushPixel(p.first,p.second, max - min, timestamp0);
     //  hit = true;
     // }
-    // std::cout << "------------------------------" << ch <<": "<<
-    // waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --")
-    // << '\n';
+    EUDAQ_DEBUG("------------------------------" + to_string(ch) + ": " to_string(waveforms[ch].size()) + "-----" + '\t' + to_string(max) + (hit ? " HIT" : " --"));
   }
   for (auto &p : amplitudes) {
     if (p.second.first > threshold_trig) {
@@ -171,9 +167,6 @@ bool AD9249Event2StdEventConverter::Converting(
         }
       }
     }
-    // std::cout << "------------------------------" << ch <<": "<<
-    // waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --")
-    // << '\n';
   }
 
   // Add the plane to the StandardEvent
