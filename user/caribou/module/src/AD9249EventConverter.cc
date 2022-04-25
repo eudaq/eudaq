@@ -40,6 +40,7 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
       // Check if this is a timestamp start - if not, reset timestamp index to zero:
       if(ts_i < 7 && ts & 0x1 == 0) {
         ts_i = 0;
+
       }
     } else {
       timestamp += (ts << 2 * ts_i);
@@ -57,7 +58,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   auto threshold_low = conf ? conf->Get("threshold_low",101) : 101;                                                                                                                                                                                               
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  std::cout << "Decoding AD event " << ev->GetEventN() << " trig " << trig_ << std::endl;
+  //  std::cout << "Decoding AD event " << ev->GetEventN() << " trig " << trig_ << std::endl;
 
   const size_t header_offset = 8;
   auto datablock0 = ev->GetBlock(0);
@@ -74,11 +75,11 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   const size_t evt_length = burst_length * 128 * 2 * 16 + 16;
   if(datablock0.size() < evt_length) {
     // FIXME throw something at someone?
-    std::cout << "Event length " << datablock0.size() << " not enough for full event, requires " << evt_length << std::endl;
+    //std::cout << "Event length " << datablock0.size() << " not enough for full event, requires " << evt_length << std::endl;
     return false;
   }
 
-  std::cout << "Burst: " << std::hex << burst_length << std::endl;
+  //std::cout << "Burst: " << std::hex << burst_length << std::endl;
 
   // Read waveforms
   std::vector<std::vector<uint16_t>> waveforms;
@@ -115,7 +116,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // C2, E1, B1, B2
   // E2, G1, G2, D1
 
-  std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig " << trig_ << " __________"<<std::endl;
+  //std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig " << trig_ << " __________"<<std::endl;
 
   std::map<std::pair<int,int>,std::pair<int,bool>> amplitudes;
   for(size_t ch = 0; ch < waveforms.size(); ch++) {
@@ -152,9 +153,8 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 	} 
       }
     }
-    std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
+    // std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
   }
-
 
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
