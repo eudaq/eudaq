@@ -52,6 +52,9 @@ void AD9249Event2StdEventConverter::decodeChannel(const size_t adc, const std::v
 }
 
 bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
+  
+  auto threshold_trig = conf ?conf->Get("threshold_trig",1000) : 1000;
+  auto threshold_low = conf ? conf->Get("threshold_low",101) : 101;                                                                                                                                                                                               
 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   std::cout << "Decoding AD event " << ev->GetEventN() << " trig " << trig_ << std::endl;
@@ -103,7 +106,7 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Channels are sorted like ADC0: A1 C1 E1 ...
   //                          ADC1: B1 D1 F1 ...
-  std::vector<std::pair<uint,uint>> mapping = {{1,2},{0,2},{1,1},{1,0},{0,3},{0,1},{0,0},{2,0},
+  std::vector<std::pair<int,int>> mapping = {{1,2},{0,2},{1,1},{1,0},{0,3},{0,1},{0,0},{2,0},
                                                {2,1},{3,0},{3,2},{3,3},{3,1},{2,2},{2,3},{1,3}};
 
   // AD9249 channels to pixel matrix map:
@@ -114,15 +117,40 @@ bool AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   std::cout<<std::dec <<"_______________ Event " << ev->GetEventN() << " trig " << trig_ << " __________"<<std::endl;
 
+  std::map<std::pair<int,int>,std::pair<int,bool>> amplitudes;
   for(size_t ch = 0; ch < waveforms.size(); ch++) {
     auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
     auto min = *std::min_element(waveforms[ch].begin(), waveforms[ch].end());
 
     bool hit = false;
-    if(max - min > 1000) {
-      auto p = mapping.at(ch);
-      plane.PushPixel(p.first,p.second, max - min, timestamp0);
-      hit = true;
+    amplitudes[mapping.at(ch)]=std::pair<int,bool>(max-min,false);
+    //    if(max - min > threshold_trig) {
+    //  auto p = mapping.at(ch);
+    //  plane.PushPixel(p.first,p.second, max - min, timestamp0);
+    //  hit = true;
+    // }
+    //std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
+  }
+  for(auto & p : amplitudes){
+    if(p.second.first > threshold_trig){
+      // add the seed pixel if not added
+      if(!p.second.second){
+	plane.PushPixel(p.first.first,p.first.second, p.second.first, timestamp0);
+	p.second.second=true;
+      }
+      // loop over all surrounding once
+      for(auto & pp : amplitudes){
+	if((std::abs(pp.first.first-p.first.first)<=1)
+	   && (std::abs(pp.first.second-p.first.second)<=1)){
+	  if(pp.second.first > threshold_low){
+	    if(!pp.second.second){                                                                                                                                                                                                                     
+	      plane.PushPixel(pp.first.first,pp.first.second, pp.second.first, timestamp0);                                                                                                                                                               
+	      pp.second.second=true;                                                                                                                                                                                                                     
+	    } 
+	  }
+
+	} 
+      }
     }
     std::cout << "------------------------------" << ch <<": "<< waveforms[ch].size() << "-----" << '\t' << max << (hit ? " HIT" : " --") << '\n';
   }
