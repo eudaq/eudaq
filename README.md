@@ -170,5 +170,10 @@ For Initialising and Configuring you have to Load to set the path to the the ini
 - ../eudaq/user/example/misc/Ex0.ini
 - ../eudaq/user/example/misc/Ex0.conf
 
+As an example, the config files used during 2S module beam tests at DESY are given in: 
+- ../eudaq/user/cms-phase2/misc/cmsph2_beam.ini
+- ../eudaq/user/cms-phase2/misc/cmsph2_beam.conf
+- ../eudaq/user/cms-phase2/misc/thresholdscan.scan
+
 A description for operating the EUDET-type beam telescopes is under construction:
 https://telescopes.desy.de/User_manual
