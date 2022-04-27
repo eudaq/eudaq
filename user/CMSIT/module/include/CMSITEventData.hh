@@ -8,6 +8,9 @@
   Support:               email to alkiviadis.papadopoulos@cern.ch
 */
 
+#ifndef CMSITEventData_H
+#define CMSITEventData_H
+
 #include <cstdint>
 #include <ctime>
 #include <string>
@@ -77,3 +80,5 @@ struct EventData
 };
 
 } // namespace CMSITEventData
+
+#endif
