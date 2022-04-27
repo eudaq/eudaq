@@ -174,6 +174,7 @@ As an example, the config files used during 2S module beam tests at DESY are giv
 - ../eudaq/user/cms-phase2/misc/cmsph2_beam.ini
 - ../eudaq/user/cms-phase2/misc/cmsph2_beam.conf
 - ../eudaq/user/cms-phase2/misc/thresholdscan.scan
+To start the RunControl and all necessary modules to run the beam test at DESY, the STARTRUN.sh script was used which can be found at the same location. 
 
 A description for operating the EUDET-type beam telescopes is under construction:
 https://telescopes.desy.de/User_manual
