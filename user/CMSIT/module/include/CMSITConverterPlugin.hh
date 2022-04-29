@@ -8,17 +8,24 @@
   Support:               email to alkiviadis.papadopoulos@cern.ch
 */
 
+#ifndef CMSITConverterPlugin_H
+#define CMSITConverterPlugin_H
+
 #include "CMSITEventData.hh"
 
 #include "eudaq/RawEvent.hh"
 #include "eudaq/StdEventConverter.hh"
 
+#include <cmath>
+
 // ROOT
+#ifdef ROOTSYS
 #include "TCanvas.h"
 #include "TDirectory.h"
 #include "TFile.h"
 #include "TH2D.h"
 #include "TKey.h"
+#endif
 
 // BOOST
 #include "boost/archive/binary_iarchive.hpp"
@@ -72,11 +79,10 @@ class TheConverter
   public:
     struct calibrationParameters
     {
+#ifdef ROOTSYS
         TFile* calibrationFile;
         TH2D*  hSlope;
         TH2D*  hIntercept;
-        float  slopeVCal2Charge;
-        float  interceptVCal2Charge;
 
         calibrationParameters()
         {
@@ -84,6 +90,9 @@ class TheConverter
             hSlope          = nullptr;
             hIntercept      = nullptr;
         }
+#endif
+        float  slopeVCal2Charge;
+        float  interceptVCal2Charge;
     };
 
     void ConverterFor25x100origR1C0(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
@@ -108,7 +117,9 @@ class CMSITConverterPlugin : public StdEventConverter
   private:
     void         Initialize();
     TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const;
+#ifdef ROOTSYS
     TH2D*        FindHistogram(const std::string& nameInHisto);
+#endif
     bool         Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const;
     int          ComputePlaneId(const uint32_t                       hybridId,
                                 const uint32_t                       chipId,
@@ -125,3 +136,5 @@ class CMSITConverterPlugin : public StdEventConverter
 };
 
 } // namespace eudaq
+
+#endif

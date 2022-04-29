@@ -19,7 +19,7 @@ void TheConverter::ConverterFor25x100origR1C0(int& row, int& col, int& charge, c
 {
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
     row    = (2 * row + 1) - (col % 2);
-    col    = std::floor(col / 2.);
+    col    = floor(col / 2.);
     col += (!isSingleChip) * nCols * lane;
 }
 
@@ -27,7 +27,7 @@ void TheConverter::ConverterFor25x100origR0C0(int& row, int& col, int& charge, c
 {
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
     row    = 2 * row + (col % 2);
-    col    = std::floor(col / 2.);
+    col    = floor(col / 2.);
     col += (!isSingleChip) * nCols * lane;
 }
 
@@ -45,12 +45,13 @@ void TheConverter::operator()(int& row, int& col, int& charge, const int& lane, 
 
 int TheConverter::ChargeConverter(const int row, const int col, const int ToT, const calibrationParameters& calibPar, const int& chargeCut)
 {
+#ifdef ROOTSYS
     if((calibPar.hIntercept != nullptr) && (calibPar.hSlope != nullptr) && (calibPar.hSlope->GetBinContent(col + 1, row + 1) != 0))
     {
         auto value = (ToT - calibPar.hIntercept->GetBinContent(col + 1, row + 1)) / calibPar.hSlope->GetBinContent(col + 1, row + 1) * calibPar.slopeVCal2Charge + calibPar.interceptVCal2Charge;
         return (value > chargeCut ? value : -1);
     }
-
+#endif
     return (ToT > chargeCut ? ToT : -1);
 }
 
@@ -157,12 +158,12 @@ void CMSITConverterPlugin::Initialize()
 
                     if(calibFileName != "")
                     {
-                        calibMap[calibration]                 = TheConverter::calibrationParameters();
+                        calibMap[calibration] = TheConverter::calibrationParameters();
+#ifdef ROOTSYS
                         calibMap[calibration].calibrationFile = TFile::Open(calibFileName.c_str());
                         if((calibMap[calibration].calibrationFile != nullptr) && (calibMap[calibration].calibrationFile->IsOpen() == true))
                         {
                             std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Opening calibration file: " << calibFileName << std::endl;
-
                             TDirectory* rootDir          = gDirectory;
                             calibMap[calibration].hSlope = CMSITConverterPlugin::FindHistogram("Slope2D");
 
@@ -177,6 +178,7 @@ void CMSITConverterPlugin::Initialize()
                         }
                         else
                             std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName << std::endl;
+#endif
                     }
                 }
 
@@ -232,6 +234,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     return theConverter;
 }
 
+#ifdef ROOTSYS
 TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto)
 {
     TDirectory* dir = gDirectory;
@@ -254,6 +257,7 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto)
 
     return nullptr;
 }
+#endif
 
 bool CMSITConverterPlugin::Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const
 {
