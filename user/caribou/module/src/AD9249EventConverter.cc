@@ -43,7 +43,7 @@ void AD9249Event2StdEventConverter::decodeChannel(
     if (ch == adc * 8 + 7) {
       // Check if this is a timestamp start - if not, reset timestamp index to
       // zero:
-      if (ts_i < 7 && ts & 0x1 == 0) {
+      if (ts_i < 8 && (ts & 0x1) == 0) {
         ts_i = 0;
       }
     } else {
