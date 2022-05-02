@@ -14,6 +14,12 @@ namespace {
 }
 
 size_t AD9249Event2StdEventConverter::trig_(0);
+bool AD9249Event2StdEventConverter::m_configured(0);
+bool AD9249Event2StdEventConverter::m_useTime(0);
+int64_t AD9249Event2StdEventConverter::m_runStartTime(-1);
+int AD9249Event2StdEventConverter::threshold_trig(1000);
+int AD9249Event2StdEventConverter::threshold_low(101);
+
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
     size_t offset, std::vector<std::vector<uint16_t>> &waveforms,
@@ -60,9 +66,18 @@ bool AD9249Event2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
     eudaq::ConfigurationSPC conf) const {
 
-  auto threshold_trig = conf ? conf->Get("threshold_trig", 1000) : 1000;
-  auto threshold_low = conf ? conf->Get("threshold_low", 101) : 101;
+  if( !m_configured ){
+    threshold_trig = conf->Get("threshold_trig", 1000);
+    threshold_low = conf->Get("threshold_low", 101);
+    m_useTime = conf->Get("use_time_stamp", false);
 
+    EUDAQ_DEBUG( "Loaded parameters from configuration file." );
+    EUDAQ_DEBUG( " threshold_low  = " + to_string( threshold_low ));
+    EUDAQ_DEBUG( " threshold_trig  = " + to_string( threshold_trig ));
+    EUDAQ_DEBUG( " use_time_stamp  = " + to_string( m_useTime ));
+
+    m_configured = true;
+  }
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   EUDAQ_DEBUG("Decoding AD event " + to_string(ev->GetEventN()) + " trig " +
               to_string(trig_));
@@ -113,6 +128,11 @@ bool AD9249Event2StdEventConverter::Converting(
   decodeChannel(0, datablock0, size_ADC0, header_offset, waveforms, timestamp0);
   decodeChannel(1, datablock0, size_ADC1, 2 * header_offset + size_ADC0,
                 waveforms, timestamp1);
+
+  // store time of the run start
+  if(m_runStartTime < 0){
+    m_runStartTime = timestamp0; // just use one of them for now
+  }
 
   // Prepare output plane:
   eudaq::StandardPlane plane(0, "Caribou", "AD9249");
@@ -176,14 +196,16 @@ bool AD9249Event2StdEventConverter::Converting(
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
 
-  // Store frame begin and end in picoseconds
-  // FIXME USE TRIGGERID
-  d2->SetTimeBegin(0);
-  d2->SetTimeEnd(0);
-
-  // Copy event numer to trigger number:
-  // d2->SetTriggerN(ev->GetEventN());
-  // FIXME count our own trigger number - the data colelctor does weird stuff
+  // use timestamps
+  if( m_useTime ){
+    d2->SetTimeBegin(timestamp0 - m_runStartTime);
+    d2->SetTimeEnd(timestamp0 - m_runStartTime);
+  }
+  // forcing corry to fall back on trigger IDs
+  else{
+    d2->SetTimeBegin(0);
+    d2->SetTimeEnd(0);
+  }
   d2->SetTriggerN(trig_);
   trig_++;
 
