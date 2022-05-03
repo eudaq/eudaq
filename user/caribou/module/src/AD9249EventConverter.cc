@@ -43,7 +43,7 @@ void AD9249Event2StdEventConverter::decodeChannel(
     }
 
     // Treat timestamp data
-    uint8_t ts = (data.at(i + 1) >> 6);
+    uint64_t ts = (data.at(i + 1) >> 6);
 
     // Channel 7 (or 15) have status bits only:
     if (ch == adc * 8 + 7) {
