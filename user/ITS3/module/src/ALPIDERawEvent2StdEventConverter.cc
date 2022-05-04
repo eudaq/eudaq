@@ -46,7 +46,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
     // read from config file
     m_useTime = conf->Get("use_time_stamp", false );
 
-    EUDAQ_DEBUG( "Loaded parameters from configuration file." );
+    EUDAQ_DEBUG( "Using configuration:" );
     EUDAQ_DEBUG( " use_time_stamp  = " + m_useTime ? "true" : "false");
 
     m_configured = true;

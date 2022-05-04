@@ -45,13 +45,13 @@ int main(int /*argc*/, const char **argv) {
   // prevent warning if no config file name given
   else if ( file_conf.Value().empty() ){}
   // but warn if attempt failed
-  else{ 
+  else{
     std::cout << "WARNING, config file '" << file_conf.Value() << "' not found!" << std::endl;
-  }    
+  }
   // build shared pointer
   const eudaq::Configuration const_eu_cfg = eu_cfg;
-  eudaq::ConfigurationSPC config_spc = std::make_shared<const eudaq::Configuration>(eu_cfg);
-  
+  eudaq::ConfigurationSPC config_spc = std::make_shared<const eudaq::Configuration>(const_eu_cfg);
+
 
   eudaq::FileReaderUP reader;
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
@@ -101,7 +101,7 @@ int main(int /*argc*/, const char **argv) {
         std::cout<< ">>>>>"<< evstd->NumPlanes() <<"<<<<"<<std::endl;
       }
     }
-    
+
     event_count ++;
   }
   std::cout<< "There are "<< event_count << "Events"<<std::endl;
