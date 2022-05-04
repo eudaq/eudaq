@@ -71,7 +71,7 @@ bool AD9249Event2StdEventConverter::Converting(
     threshold_low = conf->Get("threshold_low", 101);
     m_useTime = conf->Get("use_time_stamp", false);
 
-    EUDAQ_DEBUG( "Loaded parameters from configuration file." );
+    EUDAQ_DEBUG( "Using configuration:" );
     EUDAQ_DEBUG( " threshold_low  = " + to_string( threshold_low ));
     EUDAQ_DEBUG( " threshold_trig  = " + to_string( threshold_trig ));
     EUDAQ_DEBUG( " use_time_stamp  = " + to_string( m_useTime ));
