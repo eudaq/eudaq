@@ -74,7 +74,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
       ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
       ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
       ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
-    LOG(INFO) << "\tcol \trow \thit \tvalid \tbc \tcclck t\fclck \tts";
+    LOG(INFO)
+        << "\tcol \trow \thit \tvalid \tbc \tcclck t\fclck \tts \tfs \tfe";
   }
 
   // go through pixels and add info to plane
@@ -98,31 +99,44 @@ bool dSiPMEvent2StdEventConverter::Converting(
     auto clockCoarse = ds_pix->getCoarseTime();
     auto clockFine = ds_pix->getFineTime();
 
-    // assemble time info from bunchCounter and clocks. we have a certain amount
-    // of dead time, due to the readout and frame reset. For now I am shifting
-    // the begin by that dead time, which is prpbably wrong. FIXME we do get the
-    // bunch counter id for every pixel, from which we can derive the start and
-    // the end of each frame. re-calculate for checks
+    // assemble time info from bunchCounter and clocks. we have a dead time of
+    // 4 * 1 / 204 MHz due between read going low and frame reset going high.
+    // 3 * 1 / 408 MHz of that dead time are at the begin of a bunch, the rest
+    // is at the end.
+    // all three clocks should start with 1, which i subtract. For the coarse
+    // clock 0 should never appear, unless the clocks and frame reset are out
+    // of sync. for the fine clock 0 may appear but should be mapped to 32.
+    // we should check if we ever actually read 31.
+    if (clockCoarse == 0) {
+      LOG(ERROR) << "Coarse clock == 0. This should not happen";
+    }
+    if (clockFine == 31) {
+      LOG(DEBUG) << "Fine clock == 31. Interesting!";
+    }
+    if (clockFine == 0) {
+      clockFine = 32;
+    }
 
     // frame start
     // bunch counter (starts with 1) runs with 3 MHz clock in ps +
-    // a fixed offset for dead time, 4 cycles of the 204 MHz clock in ps
+    // a fixed offset for the first part of the dead time, 3 cycles of the 408
+    // MHz clock in ps
     uint64_t thisPixFrameStart =
-        static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 4. * 1e6 / 204.);
+        static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408.);
 
     // frame end
-    // frame start + frame length (3 MHz clock - dead time)
+    // frame start + frame length (3 MHz clock - rest of the dead time)
     uint64_t thisPixFrameEnd =
-        static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 1e6 / 3);
+        static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
 
     // timestamp
-    // frame start +
+    // frame start + partial dead time shift
     // coarse clock runs with 408 MHz in ps +
     // fine clock runs with (408 * 32 = 13056) MHz in ps +
     // shift by dead time.
     uint64_t timestamp = static_cast<uint64_t>(
-        (bunchCount - 1) * 1e6 / 3. + clockCoarse * 1e6 / 408. +
-        clockFine * 1e6 / 13056. + 4. * 1e6 / 204.);
+        (bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
+        (clockCoarse - 1) * 1e6 / 408. + (clockFine - 1) * 1e6 / 13056.);
 
     // check frame start
     if (frameStart > 0 && frameStart != thisPixFrameStart) {
@@ -152,7 +166,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
         ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
       LOG(INFO) << "\t" << col << "\t" << row << "\t" << hitBit << "\t"
                 << validBit << "\t" << bunchCount << "\t" << clockCoarse << "\t"
-                << clockFine << "\t" << timestamp;
+                << clockFine << "\t" << timestamp << "\t" << frameStart << "\t"
+                << frameEnd;
     }
 
     // assemble pixel and add to plane
