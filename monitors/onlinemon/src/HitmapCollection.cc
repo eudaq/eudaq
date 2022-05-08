@@ -144,8 +144,7 @@ HitmapHistos *HitmapCollection::getHitmapHistos(std::string sensor, int id) {
 void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
   HitmapHistos *tmphisto = new HitmapHistos(p, _mon);
   _map[p] = tmphisto;
-  // std::cout << "Registered Plane: " << p.getName() << " " << p.getID() <<
-  // std::endl;
+  std::cout << "Registered Plane: " << p.getName() << " " << p.getID() << std::endl;
   // PlaneRegistered(p.getName(),p.getID());
   if (_mon != NULL) {
     if (_mon->getOnlineMon() == NULL) {
@@ -183,7 +182,7 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     _mon->getOnlineMon()->registerHisto(
         tree, getHitmapHistos(p.getName(), p.getID())->getClusterMapHisto(),
         "COLZ", 0);
-    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4) || (p.is_RD53A)) {
+    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4) || (p.is_RD53A) || (p.is_RD53B)) {
 	
 
       sprintf(tree, "%s/Sensor %i/TOTHeat", p.getName().c_str(), p.getID());

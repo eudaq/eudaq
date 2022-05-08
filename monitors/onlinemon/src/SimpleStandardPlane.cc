@@ -256,8 +256,12 @@ void SimpleStandardPlane::setPixelType(std::string name) {
     is_RD53A = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
-} else if(name.find("Rd53a") != std::string::npos) {
+  } else if(name.find("Rd53a") != std::string::npos) {
     is_RD53A = true;
+    is_UNKNOWN = false;
+    AnalogPixelType = true;
+  } else if(name.find("Rd53b") != std::string::npos) {
+    is_RD53B = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
   } else if(name=="CLICpix" || name=="timepix3") {

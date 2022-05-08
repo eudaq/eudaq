@@ -43,6 +43,15 @@ namespace eudaq {
 #ifndef WIN32 // some linux Stuff //$$change
                 (void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
+		int prodID = std::stoi(bore.GetTag("PRODID"));
+		std::cout << "TAG: " << bore.GetTag("PRODID") << std::endl;
+                std::string DUTTYPE = bore.GetTag("DUTTYPE");
+                if(DUTTYPE=="RD53A") {
+                   FrontEndType[prodID] = "Rd53a";
+                } else if(DUTTYPE=="RD53B") {
+                   FrontEndType[prodID] = "Rd53b";
+                };
+		std::cout << "YarrConverterPlugin: front end type " << FrontEndType.at(prodID) << " declared in BORE for producer " << prodID << std::endl;
             }
 
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
@@ -50,12 +59,24 @@ namespace eudaq {
             // Again, this is just an example, adapted it for the actual data layout.
             virtual bool GetStandardSubEvent(StandardEvent &sev,
                     const Event &ev) const {
-                // If the event type is used for different sensors
-                // they can be differentiated here
-                std::string sensortype = "Rd53a";
+                // Differentiate between different sensors
+		int prodID = std::stoi(ev.GetTag("PRODID"));
+
                 // Create a StandardPlane representing one sensor plane
                 int base_id = 110;
-                int width = 400, height = 192;
+
+                int width  = 400;
+                int height = 192;
+
+                if(FrontEndType.at(prodID)=="Rd53a"){
+                    width  = 400;
+                    height = 192;
+		    //std::cout << "accessing Rd53a" << std::endl;
+                } else if (FrontEndType.at(prodID)=="Rd53b") {
+                    width  = 400;
+                    height = 384;
+		    //std::cout << "accessing Rd53b" << std::endl;
+                };
                 
                 const RawDataEvent & my_ev = dynamic_cast<const RawDataEvent &>(ev);
                 int ev_id = my_ev.GetTag("EventNumber", -1); 
@@ -64,7 +85,7 @@ namespace eudaq {
                     eudaq::RawDataEvent::data_t block=my_ev.GetBlock(i);
                     int plane_id = base_id + my_ev.GetID(i);
                      
-                    StandardPlane plane(plane_id, EVENT_TYPE, sensortype);
+                    StandardPlane plane(plane_id, EVENT_TYPE, FrontEndType.at(prodID));
                     
                     // Set the number of pixels
                     plane.SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
@@ -80,8 +101,13 @@ namespace eudaq {
                         uint32_t nHits = *((uint16_t*)(&block[it])); it+= sizeof(uint16_t);
                         for (unsigned i=0; i<nHits; i++) {
                             Fei4Hit hit = *((Fei4Hit*)(&block[it])); it+= sizeof(Fei4Hit);
-			    //                            plane.PushPixel(hit.col,hit.row,hit.tot);
-                            plane.PushPixel(hit.col,hit.row,hit.tot,false,l1id);
+			    //plane.PushPixel(hit.col,hit.row,hit.tot);
+			    //std::cout << "col: " << hit.col  << " row: " << hit.row << " tot: " << hit.tot << " l1id: " << l1id << " tag: " << tag << std::endl;
+                            if(FrontEndType.at(prodID)=="Rd53a"){
+                                plane.PushPixel(hit.col,hit.row,hit.tot,false,l1id);
+                            } else if(FrontEndType.at(prodID)=="Rd53b"){
+                                plane.PushPixel(hit.col,hit.row,hit.tot,false,tag);
+                            }
                         }
                         fragmentCnt++;
                     }
@@ -210,7 +236,8 @@ namespace eudaq {
             YARRConverterPlugin()
                 : DataConverterPlugin(EVENT_TYPE) {}
 
-            // Information extracted in Initialize() can be stored here:
+            // Information extracted in Initialize()
+            std::map<int,std::string> FrontEndType;
             unsigned m_run;
 
             // The single instance of this converter plugin
