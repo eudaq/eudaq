@@ -37,7 +37,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
   }
 
   // Data container:
-  caribou::pearyRawData rawdata;
+  std::vector<uint32_t> rawdata;
 
   // Retrieve data from event
   if (ev->NumBlocks() == 1) {
@@ -50,7 +50,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     auto data_length = datablock.size();
 
     // translate data block into pearyRawData format
-    rawdata.resize(data_length / sizeof(uintptr_t));
+    rawdata.resize(data_length / sizeof(uint32_t));
     memcpy(&rawdata[0], &datablock[0], data_length);
 
     // print some info
@@ -72,7 +72,10 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
   // call frame decoder from dSiPM device in peary, to translate pearyRawData to
   // pearydata
-  auto frame = decoder.decodeFrame<bool>(rawdata, m_zeroSupp);
+  auto frame = decoder.decodeFrame(rawdata, 1);
+  //  auto frame = decoder.decodeFrame(rawdata, m_zeroSupp);
+  EUDAQ_DEBUG("Found " + to_string(rawdata.size()) + " words in frame.");
+  EUDAQ_DEBUG("Decoded into " + to_string(frame.size()) + " pixels in frame.");
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "Caribou", "dSiPM");
