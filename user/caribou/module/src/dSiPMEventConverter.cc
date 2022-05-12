@@ -19,11 +19,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
     eudaq::ConfigurationSPC conf) const {
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
-  if (!m_configured) {
+  if (!m_configured && conf != NULL) {
     m_zeroSupp = conf->Get("zero_suppression", true);
 
-    LOG(DEBUG) << "Using configuration:";
-    LOG(DEBUG) << "  zero_suppression = " << m_zeroSupp;
+    EUDAQ_INFO("Using configuration:");
+    EUDAQ_INFO("  zero_suppression = " + to_string(m_zeroSupp));
 
     m_configured = true;
   }
@@ -54,11 +54,19 @@ bool dSiPMEvent2StdEventConverter::Converting(
     memcpy(&rawdata[0], &datablock[0], data_length);
 
     // print some info
-    LOG(DEBUG) << "Data block contains " << data_length << " words.";
+    EUDAQ_DEBUG("Data block contains " + to_string(data_length) + " words.");
+    // for(const auto &word : datablock){
+    //  std::cout << std::hex << (uint16_t)word;
+    //}
+    // std::cout << std::endl;
+    // for(const auto &word : rawdata){
+    //  std::cout << std::hex << (uintptr_t)word;
+    //}
+    // std::cout << std::endl;
 
   } // data from good event
   else {
-    LOG(WARNING) << "Ignoring bad event " << ev->GetEventNumber();
+    EUDAQ_WARN("Ignoring bad event " + to_string(ev->GetEventNumber()));
     return false;
   } // bad event
 
@@ -74,8 +82,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
       ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
       ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
       ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
-    LOG(INFO)
-        << "\tcol \trow \thit \tvalid \tbc \tcclck t\fclck \tts \tfs \tfe";
+    EUDAQ_INFO("\tcol \trow \thit \tvalid \tbc \tcclck \tfclck \tts \tfs \tfe");
   }
 
   // go through pixels and add info to plane
@@ -107,12 +114,12 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // clock 0 should never appear, unless the clocks and frame reset are out
     // of sync. for the fine clock 0 may appear but should be mapped to 32.
     // we should check if we ever actually read 31.
-    if (clockCoarse == 0) {
-      LOG(ERROR) << "Coarse clock == 0. This should not happen";
-    }
-    if (clockFine == 31) {
-      LOG(DEBUG) << "Fine clock == 31. Interesting!";
-    }
+    // if (clockCoarse == 0) {
+    //  EUDAQ_ERROR("Coarse clock == 0. This should not happen");
+    //}
+    // if (clockFine == 31) {
+    //  EUDAQ_DEBUG("Fine clock == 31. Interesting!");
+    //}
     if (clockFine == 0) {
       clockFine = 32;
     }
@@ -139,35 +146,38 @@ bool dSiPMEvent2StdEventConverter::Converting(
         (clockCoarse - 1) * 1e6 / 408. + (clockFine - 1) * 1e6 / 13056.);
 
     // check frame start
-    if (frameStart > 0 && frameStart != thisPixFrameStart) {
-      LOG(WARNING) << "This frame start does not match prev. pixels frame "
-                      "start from (same event)";
-      LOG(WARNING) << " bunch counter ID " << bunchCount;
-      LOG(WARNING) << " this frame start " << thisPixFrameStart;
-      LOG(WARNING) << " previous frame start " << frameStart;
-      return false;
-    }
+    // if (frameStart > 0 && frameStart != thisPixFrameStart) {
+    //  EUDAQ_WARN("This frame start does not match prev. pixels frame start
+    //  (from same event)");
+    // EUDAQ_WARN("  bunch counter ID " + to_string(bunchCount));
+    // EUDAQ_WARN("  this frame start " + to_string(thisPixFrameStart));
+    // EUDAQ_WARN("  previous frame start " + to_string(frameStart));
+    // return false;
+    //}
     // update frame start and end
     frameStart = thisPixFrameStart;
     frameEnd = thisPixFrameEnd;
 
     // check valid bits
-    if (hitBit == true && validBit == false) {
-      LOG(WARNING)
-          << "This pixel is hit, but the valid bit for the quadrant is not set";
-      LOG(WARNING) << " col and row " << col << " " << row;
-      return false;
-    }
+    // if (hitBit == true && validBit == false) {
+    // EUDAQ_WARN("This pixel is hit, but the valid bit for the quadrant is not
+    // set"); EUDAQ_WARN("  col and row " + to_string(col) + " " +
+    // to_string(row)); return false;
+    //}
 
     // print some info for some events:
-    if (ev->GetEventNumber() == 1 ||
-        ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
-        ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
-        ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
-      LOG(INFO) << "\t" << col << "\t" << row << "\t" << hitBit << "\t"
-                << validBit << "\t" << bunchCount << "\t" << clockCoarse << "\t"
-                << clockFine << "\t" << timestamp << "\t" << frameStart << "\t"
-                << frameEnd;
+    if (1) {
+      //    if (ev->GetEventNumber() == 1 ||
+      // ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
+      // ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
+      // ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
+      EUDAQ_INFO("\t" + to_string(col) + "\t" + to_string(row) + "\t" +
+                 to_string(hitBit) + "\t" + to_string(validBit) + "\t" +
+                 to_string(bunchCount) + "\t" +
+                 to_string(static_cast<uint64_t>(clockCoarse)) + "\t" +
+                 to_string(static_cast<uint64_t>(clockFine)) + "\t" +
+                 to_string(timestamp) + "\t" + to_string(frameStart) + "\t" +
+                 to_string(frameEnd));
     }
 
     // assemble pixel and add to plane
