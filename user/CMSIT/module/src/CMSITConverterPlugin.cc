@@ -191,6 +191,8 @@ void CMSITConverterPlugin::Initialize()
 
         cfgFile.close();
     }
+    else
+        std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't find cfg file: " << CFG_FILE_NAME << " (it's not mandatory)" << std::endl;
 }
 
 TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const
