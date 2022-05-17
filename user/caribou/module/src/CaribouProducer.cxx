@@ -37,6 +37,7 @@ private:
   size_t number_of_subevents_{0};
 
   std::string adc_signal_;
+  uint64_t adc_freq_;
 };
 
 namespace{
@@ -134,9 +135,12 @@ void CaribouProducer::DoConfigure() {
 
   // Select which ADC signal to regularly fetch:
   adc_signal_ = config->Get("adc_signal", "");
+  adc_freq_ = config->Get("adc_frequency", 1000);
+
   if(!adc_signal_.empty()) {
     // Try it out directly to catch misconfiugration
     auto adc_value = device_->getADC(adc_signal_);
+    EUDAQ_USER("Will probe ADC signal \"" + adc_signal_ + "\" every " + std::to_string(adc_freq_) + " events");
   }
 
   // Allow to stack multiple sub-events
@@ -212,10 +216,11 @@ void CaribouProducer::RunLoop() {
         event->AddBlock(0, data);
 
         // Query ADC if wanted:
-        if(m_ev%1000 == 0) {
+        if(m_ev%adc_freq_ == 0) {
           if(!adc_signal_.empty()) {
             auto adc_value = device_->getADC(adc_signal_);
             LOG(DEBUG) << "Reading ADC: " << adc_value << "V";
+            EUDAQ_USER("ADC reading: " + adc_signal_ + " =  " + std::to_string(adc_value));
             event->SetTag(adc_signal_, adc_value);
           }
         }
