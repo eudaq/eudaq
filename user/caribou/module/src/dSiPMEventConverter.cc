@@ -14,6 +14,7 @@ namespace {
 bool dSiPMEvent2StdEventConverter::m_configured(0);
 bool dSiPMEvent2StdEventConverter::m_zeroSupp(1);
 uint64_t dSiPMEvent2StdEventConverter::m_trigger(0);
+uint64_t dSiPMEvent2StdEventConverter::m_frame(0);
 
 bool dSiPMEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
@@ -79,9 +80,13 @@ bool dSiPMEvent2StdEventConverter::Converting(
   EUDAQ_DEBUG("Decoded into " + to_string(frame.size()) + " pixels in frame.");
 
   // decode trailer with time info from FPGA
-  auto [ts_control_fpga, ts_readout_fpga, trigger_id_fpga] = decoder.decodeTrailer(rawdata);
-  // std::cout << "Coss-check: " << (ts_readout_fpga & 0xFFF) << " == " << ts_control_fpga << " -> " << ts_readout_fpga << std::endl;
-  
+  auto [ts_control_fpga, ts_readout_fpga, trigger_id_fpga] =
+      decoder.decodeTrailer(rawdata);
+  // derive frame counter (inside trigger number)
+  m_frame = (trigger_id_fpga == m_trigger) ? m_frame++ : 0;
+  // store for next frame
+  m_trigger = trigger_id_fpga;
+
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "Caribou", "dSiPM");
 
@@ -197,9 +202,9 @@ bool dSiPMEvent2StdEventConverter::Converting(
   d2->AddPlane(plane);
 
   // Store frame begin and end in picoseconds
-  //d2->SetTimeBegin(frameStart);
-  //d2->SetTimeEnd(frameEnd);
-  //d2->SetTriggerN(m_trigger);
+  // d2->SetTimeBegin(frameStart);
+  // d2->SetTimeEnd(frameEnd);
+  // d2->SetTriggerN(trigger_id_fpga);
 
   // FIXME sync with timestamps
   d2->SetTimeBegin(0);
@@ -207,24 +212,22 @@ bool dSiPMEvent2StdEventConverter::Converting(
   d2->SetTriggerN(trigger_id_fpga);
 
   /*
-  std::cout << "TIMEINFO_DSIPM: itrg itrg_fpga framestart frameend ts_fpga " << m_trigger
-	    << " " << trigger_id_fpga
-	    << " " << frameStart
-	    << " " << frameEnd
-	    << " " << ts_readout_fpga << std::endl;
+  std::cout << "TIMEINFO_DSIPM: itrg itrg_fpga framestart frameend ts_fpga " <<
+  m_trigger
+            << " " << trigger_id_fpga
+            << " " << frameStart
+            << " " << frameEnd
+            << " " << ts_readout_fpga << std::endl;
   */
 
   // Fixme sync via triggers
-  //d2->SetTimeBegin(0);
-  //d2->SetTimeEnd(0);
-  //d2->SetTriggerN(m_trigger);
-  
+  // d2->SetTimeBegin(0);
+  // d2->SetTimeEnd(0);
+  // d2->SetTriggerN(m_trigger);
+
   // Identify the detetor type
   d2->SetDetectorType("dSiPM");
 
-  // Increment trigger counter:
-  m_trigger++;
- 
   // Indicate that data was successfully converted
   return true;
 }
