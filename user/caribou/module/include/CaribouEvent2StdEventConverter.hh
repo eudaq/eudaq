@@ -46,6 +46,7 @@ namespace eudaq {
   private:
     static bool m_configured;
     static bool m_zeroSupp;
+    static uint64_t m_trigger;
   };
 
   class CLICpix2Event2StdEventConverter: public eudaq::StdEventConverter{

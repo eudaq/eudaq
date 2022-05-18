@@ -13,6 +13,7 @@ namespace {
 
 bool dSiPMEvent2StdEventConverter::m_configured(0);
 bool dSiPMEvent2StdEventConverter::m_zeroSupp(1);
+uint64_t dSiPMEvent2StdEventConverter::m_trigger(0);
 
 bool dSiPMEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
@@ -198,6 +199,9 @@ bool dSiPMEvent2StdEventConverter::Converting(
   // Identify the detetor type
   d2->SetDetectorType("dSiPM");
 
+  // Increment trigger counter:
+  m_trigger++;
+ 
   // Indicate that data was successfully converted
   return true;
 }
