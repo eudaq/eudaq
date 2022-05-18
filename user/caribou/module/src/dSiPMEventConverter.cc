@@ -228,6 +228,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
   // Identify the detetor type
   d2->SetDetectorType("dSiPM");
 
+  // Copy tags
+  for(const auto& tag : d1->GetTags()) {
+    d2->SetTag(tag.first, tag.second);
+  }
+
   // Indicate that data was successfully converted
   return true;
 }
