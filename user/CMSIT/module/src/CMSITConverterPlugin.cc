@@ -71,7 +71,9 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
             TheConverter::calibrationParameters theCalibPar;
             std::string                         chipTypeFromFile;
             const auto&                         theChip = theEvent.chipData[i];
-            const auto                          planeId = CMSITConverterPlugin::ComputePlaneId(theChip.hybridId, theChip.chipId, chipTypeFromFile, theCalibPar, chargeCut, triggerIdLow, triggerIdHigh);
+            const auto                          planeId =
+                CMSITConverterPlugin::ComputePlaneId(theChip.hybridId + theChip.chipId / 10, theChip.chipId % 10, chipTypeFromFile, theCalibPar, chargeCut, triggerIdLow, triggerIdHigh);
+	    // @TMP@: temporary fix for when there is a mistake in coding the hybridId and chipId, e.g. hybridId = 0, chipId = 14 instead of hybridId = 1, chipId = 4
 
             if(std::find(planeIDs.begin(), planeIDs.end(), planeId) == planeIDs.end())
             {
@@ -97,7 +99,6 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                         myString.str("");
                         myString << "[EUDAQ::CMSITConverterPlugin::GetStandardSubEvent] WARNING: possible loss of synchronization, current trigger ID " << theEvent.tluTriggerId
                                  << ", previus trigger ID " << theTLUtriggerId_previous;
-                        std::cout << myString << std::endl;
                         EUDAQ_ERROR(myString.str().c_str());
                         exit(EXIT_FAILURE);
                     }
@@ -149,7 +150,6 @@ void CMSITConverterPlugin::Initialize()
         myString.clear();
         myString.str("");
         myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Found cfg file: " << CFG_FILE_NAME;
-        std::cout << myString << std::endl;
         EUDAQ_INFO(myString.str().c_str());
         theConfigFromFile = std::make_shared<Configuration>(Configuration(cfgFile));
 
@@ -177,7 +177,6 @@ void CMSITConverterPlugin::Initialize()
                             myString.clear();
                             myString.str("");
                             myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Opening calibration file: " << calibFileName;
-                            std::cout << myString << std::endl;
                             EUDAQ_INFO(myString.str().c_str());
 
                             TDirectory* rootDir          = gDirectory;
@@ -197,7 +196,6 @@ void CMSITConverterPlugin::Initialize()
                             myString.clear();
                             myString.str("");
                             myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName;
-                            std::cout << myString << std::endl;
                             EUDAQ_INFO(myString.str().c_str());
                         }
 #endif
@@ -219,7 +217,6 @@ void CMSITConverterPlugin::Initialize()
         myString.clear();
         myString.str("");
         myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't find cfg file: " << CFG_FILE_NAME << " (it's not mandatory)";
-        std::cout << myString << std::endl;
         EUDAQ_INFO(myString.str().c_str());
     }
 }
@@ -236,7 +233,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
     theConverter.isSingleChip   = true;
 
-    if((cfg.find("25x100") != std::string::npos) ||(cfg.find("100x25") != std::string::npos))
+    if((cfg.find("25x100") != std::string::npos) || (cfg.find("100x25") != std::string::npos))
     {
         nCols /= 2;
         nRows *= 2;
@@ -379,6 +376,7 @@ bool                                                       CMSITConverterPlugin:
 int                                                        CMSITConverterPlugin::theTLUtriggerId_previous = 0;
 std::map<std::string, TheConverter::calibrationParameters> CMSITConverterPlugin::calibMap                 = {};
 std::shared_ptr<Configuration>                             CMSITConverterPlugin::theConfigFromFile        = nullptr;
+std::once_flag                                             CMSITConverterPlugin::callOnce;
 
 namespace
 {
