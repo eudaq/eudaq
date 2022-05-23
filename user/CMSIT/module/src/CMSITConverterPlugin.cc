@@ -71,9 +71,7 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
             TheConverter::calibrationParameters theCalibPar;
             std::string                         chipTypeFromFile;
             const auto&                         theChip = theEvent.chipData[i];
-            const auto                          planeId =
-                CMSITConverterPlugin::ComputePlaneId(theChip.hybridId + theChip.chipId / 10, theChip.chipId % 10, chipTypeFromFile, theCalibPar, chargeCut, triggerIdLow, triggerIdHigh);
-	    // @TMP@: temporary fix for when there is a mistake in coding the hybridId and chipId, e.g. hybridId = 0, chipId = 14 instead of hybridId = 1, chipId = 4
+            const auto                          planeId = CMSITConverterPlugin::ComputePlaneId(theChip.hybridId, theChip.chipId, chipTypeFromFile, theCalibPar, chargeCut, triggerIdLow, triggerIdHigh);
 
             if(std::find(planeIDs.begin(), planeIDs.end(), planeId) == planeIDs.end())
             {
@@ -314,13 +312,13 @@ int CMSITConverterPlugin::ComputePlaneId(const uint32_t                       hy
                                          int&                                 triggerIdHigh) const
 {
     // #######################################################################################################
-    // # Generate a unique planeId: 100 (CMSIT offset) + 10 * hybridId (hybrid index) + chipId (chip index)  #
+    // # Generate a unique planeId: 100 (CMSIT offset) + 100 * hybridId (hybrid index) + chipId (chip index) #
     // # Don't use these ranges (Needs to be unique to each ROC):                                            #
     // # (-) 0-10:  used by NIConverter/MIMOSA                                                               #
     // # (-) 25-30: used by USBPixGen3Converter/FEI-4                                                        #
     // # (-) 30+:   used by BDAQ53Converter/RD53A with same model (30 [BDAQ offset] + 10 * boardId + chipId) #
     // #######################################################################################################
-    int planeId = CMSITplaneIdOffset + hybridId * 10 + chipId;
+    int planeId = CMSITplaneIdOffset + 100 * hybridId + chipId;
 
     // #################
     // # Set chip type #
