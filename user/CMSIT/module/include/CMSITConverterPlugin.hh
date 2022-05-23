@@ -38,7 +38,7 @@ namespace eudaq
 // ######################
 static constexpr char    EVENT_TYPE[] = "CMSIT";
 static const std::string SENSORTYPE("RD53A");
-static const int         NROWS = 192, NCOLS = 400;
+static const int         NROWS = 336, NCOLS = 432;
 static const int         MAXFRAMES = 32;
 static const int         MAXHYBRID = 9, MAXCHIPID = 7;
 static const double      PITCHX = 0.050, PITCHY = 0.050; // [mm]

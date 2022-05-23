@@ -92,8 +92,13 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                 {
                     if(exitIfOutOfSync == true)
                     {
-                        std::cout << "[EUDAQ::CMSITConverterPlugin::GetStandardSubEvent] WARNING: possible loss of synchronization, current trigger ID " << theEvent.tluTriggerId
-                                  << ", previus trigger ID " << theTLUtriggerId_previous << std::endl;
+                        std::stringstream myString;
+                        myString.clear();
+                        myString.str("");
+                        myString << "[EUDAQ::CMSITConverterPlugin::GetStandardSubEvent] WARNING: possible loss of synchronization, current trigger ID " << theEvent.tluTriggerId
+                                 << ", previus trigger ID " << theTLUtriggerId_previous;
+                        std::cout << myString << std::endl;
+                        EUDAQ_ERROR(myString.str());
                         exit(EXIT_FAILURE);
                     }
                 }
@@ -140,7 +145,12 @@ void CMSITConverterPlugin::Initialize()
 
     if(cfgFile.good() == true)
     {
-        std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Found cfg file: " << CFG_FILE_NAME << std::endl;
+        std::stringstream myString;
+        myString.clear();
+        myString.str("");
+        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Found cfg file: " << CFG_FILE_NAME;
+        std::cout << myString << std::endl;
+        EUDAQ_INFO(myString.str());
         theConfigFromFile = std::make_shared<Configuration>(Configuration(cfgFile));
 
         if(theConfigFromFile != nullptr)
@@ -162,8 +172,14 @@ void CMSITConverterPlugin::Initialize()
 #ifdef ROOTSYS
                         calibMap[calibration].calibrationFile = TFile::Open(calibFileName.c_str());
                         if((calibMap[calibration].calibrationFile != nullptr) && (calibMap[calibration].calibrationFile->IsOpen() == true))
+
                         {
-                            std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Opening calibration file: " << calibFileName << std::endl;
+                            myString.clear();
+                            myString.str("");
+                            myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Opening calibration file: " << calibFileName;
+                            std::cout << myString << std::endl;
+                            EUDAQ_INFO(myString.str());
+
                             TDirectory* rootDir          = gDirectory;
                             calibMap[calibration].hSlope = CMSITConverterPlugin::FindHistogram("Slope2D");
 
@@ -177,7 +193,13 @@ void CMSITConverterPlugin::Initialize()
                             calibMap[calibration].interceptVCal2Charge = theConfigFromFile->Get(intercept, 0.);
                         }
                         else
-                            std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName << std::endl;
+                        {
+                            myString.clear();
+                            myString.str("");
+                            myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName;
+                            std::cout << myString << std::endl;
+                            EUDAQ_INFO(myString.str());
+                        }
 #endif
                     }
                 }
@@ -192,7 +214,14 @@ void CMSITConverterPlugin::Initialize()
         cfgFile.close();
     }
     else
-        std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't find cfg file: " << CFG_FILE_NAME << " (it's not mandatory)" << std::endl;
+    {
+        std::stringstream myString;
+        myString.clear();
+        myString.str("");
+        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't find cfg file: " << CFG_FILE_NAME << " (it's not mandatory)";
+        std::cout << myString << std::endl;
+        EUDAQ_INFO(myString.str());
+    }
 }
 
 TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const
