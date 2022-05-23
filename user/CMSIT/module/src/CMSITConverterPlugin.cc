@@ -98,7 +98,7 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                         myString << "[EUDAQ::CMSITConverterPlugin::GetStandardSubEvent] WARNING: possible loss of synchronization, current trigger ID " << theEvent.tluTriggerId
                                  << ", previus trigger ID " << theTLUtriggerId_previous;
                         std::cout << myString << std::endl;
-                        EUDAQ_ERROR(myString.str());
+                        EUDAQ_ERROR(myString.str().c_str());
                         exit(EXIT_FAILURE);
                     }
                 }
@@ -150,7 +150,7 @@ void CMSITConverterPlugin::Initialize()
         myString.str("");
         myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Found cfg file: " << CFG_FILE_NAME;
         std::cout << myString << std::endl;
-        EUDAQ_INFO(myString.str());
+        EUDAQ_INFO(myString.str().c_str());
         theConfigFromFile = std::make_shared<Configuration>(Configuration(cfgFile));
 
         if(theConfigFromFile != nullptr)
@@ -178,7 +178,7 @@ void CMSITConverterPlugin::Initialize()
                             myString.str("");
                             myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Opening calibration file: " << calibFileName;
                             std::cout << myString << std::endl;
-                            EUDAQ_INFO(myString.str());
+                            EUDAQ_INFO(myString.str().c_str());
 
                             TDirectory* rootDir          = gDirectory;
                             calibMap[calibration].hSlope = CMSITConverterPlugin::FindHistogram("Slope2D");
@@ -198,7 +198,7 @@ void CMSITConverterPlugin::Initialize()
                             myString.str("");
                             myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName;
                             std::cout << myString << std::endl;
-                            EUDAQ_INFO(myString.str());
+                            EUDAQ_INFO(myString.str().c_str());
                         }
 #endif
                     }
@@ -220,7 +220,7 @@ void CMSITConverterPlugin::Initialize()
         myString.str("");
         myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't find cfg file: " << CFG_FILE_NAME << " (it's not mandatory)";
         std::cout << myString << std::endl;
-        EUDAQ_INFO(myString.str());
+        EUDAQ_INFO(myString.str().c_str());
     }
 }
 
@@ -236,7 +236,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
     theConverter.isSingleChip   = true;
 
-    if(cfg.find("25x100") != std::string::npos)
+    if((cfg.find("25x100") != std::string::npos) ||(cfg.find("100x25") != std::string::npos))
     {
         nCols /= 2;
         nRows *= 2;
@@ -257,9 +257,9 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 
     theConverter.nCols = nCols;
 
-    if(cfg.find("25x100origR0C0") != std::string::npos)
+    if((cfg.find("25x100origR0C0") != std::string::npos) || (cfg.find("100x25origR0C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
-    else if(cfg.find("25x100origR1C0") != std::string::npos)
+    else if((cfg.find("25x100origR1C0") != std::string::npos) || (cfg.find("100x25origR1C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR1C0;
 
     return theConverter;
