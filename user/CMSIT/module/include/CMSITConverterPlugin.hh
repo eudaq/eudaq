@@ -38,9 +38,9 @@ namespace eudaq
 // ######################
 static constexpr char    EVENT_TYPE[] = "CMSIT";
 static const std::string SENSORTYPE("RD53A");
-static const int         NROWS = 192, NCOLS = 400;
+static const int         NROWS = 336, NCOLS = 432;
 static const int         MAXFRAMES = 32;
-static const int         MAXHYBRID = 9, MAXCHIPID = 7;
+static const int         MAXHYBRID = 9, MAXCHIPID = 20;
 static const double      PITCHX = 0.050, PITCHY = 0.050; // [mm]
 static const int         CMSITplaneIdOffset = 100;
 static const int         MAXTRIGIDCNT       = 32767;
@@ -91,8 +91,8 @@ class TheConverter
             hIntercept      = nullptr;
         }
 #endif
-        float  slopeVCal2Charge;
-        float  interceptVCal2Charge;
+        float slopeVCal2Charge;
+        float interceptVCal2Charge;
     };
 
     void ConverterFor25x100origR1C0(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
@@ -111,6 +111,10 @@ class TheConverter
 class CMSITConverterPlugin : public StdEventConverter
 {
   public:
+    CMSITConverterPlugin()
+    {
+        std::call_once(callOnce, [&] { CMSITConverterPlugin::Initialize(); });
+    }
     bool                  Converting(EventSPC ev, StandardEventSP sev, ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = cstr2hash(EVENT_TYPE);
 
@@ -118,21 +122,22 @@ class CMSITConverterPlugin : public StdEventConverter
     void         Initialize();
     TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const;
 #ifdef ROOTSYS
-    TH2D*        FindHistogram(const std::string& nameInHisto);
+    TH2D* FindHistogram(const std::string& nameInHisto);
 #endif
-    bool         Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const;
-    int          ComputePlaneId(const uint32_t                       hybridId,
-                                const uint32_t                       chipId,
-                                std::string&                         chipTypeFromFile,
-                                TheConverter::calibrationParameters& calibPar,
-                                int&                                 chargeCut,
-                                int&                                 triggerIdLow,
-                                int&                                 triggerIdHigh) const;
+    bool Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const;
+    int  ComputePlaneId(const uint32_t                       hybridId,
+                        const uint32_t                       chipId,
+                        std::string&                         chipTypeFromFile,
+                        TheConverter::calibrationParameters& calibPar,
+                        int&                                 chargeCut,
+                        int&                                 triggerIdLow,
+                        int&                                 triggerIdHigh) const;
 
     static bool                                                       exitIfOutOfSync;
     static int                                                        theTLUtriggerId_previous;
     static std::shared_ptr<Configuration>                             theConfigFromFile;
     static std::map<std::string, TheConverter::calibrationParameters> calibMap;
+    static std::once_flag                                             callOnce;
 };
 
 } // namespace eudaq

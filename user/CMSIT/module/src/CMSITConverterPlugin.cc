@@ -92,8 +92,12 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                 {
                     if(exitIfOutOfSync == true)
                     {
-                        std::cout << "[EUDAQ::CMSITConverterPlugin::GetStandardSubEvent] WARNING: possible loss of synchronization, current trigger ID " << theEvent.tluTriggerId
-                                  << ", previus trigger ID " << theTLUtriggerId_previous << std::endl;
+                        std::stringstream myString;
+                        myString.clear();
+                        myString.str("");
+                        myString << "[EUDAQ::CMSITConverterPlugin::GetStandardSubEvent] WARNING: possible loss of synchronization, current trigger ID " << theEvent.tluTriggerId
+                                 << ", previus trigger ID " << theTLUtriggerId_previous;
+                        EUDAQ_ERROR(myString.str().c_str());
                         exit(EXIT_FAILURE);
                     }
                 }
@@ -140,7 +144,11 @@ void CMSITConverterPlugin::Initialize()
 
     if(cfgFile.good() == true)
     {
-        std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Found cfg file: " << CFG_FILE_NAME << std::endl;
+        std::stringstream myString;
+        myString.clear();
+        myString.str("");
+        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Found cfg file: " << CFG_FILE_NAME;
+        EUDAQ_INFO(myString.str().c_str());
         theConfigFromFile = std::make_shared<Configuration>(Configuration(cfgFile));
 
         if(theConfigFromFile != nullptr)
@@ -162,8 +170,13 @@ void CMSITConverterPlugin::Initialize()
 #ifdef ROOTSYS
                         calibMap[calibration].calibrationFile = TFile::Open(calibFileName.c_str());
                         if((calibMap[calibration].calibrationFile != nullptr) && (calibMap[calibration].calibrationFile->IsOpen() == true))
+
                         {
-                            std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Opening calibration file: " << calibFileName << std::endl;
+                            myString.clear();
+                            myString.str("");
+                            myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> Opening calibration file: " << calibFileName;
+                            EUDAQ_INFO(myString.str().c_str());
+
                             TDirectory* rootDir          = gDirectory;
                             calibMap[calibration].hSlope = CMSITConverterPlugin::FindHistogram("Slope2D");
 
@@ -177,7 +190,12 @@ void CMSITConverterPlugin::Initialize()
                             calibMap[calibration].interceptVCal2Charge = theConfigFromFile->Get(intercept, 0.);
                         }
                         else
-                            std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName << std::endl;
+                        {
+                            myString.clear();
+                            myString.str("");
+                            myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName;
+                            EUDAQ_INFO(myString.str().c_str());
+                        }
 #endif
                     }
                 }
@@ -192,7 +210,13 @@ void CMSITConverterPlugin::Initialize()
         cfgFile.close();
     }
     else
-        std::cout << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't find cfg file: " << CFG_FILE_NAME << " (it's not mandatory)" << std::endl;
+    {
+        std::stringstream myString;
+        myString.clear();
+        myString.str("");
+        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't find cfg file: " << CFG_FILE_NAME << " (it's not mandatory)";
+        EUDAQ_INFO(myString.str().c_str());
+    }
 }
 
 TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const
@@ -207,7 +231,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
     theConverter.isSingleChip   = true;
 
-    if(cfg.find("25x100") != std::string::npos)
+    if((cfg.find("25x100") != std::string::npos) || (cfg.find("100x25") != std::string::npos))
     {
         nCols /= 2;
         nRows *= 2;
@@ -228,9 +252,9 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 
     theConverter.nCols = nCols;
 
-    if(cfg.find("25x100origR0C0") != std::string::npos)
+    if((cfg.find("25x100origR0C0") != std::string::npos) || (cfg.find("100x25origR0C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
-    else if(cfg.find("25x100origR1C0") != std::string::npos)
+    else if((cfg.find("25x100origR1C0") != std::string::npos) || (cfg.find("100x25origR1C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR1C0;
 
     return theConverter;
@@ -288,13 +312,13 @@ int CMSITConverterPlugin::ComputePlaneId(const uint32_t                       hy
                                          int&                                 triggerIdHigh) const
 {
     // #######################################################################################################
-    // # Generate a unique planeId: 100 (CMSIT offset) + 10 * hybridId (hybrid index) + chipId (chip index)  #
+    // # Generate a unique planeId: 100 (CMSIT offset) + 100 * hybridId (hybrid index) + chipId (chip index) #
     // # Don't use these ranges (Needs to be unique to each ROC):                                            #
     // # (-) 0-10:  used by NIConverter/MIMOSA                                                               #
     // # (-) 25-30: used by USBPixGen3Converter/FEI-4                                                        #
     // # (-) 30+:   used by BDAQ53Converter/RD53A with same model (30 [BDAQ offset] + 10 * boardId + chipId) #
     // #######################################################################################################
-    int planeId = CMSITplaneIdOffset + hybridId * 10 + chipId;
+    int planeId = CMSITplaneIdOffset + 100 * hybridId + chipId;
 
     // #################
     // # Set chip type #
@@ -350,6 +374,7 @@ bool                                                       CMSITConverterPlugin:
 int                                                        CMSITConverterPlugin::theTLUtriggerId_previous = 0;
 std::map<std::string, TheConverter::calibrationParameters> CMSITConverterPlugin::calibMap                 = {};
 std::shared_ptr<Configuration>                             CMSITConverterPlugin::theConfigFromFile        = nullptr;
+std::once_flag                                             CMSITConverterPlugin::callOnce;
 
 namespace
 {
