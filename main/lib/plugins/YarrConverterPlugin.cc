@@ -43,6 +43,8 @@ namespace eudaq {
 #ifndef WIN32 // some linux Stuff //$$change
                 (void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
+                std::string event_version = bore.GetTag("YARREVENTVERSION");
+
 		int prodID = std::stoi(bore.GetTag("PRODID"));
 		std::cout << "TAG: " << bore.GetTag("PRODID") << std::endl;
                 std::string DUTTYPE = bore.GetTag("DUTTYPE");
@@ -63,7 +65,8 @@ namespace eudaq {
 		int prodID = std::stoi(ev.GetTag("PRODID"));
 
                 // Create a StandardPlane representing one sensor plane
-                int base_id = 110;
+                int base_id = 110 + prodID * 20; 
+                // assuming that there will be never more than 20 FEs connected to one SPEC/producer; otherwise a more intricate handling is necessary
 
                 int width  = 400;
                 int height = 192;
@@ -238,11 +241,12 @@ namespace eudaq {
 
             // Information extracted in Initialize()
             std::map<int,std::string> FrontEndType;
+            std::map<int,std::string> EventVersion;
             unsigned m_run;
 
             // The single instance of this converter plugin
             static YARRConverterPlugin m_instance;
-    }; // class ExampleConverterPlugin
+    }; // class YarrConverterPlugin
 
     // Instantiate the converter plugin instance
     YARRConverterPlugin YARRConverterPlugin::m_instance;
