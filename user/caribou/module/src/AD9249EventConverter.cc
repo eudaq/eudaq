@@ -59,7 +59,8 @@ void AD9249Event2StdEventConverter::decodeChannel(
   }
 
   // Convert timestamp to picoseconds from the 65MHz clock (~15ns cycle):
-  timestamp *= static_cast<uint64_t>(1. / 65. * 1e6);
+  //  timestamp *= static_cast<uint64_t>(1. / 65. * 1e6);
+  timestamp = static_cast<uint64_t>(timestamp * 1e6 / 65.);
 }
 
 bool AD9249Event2StdEventConverter::Converting(
