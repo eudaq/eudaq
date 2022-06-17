@@ -20,11 +20,63 @@
 #include "EUTelRunHeaderImpl.h"
 #endif
 
+class Version
+{
+    public:
+    Version() : m_version_string("0.0.0.0") { };
+    Version( std::string v ) : m_version_string(v) { };
+    
+    friend bool operator <  (Version u, Version v);
+    friend bool operator >  (Version u, Version v);
+    friend bool operator <= (Version u, Version v);
+    friend bool operator >= (Version u, Version v);
+    friend bool operator == (Version u, Version v);
+    
+    private:
+    std::string m_version_string;
+    
+    int version_compare(std::string v1, std::string v2) {
+       size_t i=0, j=0;
+       while( i < v1.length() || j < v2.length() ) {
+           int acc1=0, acc2=0;
+
+           while (i < v1.length() && v1[i] != '.') {  acc1 = acc1 * 10 + (v1[i] - '0');  i++;  }
+           while (j < v2.length() && v2[j] != '.') {  acc2 = acc2 * 10 + (v2[j] - '0');  j++;  }
+
+           if (acc1 < acc2)  return -1;
+           if (acc1 > acc2)  return +1;
+
+           ++i;
+           ++j;
+        }
+        return 0;
+    }    
+};
+
+bool operator <  (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) == -1;  }
+bool operator >  (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) == +1;  }
+bool operator <= (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) != +1;  }
+bool operator >= (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) != -1;  }
+bool operator == (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) ==  0; }
+
 typedef struct {
     uint16_t col;
     uint16_t row;
     uint16_t tot;
 } Fei4Hit;
+
+
+struct chipInfo {
+    std::string name;
+    std::string chipId; 
+    std::string rx;
+    std::string moduleSize;
+    std::string sensorLayout;
+    std::string pcbType;
+    unsigned int chipLocationOnModule;
+};
+                     
+
 
 namespace eudaq {
 
@@ -47,13 +99,17 @@ namespace eudaq {
 
 		int prodID = std::stoi(bore.GetTag("PRODID"));
 		std::cout << "TAG: " << bore.GetTag("PRODID") << std::endl;
+		
+                m_EventVersion[prodID] = event_version; // only now we have the producer ID available
+                
                 std::string DUTTYPE = bore.GetTag("DUTTYPE");
+                
                 if(DUTTYPE=="RD53A") {
-                   FrontEndType[prodID] = "Rd53a";
+                   m_FrontEndType[prodID] = "Rd53a";
                 } else if(DUTTYPE=="RD53B") {
-                   FrontEndType[prodID] = "Rd53b";
+                   m_FrontEndType[prodID] = "Rd53b";
                 };
-		std::cout << "YarrConverterPlugin: front end type " << FrontEndType.at(prodID) << " declared in BORE for producer " << prodID << std::endl;
+		std::cout << "YarrConverterPlugin: front end type " << m_FrontEndType.at(prodID) << " declared in BORE for producer " << prodID << std::endl;
             }
 
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
@@ -71,11 +127,11 @@ namespace eudaq {
                 int width  = 400;
                 int height = 192;
 
-                if(FrontEndType.at(prodID)=="Rd53a"){
+                if(m_FrontEndType.at(prodID)=="Rd53a"){
                     width  = 400;
                     height = 192;
 		    //std::cout << "accessing Rd53a" << std::endl;
-                } else if (FrontEndType.at(prodID)=="Rd53b") {
+                } else if (m_FrontEndType.at(prodID)=="Rd53b") {
                     width  = 400;
                     height = 384;
 		    //std::cout << "accessing Rd53b" << std::endl;
@@ -88,7 +144,7 @@ namespace eudaq {
                     eudaq::RawDataEvent::data_t block=my_ev.GetBlock(i);
                     int plane_id = base_id + my_ev.GetID(i);
                      
-                    StandardPlane plane(plane_id, EVENT_TYPE, FrontEndType.at(prodID));
+                    StandardPlane plane(plane_id, EVENT_TYPE, m_FrontEndType.at(prodID));
                     
                     // Set the number of pixels
                     plane.SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
@@ -106,9 +162,9 @@ namespace eudaq {
                             Fei4Hit hit = *((Fei4Hit*)(&block[it])); it+= sizeof(Fei4Hit);
 			    //plane.PushPixel(hit.col,hit.row,hit.tot);
 			    //std::cout << "col: " << hit.col  << " row: " << hit.row << " tot: " << hit.tot << " l1id: " << l1id << " tag: " << tag << std::endl;
-                            if(FrontEndType.at(prodID)=="Rd53a"){
+                            if(m_FrontEndType.at(prodID)=="Rd53a"){
                                 plane.PushPixel(hit.col,hit.row,hit.tot,false,l1id);
-                            } else if(FrontEndType.at(prodID)=="Rd53b"){
+                            } else if(m_FrontEndType.at(prodID)=="Rd53b"){
                                 plane.PushPixel(hit.col,hit.row,hit.tot,false,tag);
                             }
                         }
@@ -240,12 +296,14 @@ namespace eudaq {
                 : DataConverterPlugin(EVENT_TYPE) {}
 
             // Information extracted in Initialize()
-            std::map<int,std::string> FrontEndType;
-            std::map<int,std::string> EventVersion;
+            std::map<int,std::string> m_FrontEndType;
+            std::map<int,Version> m_EventVersion;
+            std::map<int,std::vector<chipInfo> > m_chip_info_by_uid;
             unsigned m_run;
 
             // The single instance of this converter plugin
             static YARRConverterPlugin m_instance;
+            
     }; // class YarrConverterPlugin
 
     // Instantiate the converter plugin instance
