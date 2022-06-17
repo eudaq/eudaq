@@ -2,6 +2,8 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 
+#include "jsoncons/json.hpp"
+
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
 #if USE_LCIO
@@ -69,11 +71,13 @@ typedef struct {
 struct chipInfo {
     std::string name;
     std::string chipId; 
-    std::string rx;
+    unsigned int rx;
     std::string moduleSize;
     std::string sensorLayout;
     std::string pcbType;
     unsigned int chipLocationOnModule;
+    unsigned int internalModuleIndex;
+    std::string moduleName;    
 };
                      
 
@@ -95,8 +99,9 @@ namespace eudaq {
 #ifndef WIN32 // some linux Stuff //$$change
                 (void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
-                std::string event_version = bore.GetTag("YARREVENTVERSION");
+                std::string event_version = bore.GetTag("YARREVENTVERSION", "1.0.0");
 
+		// getting the producer ID for event version >=2.0.1
 		int prodID = std::stoi(bore.GetTag("PRODID"));
 		std::cout << "TAG: " << bore.GetTag("PRODID") << std::endl;
 		
@@ -110,6 +115,33 @@ namespace eudaq {
                    m_FrontEndType[prodID] = "Rd53b";
                 };
 		std::cout << "YarrConverterPlugin: front end type " << m_FrontEndType.at(prodID) << " declared in BORE for producer " << prodID << std::endl;
+		
+		// getting the module information for event version >=2.1.0
+		jsoncons::json moduleChipInfoJson = jsoncons::json::parse(bore.GetTag("MODULECHIPINFO"));
+		for(const auto& uid : moduleChipInfoJson["modules"].array_range()) {
+                   chipInfo currentlyHandledChip;
+		   currentlyHandledChip.name = uid["name"].as<std::string>();
+		   currentlyHandledChip.chipId = uid["chipId"].as<std::string>();
+		   currentlyHandledChip.rx = uid["rx"].as<unsigned int>();
+		   currentlyHandledChip.moduleSize = uid["moduleSize"].as<std::string>();
+		   currentlyHandledChip.sensorLayout = uid["sensorLayout"].as<std::string>();
+		   currentlyHandledChip.pcbType = uid["pcbType"].as<std::string>();
+		   currentlyHandledChip.chipLocationOnModule = uid["chipLocationOnModule"].as<unsigned int>();
+		   currentlyHandledChip.internalModuleIndex = uid["internalModuleIndex"].as<unsigned int>();		   
+		   currentlyHandledChip.moduleName = uid["moduleName"].as<std::string>();
+
+                   m_chip_info_by_uid[prodID].push_back(currentlyHandledChip);
+		};
+		
+                int base_id = 110 + prodID * 20; 
+                // assuming that there will be never more than 20 FEs connected to one SPEC/producer; otherwise a more intricate handling is necessary
+                
+		for(const auto& uid : m_chip_info_by_uid[prodID]) {
+		   m_module_size_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleSize;
+		   m_plane_id_by_module_index[prodID][uid.internalModuleIndex] = base_id + uid.internalModuleIndex;
+		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleName;
+		} 
+		
             }
 
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
@@ -117,39 +149,47 @@ namespace eudaq {
             // Again, this is just an example, adapted it for the actual data layout.
             virtual bool GetStandardSubEvent(StandardEvent &sev,
                     const Event &ev) const {
+                    
+                if(ev.IsEORE()) {
+                   std::cout << "EORE has been reached" << std::endl;
+                   return true;
+                }
+                
                 // Differentiate between different sensors
 		int prodID = std::stoi(ev.GetTag("PRODID"));
+		
+		std::map<unsigned int, StandardPlane> standard_plane_by_module_index;
+		for (std::size_t currentModuleIndex = 0; currentModuleIndex != m_plane_id_by_module_index.size(); ++currentModuleIndex) {
+		    std::string local_plane_type;
+		    unsigned int width, height;
+		    if(m_FrontEndType.at(prodID)=="Rd53a"){
+                       width  = 400;
+                       height = 192;
+                       local_plane_type = m_FrontEndType.at(prodID);
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_chip_info_by_uid[prodID][currentModuleIndex].moduleSize=="single")) {
+                       width  = 400;
+                       height = 384;                       
+                       local_plane_type = m_FrontEndType.at(prodID);                       
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_chip_info_by_uid[prodID][currentModuleIndex].moduleSize=="quad")) {
+                       width  = 800;
+                       height = 768;
+                       local_plane_type = "RD53BQUAD";                       
+                     };
+                     unsigned int local_id = m_plane_id_by_module_index[prodID][currentModuleIndex];
+                     
+		   standard_plane_by_module_index[currentModuleIndex] = StandardPlane(local_id, EVENT_TYPE, m_FrontEndType.at(prodID));
+                    // Set the number of pixels
+                   standard_plane_by_module_index[currentModuleIndex].SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);		   
+		};
 
-                // Create a StandardPlane representing one sensor plane
-                int base_id = 110 + prodID * 20; 
-                // assuming that there will be never more than 20 FEs connected to one SPEC/producer; otherwise a more intricate handling is necessary
 
-                int width  = 400;
-                int height = 192;
-
-                if(m_FrontEndType.at(prodID)=="Rd53a"){
-                    width  = 400;
-                    height = 192;
-		    //std::cout << "accessing Rd53a" << std::endl;
-                } else if (m_FrontEndType.at(prodID)=="Rd53b") {
-                    width  = 400;
-                    height = 384;
-		    //std::cout << "accessing Rd53b" << std::endl;
-                };
-                
                 const RawDataEvent & my_ev = dynamic_cast<const RawDataEvent &>(ev);
                 int ev_id = my_ev.GetTag("EventNumber", -1); 
                 
                 for (unsigned i=0; i<my_ev.NumBlocks(); i++) {
                     eudaq::RawDataEvent::data_t block=my_ev.GetBlock(i);
-                    int plane_id = base_id + my_ev.GetID(i);
-                     
-                    StandardPlane plane(plane_id, EVENT_TYPE, m_FrontEndType.at(prodID));
-                    
-                    // Set the number of pixels
-                    plane.SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-                    
-                    plane.SetTLUEvent(ev_id);
+                                      
+                    standard_plane_by_module_index[m_chip_info_by_uid[prodID][i].internalModuleIndex].SetTLUEvent(ev_id);
                          
                     unsigned it = 0;
                     unsigned fragmentCnt = 0;
@@ -163,15 +203,17 @@ namespace eudaq {
 			    //plane.PushPixel(hit.col,hit.row,hit.tot);
 			    //std::cout << "col: " << hit.col  << " row: " << hit.row << " tot: " << hit.tot << " l1id: " << l1id << " tag: " << tag << std::endl;
                             if(m_FrontEndType.at(prodID)=="Rd53a"){
-                                plane.PushPixel(hit.col,hit.row,hit.tot,false,l1id);
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][i].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,l1id);
                             } else if(m_FrontEndType.at(prodID)=="Rd53b"){
-                                plane.PushPixel(hit.col,hit.row,hit.tot,false,tag);
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][i].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
                             }
                         }
                         fragmentCnt++;
                     }
-                    sev.AddPlane(plane);
                 }
+		for(auto it = standard_plane_by_module_index.begin(); it != standard_plane_by_module_index.end(); ++it) {
+                    sev.AddPlane(it->second);		
+		}
 
                 // Indicate that data was successfully converted
                 return true;
@@ -296,9 +338,12 @@ namespace eudaq {
                 : DataConverterPlugin(EVENT_TYPE) {}
 
             // Information extracted in Initialize()
-            std::map<int,std::string> m_FrontEndType;
-            std::map<int,Version> m_EventVersion;
-            std::map<int,std::vector<chipInfo> > m_chip_info_by_uid;
+            mutable std::map<int,std::string> m_FrontEndType;
+            mutable std::map<int,Version> m_EventVersion;
+            mutable std::map<int,std::vector<chipInfo> > m_chip_info_by_uid;
+            mutable std::map<int,std::map<unsigned int,std::string> > m_module_size_by_module_index;
+            mutable std::map<int,std::map<unsigned int, unsigned int> > m_plane_id_by_module_index;            
+            mutable std::map<int,std::map<unsigned int, std::string> > m_module_name_by_module_index;                        
             unsigned m_run;
 
             // The single instance of this converter plugin
