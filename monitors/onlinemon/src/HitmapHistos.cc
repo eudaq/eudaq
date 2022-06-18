@@ -79,7 +79,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     sprintf(out, "%s %i LVL1 Pixel Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1_%s_%i", _sensor.c_str(), _id);
     unsigned int lvl1_bin = 16;
-    if(p.is_RD53A || p.is_RD53B) 
+    if(p.is_RD53A || p.is_RD53B || p.is_RD53BQUAD) 
     {
         lvl1_bin = 32;
     }
@@ -111,7 +111,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i ToT Single Pixels", _sensor.c_str(), _id);
     sprintf(out2, "h_totsingle_%s_%i", _sensor.c_str(), _id);
-    if (p.is_USBPIXI4 || p.is_RD53A || p.is_RD53B) {
+    if (p.is_USBPIXI4 || p.is_RD53A || p.is_RD53B || p.is_RD53BQUAD) {
       _totSingle = new TH1I(out2, out, 16, 0, 15);
       SetHistoAxisLabelx(_totSingle, "ToT [ToT code]");
     } else if (p.is_DEPFET) {
@@ -127,7 +127,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i ToT Clusters", _sensor.c_str(), _id);
     sprintf(out2, "h_totcluster_%s_%i", _sensor.c_str(), _id);
-    if (p.is_USBPIXI4 || p.is_RD53A || p.is_RD53B) {
+    if (p.is_USBPIXI4 || p.is_RD53A || p.is_RD53B || p.is_RD53BQUAD) {
       _totCluster = new TH1I(out2, out, 80, 0, 79);
       SetHistoAxisLabelx(_totCluster, "ToT [sum ToT code]");
     } else {
@@ -316,7 +316,7 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
   if ((pixel_x < _maxX) && (pixel_y < _maxY)) {
     plane_map_array[pixel_x][pixel_y] = plane_map_array[pixel_x][pixel_y] + 1;
   }
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_DEPFET) || (is_RD53A) || (is_RD53B)) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_DEPFET) || (is_RD53A) || (is_RD53B) || p.is_RD53BQUAD) {
     if (_totSingle != NULL)
       _totSingle->Fill(hit.getTOT());
     if (_lvl1Distr != NULL)
@@ -380,7 +380,7 @@ void HitmapHistos::Fill(const SimpleStandardCluster &cluster) {
     }
   }
 
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_RD53A) || (is_RD53B)) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_RD53A) || (is_RD53B)  || p.is_RD53BQUAD) {
     if (_lvl1Width != NULL)
       _lvl1Width->Fill(cluster.getLVL1Width());
     if (_totCluster != NULL)
