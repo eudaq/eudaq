@@ -19,7 +19,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
       _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), 
       _clusterYWidth(NULL), _nbadHits(NULL), _nHotPixels(NULL),
       _hitmapSections(NULL), is_MIMOSA26(false), is_APIX(false),
-      is_USBPIX(false), is_USBPIXI4(false), is_RD53A(false), is_RD53B(false) {
+      is_USBPIX(false), is_USBPIXI4(false), is_RD53A(false), is_RD53B(false), is_RD53BQUAD(false) {
   char out[1024], out2[1024];
 
   _mon = mon;
@@ -32,6 +32,8 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     is_RD53A = true;
   } else if (_sensor == std::string("RD53B")) {
     is_RD53B = true;
+  } else if (_sensor == std::string("RD53BQUAD")) {
+    is_RD53BQUAD = true;
   } else if ((_sensor == std::string("USBPIX")) || (_sensor.find("USBPIXI-") != std::string::npos)) {
     is_USBPIX = true;
   } else if ((_sensor == std::string("USBPIXI4")) || (_sensor.find("USBPIXI4-") == std::string::npos)) {
