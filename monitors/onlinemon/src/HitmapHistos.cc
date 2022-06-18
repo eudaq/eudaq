@@ -380,7 +380,7 @@ void HitmapHistos::Fill(const SimpleStandardCluster &cluster) {
     }
   }
 
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_RD53A) || (is_RD53B)  || p.is_RD53BQUAD) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_RD53A) || (is_RD53B)  || is_RD53BQUAD) {
     if (_lvl1Width != NULL)
       _lvl1Width->Fill(cluster.getLVL1Width());
     if (_totCluster != NULL)
