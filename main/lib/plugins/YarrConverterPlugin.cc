@@ -103,7 +103,7 @@ namespace eudaq {
 
 		// getting the producer ID for event version >=2.0.1
 		int prodID = std::stoi(bore.GetTag("PRODID"));
-		std::cout << "TAG: " << bore.GetTag("PRODID") << std::endl;
+		std::cout << "producer tag in BORE: " << bore.GetTag("PRODID") << std::endl;
 		
                 m_EventVersion[prodID] = event_version; // only now we have the producer ID available
                 
@@ -118,7 +118,7 @@ namespace eudaq {
 		
 		// getting the module information for event version >=2.1.0
 		jsoncons::json moduleChipInfoJson = jsoncons::json::parse(bore.GetTag("MODULECHIPINFO"));
-		for(const auto& uid : moduleChipInfoJson["modules"].array_range()) {
+		for(const auto& uid : moduleChipInfoJson["uid"].array_range()) {
                    chipInfo currentlyHandledChip;
 		   currentlyHandledChip.name = uid["name"].as<std::string>();
 		   currentlyHandledChip.chipId = uid["chipId"].as<std::string>();
@@ -140,6 +140,7 @@ namespace eudaq {
 		   m_module_size_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleSize;
 		   m_plane_id_by_module_index[prodID][uid.internalModuleIndex] = base_id + uid.internalModuleIndex;
 		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleName;
+		   std::cout << "Assigning plane ID " << m_plane_id_by_module_index[prodID][uid.internalModuleIndex] << " to module " << uid.internalModuleIndex << " which is called " << m_module_name_by_module_index[prodID][uid.internalModuleIndex] << " and has chip " << uid.name << std::endl;
 		} 
 		
             }
@@ -159,37 +160,37 @@ namespace eudaq {
 		int prodID = std::stoi(ev.GetTag("PRODID"));
 		
 		std::map<unsigned int, StandardPlane> standard_plane_by_module_index;
-		for (std::size_t currentModuleIndex = 0; currentModuleIndex != m_plane_id_by_module_index.size(); ++currentModuleIndex) {
+		for (std::size_t currentPlaneIndex = 0; currentPlaneIndex < m_plane_id_by_module_index[prodID].size(); ++currentPlaneIndex) {
 		    std::string local_plane_type;
 		    unsigned int width, height;
 		    if(m_FrontEndType.at(prodID)=="Rd53a"){
                        width  = 400;
                        height = 192;
                        local_plane_type = m_FrontEndType.at(prodID);
-                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_chip_info_by_uid[prodID][currentModuleIndex].moduleSize=="single")) {
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="single")) {
                        width  = 400;
                        height = 384;                       
                        local_plane_type = m_FrontEndType.at(prodID);                       
-                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_chip_info_by_uid[prodID][currentModuleIndex].moduleSize=="quad")) {
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="quad")) {
                        width  = 800;
                        height = 768;
-                       local_plane_type = "RD53BQUAD";                       
+                       local_plane_type = "RD53BQUAD";  
                      };
-                     unsigned int local_id = m_plane_id_by_module_index[prodID][currentModuleIndex];
-                     
-		   standard_plane_by_module_index[currentModuleIndex] = StandardPlane(local_id, EVENT_TYPE, m_FrontEndType.at(prodID));
+                     unsigned int local_id = m_plane_id_by_module_index[prodID][currentPlaneIndex];
+
+		   standard_plane_by_module_index[currentPlaneIndex] = StandardPlane(local_id, EVENT_TYPE, local_plane_type);
                     // Set the number of pixels
-                   standard_plane_by_module_index[currentModuleIndex].SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);		   
+                   standard_plane_by_module_index[currentPlaneIndex].SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);		   
 		};
 
 
                 const RawDataEvent & my_ev = dynamic_cast<const RawDataEvent &>(ev);
                 int ev_id = my_ev.GetTag("EventNumber", -1); 
                 
-                for (unsigned i=0; i<my_ev.NumBlocks(); i++) {
-                    eudaq::RawDataEvent::data_t block=my_ev.GetBlock(i);
+                for (unsigned currentBlockIndex=0; currentBlockIndex<my_ev.NumBlocks(); currentBlockIndex++) {
+                    eudaq::RawDataEvent::data_t block=my_ev.GetBlock(currentBlockIndex);
                                       
-                    standard_plane_by_module_index[m_chip_info_by_uid[prodID][i].internalModuleIndex].SetTLUEvent(ev_id);
+                    standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].SetTLUEvent(ev_id);
                          
                     unsigned it = 0;
                     unsigned fragmentCnt = 0;
@@ -198,15 +199,43 @@ namespace eudaq {
                         uint32_t l1id = *((uint16_t*)(&block[it])); it+= sizeof(uint16_t);
                         uint32_t bcid = *((uint16_t*)(&block[it])); it+= sizeof(uint16_t);
                         uint32_t nHits = *((uint16_t*)(&block[it])); it+= sizeof(uint16_t);
-                        for (unsigned i=0; i<nHits; i++) {
+                        for (unsigned currentHitIndex=0; currentHitIndex<nHits; currentHitIndex++) {
                             Fei4Hit hit = *((Fei4Hit*)(&block[it])); it+= sizeof(Fei4Hit);
 			    //plane.PushPixel(hit.col,hit.row,hit.tot);
 			    //std::cout << "col: " << hit.col  << " row: " << hit.row << " tot: " << hit.tot << " l1id: " << l1id << " tag: " << tag << std::endl;
-                            if(m_FrontEndType.at(prodID)=="Rd53a"){
-                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][i].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,l1id);
-                            } else if(m_FrontEndType.at(prodID)=="Rd53b"){
-                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][i].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
+			    if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleSize=="quad")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+			       uint16_t transformed_col;
+			       uint16_t transformed_row;
+			       switch(m_chip_info_by_uid[prodID][currentBlockIndex].chipLocationOnModule){
+			       case 1:
+			           transformed_col = 384 + 1 - hit.row;
+			           transformed_row = 800 + 1 - hit.col;
+			           break;
+			       case 2:
+                                    transformed_col = 384 + 1 - hit.row;
+                                    transformed_row = 400 + 1 - hit.col;			       
+			           break;
+			       case 3:
+                                    transformed_col = 384 + hit.row;
+                                    transformed_row = hit.col;			       
+			           break;
+			       case 4:
+                                    transformed_col = 384 + hit.row;
+                                    transformed_row = 400 + hit.col;			       
+			           break;
+			       default:
+			           break;
+			       };
+                               standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(transformed_col-1,transformed_row-1,hit.tot,false,tag);			       
+			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleSize=="single")&&(m_FrontEndType.at(prodID)=="Rd53a")){
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,l1id);
+			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleSize=="single")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
+                            } else {
+                            	std::cout << "undefined module type" << std::endl;
+                            	return false;
                             }
+                            
                         }
                         fragmentCnt++;
                     }
