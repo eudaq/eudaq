@@ -124,7 +124,7 @@ namespace eudaq {
 		   currentlyHandledChip.name = uid["name"].as<std::string>();
 		   currentlyHandledChip.chipId = uid["chipId"].as<std::string>();
 		   currentlyHandledChip.rx = uid["rx"].as<unsigned int>();
-		   currentlyHandledChip.moduleSize = uid["moduleSize"].as<std::string>();
+		   currentlyHandledChip.moduleType = uid["moduleType"].as<std::string>();
 		   currentlyHandledChip.sensorType = uid["sensorType"].as<std::string>();
 		   currentlyHandledChip.pcbType = uid["pcbType"].as<std::string>();
 		   currentlyHandledChip.chipLocationOnModule = uid["chipLocationOnModule"].as<unsigned int>();
@@ -139,7 +139,7 @@ namespace eudaq {
                 // assuming that there will be never more than 20 FEs connected to one SPEC/producer; otherwise a more intricate handling is necessary
                 
 		for(const auto& uid : m_chip_info_by_uid[prodID]) {
-		   m_module_size_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleSize;
+		   m_module_size_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleType;
 		   m_plane_id_by_module_index[prodID][uid.internalModuleIndex] = base_id + uid.internalModuleIndex;
 		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleID;
 		   std::cout << "Assigning plane ID " << m_plane_id_by_module_index[prodID][uid.internalModuleIndex] << " to module " << uid.internalModuleIndex << " which is called " << m_module_name_by_module_index[prodID][uid.internalModuleIndex] << " and has chip " << uid.name << std::endl;
