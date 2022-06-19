@@ -72,12 +72,13 @@ struct chipInfo {
     std::string name;
     std::string chipId; 
     unsigned int rx;
-    std::string moduleSize;
-    std::string sensorLayout;
+    std::string moduleType;
+    std::string sensorType;
     std::string pcbType;
     unsigned int chipLocationOnModule;
     unsigned int internalModuleIndex;
-    std::string moduleName;    
+    std::string moduleName;
+    std::string moduleID;
 };
                      
 
@@ -124,11 +125,12 @@ namespace eudaq {
 		   currentlyHandledChip.chipId = uid["chipId"].as<std::string>();
 		   currentlyHandledChip.rx = uid["rx"].as<unsigned int>();
 		   currentlyHandledChip.moduleSize = uid["moduleSize"].as<std::string>();
-		   currentlyHandledChip.sensorLayout = uid["sensorLayout"].as<std::string>();
+		   currentlyHandledChip.sensorType = uid["sensorType"].as<std::string>();
 		   currentlyHandledChip.pcbType = uid["pcbType"].as<std::string>();
 		   currentlyHandledChip.chipLocationOnModule = uid["chipLocationOnModule"].as<unsigned int>();
 		   currentlyHandledChip.internalModuleIndex = uid["internalModuleIndex"].as<unsigned int>();		   
 		   currentlyHandledChip.moduleName = uid["moduleName"].as<std::string>();
+		   currentlyHandledChip.moduleID = uid["moduleID"].as<std::string>();
 
                    m_chip_info_by_uid[prodID].push_back(currentlyHandledChip);
 		};
@@ -139,7 +141,7 @@ namespace eudaq {
 		for(const auto& uid : m_chip_info_by_uid[prodID]) {
 		   m_module_size_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleSize;
 		   m_plane_id_by_module_index[prodID][uid.internalModuleIndex] = base_id + uid.internalModuleIndex;
-		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleName;
+		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleID;
 		   std::cout << "Assigning plane ID " << m_plane_id_by_module_index[prodID][uid.internalModuleIndex] << " to module " << uid.internalModuleIndex << " which is called " << m_module_name_by_module_index[prodID][uid.internalModuleIndex] << " and has chip " << uid.name << std::endl;
 		} 
 		
@@ -167,11 +169,11 @@ namespace eudaq {
                        width  = 400;
                        height = 192;
                        local_plane_type = m_FrontEndType.at(prodID);
-                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="single")) {
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_single")) {
                        width  = 400;
                        height = 384;                       
                        local_plane_type = m_FrontEndType.at(prodID);                       
-                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="quad")) {
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_quad")) {
                        width  = 800;
                        height = 768;
                        local_plane_type = "RD53BQUAD";  
@@ -203,7 +205,7 @@ namespace eudaq {
                             Fei4Hit hit = *((Fei4Hit*)(&block[it])); it+= sizeof(Fei4Hit);
 			    //plane.PushPixel(hit.col,hit.row,hit.tot);
 			    //std::cout << "col: " << hit.col  << " row: " << hit.row << " tot: " << hit.tot << " l1id: " << l1id << " tag: " << tag << std::endl;
-			    if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleSize=="quad")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+			    if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleType=="ITk_quad")&&(m_FrontEndType.at(prodID)=="Rd53b")){
 			       uint16_t transformed_col;
 			       uint16_t transformed_row;
 			       switch(m_chip_info_by_uid[prodID][currentBlockIndex].chipLocationOnModule){
@@ -227,9 +229,9 @@ namespace eudaq {
 			           break;
 			       };
                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(transformed_col-1,transformed_row-1,hit.tot,false,tag);			       
-			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleSize=="single")&&(m_FrontEndType.at(prodID)=="Rd53a")){
+			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53a")){
                                 standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,l1id);
-			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleSize=="single")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53b")){
                                 standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
                             } else {
                             	std::cout << "undefined module type" << std::endl;
