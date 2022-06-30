@@ -77,13 +77,14 @@ void DualROCaloProducer::DoStopRun(){
     m_thd_run.join();
     EUDAQ_DEBUG("DualROCalo joined");
   }
+  EUDAQ_DEBUG("Infile Closed!");
   m_ifile.close();
 }
 
 void DualROCaloProducer::DoReset(){
   m_exit_of_run = true;
-  //if(m_thd_run.joinable())
-  //  m_thd_run.join();
+  if(m_thd_run.joinable())
+    m_thd_run.join();
 
   m_ifile.close();
   m_thd_run = std::thread();
@@ -129,7 +130,10 @@ void DualROCaloProducer::Mainloop(){
 
     int block_id = 0;
 
-    while (byte_pos < m_ifile_size){
+    // char block[data_size];
+    std::vector<char> block(data_size);
+
+    while (m_ifile.read(block.data(), block.size())){
       auto ev = eudaq::Event::MakeUnique("DualROCaloEvent");
 
       // check if last event in file not correct size
@@ -138,9 +142,9 @@ void DualROCaloProducer::Mainloop(){
         continue;
       }
 
-      std::vector<char> block(data_size);
+      //std::vector<char> block(data_size);
       //memcpy(&block[0], &raw_data[byte_pos], data_size);
-      ReadRawData(block, data_size);
+      //ReadRawData(block, data_size);
 
       //uint16_t event_size = uint16_t((uint8_t)block[1] << 8 | (uint8_t)block[0]);
       uint16_t event_size;
@@ -219,7 +223,7 @@ void DualROCaloProducer::Mainloop(){
       }
 
       //EUDAQ_DEBUG("Mainloop()::Defining send block");
-      std::vector<uint8_t> hits(block.begin()+27, block.end());
+      std::vector<uint8_t> hits(block[27], block[data_size]);
       uint8_t channel_size = 6;
       uint8_t header_size = 27;
       uint16_t expected_size = header_size + num_active_channels*channel_size;
@@ -263,7 +267,10 @@ void DualROCaloProducer::Mainloop(){
 
     }
 
-    DualROCaloProducer::DoStopRun();
+    EUDAQ_DEBUG("End of File reached!");
+    //DualROCaloProducer::DoStopRun();
+    m_exit_of_run=true;
 
   }
+  EUDAQ_DEBUG("EXITING MAINLOOP");
 }
