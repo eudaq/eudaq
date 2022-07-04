@@ -61,6 +61,7 @@ namespace eudaq {
       return GetString(key);
     }
     std::string Get(const std::string &key, const std::string &def) const;
+    float Get(const std::string &key, float def) const;
     double Get(const std::string &key, double def) const;
     int64_t Get(const std::string &key, int64_t def) const;
     uint64_t Get(const std::string &key, uint64_t def) const;

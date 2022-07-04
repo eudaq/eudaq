@@ -151,6 +151,15 @@ namespace eudaq {
     return def;
   }
 
+  float Configuration::Get(const std::string &key, float def) const {
+    try {
+      return from_string(GetString(key), def);
+    } catch (const Exception &) {
+      // ignore: return default
+    }
+    return def;
+  }
+
   double Configuration::Get(const std::string &key, double def) const {
     try {
       return from_string(GetString(key), def);
