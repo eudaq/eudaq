@@ -264,11 +264,15 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto)
 {
     TDirectory* dir = gDirectory;
-    TKey*       key;
+    TKey*       key = nullptr;
+
+    // #######################
+    // # Find Chip directory #
+    // #######################
     while(true)
     {
         TIter keyList(dir->GetListOfKeys());
-        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (strcmp(key->GetName(), "Channel") != 0))
+        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (strcmp(key->GetName(), "Chip") != 0))
         {
             dir->cd(key->GetName());
             dir = gDirectory;
@@ -276,9 +280,18 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto)
         else
             break;
     }
-    TIter keyList(dir->GetListOfKeys());
-    while(((key = (TKey*)keyList.Next()) != nullptr) && (std::string(key->GetName()).find(nameInHisto) == std::string::npos)) {};
 
+    // ###########################
+    // # Enter in Chip directory #
+    // ###########################
+    TIter keyList(dir->GetListOfKeys());
+    if(key != nullptr) dir->cd(key->GetName());
+    dir = gDirectory;
+
+    // ######################
+    // # Find the histogram #
+    // ######################
+    while(((key = (TKey*)keyList.Next()) != nullptr) && (std::string(key->GetName()).find(nameInHisto) == std::string::npos)) {};
     if((dir != nullptr) && (dir->Get(key->GetName()) != nullptr)) return (TH2D*)((TCanvas*)dir->Get(key->GetName()))->GetPrimitive(key->GetName());
 
     return nullptr;
