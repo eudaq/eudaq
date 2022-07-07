@@ -27,7 +27,7 @@ public:
 private:
 
   uint32_t getWord(const std::vector<uint8_t>& data, size_t index) const;
-  eudaq::StandardPlane ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const;
+  eudaq::StandardPlane ConvertPlane(const std::vector<uint8_t> & data, uint32_t id, bool swap_xy) const;
   bool isEventValid(const std::vector<uint8_t> & data) const;
   bool getHitData(uint32_t &Word, bool second_hit,
 		  uint32_t &Col, uint32_t &Row, uint32_t &ToT) const;
@@ -55,15 +55,16 @@ ATLASFEI4Interpreter<0x00007C00, 0x000003FF> UsbpixI4BRawEvent2StdEventConverter
 bool UsbpixI4BRawEvent2StdEventConverter::
 Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
   auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+  bool swap_xy = ev_raw->GetTag("SWAP_XY", 0);
   auto block_n_list = ev_raw->GetBlockNumList();
   for(auto &bn: block_n_list){
-    d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn+10));//offset 10
+    d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn+10, swap_xy));//offset 10
   }
   return true;
 }
 
 eudaq::StandardPlane UsbpixI4BRawEvent2StdEventConverter::
-ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
+ConvertPlane(const std::vector<uint8_t> & data, uint32_t id, bool swap_xy) const{
   eudaq::StandardPlane plane(id, "USBPIXI4B", "USBPIXI4B");
   bool valid = isEventValid(data);
   uint32_t ToT = 0;
@@ -74,9 +75,18 @@ ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
   int colMult = 1;
   int rowMult = 1;
 
-  plane.SetSizeZS((CHIP_MAX_COL_NORM + 1)*colMult, (CHIP_MAX_ROW_NORM + 1)*rowMult,
+  // TODO: use this as a conf-parameter 
+  if(swap_xy){
+      plane.SetSizeZS((CHIP_MAX_ROW_NORM + 1)*rowMult, (CHIP_MAX_COL_NORM + 1)*colMult, 
+              0, consecutive_lvl1,
+              eudaq::StandardPlane::FLAG_DIFFCOORDS|eudaq::StandardPlane::FLAG_ACCUMULATE);
+  }
+  else{
+      plane.SetSizeZS((CHIP_MAX_COL_NORM + 1)*colMult, (CHIP_MAX_ROW_NORM + 1)*rowMult,
 		  0, consecutive_lvl1,
 		  eudaq::StandardPlane::FLAG_DIFFCOORDS|eudaq::StandardPlane::FLAG_ACCUMULATE);
+  }
+
 
   if(!valid){
     return plane;
@@ -89,13 +99,25 @@ ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
       lvl1++;
     }
     else{
-      //First Hit
-      if(getHitData(Word, false, Col, Row, ToT)){
-	plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+      if(swap_xy){
+            //First Hit
+            if(getHitData(Word, false, Col, Row, ToT)){
+                   plane.PushPixel(Row, Col, ToT, false, lvl1 - 1);
+            }
+            //Second Hit
+            if(getHitData(Word, true, Col, Row, ToT)){
+                   plane.PushPixel(Row, Col, ToT, false, lvl1 - 1);
+            }
       }
-      //Second Hit
-      if(getHitData(Word, true, Col, Row, ToT)){
-	plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+      else{
+            //First Hit
+            if(getHitData(Word, false, Col, Row, ToT)){
+                   plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+            }
+            //Second Hit
+            if(getHitData(Word, true, Col, Row, ToT)){
+                   plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+            }
       }
     }
   }
