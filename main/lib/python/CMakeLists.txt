@@ -30,6 +30,11 @@ set(CMAKE_SHARED_MODULE_PREFIX  "")
 add_library(pyeudaq SHARED ${EUDAQ_COMPONENT_SRC} ${PYBIND_HEADER_FILE})
 target_link_libraries(pyeudaq ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${PYTHON_LIBRARIES})
 
+if (APPLE)
+    set_property(TARGET pyeudaq PROPERTY OUTPUT_NAME "pyeudaq.so")
+    set_property(TARGET pyeudaq PROPERTY SUFFIX "")
+endif()
+
 install(TARGETS pyeudaq
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
