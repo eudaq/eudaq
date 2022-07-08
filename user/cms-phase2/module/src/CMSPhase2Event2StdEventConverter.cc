@@ -9,7 +9,8 @@ namespace {
 
 bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eudaq::StandardEventSP pStdEvent, eudaq::ConfigurationSPC conf) const
 {
-
+  std::string trigger_number_source_ = conf->Get("trigger_number_source", "TLU");
+  
   // No event
   if(!pEvent || pEvent->GetNumSubEvent() < 1) {
     return false;
@@ -27,18 +28,26 @@ bool CMSPhase2RawEvent2StdEventConverter::Converting(eudaq::EventSPC pEvent, eud
   for(uint32_t cFrameId=0; cFrameId<cNFrames ; cFrameId++){
     cSubEventRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(pEvent->GetSubEvent(cFrameId));
 
-    // The trigger ID tag is only set on the subevents containing the different trigger multiplicities
-    //pStdEvent->SetTriggerN(std::stol(cSubEventRaw->GetTag("TLU_TRIGGER_ID", "0")));
-    
+    // Ste trigger ID tag is only set on the subevents containing the different trigger multiplicities
+    if (trigger_number_source_.compare("EVENT") == 0)
+      pStdEvent->SetTriggerN(pEvent->GetEventNumber());
+    //if (trigger_number_source_).compare("TLU") == 0)
+    else
+      pStdEvent->SetTriggerN(std::stol(cSubEventRaw->GetTag("TLU_TRIGGER_ID", "0")));
+
     for(uint32_t cBlockId=0; cBlockId < cSubEventRaw->GetBlockNumList().size(); cBlockId++){
       AddFrameToPlane(cPlanes.at(cBlockId), cSubEventRaw->GetBlock(cBlockId), cFrameId, cNFrames ); 
+    }
+
+    const std::map<std::string, std::string> cRawTags = cSubEventRaw->GetTags();
+    for(auto item : cRawTags) {
+      pStdEvent->SetTag(item.first, item.second);
     }
   }
   for(auto cPlane : cPlanes ){
     pStdEvent->AddPlane(*cPlane);
   } 
 
-  pStdEvent->SetTriggerN(pEvent->GetEventN());
   return true;
 }
 
