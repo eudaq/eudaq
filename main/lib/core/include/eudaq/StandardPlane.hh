@@ -71,6 +71,10 @@ namespace eudaq {
     double GetY(uint32_t index, uint32_t frame) const;
     double GetY(uint32_t index) const;
 
+    void SetWaveform(uint32_t index, std::vector<double> waveform, uint32_t frame = 0);
+    bool HasWaveform(uint32_t index, uint32_t frame = 0) const;
+    std::vector<double> GetWaveform(uint32_t index, uint32_t frame = 0) const;
+
     // NOTE this returns a timestamp in picoseconds
     uint64_t GetTimestamp(uint32_t index, uint32_t frame) const;
     // NOTE this returns a timestamp in picoseconds
@@ -133,6 +137,7 @@ namespace eudaq {
     // Timestamp of this plane in picoseconds
     uint64_t m_timestamp{};
     std::vector<std::vector<pixel_t>> m_pix;
+    std::vector<std::vector<std::vector<double>>> m_waveform;
     std::vector<std::vector<coord_t>> m_x, m_y;
     std::vector<std::vector<uint64_t>> m_time;
     std::vector<std::vector<bool>> m_pivot;

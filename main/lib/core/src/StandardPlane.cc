@@ -21,6 +21,7 @@ namespace eudaq{
     ds.read(m_flags);
     ds.read(m_pivotpixel);
     ds.read(m_pix);
+    ds.read(m_waveform);
     ds.read(m_x);
     ds.read(m_y);
     ds.read(m_pivot);
@@ -37,6 +38,7 @@ namespace eudaq{
     ser.write(m_flags);
     ser.write(m_pivotpixel);
     ser.write(m_pix);
+    ser.write(m_waveform);
     ser.write(m_x);
     ser.write(m_y);
     ser.write(m_pivot);
@@ -69,6 +71,7 @@ namespace eudaq{
     m_xsize = w;
     m_ysize = h;
     m_pix.resize(frames);
+    m_waveform.resize(frames);
     m_time.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
     m_x.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
     m_y.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
@@ -94,11 +97,24 @@ namespace eudaq{
     m_x[frame].push_back(x);
     m_y[frame].push_back(y);
     m_pix[frame].push_back(p);
+    m_waveform[frame].push_back(std::vector<double>());
     m_time[frame].push_back(time_ps);
     if (m_pivot.size())
       m_pivot[frame].push_back(pivot);
     // std::cout << "DBG: " << frame << ", " << x << ", " << y << ", " << p <<
     // ";" << m_pix[0].size() << ", " << m_pivot.size() << std::endl;
+  }
+
+  void StandardPlane::SetWaveform(uint32_t index, std::vector<double> waveform, uint32_t frame) {
+    if (frame > m_x.size()) {
+      EUDAQ_THROW("Bad frame number " + to_string(frame) + " in SetWaveform");
+    }
+
+    if(index >= m_waveform.at(frame).size()) {
+      EUDAQ_THROW("Bad pixel index " + to_string(frame) + " in SetWaveform");
+    }
+
+    m_waveform.at(frame).at(index) = std::move(waveform);
   }
 
   void StandardPlane::SetPixelHelper(uint32_t index, uint32_t x, uint32_t y,
@@ -117,12 +133,23 @@ namespace eudaq{
     if (frame < m_pix.size()) {
       m_pix.at(frame).at(index) = pix;
     }
+    if (frame < m_waveform.size()) {
+      m_waveform.at(frame).at(index) = std::vector<double>();
+    }
     if (frame < m_time.size()) {
       m_time.at(frame).at(index) = time_ps;
     }
   }
 
   void StandardPlane::SetFlags(StandardPlane::FLAGS flags) { m_flags |= flags; }
+
+  bool StandardPlane::HasWaveform(uint32_t index, uint32_t frame) const {
+    return !m_waveform.at(frame).at(index).empty();
+  }
+
+  std::vector<double> StandardPlane::GetWaveform(uint32_t index, uint32_t frame) const {
+    return m_waveform.at(frame).at(index);
+  }
 
   double StandardPlane::GetPixel(uint32_t index, uint32_t frame) const {
     return m_pix.at(frame).at(index);
