@@ -22,6 +22,8 @@ namespace eudaq{
     ds.read(m_pivotpixel);
     ds.read(m_pix);
     ds.read(m_waveform);
+    ds.read(m_waveform_x0);
+    ds.read(m_waveform_dx);
     ds.read(m_x);
     ds.read(m_y);
     ds.read(m_pivot);
@@ -39,6 +41,8 @@ namespace eudaq{
     ser.write(m_pivotpixel);
     ser.write(m_pix);
     ser.write(m_waveform);
+    ser.write(m_waveform_x0);
+    ser.write(m_waveform_dx);
     ser.write(m_x);
     ser.write(m_y);
     ser.write(m_pivot);
@@ -105,7 +109,7 @@ namespace eudaq{
     // ";" << m_pix[0].size() << ", " << m_pivot.size() << std::endl;
   }
 
-  void StandardPlane::SetWaveform(uint32_t index, std::vector<double> waveform, uint32_t frame) {
+  void StandardPlane::SetWaveform(uint32_t index, std::vector<double> waveform, double x0, double dx, uint32_t frame) {
     if (frame > m_x.size()) {
       EUDAQ_THROW("Bad frame number " + to_string(frame) + " in SetWaveform");
     }
@@ -115,6 +119,8 @@ namespace eudaq{
     }
 
     m_waveform.at(frame).at(index) = std::move(waveform);
+    m_waveform_x0.at(frame).at(index) = x0;
+    m_waveform_dx.at(frame).at(index) = dx;
   }
 
   void StandardPlane::SetPixelHelper(uint32_t index, uint32_t x, uint32_t y,
@@ -136,6 +142,12 @@ namespace eudaq{
     if (frame < m_waveform.size()) {
       m_waveform.at(frame).at(index) = std::vector<double>();
     }
+    if (frame < m_waveform_x0.size()) {
+      m_waveform_x0.at(frame).at(index) = 0.;
+    }
+    if (frame < m_waveform_dx.size()) {
+      m_waveform_dx.at(frame).at(index) = 0.;
+    }
     if (frame < m_time.size()) {
       m_time.at(frame).at(index) = time_ps;
     }
@@ -149,6 +161,12 @@ namespace eudaq{
 
   std::vector<double> StandardPlane::GetWaveform(uint32_t index, uint32_t frame) const {
     return m_waveform.at(frame).at(index);
+  }
+  double StandardPlane::GetWaveformX0(uint32_t index, uint32_t frame) const {
+    return m_waveform_x0.at(frame).at(index);
+  }
+  double StandardPlane::GetWaveformDX(uint32_t index, uint32_t frame) const {
+    return m_waveform_dx.at(frame).at(index);
   }
 
   double StandardPlane::GetPixel(uint32_t index, uint32_t frame) const {
