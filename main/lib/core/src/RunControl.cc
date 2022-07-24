@@ -111,7 +111,6 @@ namespace eudaq {
       }
     }
     lk.unlock();
-    m_listening = false;
 
     m_conf->SetSection("");
     for(auto &conn: conn_to_conf){
