@@ -16,6 +16,9 @@ test.ini
 *.txt
 *.sh
 
+*txt
+*sh
+
 *.zip
 !main/lib/python/extern/pybind11*zip
 *.rar

@@ -28,7 +28,7 @@ private:
   std::string m_dummy_data_path;
   std::string m_dummy_in_path;
   std::thread m_thd_run;
-  bool m_exit_of_run;
+  mutable bool m_exit_of_run;
 };
 
 
@@ -118,6 +118,7 @@ void DualROCaloProducer::ReadRawData(std::vector<char>& block, uint16_t data_siz
 void DualROCaloProducer::Mainloop(){  
   //auto tp_start_run = std::chrono::steady_clock::now();
   uint64_t loop_count = 0;
+  EUDAQ_INFO("Mainloop():: m_exit_of_run = "+std::to_string(m_exit_of_run));
   while(!m_exit_of_run){
     
     uint16_t data_size = 411;
@@ -134,6 +135,8 @@ void DualROCaloProducer::Mainloop(){
     std::vector<char> block(data_size);
 
     while (m_ifile.read(block.data(), block.size())){
+      // if statement needed to stop reading instead of having to wait until end of file is reached
+      if(m_exit_of_run==true) break;
       auto ev = eudaq::Event::MakeUnique("DualROCaloEvent");
 
       // check if last event in file not correct size
@@ -218,7 +221,7 @@ void DualROCaloProducer::Mainloop(){
         }
         //std::copy(std::begin(channel_mask_bits), std::end(channel_mask_bits), std::ostream_iterator<int>(std::cout, " "));
 
-        eudaq::mSleep(10000);
+        
 
       }
 
@@ -245,6 +248,10 @@ void DualROCaloProducer::Mainloop(){
       }
       block_id++;
 
+      if (loop_count==1){
+        ev->Print(std::cout);
+        eudaq::mSleep(10000);
+      }
       SendEvent(std::move(ev));
 
       //EUDAQ_DEBUG("Mainloop():: Incrementing byte_pos");
@@ -267,7 +274,7 @@ void DualROCaloProducer::Mainloop(){
 
     }
 
-    EUDAQ_DEBUG("End of File reached!");
+    //EUDAQ_DEBUG("End of File reached!");
     //DualROCaloProducer::DoStopRun();
     m_exit_of_run=true;
 
