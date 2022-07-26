@@ -65,6 +65,7 @@ void DualROCaloDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP
   auto ev_sync = eudaq::Event::MakeUnique("DualROCalo");
   ev_sync->SetFlagPacket();
   ev_sync->SetTriggerN(trigger_n);
+  //EUDAQ_DEBUG("DualROCaloDataCollector:: Set Trigger Number");
 
   for(auto &conn_evque: m_conn_evque){
     auto &ev_front = conn_evque.second.front();
@@ -91,6 +92,6 @@ void DualROCaloDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP
 
   }
 
-  ev_sync->Print(std::cout);
+  //ev_sync->Print(std::cout);
   WriteEvent(std::move(ev_sync));
 }
