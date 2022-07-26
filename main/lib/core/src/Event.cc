@@ -91,6 +91,9 @@ namespace eudaq {
     ser.write(m_stm_n);
     ser.write(m_run_n);
     ser.write(m_ev_n);
+    /*if (m_tg_n<=400){
+    EUDAQ_DEBUG("Event::Serialize:: WRITING TIGGGER NUMBER = " + std::to_string(m_tg_n));
+    }*/
     ser.write(m_tg_n);
     ser.write(m_extend);
     ser.write(m_ts_begin);
