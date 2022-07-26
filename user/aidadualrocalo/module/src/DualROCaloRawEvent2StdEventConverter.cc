@@ -4,7 +4,7 @@
 class DualROCaloRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("DummyRaw");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("DualROCaloEvent");
 };
 
 namespace{
@@ -16,15 +16,31 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   size_t nblocks= ev->NumBlocks();
   auto block_n_list = ev->GetBlockNumList();
+  std::cout<<"Converting:: Getting "<< std::to_string(nblocks) << " Blocks!" << std::endl;
+  std::cout<<"Converting:: List is  "<< std::to_string(block_n_list.size()) << " long!" << std::endl;
+  std::cout<<"Converting:: Event with trigger number = " << std::to_string(ev->GetTriggerN()) << std::endl;
+  std::cout<<"Converting:: Event with time stamp = " << std::to_string(ev->GetTimestampBegin()) << std::endl;
+  
   for(auto &block_n: block_n_list){
+    std::cout<<"Converting:: Getting new block with index = " << std::to_string(block_n) << std::endl;
     std::vector<uint8_t> block = ev->GetBlock(block_n);
+    std::cout<<"Converting:: Actually got new block!" << std::endl;
+    
     /*
     uint16_t event_size = uint16_t((uint8_t)block[1] << 8 |
                                    (uint8_t)block[0]);
+    std::cout<<"Converting:: Accessing new block!" << std::endl;
     if(event_size != block.size())
       EUDAQ_THROW("Unknown data");
-    
+    */
     uint8_t boardID = uint8_t(block[2]);
+    std::cout<<"Converting:: Accessing new block!" << std::endl;
+    std::cout<<"Converting:: block size is = " << std::to_string(block.size()) << std::endl;
+    if (block.size()==0){
+      std::cout << "EMPTY BLOCK! " << std::endl;
+      continue;
+    }
+    /*
     double trigger_time_stamp;
     memcpy(&trigger_time_stamp, &block[3], sizeof(double));
 
@@ -40,9 +56,11 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
       channel_mask_bits[b] = ((1 << (b % 8)) & (channel_mask[b/8])) >> (b % 8);
       if(channel_mask_bits[b] == 1) num_active_channels++;
     }
-
-    std::vector<uint8_t> hits(block.begin()+27, block.end());
     */
+    std::cout<<"Converting:: Decoded new block!" << std::endl;
+
+    std::vector<uint8_t> hits(block.begin(), block.end());
+    
 
     uint8_t data_size = 6;
     /*
@@ -50,10 +68,13 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
     if(hits.size() != expected_size)
       EUDAQ_THROW("Unknown data");
       */
+
+    std::cout<<"Converting:: Creating Planes!" << std::endl;
     eudaq::StandardPlane plane_lg(block_n, "my_Dummy_lg_plane", "my_Dummy_lg_plane");
     plane_lg.SetSizeZS(block.size(), 1, 0);
     eudaq::StandardPlane plane_hg(block_n, "my_Dummy_hg_plane", "my_Dummy_hg_plane");
     plane_hg.SetSizeZS(block.size(), 1, 0);
+    std::cout<<"Converting:: Created Planes!" << std::endl;
     for(size_t n = 0; n < block.size(); ++n){
       uint16_t index = n*data_size;
 
@@ -70,6 +91,9 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
     }
     d2->AddPlane(plane_lg);
     d2->AddPlane(plane_hg);
+    std::cout<<"Converting:: Added Planes!" << std::endl;
   }
+
+  
   return true;
 }

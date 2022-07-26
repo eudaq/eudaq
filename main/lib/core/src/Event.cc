@@ -145,6 +145,7 @@ namespace eudaq {
       os << std::string(offset + 2, ' ') << "</Tags>\n";
     }
     os << std::string(offset + 2, ' ')<<"<Block_Size>"<<m_blocks.size()<<"</Block_Size>\n";
+    os << std::string(offset + 2, ' ') << "<Block_Data_Size>" << m_blocks.find(0)->second.size() << "</Block_Data_Size>\n";
 
     if(!m_sub_events.empty()){
       os << std::string(offset + 2, ' ') << "<SubEvents>\n";
