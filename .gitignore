@@ -13,6 +13,8 @@ test.ini
 *.log
 *.root
 *.dat
+*.txt
+*.sh
 
 *.zip
 !main/lib/python/extern/pybind11*zip

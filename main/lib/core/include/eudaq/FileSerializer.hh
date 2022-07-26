@@ -19,8 +19,10 @@ namespace eudaq {
 
   private:
     virtual void Serialize(const uint8_t *data, size_t len);
+    //virtual void Serialize_tgn(const uint8_t *data, size_t len);
     FILE *m_file;
     uint64_t m_filebytes;
+    std::string m_fname;
   };
 
 }
