@@ -69,7 +69,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
   tev*=12500; // 80Mhz clks to 1ps
 
   // store time of the run start for each plane
-  if(m_runStartTimes.find(rawev->GetDeviceN()) == m_runStartTimes.end()){
+  if(iev == 1){
     m_runStartTimes.emplace(std::make_pair(rawev->GetDeviceN(), tev));
   }
 
