@@ -74,7 +74,7 @@ bool AD9249Event2StdEventConverter::Converting(
     threshold_low = conf->Get("threshold_low", 101);
     m_useTime = conf->Get("use_time_stamp", false);
     m_waveform_filename = conf->Get("waveform_filename", "");
-    
+
     EUDAQ_DEBUG( "Using configuration:" );
     EUDAQ_DEBUG( " threshold_low  = " + to_string( threshold_low ));
     EUDAQ_DEBUG( " threshold_trig  = " + to_string( threshold_trig ));
@@ -134,7 +134,7 @@ bool AD9249Event2StdEventConverter::Converting(
                 waveforms, timestamp1);
 
   // store time of the run start
-  if(m_runStartTime < 0){
+  if(trig_ <= 1){
     m_runStartTime = timestamp0; // just use one of them for now
   }
 
@@ -158,10 +158,10 @@ bool AD9249Event2StdEventConverter::Converting(
   // print waveforms to file, if a filename is given
   // this returns false! If you want to change that that remove `trig_++`!!!
   if(!m_waveform_filename.empty()){
-    
+
     // Open
     m_outfile_waveforms.open(m_waveform_filename, std::ios_base::app); // append
-    
+
     // Print to file
     for(size_t ch = 0; ch < waveforms.size(); ch++) {
       m_outfile_waveforms << trig_ << " " << ch << " " << mapping.at(ch).first << " " << mapping.at(ch).second << " : ";
@@ -176,7 +176,7 @@ bool AD9249Event2StdEventConverter::Converting(
     trig_++;
     return false;
   }
-  
+
   EUDAQ_DEBUG("_______________ Event " + to_string(ev->GetEventN()) + " trig " +
               to_string(trig_) + " __________");
 
