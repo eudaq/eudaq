@@ -65,14 +65,14 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
       	uint32_t d=reg<<14|(data0&0x3F)<<8|data[i+1];
        	uint16_t x=d>>9&0x3FE|(d^d>>1)&0x1;
        	uint16_t y=d>>1&0x1FF;
-       	plane.PushPixel(x,y,1,tev); // row, column, charge, time
+       	plane.PushPixel(x,y,1,tev); // column, row, charge, time
        	uint8_t data2=data[i+2];
        	d+=1;
        	while(data2) {
        	  if(data2&1) {
             x=d>>9&0x3FE|(d^d>>1)&0x1;
             y=d>>1&0x1FF;
-            plane.PushPixel(x,y,1,tev); // row, column, charge, time
+            plane.PushPixel(x,y,1,tev); // column, row, charge, time
           }
           data2>>=1;
           d+=1;
@@ -82,7 +82,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
           uint32_t d=reg<<14|(data0&0x3F)<<8|data[i+1];
           uint16_t x=d>>9&0x3FE|(d^d>>1)&0x1;
           uint16_t y=d>>1&0x1FF;
-          plane.PushPixel(x,y,1,tev); // row, column, charge, time
+          plane.PushPixel(x,y,1,tev); // column, row, charge, time
           i+=2;
         } else if((data0&0xE0)==0xC0) {// region header
           reg=data0&0x1F;
@@ -123,9 +123,9 @@ void ALPIDERawEvent2StdEventConverter::Dump(const std::vector<uint8_t> &data,siz
   EUDAQ_WARN("Raw event dump:");
   for (size_t j=0;j<data.size();++j) {
     if (i==j)
-      sprintf(buf,"%06X: %02X <-- problem around here?",j,data[j]);
+      sprintf(buf,"%06zX: %02X <-- problem around here?",j,data[j]);
     else 
-      sprintf(buf,"%06X: %02X",j,data[j]);
+      sprintf(buf,"%06zX: %02X",j,data[j]);
     EUDAQ_WARN(buf);
   }
 }
