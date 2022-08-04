@@ -88,6 +88,7 @@ namespace eudaq{
     for (size_t i = 0; i < m_x.size(); ++i) {
       m_x[i].resize(npix);
       m_y[i].resize(npix);
+      m_waveform[i].resize(npix);
       m_time[i].resize(npix);
       if (m_pivot.size())
 	m_pivot[i].resize(npix);
