@@ -100,7 +100,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   for(int i=1; i<finets_vec.size(); i++) {
       // 128 = half the fineTS counter range -> 128*780ps = 99ns = 3m (TOF)
       // For a time difference larger than 99ns, the overflow detection doesn't work anymore.
-      if(abs(finets_avg - finets_vec.at(i)) > 128) { // 128*780ps = 99ns
+    if(abs(static_cast<long>(finets_avg - finets_vec.at(i))) > 128) { // 128*780ps = 99ns
           finets_vec.at(i) += 0xFF; // overflow compensation
       }
       // Need to weight average with previous number of iterations:
