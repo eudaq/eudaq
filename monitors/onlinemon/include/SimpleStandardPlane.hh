@@ -89,6 +89,8 @@ public:
   bool is_USBPIXI4;
   bool is_FORTIS;
   bool is_EXPLORER;
+  bool is_APTS;
+  bool is_OPAMP;
   bool is_UNKNOWN;
 
 private:
