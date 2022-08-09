@@ -72,10 +72,14 @@ namespace eudaq {
     double GetY(uint32_t index) const;
 
     void SetWaveform(uint32_t index, std::vector<double> waveform, double x0, double dx, uint32_t frame = 0);
-    bool HasWaveform(uint32_t index, uint32_t frame = 0) const;
-    std::vector<double> GetWaveform(uint32_t index, uint32_t frame = 0) const;
-    double GetWaveformX0(uint32_t index, uint32_t frame = 0) const;
-    double GetWaveformDX(uint32_t index, uint32_t frame = 0) const;
+    bool HasWaveform(uint32_t index, uint32_t frame) const;
+    bool HasWaveform(uint32_t index) const;
+    std::vector<double> GetWaveform(uint32_t index, uint32_t frame) const;
+    std::vector<double> GetWaveform(uint32_t index) const;
+    double GetWaveformX0(uint32_t index, uint32_t frame) const;
+    double GetWaveformX0(uint32_t index) const;
+    double GetWaveformDX(uint32_t index, uint32_t frame) const;
+    double GetWaveformDX(uint32_t index) const;
 
     // NOTE this returns a timestamp in picoseconds
     uint64_t GetTimestamp(uint32_t index, uint32_t frame) const;
@@ -150,10 +154,16 @@ namespace eudaq {
     mutable const std::vector<pixel_t> *m_result_pix;
     mutable const std::vector<coord_t> *m_result_x, *m_result_y;
     mutable const std::vector<uint64_t> *m_result_time;
+    mutable const std::vector<std::vector<double>> *m_result_waveform;
+    mutable const std::vector<double> *m_result_waveform_x0;
+    mutable const std::vector<double> *m_result_waveform_dx;
 
     mutable std::vector<pixel_t> m_temp_pix;
     mutable std::vector<coord_t> m_temp_x, m_temp_y;
     mutable std::vector<uint64_t> m_temp_time;
+    mutable std::vector<std::vector<double>> m_temp_waveform;
+    mutable std::vector<double> m_temp_waveform_x0;
+    mutable std::vector<double> m_temp_waveform_dx;
   };
 
 } // namespace eudaq
