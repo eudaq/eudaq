@@ -48,3 +48,10 @@ install(TARGETS ${INSTALL_TARGETS}
   DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
+
+
+enable_testing()
+add_test(
+   NAME runTest
+   COMMAND euCliReader -i "/Users/lhuth/data/cmosAmp/run_001474_tlu_220331153704.raw" -std -e 10 -E 12 -s
+)
