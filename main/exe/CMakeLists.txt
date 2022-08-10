@@ -53,5 +53,5 @@ install(TARGETS ${INSTALL_TARGETS}
 enable_testing()
 add_test(
    NAME runTest
-   COMMAND euCliReader -i "/Users/lhuth/data/cmosAmp/run_001474_tlu_220331153704.raw" -std -e 10 -E 12 -s
+   COMMAND euCliReader -i "${CMAKE_SOURCE_DIR}/testing/data/mimosa_tlu.raw" -std -e 0 -E 5 -s
 )
