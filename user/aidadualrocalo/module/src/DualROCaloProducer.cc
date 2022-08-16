@@ -226,7 +226,7 @@ void DualROCaloProducer::Mainloop(){
       }
 
       //EUDAQ_DEBUG("Mainloop()::Defining send block");
-      std::vector<uint8_t> hits(block[27], block[data_size]);
+      std::vector<uint8_t> hits(block.begin()+27, block.end());
       uint8_t channel_size = 6;
       uint8_t header_size = 27;
       uint16_t expected_size = header_size + num_active_channels*channel_size;
@@ -241,7 +241,7 @@ void DualROCaloProducer::Mainloop(){
         //EUDAQ_THROW("Unknown data");
       }*/
       
-      //EUDAQ_INFO("Adding Block with ID = " + std::to_string(block_id) + " and size = " + std::to_string(hits.size()));
+      EUDAQ_INFO("Adding Block with ID = " + std::to_string(block_id) + " and size = " + std::to_string(hits.size()));
       ev->AddBlock(block_id, hits);
       if(block_id == 0){
         ev->SetBORE();
