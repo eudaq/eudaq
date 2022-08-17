@@ -120,7 +120,7 @@ namespace eudaq {
 		// getting the module information for event version >=2.1.0
 		jsoncons::json moduleChipInfoJson = jsoncons::json::parse(bore.GetTag("MODULECHIPINFO"));
 		for(const auto& uid : moduleChipInfoJson["uid"].array_range()) {
-                   chipInfo currentlyHandledChip;
+           chipInfo currentlyHandledChip;
 		   currentlyHandledChip.name = uid["name"].as<std::string>();
 		   currentlyHandledChip.chipId = uid["chipId"].as<std::string>();
 		   currentlyHandledChip.rx = uid["rx"].as<unsigned int>();
@@ -132,7 +132,7 @@ namespace eudaq {
 		   currentlyHandledChip.moduleName = uid["moduleName"].as<std::string>();
 		   currentlyHandledChip.moduleID = uid["moduleID"].as<std::string>();
 
-                   m_chip_info_by_uid[prodID].push_back(currentlyHandledChip);
+           m_chip_info_by_uid[prodID].push_back(currentlyHandledChip);
 		};
 		
                 int base_id = 110 + prodID * 20; 
