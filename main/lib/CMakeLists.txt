@@ -1,3 +1,61 @@
+find_package(Git REQUIRED)
+
+execute_process(
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+   COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+   RESULT_VARIABLE result_git_branch
+   OUTPUT_VARIABLE EUDAQ_GIT_BRANCH
+   OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(result_git_branch)
+   message(FATAL_ERROR "Failed to get git branch: ${result_git_branch}")
+endif()
+
+execute_process(
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+   COMMAND ${GIT_EXECUTABLE} describe --tag
+   RESULT_VARIABLE result_git_tag
+   OUTPUT_VARIABLE EUDAQ_GIT_TAG
+   OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(result_git_tag)
+   message(FATAL_ERROR "Failed to get git tag: ${result_git_tag}")
+endif()
+
+execute_process(
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+   COMMAND ${GIT_EXECUTABLE} describe --always --dirty --abbrev=40 --match="NoTagWithThisName"
+   RESULT_VARIABLE result_git_hash
+   OUTPUT_VARIABLE EUDAQ_GIT_HASH
+   OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(result_git_hash)
+   message(FATAL_ERROR "Failed to get git hash: ${result_git_hash}")
+endif()
+
+execute_process(
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+   COMMAND ${GIT_EXECUTABLE} log -1 --format=%ad --date=iso
+   RESULT_VARIABLE result_git_date
+   OUTPUT_VARIABLE EUDAQ_GIT_DATE
+   OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(result_git_date)
+   message(FATAL_ERROR "Failed to get git date: ${result_git_date}")
+endif()
+
+execute_process(
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+   COMMAND ${GIT_EXECUTABLE} log -1 --format=%s
+   RESULT_VARIABLE result_git_subject
+   OUTPUT_VARIABLE EUDAQ_GIT_SUBJECT
+   OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(result_git_subject)
+   message(FATAL_ERROR "Failed to get git subject: ${result_git_subject}")
+endif()
+configure_file(src/eudaq_version.cpp.in ${CMAKE_CURRENT_SOURCE_DIR}/src/eudaq_version.cpp @ONLY)
+
 option(USE_ROOT "Compiling main library using ROOT" ON)
 if (USE_ROOT)
    FIND_PACKAGE( ROOT REQUIRED )

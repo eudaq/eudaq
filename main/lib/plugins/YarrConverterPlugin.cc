@@ -2,6 +2,8 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 
+#include "jsoncons/json.hpp"
+
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
 #if USE_LCIO
@@ -20,11 +22,66 @@
 #include "EUTelRunHeaderImpl.h"
 #endif
 
+class Version
+{
+    public:
+    Version() : m_version_string("0.0.0.0") { };
+    Version( std::string v ) : m_version_string(v) { };
+    
+    friend bool operator <  (Version u, Version v);
+    friend bool operator >  (Version u, Version v);
+    friend bool operator <= (Version u, Version v);
+    friend bool operator >= (Version u, Version v);
+    friend bool operator == (Version u, Version v);
+    
+    private:
+    std::string m_version_string;
+    
+    int version_compare(std::string v1, std::string v2) {
+       size_t i=0, j=0;
+       while( i < v1.length() || j < v2.length() ) {
+           int acc1=0, acc2=0;
+
+           while (i < v1.length() && v1[i] != '.') {  acc1 = acc1 * 10 + (v1[i] - '0');  i++;  }
+           while (j < v2.length() && v2[j] != '.') {  acc2 = acc2 * 10 + (v2[j] - '0');  j++;  }
+
+           if (acc1 < acc2)  return -1;
+           if (acc1 > acc2)  return +1;
+
+           ++i;
+           ++j;
+        }
+        return 0;
+    }    
+};
+
+bool operator <  (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) == -1;  }
+bool operator >  (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) == +1;  }
+bool operator <= (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) != +1;  }
+bool operator >= (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) != -1;  }
+bool operator == (Version u, Version v) {  return u.version_compare(u.m_version_string, v.m_version_string) ==  0; }
+
 typedef struct {
     uint16_t col;
     uint16_t row;
     uint16_t tot;
 } Fei4Hit;
+
+
+struct chipInfo {
+    std::string name;
+    std::string chipId; 
+    unsigned int rx;
+    std::string moduleType;
+    std::string sensorType;
+    std::string pcbType;
+    unsigned int chipLocationOnModule;
+    unsigned int internalModuleIndex;
+    std::string moduleName;
+    std::string moduleID;
+};
+                     
+
 
 namespace eudaq {
 
@@ -43,6 +100,51 @@ namespace eudaq {
 #ifndef WIN32 // some linux Stuff //$$change
                 (void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
+                std::string event_version = bore.GetTag("YARREVENTVERSION", "1.0.0");
+
+		// getting the producer ID for event version >=2.0.1
+		int prodID = std::stoi(bore.GetTag("PRODID"));
+		std::cout << "producer tag in BORE: " << bore.GetTag("PRODID") << std::endl;
+		
+                m_EventVersion[prodID] = event_version; // only now we have the producer ID available
+                
+                std::string DUTTYPE = bore.GetTag("DUTTYPE");
+                
+                if(DUTTYPE=="RD53A") {
+                   m_FrontEndType[prodID] = "Rd53a";
+                } else if(DUTTYPE=="RD53B") {
+                   m_FrontEndType[prodID] = "Rd53b";
+                };
+		std::cout << "YarrConverterPlugin: front end type " << m_FrontEndType.at(prodID) << " declared in BORE for producer " << prodID << std::endl;
+		
+		// getting the module information for event version >=2.1.0
+		jsoncons::json moduleChipInfoJson = jsoncons::json::parse(bore.GetTag("MODULECHIPINFO"));
+		for(const auto& uid : moduleChipInfoJson["uid"].array_range()) {
+           chipInfo currentlyHandledChip;
+		   currentlyHandledChip.name = uid["name"].as<std::string>();
+		   currentlyHandledChip.chipId = uid["chipId"].as<std::string>();
+		   currentlyHandledChip.rx = uid["rx"].as<unsigned int>();
+		   currentlyHandledChip.moduleType = uid["moduleType"].as<std::string>();
+		   currentlyHandledChip.sensorType = uid["sensorType"].as<std::string>();
+		   currentlyHandledChip.pcbType = uid["pcbType"].as<std::string>();
+		   currentlyHandledChip.chipLocationOnModule = uid["chipLocationOnModule"].as<unsigned int>();
+		   currentlyHandledChip.internalModuleIndex = uid["internalModuleIndex"].as<unsigned int>();		   
+		   currentlyHandledChip.moduleName = uid["moduleName"].as<std::string>();
+		   currentlyHandledChip.moduleID = uid["moduleID"].as<std::string>();
+
+           m_chip_info_by_uid[prodID].push_back(currentlyHandledChip);
+		};
+		
+                int base_id = 110 + prodID * 20; 
+                // assuming that there will be never more than 20 FEs connected to one SPEC/producer; otherwise a more intricate handling is necessary
+                
+		for(const auto& uid : m_chip_info_by_uid[prodID]) {
+		   m_module_size_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleType;
+		   m_plane_id_by_module_index[prodID][uid.internalModuleIndex] = base_id + uid.internalModuleIndex;
+		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleID;
+		   std::cout << "Assigning plane ID " << m_plane_id_by_module_index[prodID][uid.internalModuleIndex] << " to module " << uid.internalModuleIndex << " which is called " << m_module_name_by_module_index[prodID][uid.internalModuleIndex] << " and has chip " << uid.name << std::endl;
+		} 
+		
             }
 
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
@@ -50,26 +152,47 @@ namespace eudaq {
             // Again, this is just an example, adapted it for the actual data layout.
             virtual bool GetStandardSubEvent(StandardEvent &sev,
                     const Event &ev) const {
-                // If the event type is used for different sensors
-                // they can be differentiated here
-                std::string sensortype = "Rd53a";
-                // Create a StandardPlane representing one sensor plane
-                int base_id = 110;
-                int width = 400, height = 192;
+                    
+                if(ev.IsEORE()) {
+                   std::cout << "EORE has been reached" << std::endl;
+                   return true;
+                }
                 
+                // Differentiate between different sensors
+		int prodID = std::stoi(ev.GetTag("PRODID"));
+		
+		std::map<unsigned int, StandardPlane> standard_plane_by_module_index;
+		for (std::size_t currentPlaneIndex = 0; currentPlaneIndex < m_plane_id_by_module_index[prodID].size(); ++currentPlaneIndex) {
+		    std::string local_plane_type;
+		    unsigned int width, height;
+		    if(m_FrontEndType.at(prodID)=="Rd53a"){
+                       width  = 400;
+                       height = 192;
+                       local_plane_type = m_FrontEndType.at(prodID);
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_single")) {
+                       width  = 400;
+                       height = 384;                       
+                       local_plane_type = m_FrontEndType.at(prodID);                       
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_quad")) {
+                       width  = 800;
+                       height = 768;
+                       local_plane_type = "RD53BQUAD";  
+                     };
+                     unsigned int local_id = m_plane_id_by_module_index[prodID][currentPlaneIndex];
+
+		   standard_plane_by_module_index[currentPlaneIndex] = StandardPlane(local_id, EVENT_TYPE, local_plane_type);
+                    // Set the number of pixels
+                   standard_plane_by_module_index[currentPlaneIndex].SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);		   
+		};
+
+
                 const RawDataEvent & my_ev = dynamic_cast<const RawDataEvent &>(ev);
                 int ev_id = my_ev.GetTag("EventNumber", -1); 
                 
-                for (unsigned i=0; i<my_ev.NumBlocks(); i++) {
-                    eudaq::RawDataEvent::data_t block=my_ev.GetBlock(i);
-                    int plane_id = base_id + my_ev.GetID(i);
-                     
-                    StandardPlane plane(plane_id, EVENT_TYPE, sensortype);
-                    
-                    // Set the number of pixels
-                    plane.SetSizeZS(width, height, 0, 32, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-                    
-                    plane.SetTLUEvent(ev_id);
+                for (unsigned currentBlockIndex=0; currentBlockIndex<my_ev.NumBlocks(); currentBlockIndex++) {
+                    eudaq::RawDataEvent::data_t block=my_ev.GetBlock(currentBlockIndex);
+                                      
+                    standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].SetTLUEvent(ev_id);
                          
                     unsigned it = 0;
                     unsigned fragmentCnt = 0;
@@ -78,15 +201,50 @@ namespace eudaq {
                         uint32_t l1id = *((uint16_t*)(&block[it])); it+= sizeof(uint16_t);
                         uint32_t bcid = *((uint16_t*)(&block[it])); it+= sizeof(uint16_t);
                         uint32_t nHits = *((uint16_t*)(&block[it])); it+= sizeof(uint16_t);
-                        for (unsigned i=0; i<nHits; i++) {
+                        for (unsigned currentHitIndex=0; currentHitIndex<nHits; currentHitIndex++) {
                             Fei4Hit hit = *((Fei4Hit*)(&block[it])); it+= sizeof(Fei4Hit);
-			    //                            plane.PushPixel(hit.col,hit.row,hit.tot);
-                            plane.PushPixel(hit.col,hit.row,hit.tot,false,l1id);
+			    //plane.PushPixel(hit.col,hit.row,hit.tot);
+			    //std::cout << "col: " << hit.col  << " row: " << hit.row << " tot: " << hit.tot << " l1id: " << l1id << " tag: " << tag << std::endl;
+			    if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleType=="ITk_quad")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+			       uint16_t transformed_col;
+			       uint16_t transformed_row;
+			       switch(m_chip_info_by_uid[prodID][currentBlockIndex].chipLocationOnModule){
+			       case 1:
+			           transformed_col = 384 + 1 - hit.row;
+			           transformed_row = 800 + 1 - hit.col;
+			           break;
+			       case 2:
+                                    transformed_col = 384 + 1 - hit.row;
+                                    transformed_row = 400 + 1 - hit.col;			       
+			           break;
+			       case 3:
+                                    transformed_col = 384 + hit.row;
+                                    transformed_row = hit.col;			       
+			           break;
+			       case 4:
+                                    transformed_col = 384 + hit.row;
+                                    transformed_row = 400 + hit.col;			       
+			           break;
+			       default:
+			           break;
+			       };
+                               standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(transformed_col-1,transformed_row-1,hit.tot,false,tag);			       
+			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53a")){
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,l1id);
+			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
+                            } else {
+                            	std::cout << "undefined module type" << std::endl;
+                            	return false;
+                            }
+                            
                         }
                         fragmentCnt++;
                     }
-                    sev.AddPlane(plane);
                 }
+		for(auto it = standard_plane_by_module_index.begin(); it != standard_plane_by_module_index.end(); ++it) {
+                    sev.AddPlane(it->second);		
+		}
 
                 // Indicate that data was successfully converted
                 return true;
@@ -210,12 +368,19 @@ namespace eudaq {
             YARRConverterPlugin()
                 : DataConverterPlugin(EVENT_TYPE) {}
 
-            // Information extracted in Initialize() can be stored here:
+            // Information extracted in Initialize()
+            mutable std::map<int,std::string> m_FrontEndType;
+            mutable std::map<int,Version> m_EventVersion;
+            mutable std::map<int,std::vector<chipInfo> > m_chip_info_by_uid;
+            mutable std::map<int,std::map<unsigned int,std::string> > m_module_size_by_module_index;
+            mutable std::map<int,std::map<unsigned int, unsigned int> > m_plane_id_by_module_index;            
+            mutable std::map<int,std::map<unsigned int, std::string> > m_module_name_by_module_index;                        
             unsigned m_run;
 
             // The single instance of this converter plugin
             static YARRConverterPlugin m_instance;
-    }; // class ExampleConverterPlugin
+            
+    }; // class YarrConverterPlugin
 
     // Instantiate the converter plugin instance
     YARRConverterPlugin YARRConverterPlugin::m_instance;

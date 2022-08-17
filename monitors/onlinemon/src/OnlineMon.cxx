@@ -314,6 +314,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
         sensorname=plane.Sensor();
 
       }
+      //std::cout << "sensor name: " << sensorname << std::endl;
       // DEAL with Fortis ...
       if (strcmp(plane.Sensor().c_str(), "FORTIS") == 0 )
       {

@@ -75,3 +75,6 @@ debug/*
 # ignore OS files
 Thumbs.db
 *.lnk
+
+main/lib/src/eudaq_version.cpp
+
