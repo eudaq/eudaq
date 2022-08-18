@@ -27,6 +27,10 @@ namespace eudaq{
     auto dummy0 = eudaq::Factory<eudaq::LogCollector>::
       Register<FileLogCollector, const std::string&, const std::string&>(FileLogCollector::m_id_factory);
   }
+  namespace{
+    auto dummy1 = eudaq::Factory<eudaq::LogCollector>::
+      Register<FileLogCollector, const std::string&, const std::string&>(eudaq::cstr2hash("log"));
+  }
 
   FileLogCollector::FileLogCollector(const std::string &name, const std::string &runcontrol)
     :eudaq::LogCollector(name, runcontrol){
