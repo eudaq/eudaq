@@ -242,10 +242,10 @@ void DualROCaloProducer::Mainloop(){
       }*/
       
       EUDAQ_INFO("Adding Block with ID = " + std::to_string(block_id) + " and size = " + std::to_string(hits.size()));
-      ev->AddBlock(block_id, hits);
-      if(block_id == 0){
-        ev->SetBORE();
-      }
+      ev->AddBlock(0, hits);
+      //if(block_id == 0){
+      //  ev->SetBORE();
+      //}
       block_id++;
 
       if (loop_count==1){
