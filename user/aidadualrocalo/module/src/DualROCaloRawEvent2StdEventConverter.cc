@@ -176,7 +176,7 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
   //uint16_t tluid = eudaq::getlittleendian<uint16_t>(&data0[6]);
   datait it0 = data0.begin();
   //uint32_t board = 0;
-  eudaq::StandardPlane plane(0, "Board", "DualROCalo");
+  eudaq::StandardPlane plane(0, "DualROCalo", "DualROCalo");
   plane.SetSizeZS(8, 8, 0);
 
   while (it0 < data0.end()) {
