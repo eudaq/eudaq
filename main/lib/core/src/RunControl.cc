@@ -51,7 +51,12 @@ namespace eudaq {
 	return;
       }
       else if(st == Status::STATE_UNINIT){
-	conn_to_init.push_back(conn);
+        if(conn->GetType() == "LogCollector") {
+          conn_to_init.insert(conn_to_init.begin(),conn);
+        }
+        else {
+          conn_to_init.push_back(conn);
+        }
       }
     }
     lk.unlock();
@@ -62,7 +67,7 @@ namespace eudaq {
 
 }
     void RunControl::InitialiseSingleConnection(ConnectionSPC id) {
-    EUDAQ_INFO("Processing Initialise command");
+    EUDAQ_INFO(std::string("Processing Initialise command for ")+id->GetName());
     std::unique_lock<std::mutex> lk(m_mtx_conn);
 	  
     auto st = m_conn_status[id]->GetState();
