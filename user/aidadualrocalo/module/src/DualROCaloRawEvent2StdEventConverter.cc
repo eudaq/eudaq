@@ -157,8 +157,14 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
     d2->SetRunN(d1->GetRunN());
     d2->SetEventN(d1->GetEventN());
     d2->SetStreamN(d1->GetStreamN());
-    d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
-    d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
+    if (d1->IsFlagTrigger()){
+      d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
+      std::cout<<"TriggerN = " << std::to_string(d1->GetTriggerN()) << std::endl;
+    }
+    if (d1->IsFlagTimestamp()){
+      d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd()+1, d1->IsFlagTimestamp());
+      std::cout<<"TimeBegin = " << std::to_string(d1->GetTimestampBegin())<<" TimeEnd = " << std::to_string(d1->GetTimestampEnd()) << std::endl;
+    }
   }
 
   auto &rawev = *ev;
@@ -190,7 +196,7 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
     uint16_t y = (uint16_t) n/8;
 
     //std::cout << "Converting:: lg value = " << std::to_string(lg_adc_value) << std::endl;
-    std::cout<<"Converting:: n = " << std::to_string(n)<<" x = " << std::to_string(x)<<" y = " << std::to_string(y) << " adc = " << std::to_string(lg_adc_value) <<  std::endl;
+    //std::cout<<"Converting:: n = " << std::to_string(n)<<" x = " << std::to_string(x)<<" y = " << std::to_string(y) << " adc = " << std::to_string(lg_adc_value) <<  std::endl;
 
 
     plane.PushPixel(x, y, lg_adc_value);
