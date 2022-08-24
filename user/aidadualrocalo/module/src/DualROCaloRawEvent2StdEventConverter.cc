@@ -1,5 +1,6 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
+#include "eudaq/Utils.hh"
 
 /*
 class DualROCaloRawEvent2StdEventConverter: public eudaq::StdEventConverter{
@@ -140,7 +141,29 @@ namespace{
 
 bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
-  //TODO: number of telescope plane may be less than 6. Decode additional tags
+
+  auto map_file = conf->Get("map_file", "default_map_file.txt");
+  auto hg_pedestal_file = conf->Get("hg_pedestal_file", "default_hg_pedestal_file.txt");
+  auto use_timestamps = conf->Get("use_timestamps", true);
+
+  std::string content;
+  content = eudaq::ReadLineFromFile(map_file);
+  std::vector<int> channel_map;
+  std::stringstream ss(content);
+  for (int i; ss >> i;) {
+    channel_map.push_back(i);    
+    if (ss.peek() == ',') ss.ignore();
+  }
+
+/*
+  std::vector<float> hg_pedestals;
+  float pedestal;
+  std::string pedestal_str;
+  for (int i=0; i<320; i++){
+    pedestal_str = eudaq::ReadLineFromFile(hg_pedestal_file);
+    std::cout<< "Pedestal = " <<pedestal_str<<std::endl;
+  }*/
+
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   if(!ev)
     return false;
@@ -159,10 +182,10 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
     d2->SetStreamN(d1->GetStreamN());
     if (d1->IsFlagTrigger()){
       d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
-      std::cout<<"TriggerN = " << std::to_string(d1->GetTriggerN()) << std::endl;
+      //std::cout<<"DualROCaloConverter::TriggerN = " << std::to_string(d1->GetTriggerN()) << std::endl;
     }
-    if (d1->IsFlagTimestamp()){
-      d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd()+1, d1->IsFlagTimestamp());
+    if (d1->IsFlagTimestamp() && use_timestamps){
+      d2->SetTimestamp(d1->GetTimestampBegin()*1000000, d1->GetTimestampEnd()*1000000, d1->IsFlagTimestamp());
       std::cout<<"TimeBegin = " << std::to_string(d1->GetTimestampBegin())<<" TimeEnd = " << std::to_string(d1->GetTimestampEnd()) << std::endl;
     }
   }
@@ -180,10 +203,14 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
   //uint32_t header1 = eudaq::getlittleendian<uint32_t>(&data1[0]);
   //uint16_t pivot = eudaq::getlittleendian<uint16_t>(&data0[4]);
   //uint16_t tluid = eudaq::getlittleendian<uint16_t>(&data0[6]);
-  datait it0 = data0.begin();
+  datait it0 = data0.begin()+1;
   //uint32_t board = 0;
   eudaq::StandardPlane plane(0, "DualROCalo", "DualROCalo");
-  plane.SetSizeZS(8, 8, 0);
+  plane.SetSizeZS(16, 20, 0);
+
+  eudaq::StandardPlane plane_lg(1, "DualROCalo", "DualROCalo");
+  plane_lg.SetSizeZS(16, 20, 0);
+  uint8_t board_id = data0[0];
 
   while (it0 < data0.end()) {
     
@@ -191,15 +218,20 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
     uint16_t lg_adc_value = eudaq::getlittleendian<uint16_t>(&(*(it0+2)));
     uint16_t hg_adc_value = eudaq::getlittleendian<uint16_t>(&(*(it0+4)));
 
-    uint8_t n = channel_id;
-    uint16_t x = n % 8;
-    uint16_t y = (uint16_t) n/8;
+    uint8_t n = channel_map[channel_id];
+    uint16_t x = n % 16;
+    uint16_t y = 19 - ((uint16_t) n/16 + 4*board_id); //channel numbering starts from the top (19 because we start from 0)
 
     //std::cout << "Converting:: lg value = " << std::to_string(lg_adc_value) << std::endl;
     //std::cout<<"Converting:: n = " << std::to_string(n)<<" x = " << std::to_string(x)<<" y = " << std::to_string(y) << " adc = " << std::to_string(lg_adc_value) <<  std::endl;
 
 
-    plane.PushPixel(x, y, lg_adc_value);
+    if (hg_adc_value>70) 
+      plane.PushPixel(x, y, hg_adc_value);
+
+    if (lg_adc_value>70)
+      plane_lg.PushPixel(x, y, lg_adc_value);
+
 
     it0 += 6;
     
@@ -212,7 +244,6 @@ bool DualROCaloRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq:
   }
 
   d2->AddPlane(plane);
-  std::cout << "Added Plane!" << std::endl;
   //eudaq::mSleep(1000);
 
   return true;

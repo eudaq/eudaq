@@ -73,11 +73,8 @@ void DualROCaloProducer::DoStopRun(){
   m_exit_of_run = true;
   EUDAQ_INFO("Exiting DualROCalo Run");
   if(m_thd_run.joinable()){
-    EUDAQ_DEBUG("DualROCalo Joinable"); 
     m_thd_run.join();
-    EUDAQ_DEBUG("DualROCalo joined");
   }
-  EUDAQ_DEBUG("Infile Closed!");
   m_ifile.close();
 }
 
@@ -226,7 +223,9 @@ void DualROCaloProducer::Mainloop(){
       }
 
       //EUDAQ_DEBUG("Mainloop()::Defining send block");
-      std::vector<uint8_t> hits(block.begin()+27, block.end());
+      std::vector<uint8_t> hits;
+      hits.push_back(board_id);
+      hits.insert(hits.end(), block.begin()+27, block.end());
       uint8_t channel_size = 6;
       uint8_t header_size = 27;
       uint16_t expected_size = header_size + num_active_channels*channel_size;
@@ -241,7 +240,7 @@ void DualROCaloProducer::Mainloop(){
         //EUDAQ_THROW("Unknown data");
       }*/
       
-      EUDAQ_INFO("Adding Block with ID = " + std::to_string(block_id) + " and size = " + std::to_string(hits.size()));
+      //EUDAQ_INFO("Adding Block with ID = " + std::to_string(block_id) + " and size = " + std::to_string(hits.size()));
       ev->AddBlock(0, hits);
       //if(block_id == 0){
       //  ev->SetBORE();
@@ -250,7 +249,7 @@ void DualROCaloProducer::Mainloop(){
 
       if (loop_count==1){
         ev->Print(std::cout);
-        eudaq::mSleep(10000);
+        //eudaq::mSleep(10000);
       }
       SendEvent(std::move(ev));
 
