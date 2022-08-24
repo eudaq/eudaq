@@ -295,7 +295,6 @@ namespace eudaq{
 
   uint32_t StandardPlane::HitPixels() const {
     SetupResult();
-    std::cout<<"StandardPlane::HitPixels called with no argument. m_result_pix->size()= "<<std::to_string(m_result_pix->size()) << std::endl;
     return m_result_pix->size();
   }
 
