@@ -10,6 +10,14 @@
 #include <unistd.h>
 #include <signal.h>
 #include <wait.h>
+#include <sys/stat.h>
+#include <iterator>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+
+
+#define TOKEN " "
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class CorryMonitor : public eudaq::Monitor {
@@ -32,6 +40,9 @@ private:
   pid_t m_corry_pid;
   std::string m_corry_path;
   std::string m_corry_config;
+  std::string m_corry_options;
+
+  char **argv;
 
 };
 
@@ -47,16 +58,72 @@ CorryMonitor::CorryMonitor(const std::string & name, const std::string & runcont
 void CorryMonitor::DoInitialise(){
   auto ini = GetInitConfiguration();
   ini->Print(std::cout);
+  m_corry_path = ini->Get("CORRY_PATH", "/path/to/corry");
+  
+  struct stat buffer;   
+  if(stat(m_corry_path.c_str(), &buffer) != 0)
+    EUDAQ_THROW("Corryvreckan cannot be found! Please check your /path/to/corry");
+
+  /* 
+  if (FILE *file = fopen(m_corry_path.c_str(), "r")) {
+        fclose(file);
+    } else {
+        EUDAQ_THROW("Corryvreckan cannot be found! Please check your /path/to/corry.");
+    } */ 
+
+}
+
+static char **addArg (char **argv, size_t *pSz, size_t *pUsed, char *str) {
+    // Make sure enough space for another one.
+
+    if (*pUsed == *pSz) {
+        *pSz = *pSz + 25;
+        argv = (char **) realloc (argv, *pSz * sizeof (char*));
+        if (argv == 0) {
+            std::cerr << "Out of memory\n";
+            exit (1);
+        }
+    }
+
+    // Add it and return (possibly new) array.
+
+    argv[(*pUsed)++] = (str == 0) ? 0 : strdup (str);
+    return argv;
 }
 
 void CorryMonitor::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_en_print = conf->Get("Corry_ENABLE_PRINT", 1);
-  m_en_std_converter = conf->Get("Corry_ENABLE_STD_CONVERTER", 0);
-  m_en_std_print = conf->Get("Corry_ENABLE_STD_PRINT", 0);
-  m_corry_path = conf->Get("CORRY_PATH", "~/corryvreckan/install/bin/corry");
+  m_en_print = conf->Get("CORRY_ENABLE_PRINT", 1);
+  m_en_std_converter = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
+  m_en_std_print = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
+
   m_corry_config = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
+  struct stat buffer;   
+  if(stat(m_corry_config.c_str(), &buffer) != 0)
+    EUDAQ_THROW("Config for corry cannot be found! Please check your /path/to/config.conf");
+
+  m_corry_options = conf->Get("CORRY_OPTIONS", "");
+
+
+  std::string my_command = m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
+
+  //    Initial size, used and array.
+
+  size_t sz = 0, used = 0;
+  argv = 0;
+
+  char * cstr = new char[my_command.length()+1];
+  std::strcpy(cstr, my_command.c_str());
+
+  // Add the command itself.
+  argv = addArg (argv, &sz, &used, strtok (cstr, TOKEN));
+
+  // Add each argument in turn, then the terminator.
+  while ((cstr = strtok (0, TOKEN)) != 0)
+        argv = addArg (argv, &sz, &used, cstr);
+
+  argv = addArg (argv, &sz, &used, 0);
 }
 
 void CorryMonitor::DoStartRun(){
@@ -67,13 +134,18 @@ void CorryMonitor::DoStartRun(){
     perror("fork");
     exit(1);
 
-  case 0: // child
-    execl(m_corry_path.c_str(), "corry", "-c", m_corry_config.c_str(), (char*)0);
-    //execl("/home/andreas/corryvreckan/install/bin/corry", "corry", "-c", "/home/andreas/Documents/Monitoring/monitoring.conf", (char*)0);
-    perror("execl"); // execl doesn't return unless there is a problem
+  case 0: // child: start corryvreckan
+    //execl(m_corry_path.c_str(), "corry", "-c", m_corry_config.c_str(), m_corry_options.c_str(), (char*)0);
+    //command = &commandVector[0];
+    //execvp(my_argv[0], my_argv);
+    execvp(argv[0], argv);
+    //execl(m_corry_path.c_str(), "corry", "-c", m_corry_config.c_str(), "-o", "number_of_events=10000", (char*)0);
+    //execv(m_corry_path.c_str(), (char **)execv_arguments);
+    //execv (programname, (char **)argv);
+    perror("execv"); // execv doesn't return unless there is a problem
     exit(1);
   
-  default:
+  default: // parent
     break;
   }
   
