@@ -62,7 +62,7 @@ void CorryMonitor::DoInitialise(){
   
   struct stat buffer;   
   if(stat(m_corry_path.c_str(), &buffer) != 0)
-    EUDAQ_THROW("Corryvreckan cannot be found! Please check your /path/to/corry");
+    EUDAQ_THROW("Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)");
 
   /* 
   if (FILE *file = fopen(m_corry_path.c_str(), "r")) {
@@ -101,7 +101,7 @@ void CorryMonitor::DoConfigure(){
   m_corry_config = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
   struct stat buffer;   
   if(stat(m_corry_config.c_str(), &buffer) != 0)
-    EUDAQ_THROW("Config for corry cannot be found! Please check your /path/to/config.conf");
+    EUDAQ_THROW("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
 
   m_corry_options = conf->Get("CORRY_OPTIONS", "");
 
