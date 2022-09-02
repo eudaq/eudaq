@@ -42,7 +42,7 @@ REGISTER_CONVERTER(ALPIDE_plane_19)
 bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdEventSP out,eudaq::ConfigSPC conf) const{
 
   // load configuration from config file
-  if( !m_configured ){
+  if(!m_configured && conf != nullptr){
     // read from config file
     m_useTime = conf->Get("use_time_stamp", false );
 
