@@ -74,34 +74,87 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
     return true;
 }
 
+//void Scan::createConfigs(unsigned condition, eudaq::ConfigurationSP conf,std::vector<ScanSection> sec) {
+//    if(condition == sec.size())
+//        return;
+//    auto confsBefore = m_config_files.size();
+
+//    // We can scan in both directions:
+//    bool decreasing = (sec.at(condition).start > sec.at(condition).stop);
+//    auto value = sec.at(condition).start;
+//    auto steps = std::abs(sec.at(condition).start-sec.at(condition).stop)/sec.at(condition).step;
+//    EUDAQ_INFO( "Condition " + std::to_string(condition));
+//    EUDAQ_INFO( "confsBefore " + std::to_string(confsBefore));
+//    for(int nStep=0; nStep<steps; ++nStep)
+//    {
+//        // if the scan is nested, all other data points from before need to be
+//        // redone with each point of current scan
+//        if(sec.at(condition).nested) {
+//            for(unsigned i =0; i < confsBefore;++i) {
+//                eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
+//                tmpConf->SetSection(sec.at(condition).name);
+//                tmpConf->Set(sec.at(condition).parameter, value);
+//                storeConfigFile(tmpConf);
+//                addSection(sec.at(condition));
+//            }
+//        } else {
+//            auto level = sec.at(condition).nestLevel;
+//            for (unsigned parCounter = condition; parCounter < sec.size(); parCounter++){
+//                EUDAQ_INFO( "A NestLevel " + std::to_string(level));
+//                if (sec.at(parCounter).nestLevel == level){
+//                    EUDAQ_INFO( "B NestLevel " + std::to_string(parCounter));
+//                    conf->SetSection(sec.at(parCounter).name);
+//                    conf->Set(sec.at(parCounter).parameter, value);
+//                }
+//            }
+//            conf->SetSection(sec.at(condition).name);
+//            conf->Set(sec.at(condition).parameter, value);
+//            storeConfigFile(conf);
+//            EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
+//            addSection(sec.at(condition));
+//        }
+//        value+= (decreasing? -1: 1) *sec.at(condition).step;
+//    }
+//    conf->SetSection(sec.at(condition).name);
+//    conf->Set(sec.at(condition).parameter, sec.at(condition).defaultV);
+//    EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
+//    createConfigs(condition+1,conf,sec);
+//}
+
 void Scan::createConfigs(unsigned condition, eudaq::ConfigurationSP conf,std::vector<ScanSection> sec) {
     if(condition == sec.size())
         return;
     auto confsBefore = m_config_files.size();
-
+    auto level = sec.at(condition).nestLevel; // ask for the nestLevel of the current file
+    std::vector<double> value;
+    std::vector<double> step;
+    auto nSteps = std::abs(sec.at(condition).start-sec.at(condition).stop)/sec.at(condition).step;
+    std::vector<bool> decreasing;
+    std::vector<std::string> name;
+    value.push_back(sec.at(condition).start);
+    step.push_back(std::abs(sec.at(condition).start-sec.at(condition).stop)/sec.at(condition).step); // all same level parameters must have the same number of steps
+    for (unsigned secCounter = condition; secCounter < sec.size(); secCounter++){ // loop through all later scan parameters and see if any of them have the same nestLevel
+        EUDAQ_INFO( "A NestLevel " + std::to_string(level));
+        if (sec.at(secCounter).nestLevel == level){
+            decreasing.push_back((sec.at(secCounter).start > sec.at(secCounter).stop));
+            value.push_back(sec.at(secCounter).start);
+            step.push_back(sec.at(secCounter).step);
+        }
+    }
     // We can scan in both directions:
-    bool decreasing = (sec.at(condition).start > sec.at(condition).stop);
-    auto value = sec.at(condition).start;
-    auto steps = std::abs(sec.at(condition).start-sec.at(condition).stop)/sec.at(condition).step;
-    for(int nStep=0; nStep<steps; ++nStep)
+
+
+    for(int nStep=0; nStep<nSteps; ++nStep)
     {
         // if the scan is nested, all other data points from before need to be
         // redone with each point of current scan
-        if(sec.at(condition).nested) {
-            for(unsigned i =0; i < confsBefore;++i) {
-                eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
-                tmpConf->SetSection(sec.at(condition).name);
-                tmpConf->Set(sec.at(condition).parameter, value);
-                storeConfigFile(tmpConf);
-                addSection(sec.at(condition));
-            }
-        } else {
-            conf->SetSection(sec.at(condition).name);
-            conf->Set(sec.at(condition).parameter, value);
-            storeConfigFile(conf);
-            EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
-            addSection(sec.at(condition));
-        }
+
+        conf->SetSection(sec.at(condition).name);
+        conf->Set(sec.at(condition).parameter, value);
+        storeConfigFile(conf);
+        EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
+        addSection(sec.at(condition));
+
         value+= (decreasing? -1: 1) *sec.at(condition).step;
     }
     conf->SetSection(sec.at(condition).name);
