@@ -1,5 +1,5 @@
 [global]
-repeatScans = 1
+repeatScans = 0
 allowNested = 0 # overrides local nested arguments
 #configPrefix = "path/to/folder/scanned" // optional
 timeBasedScan = 1 # 1 = true :)
@@ -16,7 +16,7 @@ name = Producer.my_pd0
 parameter = EX0_PLANE_ID
 
 [4]
-nested = 1
+#nested = 1
 default = 0
 start = 1
 stop = 2
