@@ -26,10 +26,11 @@ public:
         double start, step, stop, defaultV;
         int secIndex;
         bool nested;
+        int nestLevel;
         std::string name, parameter, eventCounter;
 
-        ScanSection(double start, double stop, double step, std::string name,std::string parameter,std::string eventCounter, double defaultV, int idx, bool nested = false)
-            : start(start), stop(stop), step(step), name(name), nested(nested), parameter(parameter), eventCounter(eventCounter), defaultV(defaultV), secIndex(idx)
+        ScanSection(double start, double stop, double step, std::string name,std::string parameter,std::string eventCounter, double defaultV, int idx, bool nested = false, int nestLevel = 0)
+            : start(start), stop(stop), step(step), name(name), nested(nested), parameter(parameter), eventCounter(eventCounter), defaultV(defaultV), secIndex(idx), nestLevel(nestLevel)
         {}
     };
     Scan():m_allow_nested_scan(false), m_scan_is_time_based(true), m_time_per_step(0), m_repeatScans(false),

@@ -34,6 +34,7 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             double step     = scanConf->Get("step",std::numeric_limits<double>::min());
             double stop     = scanConf->Get("stop",std::numeric_limits<double>::min());
             double defaultV = scanConf->Get("default",start);
+            int nestLevel = scanConf->Get("nestLevel", 0);
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
             std::string Counter  = scanConf->Get("eventCounter","wrongPara");
@@ -53,7 +54,7 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             if(!defaultConf->Has(param))
                 return scanError("Scan parameter "+std::to_string(i)+":"+param+" is not defined in default configuration");
 
-            sec.push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested));
+            sec.push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested, nestLevel));
 
             defaultConf->SetSection("");
             defaultConf->SetSection(name);
