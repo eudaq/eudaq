@@ -34,7 +34,7 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             double step     = scanConf->Get("step",std::numeric_limits<double>::min());
             double stop     = scanConf->Get("stop",std::numeric_limits<double>::min());
             double defaultV = scanConf->Get("default",start);
-            int nestLevel = scanConf->Get("nestLevel", 0);
+            int scanParallelTo = scanConf->Get("scanParallelTo", i);
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
             std::string Counter  = scanConf->Get("eventCounter","wrongPara");
@@ -54,7 +54,7 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             if(!defaultConf->Has(param))
                 return scanError("Scan parameter "+std::to_string(i)+":"+param+" is not defined in default configuration");
 
-            sec.push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested, nestLevel));
+            sec.push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested, scanParallelTo));
 
             defaultConf->SetSection("");
             defaultConf->SetSection(name);
@@ -122,8 +122,8 @@ void Scan::createConfigs(unsigned condition, eudaq::ConfigurationSP conf,std::ve
     auto nSteps = std::abs(sec.at(condition).start-sec.at(condition).stop)/sec.at(condition).step;
     std::vector<bool> decreasing;
     std::vector<std::string> name;
-    for (unsigned secCounter = 0; secCounter < sec.size(); secCounter++){ // loop through all later scan parameters and see if any of them have the same nestLevel
-        if (sec.at(secCounter).nestLevel == condition){
+    for (unsigned secCounter = 0; secCounter < sec.size(); secCounter++){ // loop through all later scan parameters and see if any of them have the same scanParallelTo
+        if (sec.at(secCounter).scanParallelTo == condition){
             decreasing.push_back((sec.at(secCounter).start > sec.at(secCounter).stop));
             value.push_back(sec.at(secCounter).start);
             step.push_back(sec.at(secCounter).step);
@@ -137,30 +137,34 @@ void Scan::createConfigs(unsigned condition, eudaq::ConfigurationSP conf,std::ve
     {
         // if the scan is nested, all other data points from before need to be
         // redone with each point of current
-//        if(sec.at(condition).nested) {
-//            for(unsigned i =0; i < confsBefore;++i) {
-//                eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
-//                tmpConf->SetSection(sec.at(condition).name);
-//                tmpConf->Set(sec.at(condition).parameter, value);
-//                storeConfigFile(tmpConf);
-//                addSection(sec.at(condition));
-//            }
-//        }
-//        else {
+        if(sec.at(condition).nested) {
+            for(unsigned i =0; i < confsBefore;++i) {
+                eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
+                for (unsigned int param = 0; param < value.size(); param++){
+                    tmpConf->SetSection(sec.at(param).name);
+                    tmpConf->Set(sec.at(param).parameter, value.at(param));
+                    addSection(sec.at(param));
+                    value.at(param) += (decreasing.at(param)? -1: 1) *sec.at(param).step;
+                }
+                storeConfigFile(tmpConf);
+            }
+        }
+        else {
             for (unsigned int param = 0; param < value.size(); param++){
                 conf->SetSection(sec.at(param).name);
                 conf->Set(sec.at(param).parameter, value.at(param));
                 EUDAQ_DEBUG(sec.at(param).name+":"+sec.at(param).parameter+":"+std::to_string(value.at(param)));
-                addSection(sec.at(condition));
+                addSection(sec.at(param));
                 value.at(param) += (decreasing.at(param)? -1: 1) *sec.at(param).step;
             }
-//        }
+        }
         storeConfigFile(conf);
     }
 //    conf->SetSection(sec.at(condition).name);
 //    conf->Set(sec.at(condition).parameter, sec.at(condition).defaultV);
     createConfigs(condition+1,conf,sec);
 }
+
 
 bool Scan::storeConfigFile(eudaq::ConfigurationSP conf) {
     std::string filename = m_config_file_prefix+"_"+std::to_string(m_config_files.size())+".conf";
