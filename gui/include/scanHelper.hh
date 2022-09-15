@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <map>
 
 #include "eudaq/Config.hh"
 #include "eudaq/Logger.hh"
@@ -127,6 +128,15 @@ private:
      * @param sec Scan section beeing read
      */
     void createConfigs(unsigned condition, eudaq::ConfigurationSP conf, std::vector<ScanSection> sec);
+
+    /**
+     * @brief Creates the configuration files for each scan
+     * @param condition Recursvice iterator over the scan secctions 'sec'
+     * @param conf Default configuration
+     * @param sec Scan section beeing read
+     */
+    void createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, std::map<int, std::vector<ScanSection>> mapSec);
+
     /**
      * @brief add additional information for each section
      * @param s Section read in
