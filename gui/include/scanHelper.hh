@@ -135,7 +135,7 @@ private:
      * @param conf Default configuration
      * @param sec Scan section beeing read
      */
-    void createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, std::map<int, std::vector<ScanSection>> mapSec);
+    void createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, std::unordered_map<int, std::vector<ScanSection>> mapSec);
 
     /**
      * @brief add additional information for each section

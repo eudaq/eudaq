@@ -25,8 +25,9 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
 
     int i = 0 ;
     std::vector<ScanSection> sec;
-    std::map<int, std::vector<ScanSection>> mapSec;
+    std::unordered_map<int, std::vector<ScanSection>> mapSec;
     // having more than a thousand scans at once is pointless
+    int parallel = 0;
     while(i<1000) {
         if(scanConf->HasSection(std::to_string(i))) {
             scanConf->SetSection(std::to_string(i));
@@ -35,7 +36,7 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             double step     = scanConf->Get("step",std::numeric_limits<double>::min());
             double stop     = scanConf->Get("stop",std::numeric_limits<double>::min());
             double defaultV = scanConf->Get("default",start);
-            int scanParallelTo = scanConf->Get("scanParallelTo", i);
+            int scanParallelTo = scanConf->Get("scanParallelTo", parallel);
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
             std::string Counter  = scanConf->Get("eventCounter","wrongPara");
@@ -56,12 +57,13 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
                 return scanError("Scan parameter "+std::to_string(i)+":"+param+" is not defined in default configuration");
 
             sec.push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested, scanParallelTo));
-
+            EUDAQ_INFO("Found "+std::to_string(scanParallelTo));
             mapSec[scanParallelTo].push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested, scanParallelTo));
 
             defaultConf->SetSection("");
             defaultConf->SetSection(name);
             defaultConf->SetString(param,std::to_string(defaultV));
+            parallel++;
         }
         ++i;
     }
@@ -128,7 +130,7 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
 //    createConfigs(condition+1,conf,sec);
 //}
 
-void Scan::createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, std::map<int, std::vector<ScanSection>> mapSec) {
+void Scan::createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, std::unordered_map<int, std::vector<ScanSection>> mapSec) {
     EUDAQ_INFO("Map size = " + std::to_string(mapSec.size()));
     if(condition == mapSec.size())
         return;
@@ -178,8 +180,10 @@ void Scan::createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, s
             storeConfigFile(conf);
         }
     }
-////    conf->SetSection(mapSec.at(condition).name);
-////    conf->Set(mapSec.at(condition).parameter, mapSec.at(condition).defaultV);
+    for (unsigned int param = 0; param < value.size(); param++){
+        conf->SetSection(mapSec[condition].at(param).name);
+        conf->Set(mapSec[condition].at(param).parameter, mapSec[condition].at(param).defaultV);
+    }
     EUDAQ_DEBUG("Moving to next parameter");
     createConfigsMulti(condition+1,conf,mapSec);
 }
