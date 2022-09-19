@@ -178,10 +178,10 @@ void CMSITConverterPlugin::Initialize()
                             EUDAQ_INFO(myString.str().c_str());
 
                             TDirectory* rootDir          = gDirectory;
-                            calibMap[calibration].hSlope = CMSITConverterPlugin::FindHistogram("Slope2D");
+                            calibMap[calibration].hSlope = CMSITConverterPlugin::FindHistogram("Slope2D", hybridId, chipId);
 
                             rootDir->cd();
-                            calibMap[calibration].hIntercept = CMSITConverterPlugin::FindHistogram("Intercept2D");
+                            calibMap[calibration].hIntercept = CMSITConverterPlugin::FindHistogram("Intercept2D", hybridId, chipId);
 
                             const std::string slope("slopeVCal2Electrons_hybridId" + std::to_string(hybridId) + "_chipId" + std::to_string(chipId));
                             calibMap[calibration].slopeVCal2Charge = theConfigFromFile->Get(slope, 0.);
@@ -261,18 +261,18 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 }
 
 #ifdef ROOTSYS
-TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto)
+TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16_t hybridId, uint16_t chipId)
 {
     TDirectory* dir = gDirectory;
     TKey*       key = nullptr;
 
-    // #######################
-    // # Find Chip directory #
-    // #######################
+    // ########################
+    // # Find sub-directories #
+    // ########################
     while(true)
     {
         TIter keyList(dir->GetListOfKeys());
-        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (strcmp(key->GetName(), "Chip") != 0))
+        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid")) != 0))
         {
             dir->cd(key->GetName());
             dir = gDirectory;
@@ -281,17 +281,34 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto)
             break;
     }
 
+    // #####################
+    // # Search for Hybrid #
+    // #####################
+    TIter keyListHybrid(dir->GetListOfKeys());
+    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid_") + std::to_string(hybridId)) != 0)) key = (TKey*)keyListHybrid.Next();
+
+    // ###################
+    // # Search for Chip #
+    // ###################
+    if(key != nullptr)
+    {
+        dir->cd(key->GetName());
+        dir = gDirectory;
+    }
+    TIter keyListChip(dir->GetListOfKeys());
+    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Chip_") + std::to_string(chipId)) != 0)) key = (TKey*)keyListChip.Next();
+
     // ###########################
     // # Enter in Chip directory #
     // ###########################
-    TIter keyList(dir->GetListOfKeys());
     if(key != nullptr) dir->cd(key->GetName());
     dir = gDirectory;
+    TIter keyListHisto(dir->GetListOfKeys());
 
     // ######################
     // # Find the histogram #
     // ######################
-    while(((key = (TKey*)keyList.Next()) != nullptr) && (std::string(key->GetName()).find(nameInHisto) == std::string::npos)) {};
+    while(((key = (TKey*)keyListHisto.Next()) != nullptr) && (std::string(key->GetName()).find(nameInHisto) == std::string::npos)) {};
     if((dir != nullptr) && (dir->Get(key->GetName()) != nullptr)) return (TH2D*)((TCanvas*)dir->Get(key->GetName()))->GetPrimitive(key->GetName());
 
     return nullptr;
