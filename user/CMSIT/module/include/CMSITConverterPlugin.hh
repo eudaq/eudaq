@@ -10,6 +10,7 @@
 
 #ifndef CMSITConverterPlugin_H
 #define CMSITConverterPlugin_H
+#define ROOTSYS getenv("ROOTSYS")
 
 #include "CMSITEventData.hh"
 
@@ -122,7 +123,7 @@ class CMSITConverterPlugin : public StdEventConverter
     void         Initialize();
     TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const;
 #ifdef ROOTSYS
-    TH2D* FindHistogram(const std::string& nameInHisto);
+    TH2D* FindHistogram(const std::string& nameInHisto, uint16_t hybridId, uint16_t chipId);
 #endif
     bool Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const;
     int  ComputePlaneId(const uint32_t                       hybridId,

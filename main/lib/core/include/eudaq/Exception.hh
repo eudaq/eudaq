@@ -66,8 +66,8 @@ namespace eudaq {
   };
 
   namespace {
-    // void do_log(const Exception &) {}
-    // void do_log(const LoggedException &e) { e.Log(); }
+    void do_log(const Exception &) {}
+    void do_log(const LoggedException &e) { e.Log(); }
   }
 
   template <typename T>
