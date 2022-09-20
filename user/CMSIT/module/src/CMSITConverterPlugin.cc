@@ -170,7 +170,6 @@ void CMSITConverterPlugin::Initialize()
 #ifdef ROOTSYS
                         calibMap[calibration].calibrationFile = TFile::Open(calibFileName.c_str());
                         if((calibMap[calibration].calibrationFile != nullptr) && (calibMap[calibration].calibrationFile->IsOpen() == true))
-
                         {
                             myString.clear();
                             myString.str("");
@@ -196,6 +195,11 @@ void CMSITConverterPlugin::Initialize()
                             myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> I couldn't open the calibration file: " << calibFileName;
                             EUDAQ_INFO(myString.str().c_str());
                         }
+#else
+			myString.clear();
+			myString.str("");
+			myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> ROOTSYS not defined";
+			EUDAQ_INFO(myString.str().c_str());
 #endif
                     }
                 }

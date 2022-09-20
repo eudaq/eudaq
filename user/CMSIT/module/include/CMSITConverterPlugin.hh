@@ -10,6 +10,7 @@
 
 #ifndef CMSITConverterPlugin_H
 #define CMSITConverterPlugin_H
+#define ROOTSYS getenv("ROOTSYS")
 
 #include "CMSITEventData.hh"
 
