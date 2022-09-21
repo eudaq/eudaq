@@ -40,12 +40,13 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
             std::string Counter  = scanConf->Get("eventCounter","wrongPara");
-
+            EUDAQ_INFO("Checking condition with start "+std::to_string(std::numeric_limits<double>::epsilon()>std::abs(start - std::numeric_limits<double>::min())));
+            EUDAQ_INFO("Checking condition with start epsilon "+std::to_string(std::numeric_limits<double>::epsilon()));
+            EUDAQ_INFO("Checking condition with start other "+std::to_string(std::abs(start - std::numeric_limits<double>::min())));
+            EUDAQ_INFO("Checking condition with start "+std::to_string(std::abs(start - std::numeric_limits<double>::min()) - std::numeric_limits<double>::epsilon()));
             if(!m_scan_is_time_based && Counter == "wrongPara")
                 return scanError("To run a scan based on a number of events, \"eventCounter\" needs to be specified in section"+std::to_string(i));
             if(name == "wrongPara" || param == "wrongPara"
-               || (std::numeric_limits<double>::epsilon()>std::abs(start - std::numeric_limits<double>::min()))
-               || (std::numeric_limits<double>::epsilon()>std::abs(stop - std::numeric_limits<double>::min()))
                || (std::numeric_limits<double>::epsilon()>std::abs(step - std::numeric_limits<double>::min())))
                 return scanError("Scan section "+std::to_string(i)+" is incomplete -> Please check");
 
