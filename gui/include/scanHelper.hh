@@ -121,13 +121,6 @@ private:
      * @return True if file created
      */
     bool storeConfigFile(eudaq::ConfigurationSP conf);
-    /**
-     * @brief Creates the configuration files for each scan
-     * @param condition Recursvice iterator over the scan secctions 'sec'
-     * @param conf Default configuration
-     * @param sec Scan section beeing read
-     */
-    void createConfigs(unsigned condition, eudaq::ConfigurationSP conf, std::vector<ScanSection> sec);
 
     /**
      * @brief Creates the configuration files for each scan
