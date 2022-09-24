@@ -90,6 +90,7 @@ public:
   bool is_FORTIS;
   bool is_EXPLORER;
   bool is_RD53A;
+  bool is_RD53B;
   bool is_REF;
   bool is_UNKNOWN;
 
