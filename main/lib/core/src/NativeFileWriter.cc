@@ -5,11 +5,14 @@
 class NativeFileWriter : public eudaq::FileWriter {
 public:
   NativeFileWriter(const std::string &patt);
+  NativeFileWriter(const std::string &patt, const std::string &filename);
   void WriteEvent(eudaq::EventSPC ev) override;
   uint64_t FileBytes() const override;
 private:
   std::unique_ptr<eudaq::FileSerializer> m_ser;
   std::string m_filepattern;
+  std::string m_filename;
+  bool m_filename_passed;
   uint32_t m_run_n;
 };
 
@@ -18,14 +21,30 @@ namespace{
     Register<NativeFileWriter, std::string&>(eudaq::cstr2hash("native"));
   auto dummy1 = eudaq::Factory<eudaq::FileWriter>::
     Register<NativeFileWriter, std::string&&>(eudaq::cstr2hash("native"));
+
+  auto dummy2 = eudaq::Factory<eudaq::FileWriter>::
+    Register<NativeFileWriter, std::string&, std::string &>(eudaq::cstr2hash("native"));
+  auto dummy3 = eudaq::Factory<eudaq::FileWriter>::
+    Register<NativeFileWriter, std::string&&, std::string &&>(eudaq::cstr2hash("native"));
 }
 
 NativeFileWriter::NativeFileWriter(const std::string &patt){
   m_filepattern = patt;
+  m_filename_passed = false;
+}
+
+NativeFileWriter::NativeFileWriter(const std::string &patt, const std::string &filename){
+  m_filepattern = patt;
+  m_filename = filename;
+  m_filename_passed = true;
 }
   
 void NativeFileWriter::WriteEvent(eudaq::EventSPC ev) {
   uint32_t run_n = ev->GetRunN();
+  if (m_filename_passed && (!m_ser || m_run_n != run_n)){
+    m_ser.reset(new eudaq::FileSerializer(m_filename));
+    m_run_n = run_n;
+  }
   if(!m_ser || m_run_n != run_n){
     std::time_t time_now = std::time(nullptr);
     char time_buff[13];

@@ -1,6 +1,7 @@
 #include "eudaq/DataCollector.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/FileNamer.hh"
 #include <iostream>
 #include <ostream>
 #include <ctime>
@@ -95,7 +96,17 @@ namespace eudaq {
     try {
       m_data_addr = Listen(m_data_addr);
       SetStatusTag("_SERVER", m_data_addr);
-      m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(m_fwtype), m_fwpatt);
+      std::time_t time_now = std::time(nullptr);
+      char time_buff[13];
+      time_buff[12] = 0;
+      std::strftime(time_buff, sizeof(time_buff),
+		  "%y%m%d%H%M%S", std::localtime(&time_now));
+      std::string time_str(time_buff);
+      std::string file_name_writer = eudaq::FileNamer(m_fwpatt).
+					   Set('X', ".raw").
+					   Set('R', GetRunNumber()).
+					   Set('D', time_str);
+      m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(m_fwtype), m_fwpatt, file_name_writer);
       m_evt_c = 0;
 
       std::string mn_str = GetConfiguration()->Get("EUDAQ_MN", "");

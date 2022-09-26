@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <filesystem>
 
 
 #define TOKEN " "
@@ -41,6 +42,9 @@ private:
   std::string m_corry_path;
   std::string m_corry_config;
   std::string m_corry_options;
+
+  std::string m_fwpatt;
+  std::string m_fwtype;
 
   char **argv;
 
@@ -98,6 +102,9 @@ void CorryMonitor::DoConfigure(){
   m_en_std_converter = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
   m_en_std_print = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
 
+  m_fwtype = conf->Get("EUDAQ_FW", "native");
+  m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
+
   m_corry_config = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
   struct stat buffer;   
   if(stat(m_corry_config.c_str(), &buffer) != 0)
@@ -127,6 +134,14 @@ void CorryMonitor::DoConfigure(){
 }
 
 void CorryMonitor::DoStartRun(){
+  // Wait one second for file to be created and first events being written
+  //eudaq::mSleep(10000);
+  system("echo $PWD");
+  system("cd ..");
+  system("cd -");
+  std::string filename;
+  for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/"))
+        std::cout << entry.path() << std::endl;
   m_corry_pid = fork();
   switch (m_corry_pid)
   {
@@ -152,7 +167,7 @@ void CorryMonitor::DoStartRun(){
 }
 
 void CorryMonitor::DoStopRun(){
-  kill(m_corry_pid, SIGTERM);
+  kill(m_corry_pid, SIGINT);
 
   bool died = false;
   for (int loop=0; !died && loop < 5; ++loop)
@@ -162,7 +177,7 @@ void CorryMonitor::DoStopRun(){
     if (waitpid(m_corry_pid, &status, WNOHANG) == m_corry_pid) died = true;
   }
 
-  if (!died) kill(m_corry_pid, SIGKILL);
+  if (!died) kill(m_corry_pid, SIGQUIT);
 }
 
 void CorryMonitor::DoReset(){
