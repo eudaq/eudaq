@@ -22,6 +22,10 @@ int AD9249Event2StdEventConverter::threshold_low(101);
 std::string AD9249Event2StdEventConverter::m_waveform_filename("");
 std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 
+//baseline evaluation 
+int AD9249Event2StdEventConverter::blStart(200); 
+int AD9249Event2StdEventConverter::blEnd(100); 
+
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
     size_t offset, std::vector<std::vector<uint16_t>> &waveforms,
@@ -72,6 +76,8 @@ bool AD9249Event2StdEventConverter::Converting(
   if( !m_configured ){
     threshold_trig = conf->Get("threshold_trig", 1000);
     threshold_low = conf->Get("threshold_low", 101);
+    blStart = conf->Get("blStart", 200);
+    blEnd = conf->Get("blEnd", 100);
     m_useTime = conf->Get("use_time_stamp", false);
     m_waveform_filename = conf->Get("waveform_filename", "");
 
@@ -181,12 +187,25 @@ bool AD9249Event2StdEventConverter::Converting(
               to_string(trig_) + " __________");
 
   std::map<std::pair<int, int>, std::pair<int, bool>> amplitudes;
-  for (size_t ch = 0; ch < waveforms.size(); ch++) {
+  for (size_t ch = 0; ch < waveforms.size(); ch++) {  
+  
     auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
-    auto min = *std::min_element(waveforms[ch].begin(), waveforms[ch].end());
-
+    auto max_posizion = std::distance(waveforms[ch].begin(),std::max_element(waveforms[ch].begin(), waveforms[ch].end()));
+    
+    if((max_posizion - blStart) < 0){
+      //skip if the max is too early
+      continue;
+    }
+    
+    double baseline = 0.;
+    
+    for(int i=max_posizion-blStart; i<max_posizion-blEnd; i++){
+      baseline += waveforms[ch][i];
+    }
+    baseline /= blStart-blEnd;
+    
     bool hit = false;
-    amplitudes[mapping.at(ch)] = std::pair<int, bool>(max - min, false);
+    amplitudes[mapping.at(ch)] = std::pair<int, bool>(max - baseline, false);
     //    if(max - min > threshold_trig) {
     //  auto p = mapping.at(ch);
     //  plane.PushPixel(p.first,p.second, max - min, timestamp0);
@@ -196,6 +215,7 @@ bool AD9249Event2StdEventConverter::Converting(
                 to_string(waveforms[ch].size()) + "-----" + '\t' +
                 to_string(max) + (hit ? " HIT" : " --"));
   }
+  
   for (auto &p : amplitudes) {
     if (p.second.first > threshold_trig) {
       // add the seed pixel if not added
