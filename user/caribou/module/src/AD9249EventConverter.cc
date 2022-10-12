@@ -26,6 +26,10 @@ std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 int AD9249Event2StdEventConverter::m_blStart(200);
 int AD9249Event2StdEventConverter::m_blEnd(100);
 
+// calibration functions
+std::vector<string> AD9249Event2StdEventConverter::m_calib_strings(16,"x");
+std::vector<TF1*> AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name","x"));
+
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
     size_t offset, std::vector<std::vector<uint16_t>> &waveforms,
@@ -81,10 +85,23 @@ bool AD9249Event2StdEventConverter::Converting(
     m_useTime = conf->Get("use_time_stamp", false);
     m_waveform_filename = conf->Get("waveform_filename", "");
 
+    // read calibration functions
+    delete m_calib_functions.at(0); // since there is only one 'name' this destroys them all
+    for(unsigned int i = 0; i < m_calib_strings.size(); i++){
+      unsigned int col = i/4;
+      unsigned int row = i%4;
+      m_calib_strings.at(i) = conf->Get(Form("calibration_px%i%i", col, row), m_calib_strings.at(i));
+      m_calib_functions.at(i) = new TF1(Form("calibration_px%i%i", col, row), m_calib_strings.at(i));
+    }
+
     EUDAQ_DEBUG( "Using configuration:" );
     EUDAQ_DEBUG( " threshold_low  = " + to_string( threshold_low ));
     EUDAQ_DEBUG( " threshold_trig  = " + to_string( threshold_trig ));
     EUDAQ_DEBUG( " use_time_stamp  = " + to_string( m_useTime ));
+    EUDAQ_DEBUG( "Calibration functions: ");
+    for(unsigned int i = 0; i < m_calib_strings.size(); i++){
+      EUDAQ_DEBUG( m_calib_functions.at(i)->GetName() + " " + m_calib_functions.at(i).GetExpFormula());
+    }
 
     m_configured = true;
   }

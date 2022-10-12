@@ -2,6 +2,8 @@
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 
+#include "TF1.h"
+
 /**
  * Caribou event converter, converting from raw detector data to EUDAQ StandardEvent format
  * @WARNING Each Caribou device needs to register its own converter, as Peary does not force a specific data format!
@@ -45,6 +47,9 @@ namespace eudaq {
 
     static int m_blStart;
     static int m_blEnd;
+
+    static vector<string> m_calib_strings;
+    static vector<TF1*> m_calib_functions;
 };
 
 
