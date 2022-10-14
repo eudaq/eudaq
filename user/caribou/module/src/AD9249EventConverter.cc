@@ -25,8 +25,8 @@ std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 int AD9249Event2StdEventConverter::m_blStart(200);
 int AD9249Event2StdEventConverter::m_blEnd(100);
 // calibration functions
-double AD9249Event2StdEventConverter::m_calib_range_min( 1000);
-double AD9249Event2StdEventConverter::m_calib_range_max(10000);
+double AD9249Event2StdEventConverter::m_calib_range_min( 125);
+double AD9249Event2StdEventConverter::m_calib_range_max(1200);
 std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,"x");
 std::vector<TF1*> AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name","x"));
 
@@ -90,9 +90,7 @@ bool AD9249Event2StdEventConverter::Converting(
     // read calibration functions
     delete m_calib_functions.at(0); // since there is only one 'name' this destroys them all
     for(unsigned int i = 0; i < m_calib_strings.size(); i++){
-      unsigned int col = i/4;
-      unsigned int row = i%4;
-      std::string name = "calibration_px" + to_string(i/4) + to_string(i%4);
+      std::string name = "calibration_px" + mapping.at(i).first + mapping.at(i).second;
       m_calib_strings.at(i) = conf->Get(name, m_calib_strings.at(i));
       m_calib_functions.at(i) = new TF1(name.c_str(), m_calib_strings.at(i).c_str(), m_calib_range_min, m_calib_range_max);
     }
@@ -199,6 +197,7 @@ bool AD9249Event2StdEventConverter::Converting(
   std::map<std::pair<int, int>, std::pair<int, bool>> amplitudes;
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
 
+    // find waveform maximum
     auto max = std::max_element(waveforms[ch].begin(), waveforms[ch].end());
     auto max_posizion = std::distance(waveforms[ch].begin(),max);
 
@@ -208,14 +207,19 @@ bool AD9249Event2StdEventConverter::Converting(
       continue;
     }
 
+    // calculate waveform baseline
     double baseline = 0.;
-
     for(int i=max_posizion-m_blStart; i<max_posizion-m_blEnd; i++){
       baseline += waveforms[ch][i];
     }
     baseline /= m_blStart-m_blEnd;
 
-    amplitudes[mapping.at(ch)] = std::pair<int, bool>(*max - baseline, false);
+    // caclulate amplitude and apply calibration
+    double amplitude =  m_calib_functions.at(ch)->Eval(*max - baseline);
+    if(amplitude > m_calib_range_max) amplitude = m_calib_range_max;
+    if(amplitude < m_calib_range_min) amplitude = 0;    
+
+    amplitudes[mapping.at(ch)] = std::pair<int, bool>(amplitude, false);
   }
 
   for (auto &p : amplitudes) {
