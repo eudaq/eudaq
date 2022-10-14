@@ -44,12 +44,10 @@ namespace eudaq {
     static int threshold_low;
     static std::string m_waveform_filename;
     static std::ofstream m_outfile_waveforms;
-
     static int m_blStart;
     static int m_blEnd;
-
-    static vector<string> m_calib_strings;
-    static vector<TF1*> m_calib_functions;
+    static std::vector<std::string> m_calib_strings;
+    static std::vector<TF1*> m_calib_functions;
 };
 
 

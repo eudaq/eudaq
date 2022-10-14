@@ -27,7 +27,7 @@ int AD9249Event2StdEventConverter::m_blStart(200);
 int AD9249Event2StdEventConverter::m_blEnd(100);
 
 // calibration functions
-std::vector<string> AD9249Event2StdEventConverter::m_calib_strings(16,"x");
+std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,"x");
 std::vector<TF1*> AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name","x"));
 
 void AD9249Event2StdEventConverter::decodeChannel(
@@ -90,8 +90,9 @@ bool AD9249Event2StdEventConverter::Converting(
     for(unsigned int i = 0; i < m_calib_strings.size(); i++){
       unsigned int col = i/4;
       unsigned int row = i%4;
-      m_calib_strings.at(i) = conf->Get(Form("calibration_px%i%i", col, row), m_calib_strings.at(i));
-      m_calib_functions.at(i) = new TF1(Form("calibration_px%i%i", col, row), m_calib_strings.at(i));
+      std::string name = "calibration_px" + to_string(i/4) + to_string(i%4);
+      m_calib_strings.at(i) = conf->Get(name, m_calib_strings.at(i));
+      m_calib_functions.at(i) = new TF1(name.c_str(), m_calib_strings.at(i).c_str());
     }
 
     EUDAQ_DEBUG( "Using configuration:" );
@@ -100,7 +101,8 @@ bool AD9249Event2StdEventConverter::Converting(
     EUDAQ_DEBUG( " use_time_stamp  = " + to_string( m_useTime ));
     EUDAQ_DEBUG( "Calibration functions: ");
     for(unsigned int i = 0; i < m_calib_strings.size(); i++){
-      EUDAQ_DEBUG( m_calib_functions.at(i)->GetName() + " " + m_calib_functions.at(i).GetExpFormula());
+      EUDAQ_DEBUG( to_string( m_calib_functions.at(i)->GetName() ) + " " +
+                   to_string( m_calib_functions.at(i)->GetExpFormula() ));
     }
 
     m_configured = true;
