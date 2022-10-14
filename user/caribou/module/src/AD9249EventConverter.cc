@@ -215,8 +215,9 @@ bool AD9249Event2StdEventConverter::Converting(
     auto max = std::max_element(waveforms[ch].begin(), waveforms[ch].end());
     auto max_posizion = std::distance(waveforms[ch].begin(),max);
 
+    // this means that we will not have an amplitude for some noise events.
     if((max_posizion - m_blStart) < 0){
-      //skip if the max is too early
+      EUDAQ_DEBUG("  Skipping channel " + to_string(ch) + " max too early");
       continue;
     }
 
@@ -227,16 +228,7 @@ bool AD9249Event2StdEventConverter::Converting(
     }
     baseline /= m_blStart-m_blEnd;
 
-    bool hit = false;
     amplitudes[mapping.at(ch)] = std::pair<int, bool>(*max - baseline, false);
-    //    if(max - min > threshold_trig) {
-    //  auto p = mapping.at(ch);
-    //  plane.PushPixel(p.first,p.second, max - min, timestamp0);
-    //  hit = true;
-    // }
-    EUDAQ_DEBUG("------------------------------" + to_string(ch) + ": " +
-                to_string(waveforms[ch].size()) + "-----" + '\t' +
-                to_string(*max) + (hit ? " HIT" : " --"));
   }
 
   for (auto &p : amplitudes) {
@@ -246,6 +238,10 @@ bool AD9249Event2StdEventConverter::Converting(
         plane.PushPixel(p.first.first, p.first.second, p.second.first,
                         timestamp0);
         p.second.second = true;
+        EUDAQ_DEBUG("  High threshold: Adding pixel (col, row, amp) " +
+                    to_string(p.first.first) + " " +
+                    to_string(p.first.second) + " " +
+                    to_string(p.second.first));
       }
       // loop over all surrounding once
       for (auto &pp : amplitudes) {
@@ -256,6 +252,10 @@ bool AD9249Event2StdEventConverter::Converting(
               plane.PushPixel(pp.first.first, pp.first.second, pp.second.first,
                               timestamp0);
               pp.second.second = true;
+              EUDAQ_DEBUG("  Low threshold: Adding pixel (col, row, amp) " +
+                     to_string(p.first.first) + " " +
+                     to_string(p.first.second) + " " +
+                     to_string(p.second.first));
             }
           }
         }
