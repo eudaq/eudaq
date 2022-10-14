@@ -212,8 +212,8 @@ bool AD9249Event2StdEventConverter::Converting(
   std::map<std::pair<int, int>, std::pair<int, bool>> amplitudes;
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
 
-    auto max = *std::max_element(waveforms[ch].begin(), waveforms[ch].end());
-    auto max_posizion = std::distance(waveforms[ch].begin(),std::max_element(waveforms[ch].begin(), waveforms[ch].end()));
+    auto max = std::max_element(waveforms[ch].begin(), waveforms[ch].end());
+    auto max_posizion = std::distance(waveforms[ch].begin(),max);
 
     if((max_posizion - m_blStart) < 0){
       //skip if the max is too early
@@ -228,7 +228,7 @@ bool AD9249Event2StdEventConverter::Converting(
     baseline /= m_blStart-m_blEnd;
 
     bool hit = false;
-    amplitudes[mapping.at(ch)] = std::pair<int, bool>(max - baseline, false);
+    amplitudes[mapping.at(ch)] = std::pair<int, bool>(*max - baseline, false);
     //    if(max - min > threshold_trig) {
     //  auto p = mapping.at(ch);
     //  plane.PushPixel(p.first,p.second, max - min, timestamp0);
@@ -236,7 +236,7 @@ bool AD9249Event2StdEventConverter::Converting(
     // }
     EUDAQ_DEBUG("------------------------------" + to_string(ch) + ": " +
                 to_string(waveforms[ch].size()) + "-----" + '\t' +
-                to_string(max) + (hit ? " HIT" : " --"));
+                to_string(*max) + (hit ? " HIT" : " --"));
   }
 
   for (auto &p : amplitudes) {
