@@ -50,6 +50,16 @@ namespace eudaq {
     static double m_calib_range_max;
     static std::vector<std::string> m_calib_strings;
     static std::vector<TF1*> m_calib_functions;
+    // Channels are sorted like ADC0: A1 C1 E1 ...
+    //                          ADC1: B1 D1 F1 ...
+    // AD9249 channels to pixel matrix map:
+    // A2, H2, F2, H1
+    // C1, A1, D2, F1
+    // C2, E1, B1, B2
+    // E2, G1, G2, D1
+    const std::vector<std::pair<int, int>> mapping = {
+      {1, 2}, {0, 2}, {1, 1}, {1, 0}, {0, 3}, {0, 1}, {0, 0}, {2, 0},
+      {2, 1}, {3, 0}, {3, 2}, {3, 3}, {3, 1}, {2, 2}, {2, 3}, {1, 3}};
 };
 
 

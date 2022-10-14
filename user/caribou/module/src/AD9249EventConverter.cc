@@ -171,19 +171,6 @@ bool AD9249Event2StdEventConverter::Converting(
   eudaq::StandardPlane plane(0, "Caribou", "AD9249");
   plane.SetSizeZS(4, 4, 0);
 
-  // Channels are sorted like ADC0: A1 C1 E1 ...
-  //                          ADC1: B1 D1 F1 ...
-  std::vector<std::pair<int, int>> mapping = {
-      {1, 2}, {0, 2}, {1, 1}, {1, 0}, {0, 3}, {0, 1}, {0, 0}, {2, 0},
-      {2, 1}, {3, 0}, {3, 2}, {3, 3}, {3, 1}, {2, 2}, {2, 3}, {1, 3}};
-
-  // AD9249 channels to pixel matrix map:
-  // A2, H2, F2, H1
-  // C1, A1, D2, F1
-  // C2, E1, B1, B2
-  // E2, G1, G2, D1
-
-
   // print waveforms to file, if a filename is given
   // this returns false! If you want to change that that remove `trig_++`!!!
   if(!m_waveform_filename.empty()){
