@@ -21,12 +21,12 @@ int AD9249Event2StdEventConverter::threshold_trig(1000);
 int AD9249Event2StdEventConverter::threshold_low(101);
 std::string AD9249Event2StdEventConverter::m_waveform_filename("");
 std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
-
 //baseline evaluation
 int AD9249Event2StdEventConverter::m_blStart(200);
 int AD9249Event2StdEventConverter::m_blEnd(100);
-
 // calibration functions
+double AD9249Event2StdEventConverter::m_calib_range_min( 1000);
+double AD9249Event2StdEventConverter::m_calib_range_max(10000);
 std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,"x");
 std::vector<TF1*> AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name","x"));
 
@@ -82,6 +82,8 @@ bool AD9249Event2StdEventConverter::Converting(
     threshold_low = conf->Get("threshold_low", 101);
     m_blStart = conf->Get("blStart", 200);
     m_blEnd = conf->Get("blEnd", 100);
+    m_calib_range_min = conf->Get("calib_range_min", m_calib_range_min);
+    m_calib_range_max = conf->Get("calib_range_max", m_calib_range_max);
     m_useTime = conf->Get("use_time_stamp", false);
     m_waveform_filename = conf->Get("waveform_filename", "");
 
@@ -92,7 +94,7 @@ bool AD9249Event2StdEventConverter::Converting(
       unsigned int row = i%4;
       std::string name = "calibration_px" + to_string(i/4) + to_string(i%4);
       m_calib_strings.at(i) = conf->Get(name, m_calib_strings.at(i));
-      m_calib_functions.at(i) = new TF1(name.c_str(), m_calib_strings.at(i).c_str());
+      m_calib_functions.at(i) = new TF1(name.c_str(), m_calib_strings.at(i).c_str(), m_calib_range_min, m_calib_range_max);
     }
 
     EUDAQ_DEBUG( "Using configuration:" );
@@ -104,6 +106,8 @@ bool AD9249Event2StdEventConverter::Converting(
       EUDAQ_DEBUG( to_string( m_calib_functions.at(i)->GetName() ) + " " +
                    to_string( m_calib_functions.at(i)->GetExpFormula() ));
     }
+    EUDAQ_DEBUG( " calib_range_min  = " + to_string( m_calib_range_min ));
+    EUDAQ_DEBUG( " calib_range_max  = " + to_string( m_calib_range_max ));
 
     m_configured = true;
   }
