@@ -80,7 +80,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
   EUDAQ_DEBUG("Decoded into " + to_string(frame.size()) + " pixels in frame.");
 
   // decode trailer with time info from FPGA
-  auto [ts_control_fpga, ts_readout_fpga, trigger_id_fpga] =
+  auto [ts_control_fpga, ts_fine_fpga, ts_readout_fpga, trigger_id_fpga] =
       decoder.decodeTrailer(rawdata);
   // derive frame counter (inside trigger number)
   m_frame = (trigger_id_fpga == m_trigger) ? m_frame++ : 0;
