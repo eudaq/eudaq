@@ -163,14 +163,14 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   d2->SetTag("DIFF_FINETS14_del_ns", std::to_string((finets1_ns - finets4_ns)).c_str());
   d2->SetTag("DIFF_FINETS15_del_ns", std::to_string((finets1_ns - finets5_ns)).c_str());
 
-  d2->SetTag("DIFF_FINETS23_del_ns", std::to_string((finets3_ns - finets3_ns)).c_str());
-  d2->SetTag("DIFF_FINETS24_del_ns", std::to_string((finets3_ns - finets4_ns)).c_str());
-  d2->SetTag("DIFF_FINETS25_del_ns", std::to_string((finets3_ns - finets5_ns)).c_str());
+  d2->SetTag("DIFF_FINETS23_del_ns", std::to_string((finets2_ns - finets3_ns)).c_str());
+  d2->SetTag("DIFF_FINETS24_del_ns", std::to_string((finets2_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS25_del_ns", std::to_string((finets2_ns - finets5_ns)).c_str());
 
-  d2->SetTag("DIFF_FINETS34_del_ns", std::to_string((finets4_ns - finets4_ns)).c_str());
-  d2->SetTag("DIFF_FINETS35_del_ns", std::to_string((finets4_ns - finets5_ns)).c_str());
+  d2->SetTag("DIFF_FINETS34_del_ns", std::to_string((finets3_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS35_del_ns", std::to_string((finets3_ns - finets5_ns)).c_str());
 
-  d2->SetTag("DIFF_FINETS45_del_ns", std::to_string((finets5_ns - finets5_ns)).c_str());
+  d2->SetTag("DIFF_FINETS45_del_ns", std::to_string((finets4_ns - finets5_ns)).c_str());
 
   return true;
 }
