@@ -25,8 +25,8 @@ std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 int AD9249Event2StdEventConverter::m_blStart(200);
 int AD9249Event2StdEventConverter::m_blEnd(100);
 // calibration functions
-double AD9249Event2StdEventConverter::m_calib_range_min( 125);
-double AD9249Event2StdEventConverter::m_calib_range_max(1200);
+double AD9249Event2StdEventConverter::m_calib_range_min(    0);
+double AD9249Event2StdEventConverter::m_calib_range_max(16384);
 std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,"x");
 std::vector<TF1*> AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name","x"));
 
@@ -217,7 +217,7 @@ bool AD9249Event2StdEventConverter::Converting(
     // caclulate amplitude and apply calibration
     double amplitude =  m_calib_functions.at(ch)->Eval(*max - baseline);
     if(amplitude > m_calib_range_max) amplitude = m_calib_range_max;
-    if(amplitude < m_calib_range_min) amplitude = 0;    
+    if(amplitude < m_calib_range_min) amplitude = 0;
 
     amplitudes[mapping.at(ch)] = std::pair<int, bool>(amplitude, false);
   }
