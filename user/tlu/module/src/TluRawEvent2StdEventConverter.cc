@@ -117,15 +117,16 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   uint8_t coarse_3lsb = 0x7 & coarse_ts;
   uint8_t finets_avg_3msb = (0xE0 & finets_avg) >> 5;
 
-// fine ts is sampled when the discriminator registers the edge and always earlier than coarse ts. If not, the 4th lsb of the coarse must have flipped. Correct for this here.
-if(coarse_3lsb<finets_avg_3msb){
-    coarse_ts-=0x8;
-}
+  // fine ts is sampled when the discriminator registers the edge and always earlier than coarse ts. If not, the 4th lsb of the coarse must have flipped. Correct for this here.
+  if(coarse_3lsb<finets_avg_3msb){
+      coarse_ts-=0x8;
+  }
 
   // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets_avg and add the 4 lsb of fine ts at the end:
   auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets_avg & 0xFF))) * 1000.);
 
 
+   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
   d2->SetTimeBegin(ts);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
   d2->SetTimestamp(ts, d1->GetTimestampEnd(), d1->IsFlagTimestamp());
