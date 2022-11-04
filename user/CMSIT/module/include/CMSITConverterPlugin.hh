@@ -48,13 +48,13 @@ static const double      PITCHX = 0.050, PITCHY = 0.050; // [mm]
 static const int         CMSITplaneIdOffset = 100;
 static const int         MAXTRIGIDCNT       = 32767;
 // #####################################################################
-// # Config file name: CFG_FILE_NAME                                   #
 // # Layout example:                                                   #
 // #                                                                   #
 // # [sensor.geometry]                                                 #
 // # pitch_hybridId0_chipId0 = “25x100origR0C0”                        #
 // # pitch_hybridId1_chipId0 = “25x100origR1C0”                        #
-// # pitch_hybridId2_chipId0 = “50x50”                                 #
+// # pitch_hybridId2_chipId0 = “RD53B 50x50”                           #
+// # pitch_hybridId3_chipId0 = “RD53A 50x50”                           #
 // #                                                                   #
 // # [sensor.calibration]                                              #
 // # fileName_hybridId0_chipId0                = “Run000000_Gain.root" #
