@@ -351,7 +351,7 @@ int CMSITConverterPlugin::ComputePlaneId(const uint32_t                       hy
     // # Don't use these ranges (Needs to be unique to each ROC):                                            #
     // # (-) 0-10:  used by NIConverter/MIMOSA                                                               #
     // # (-) 25-30: used by USBPixGen3Converter/FEI-4                                                        #
-    // # (-) 30+:   used by BDAQ53Converter/RD53A with same model (30 [BDAQ offset] + 10 * boardId + chipId) #
+    // # (-) 30+:   used by BDAQ53Converter/RD53 with same model (30 [BDAQ offset] + 10 * boardId + chipId)  #
     // #######################################################################################################
     int planeId = CMSITplaneIdOffset + 100 * hybridId + chipId;
 
