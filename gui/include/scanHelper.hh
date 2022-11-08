@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdlib>
 #include <map>
+#include <unordered_map>
 
 #include "eudaq/Config.hh"
 #include "eudaq/Logger.hh"
