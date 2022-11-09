@@ -136,6 +136,16 @@ void CorryMonitor::DoConfigure(){
         argv = addArg (argv, &sz, &used, cstr);
 
   argv = addArg (argv, &sz, &used, 0);
+
+  std::string section = "DataCollector.my_dc";
+  std::ifstream file {"Ex0.conf"};
+
+	std::shared_ptr<eudaq::Configuration> dc_conf = std::make_shared<eudaq::Configuration>(file, section);
+  dc_conf->Print();
+
+ m_fwtype = dc_conf->Get("EUDAQ_FW", "native");
+  m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
+  std::cout << "FILE PATTERN = " << m_fwpatt << std::endl;
 }
 
 void CorryMonitor::DoStartRun(){
