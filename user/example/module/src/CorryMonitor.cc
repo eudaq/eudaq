@@ -47,6 +47,7 @@ private:
   bool m_en_std_converter;
   bool m_en_std_print;
   pid_t m_corry_pid;
+  std::string m_datacollector_to_monitor;
   std::string m_corry_path;
   std::string m_corry_config;
   std::string m_corry_options;
@@ -106,16 +107,17 @@ static char **addArg (char **argv, size_t *pSz, size_t *pUsed, char *str) {
 void CorryMonitor::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_en_print = conf->Get("CORRY_ENABLE_PRINT", 1);
-  m_en_std_converter = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
-  m_en_std_print = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
+  m_en_print                  = conf->Get("CORRY_ENABLE_PRINT", 1);
+  m_en_std_converter          = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
+  m_en_std_print              = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
+  m_datacollector_to_monitor  = conf->Get("DATACOLLECTOR_TO_MONITOR", "my_dc");
+  m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
+  m_corry_options             = conf->Get("CORRY_OPTIONS", "");
 
-  m_corry_config = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
+  // Check if corryvreckan is found
   struct stat buffer;   
   if(stat(m_corry_config.c_str(), &buffer) != 0)
     EUDAQ_THROW("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
-
-  m_corry_options = conf->Get("CORRY_OPTIONS", "");
 
 
   std::string my_command = m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
@@ -137,15 +139,26 @@ void CorryMonitor::DoConfigure(){
 
   argv = addArg (argv, &sz, &used, 0);
 
-  std::string section = "DataCollector.my_dc";
-  std::ifstream file {"Ex0.conf"};
+  std::string section = "DataCollector."+m_datacollector_to_monitor;
+  std::string config_file_path = conf->Name();
+
+  // Check if DataCollector with name m_datacollector_to_monitor is found
+  conf->SetSection("");
+  if (!(conf->Has(section)))
+    EUDAQ_THROW("DataCollector to be monitored (\"" + section + "\") not found!");
+  else 
+    EUDAQ_DEBUG("DataCollector to be monitored is " + section);
+
+  std::ifstream file {config_file_path};
 
 	std::shared_ptr<eudaq::Configuration> dc_conf = std::make_shared<eudaq::Configuration>(file, section);
   dc_conf->Print();
 
- m_fwtype = dc_conf->Get("EUDAQ_FW", "native");
-  m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
+  //m_fwtype = dc_conf->Get("EUDAQ_FW", "native");
+  m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector 
+
   std::cout << "FILE PATTERN = " << m_fwpatt << std::endl;
+  std::cout<< "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<std::endl;
 }
 
 void CorryMonitor::DoStartRun(){
