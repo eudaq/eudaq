@@ -8,9 +8,8 @@
 using namespace eudaq;
 
 namespace {
-  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
-      AD9249Event2StdEventConverter>(
-      AD9249Event2StdEventConverter::m_id_factory);
+auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
+    AD9249Event2StdEventConverter>(AD9249Event2StdEventConverter::m_id_factory);
 }
 
 size_t AD9249Event2StdEventConverter::trig_(0);
@@ -21,18 +20,20 @@ int AD9249Event2StdEventConverter::threshold_trig(1000);
 int AD9249Event2StdEventConverter::threshold_low(101);
 std::string AD9249Event2StdEventConverter::m_waveform_filename("");
 std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
-//baseline evaluation
+// baseline evaluation
 int AD9249Event2StdEventConverter::m_blStart(200);
 int AD9249Event2StdEventConverter::m_blEnd(100);
 // calibration functions
-double AD9249Event2StdEventConverter::m_calib_range_min(    0);
+double AD9249Event2StdEventConverter::m_calib_range_min(0);
 double AD9249Event2StdEventConverter::m_calib_range_max(16384);
-std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,"x");
-std::vector<TF1*> AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name","x"));
+std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,
+                                                                        "x");
+std::vector<TF1 *>
+AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name", "x"));
 
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
-    size_t offset, std::vector<std::vector<uint16_t>> &waveforms,
+    size_t offset, std::vector<std::vector<uint16_t> > &waveforms,
     uint64_t &timestamp) const {
 
   // Timestamp index
@@ -73,11 +74,12 @@ void AD9249Event2StdEventConverter::decodeChannel(
   timestamp = static_cast<uint64_t>(timestamp * 1e6 / 65.);
 }
 
-bool AD9249Event2StdEventConverter::Converting(
-    eudaq::EventSPC d1, eudaq::StandardEventSP d2,
-    eudaq::ConfigurationSPC conf) const {
+bool
+AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
+                                          eudaq::StandardEventSP d2,
+                                          eudaq::ConfigurationSPC conf) const {
 
-  if( !m_configured ){
+  if (!m_configured) {
     threshold_trig = conf->Get("threshold_trig", 1000);
     threshold_low = conf->Get("threshold_low", 101);
     m_blStart = conf->Get("blStart", 200);
@@ -88,24 +90,28 @@ bool AD9249Event2StdEventConverter::Converting(
     m_waveform_filename = conf->Get("waveform_filename", "");
 
     // read calibration functions
-    delete m_calib_functions.at(0); // since there is only one 'name' this destroys them all
-    for(unsigned int i = 0; i < m_calib_strings.size(); i++){
-      std::string name = "calibration_px" + mapping.at(i).first + mapping.at(i).second;
+    delete m_calib_functions.at(
+        0); // since there is only one 'name' this destroys them all
+    for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
+      std::string name = "calibration_px" + to_string(mapping.at(i).first) +
+                         to_string(mapping.at(i).second);
       m_calib_strings.at(i) = conf->Get(name, m_calib_strings.at(i));
-      m_calib_functions.at(i) = new TF1(name.c_str(), m_calib_strings.at(i).c_str(), m_calib_range_min, m_calib_range_max);
+      m_calib_functions.at(i) =
+          new TF1(name.c_str(), m_calib_strings.at(i).c_str(),
+                  m_calib_range_min, m_calib_range_max);
     }
 
-    EUDAQ_DEBUG( "Using configuration:" );
-    EUDAQ_DEBUG( " threshold_low  = " + to_string( threshold_low ));
-    EUDAQ_DEBUG( " threshold_trig  = " + to_string( threshold_trig ));
-    EUDAQ_DEBUG( " use_time_stamp  = " + to_string( m_useTime ));
-    EUDAQ_DEBUG( "Calibration functions: ");
-    for(unsigned int i = 0; i < m_calib_strings.size(); i++){
-      EUDAQ_DEBUG( to_string( m_calib_functions.at(i)->GetName() ) + " " +
-                   to_string( m_calib_functions.at(i)->GetExpFormula() ));
+    EUDAQ_DEBUG("Using configuration:");
+    EUDAQ_DEBUG(" threshold_low  = " + to_string(threshold_low));
+    EUDAQ_DEBUG(" threshold_trig  = " + to_string(threshold_trig));
+    EUDAQ_DEBUG(" use_time_stamp  = " + to_string(m_useTime));
+    EUDAQ_DEBUG("Calibration functions: ");
+    for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
+      EUDAQ_DEBUG(to_string(m_calib_functions.at(i)->GetName()) + " " +
+                  to_string(m_calib_functions.at(i)->GetExpFormula()));
     }
-    EUDAQ_DEBUG( " calib_range_min  = " + to_string( m_calib_range_min ));
-    EUDAQ_DEBUG( " calib_range_max  = " + to_string( m_calib_range_max ));
+    EUDAQ_DEBUG(" calib_range_min  = " + to_string(m_calib_range_min));
+    EUDAQ_DEBUG(" calib_range_max  = " + to_string(m_calib_range_max));
 
     m_configured = true;
   }
@@ -137,7 +143,7 @@ bool AD9249Event2StdEventConverter::Converting(
   EUDAQ_DEBUG("Burst: " + to_string(burst_length));
 
   // Read waveforms
-  std::vector<std::vector<uint16_t>> waveforms;
+  std::vector<std::vector<uint16_t> > waveforms;
   waveforms.resize(16);
 
   uint32_t size_ADC0 = (static_cast<uint32_t>(datablock0.at(7)) << 24) +
@@ -161,7 +167,7 @@ bool AD9249Event2StdEventConverter::Converting(
                 waveforms, timestamp1);
 
   // store time of the run start
-  if(trig_ <= 1){
+  if (trig_ <= 1) {
     m_runStartTime = timestamp0; // just use one of them for now
   }
 
@@ -171,16 +177,17 @@ bool AD9249Event2StdEventConverter::Converting(
 
   // print waveforms to file, if a filename is given
   // this returns false! If you want to change that that remove `trig_++`!!!
-  if(!m_waveform_filename.empty()){
+  if (!m_waveform_filename.empty()) {
 
     // Open
     m_outfile_waveforms.open(m_waveform_filename, std::ios_base::app); // append
 
     // Print to file
-    for(size_t ch = 0; ch < waveforms.size(); ch++) {
-      m_outfile_waveforms << trig_ << " " << ch << " " << mapping.at(ch).first << " " << mapping.at(ch).second << " : ";
-      auto const& waveform = waveforms.at(ch);
-      for(auto const& sample : waveform) {
+    for (size_t ch = 0; ch < waveforms.size(); ch++) {
+      m_outfile_waveforms << trig_ << " " << ch << " " << mapping.at(ch).first
+                          << " " << mapping.at(ch).second << " : ";
+      auto const &waveform = waveforms.at(ch);
+      for (auto const &sample : waveform) {
         m_outfile_waveforms << sample << " ";
       }
       m_outfile_waveforms << std::endl;
@@ -194,30 +201,32 @@ bool AD9249Event2StdEventConverter::Converting(
   EUDAQ_DEBUG("_______________ Event " + to_string(ev->GetEventN()) + " trig " +
               to_string(trig_) + " __________");
 
-  std::map<std::pair<int, int>, std::pair<int, bool>> amplitudes;
+  std::map<std::pair<int, int>, std::pair<int, bool> > amplitudes;
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
 
     // find waveform maximum
     auto max = std::max_element(waveforms[ch].begin(), waveforms[ch].end());
-    auto max_posizion = std::distance(waveforms[ch].begin(),max);
+    auto max_posizion = std::distance(waveforms[ch].begin(), max);
 
     // this means that we will not have an amplitude for some noise events.
-    if((max_posizion - m_blStart) < 0){
+    if ((max_posizion - m_blStart) < 0) {
       EUDAQ_DEBUG("  Skipping channel " + to_string(ch) + " max too early");
       continue;
     }
 
     // calculate waveform baseline
     double baseline = 0.;
-    for(int i=max_posizion-m_blStart; i<max_posizion-m_blEnd; i++){
+    for (int i = max_posizion - m_blStart; i < max_posizion - m_blEnd; i++) {
       baseline += waveforms[ch][i];
     }
-    baseline /= m_blStart-m_blEnd;
+    baseline /= m_blStart - m_blEnd;
 
     // caclulate amplitude and apply calibration
-    double amplitude =  m_calib_functions.at(ch)->Eval(*max - baseline);
-    if(amplitude > m_calib_range_max) amplitude = m_calib_range_max;
-    if(amplitude < m_calib_range_min) amplitude = 0;
+    double amplitude = m_calib_functions.at(ch)->Eval(*max - baseline);
+    if (amplitude > m_calib_range_max)
+      amplitude = m_calib_range_max;
+    if (amplitude < m_calib_range_min)
+      amplitude = 0;
 
     amplitudes[mapping.at(ch)] = std::pair<int, bool>(amplitude, false);
   }
@@ -230,9 +239,8 @@ bool AD9249Event2StdEventConverter::Converting(
                         timestamp0);
         p.second.second = true;
         EUDAQ_DEBUG("  High threshold: Adding pixel (col, row, amp) " +
-                    to_string(p.first.first) + " " +
-                    to_string(p.first.second) + " " +
-                    to_string(p.second.first));
+                    to_string(p.first.first) + " " + to_string(p.first.second) +
+                    " " + to_string(p.second.first));
       }
       // loop over all surrounding once
       for (auto &pp : amplitudes) {
@@ -244,9 +252,9 @@ bool AD9249Event2StdEventConverter::Converting(
                               timestamp0);
               pp.second.second = true;
               EUDAQ_DEBUG("  Low threshold: Adding pixel (col, row, amp) " +
-                     to_string(p.first.first) + " " +
-                     to_string(p.first.second) + " " +
-                     to_string(p.second.first));
+                          to_string(p.first.first) + " " +
+                          to_string(p.first.second) + " " +
+                          to_string(p.second.first));
             }
           }
         }
@@ -258,12 +266,12 @@ bool AD9249Event2StdEventConverter::Converting(
   d2->AddPlane(plane);
 
   // use timestamps
-  if( m_useTime ){
+  if (m_useTime) {
     d2->SetTimeBegin(timestamp0 - m_runStartTime);
     d2->SetTimeEnd(timestamp0 - m_runStartTime);
   }
   // forcing corry to fall back on trigger IDs
-  else{
+  else {
     d2->SetTimeBegin(0);
     d2->SetTimeEnd(0);
   }
