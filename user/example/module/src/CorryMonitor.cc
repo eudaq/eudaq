@@ -1,6 +1,7 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/StdEventConverter.hh"
+#include "eudaq/Configuration.hh"
 #include <iostream>
 #include <fstream>
 #include <ratio>
@@ -16,9 +17,16 @@
 #include <cstdlib>
 #include <cstdio>
 #include <filesystem>
+#include <map>
 
+#include <sys/inotify.h>
+/* // For cross platform monitoring of new files in folder
+#include <QFileSystemWatcher>
+*/
 
 #define TOKEN " "
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class CorryMonitor : public eudaq::Monitor {
@@ -102,9 +110,6 @@ void CorryMonitor::DoConfigure(){
   m_en_std_converter = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
   m_en_std_print = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
 
-  m_fwtype = conf->Get("EUDAQ_FW", "native");
-  m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
-
   m_corry_config = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
   struct stat buffer;   
   if(stat(m_corry_config.c_str(), &buffer) != 0)
@@ -140,8 +145,25 @@ void CorryMonitor::DoStartRun(){
   system("cd ..");
   system("cd -");
   std::string filename;
-  for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/"))
-        std::cout << entry.path() << std::endl;
+  //std::cout<< "??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????"<<std::endl;
+  //std::cout<< eudaq::ReadLineFromFile("datacollector_const_file.txt") << std::endl;;
+  //for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/"))
+  //      std::cout << entry.path() << std::endl;
+      
+  int fd = inotify_init();
+  if ( fd < 0 ) {
+    perror( "Couldn't initialize inotify");
+  }
+
+  int wd = inotify_add_watch(fd, "./", IN_CREATE);
+
+  char buffer[BUF_LEN];
+  //int length = read( fd, buffer, BUF_LEN );
+  int length, i = 0;
+  std::string event_name;
+
+
+
   m_corry_pid = fork();
   switch (m_corry_pid)
   {
@@ -150,13 +172,39 @@ void CorryMonitor::DoStartRun(){
     exit(1);
 
   case 0: // child: start corryvreckan
-    //execl(m_corry_path.c_str(), "corry", "-c", m_corry_config.c_str(), m_corry_options.c_str(), (char*)0);
-    //command = &commandVector[0];
-    //execvp(my_argv[0], my_argv);
+    while(1){
+
+      length = read( fd, buffer, BUF_LEN );
+      if ( length < 0 ) {
+        perror( "read" );
+      }  
+
+      while ( i < length ) {
+        struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
+        if ( event->len ) {
+          if ( event->mask & IN_CREATE ) {
+            if ( !(event->mask & IN_ISDIR) ) {
+              std::cout<< "??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????"<<std::endl;
+              std::stringstream ss;
+              ss << event->name;
+              event_name = ss.str();
+              std::cout << "The file "<<event_name << " was created" << std::endl;
+              std::cout<< "File pattern is " << m_fwpatt << std::endl; 
+            }
+          }
+        }
+        i += EVENT_SIZE + event->len;
+      }
+
+      break;
+
+    }
+    std::cout<< eudaq::ReadLineFromFile("datacollector_const_file.txt") << std::endl;
+    for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/"))
+        std::cout << entry.path() << std::endl;
+
+
     execvp(argv[0], argv);
-    //execl(m_corry_path.c_str(), "corry", "-c", m_corry_config.c_str(), "-o", "number_of_events=10000", (char*)0);
-    //execv(m_corry_path.c_str(), (char **)execv_arguments);
-    //execv (programname, (char **)argv);
     perror("execv"); // execv doesn't return unless there is a problem
     exit(1);
   
