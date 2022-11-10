@@ -38,21 +38,23 @@ namespace eudaq
 // # Internal constants #
 // ######################
 static constexpr char    EVENT_TYPE[] = "CMSIT";
-static const std::string SENSORTYPE("RD53A");
-static const int         NROWS = 336, NCOLS = 432;
+static const std::string SENSORTYPE_RD53A("RD53A");
+static const std::string SENSORTYPE_RD53B("RD53B");
+static const int         NROWS_RD53A = 192, NCOLS_RD53A = 400;
+static const int         NROWS_RD53B = 336, NCOLS_RD53B = 432;
 static const int         MAXFRAMES = 32;
-static const int         MAXHYBRID = 9, MAXCHIPID = 20;
+static const int         MAXHYBRID = 9, MAXCHIPID = 32;
 static const double      PITCHX = 0.050, PITCHY = 0.050; // [mm]
 static const int         CMSITplaneIdOffset = 100;
 static const int         MAXTRIGIDCNT       = 32767;
 // #####################################################################
-// # Config file name: CFG_FILE_NAME                                   #
 // # Layout example:                                                   #
 // #                                                                   #
 // # [sensor.geometry]                                                 #
 // # pitch_hybridId0_chipId0 = “25x100origR0C0”                        #
 // # pitch_hybridId1_chipId0 = “25x100origR1C0”                        #
-// # pitch_hybridId2_chipId0 = “50x50”                                 #
+// # pitch_hybridId2_chipId0 = “RD53B 50x50”                           #
+// # pitch_hybridId3_chipId0 = “RD53A 50x50”                           #
 // #                                                                   #
 // # [sensor.calibration]                                              #
 // # fileName_hybridId0_chipId0                = “Run000000_Gain.root" #
@@ -121,7 +123,7 @@ class CMSITConverterPlugin : public StdEventConverter
 
   private:
     void         Initialize();
-    TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const;
+    TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY, std::string& SensorType) const;
 #ifdef ROOTSYS
     TH2D* FindHistogram(const std::string& nameInHisto, uint16_t hybridId, uint16_t chipId);
 #endif

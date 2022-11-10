@@ -75,14 +75,13 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
 
             if(std::find(planeIDs.begin(), planeIDs.end(), planeId) == planeIDs.end())
             {
-                StandardPlane plane(planeId, EVENT_TYPE, SENSORTYPE);
+                int         nRows, nCols;
+                double      pitchX, pitchY;
+                std::string SensorType;
+                auto        theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, pitchX, pitchY, SensorType);
 
+                StandardPlane plane(planeId, EVENT_TYPE, SensorType);
                 planeIDs.push_back(planeId);
-
-                int    nRows, nCols;
-                double pitchX, pitchY;
-                auto   theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, pitchX, pitchY);
-
                 plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
                 // #######################################
@@ -196,10 +195,10 @@ void CMSITConverterPlugin::Initialize()
                             EUDAQ_INFO(myString.str().c_str());
                         }
 #else
-			myString.clear();
-			myString.str("");
-			myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> ROOTSYS not defined";
-			EUDAQ_INFO(myString.str().c_str());
+                        myString.clear();
+                        myString.str("");
+                        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> ROOTSYS not defined";
+                        EUDAQ_INFO(myString.str().c_str());
 #endif
                     }
                 }
@@ -223,14 +222,16 @@ void CMSITConverterPlugin::Initialize()
     }
 }
 
-TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY) const
+TheConverter
+CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY, std::string& SensorType) const
 {
     TheConverter theConverter;
     std::string  cfg = (cfgFromFile != "" ? cfgFromFile : cfgFromData);
-    nRows            = NROWS;
-    nCols            = NCOLS;
+    nRows            = (cfg.find("RD53A") != std::string::npos ? NROWS_RD53A : NROWS_RD53B);
+    nCols            = (cfg.find("RD53A") != std::string::npos ? NCOLS_RD53A : NCOLS_RD53B);
     pitchX           = PITCHX; // [mm]
     pitchY           = PITCHY; // [mm]
+    SensorType       = (cfg.find("RD53A") != std::string::npos ? SENSORTYPE_RD53A : SENSORTYPE_RD53B);
 
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
     theConverter.isSingleChip   = true;
@@ -276,7 +277,7 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16
     while(true)
     {
         TIter keyList(dir->GetListOfKeys());
-        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid")) != 0))
+        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid")) == std::string::npos))
         {
             dir->cd(key->GetName());
             dir = gDirectory;
@@ -289,7 +290,7 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16
     // # Search for Hybrid #
     // #####################
     TIter keyListHybrid(dir->GetListOfKeys());
-    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid_") + std::to_string(hybridId)) != 0)) key = (TKey*)keyListHybrid.Next();
+    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid_") + std::to_string(hybridId)) == std::string::npos)) key = (TKey*)keyListHybrid.Next();
 
     // ###################
     // # Search for Chip #
@@ -300,7 +301,7 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16
         dir = gDirectory;
     }
     TIter keyListChip(dir->GetListOfKeys());
-    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Chip_") + std::to_string(chipId)) != 0)) key = (TKey*)keyListChip.Next();
+    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Chip_") + std::to_string(chipId)) == std::string::npos)) key = (TKey*)keyListChip.Next();
 
     // ###########################
     // # Enter in Chip directory #
@@ -350,7 +351,7 @@ int CMSITConverterPlugin::ComputePlaneId(const uint32_t                       hy
     // # Don't use these ranges (Needs to be unique to each ROC):                                            #
     // # (-) 0-10:  used by NIConverter/MIMOSA                                                               #
     // # (-) 25-30: used by USBPixGen3Converter/FEI-4                                                        #
-    // # (-) 30+:   used by BDAQ53Converter/RD53A with same model (30 [BDAQ offset] + 10 * boardId + chipId) #
+    // # (-) 30+:   used by BDAQ53Converter/RD53 with same model (30 [BDAQ offset] + 10 * boardId + chipId)  #
     // #######################################################################################################
     int planeId = CMSITplaneIdOffset + 100 * hybridId + chipId;
 
