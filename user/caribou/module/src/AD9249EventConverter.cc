@@ -28,8 +28,8 @@ double AD9249Event2StdEventConverter::m_calib_range_min(0);
 double AD9249Event2StdEventConverter::m_calib_range_max(16384);
 std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,
                                                                         "x");
-std::vector<TF1 *>
-AD9249Event2StdEventConverter::m_calib_functions(16, new TF1("name", "x"));
+std::vector<TF1>
+AD9249Event2StdEventConverter::m_calib_functions(16, TF1("name", "x"));
 
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
@@ -90,15 +90,13 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     m_waveform_filename = conf->Get("waveform_filename", "");
 
     // read calibration functions
-    delete m_calib_functions.at(
-        0); // since there is only one 'name' this destroys them all
+    m_calib_functions.clear();
     for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
       std::string name = "calibration_px" + to_string(mapping.at(i).first) +
                          to_string(mapping.at(i).second);
       m_calib_strings.at(i) = conf->Get(name, m_calib_strings.at(i));
-      m_calib_functions.at(i) =
-          new TF1(name.c_str(), m_calib_strings.at(i).c_str(),
-                  m_calib_range_min, m_calib_range_max);
+      m_calib_functions.emplace_back(name.c_str(), m_calib_strings.at(i).c_str(),
+                                     m_calib_range_min, m_calib_range_max);
     }
 
     EUDAQ_DEBUG("Using configuration:");
@@ -107,8 +105,8 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     EUDAQ_DEBUG(" use_time_stamp  = " + to_string(m_useTime));
     EUDAQ_DEBUG("Calibration functions: ");
     for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
-      EUDAQ_DEBUG(to_string(m_calib_functions.at(i)->GetName()) + " " +
-                  to_string(m_calib_functions.at(i)->GetExpFormula()));
+      EUDAQ_DEBUG(to_string(m_calib_functions.at(i).GetName()) + " " +
+                  to_string(m_calib_functions.at(i).GetExpFormula()));
     }
     EUDAQ_DEBUG(" calib_range_min  = " + to_string(m_calib_range_min));
     EUDAQ_DEBUG(" calib_range_max  = " + to_string(m_calib_range_max));
@@ -222,7 +220,7 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     baseline /= m_blStart - m_blEnd;
 
     // caclulate amplitude and apply calibration
-    double amplitude = m_calib_functions.at(ch)->Eval(*max - baseline);
+    double amplitude = m_calib_functions.at(ch).Eval(*max - baseline);
     if (amplitude > m_calib_range_max)
       amplitude = m_calib_range_max;
     if (amplitude < m_calib_range_min)
