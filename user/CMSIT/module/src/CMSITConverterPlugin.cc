@@ -277,7 +277,7 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16
     while(true)
     {
         TIter keyList(dir->GetListOfKeys());
-        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid")) != 0))
+        if(((key = (TKey*)keyList.Next()) != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid")) == std::string::npos))
         {
             dir->cd(key->GetName());
             dir = gDirectory;
@@ -290,7 +290,7 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16
     // # Search for Hybrid #
     // #####################
     TIter keyListHybrid(dir->GetListOfKeys());
-    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid_") + std::to_string(hybridId)) != 0)) key = (TKey*)keyListHybrid.Next();
+    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid_") + std::to_string(hybridId)) == std::string::npos)) key = (TKey*)keyListHybrid.Next();
 
     // ###################
     // # Search for Chip #
@@ -301,7 +301,7 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16
         dir = gDirectory;
     }
     TIter keyListChip(dir->GetListOfKeys());
-    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Chip_") + std::to_string(chipId)) != 0)) key = (TKey*)keyListChip.Next();
+    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Chip_") + std::to_string(chipId)) == std::string::npos)) key = (TKey*)keyListChip.Next();
 
     // ###########################
     // # Enter in Chip directory #
