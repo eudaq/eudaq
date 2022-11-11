@@ -103,7 +103,7 @@ class TheConverter
     void ConverterFor50x50(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
     void operator()(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
 
-    int  nCols;
+    int  nCols, nRows;
     bool isSingleChip;
     void (TheConverter::*whichConverter)(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
 

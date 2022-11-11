@@ -48,7 +48,11 @@ int TheConverter::ChargeConverter(const int row, const int col, const int ToT, c
 #ifdef ROOTSYS
     if((calibPar.hIntercept != nullptr) && (calibPar.hSlope != nullptr) && (calibPar.hSlope->GetBinContent(col + 1, row + 1) != 0))
     {
-        auto value = (ToT - calibPar.hIntercept->GetBinContent(col + 1, row + 1)) / calibPar.hSlope->GetBinContent(col + 1, row + 1) * calibPar.slopeVCal2Charge + calibPar.interceptVCal2Charge;
+        double value = -1;
+
+        if((isnan(calibPar.hIntercept->GetBinContent(col + 1, row + 1)) == false) && (isnan(calibPar.hSlope->GetBinContent(col + 1, row + 1)) == false))
+            value = (ToT - calibPar.hIntercept->GetBinContent(col + 1, row + 1)) / calibPar.hSlope->GetBinContent(col + 1, row + 1) * calibPar.slopeVCal2Charge + calibPar.interceptVCal2Charge;
+
         return (value > chargeCut ? value : -1);
     }
 #endif
@@ -256,6 +260,7 @@ CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std:
     }
 
     theConverter.nCols = nCols;
+    theConverter.nRows = nRows;
 
     if((cfg.find("25x100origR0C0") != std::string::npos) || (cfg.find("100x25origR0C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
@@ -290,7 +295,8 @@ TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16
     // # Search for Hybrid #
     // #####################
     TIter keyListHybrid(dir->GetListOfKeys());
-    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid_") + std::to_string(hybridId)) == std::string::npos)) key = (TKey*)keyListHybrid.Next();
+    while((key != nullptr) && (key->IsFolder() == true) && (std::string(key->GetName()).find(std::string("Hybrid_") + std::to_string(hybridId)) == std::string::npos))
+        key = (TKey*)keyListHybrid.Next();
 
     // ###################
     // # Search for Chip #
