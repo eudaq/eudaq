@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <regex>
+#include <filesystem>
 
 #include <sys/inotify.h>
 /* // TODO: For cross platform monitoring of new files in folder need to adapt code with
@@ -42,7 +43,7 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("CorryMonitor");
   
 private:
-  std::string getFileString(std::string pattern);
+  std::pair<std::string, std::string> getFileString(std::string pattern);
 
   bool m_en_print;
   bool m_en_std_converter;
@@ -128,7 +129,8 @@ bool string_match(const char *pattern, const char *candidate, int p, int c) {
   }
 }
 
-std::string CorryMonitor::getFileString(std::string pattern){
+std::pair<std::string, std::string> CorryMonitor::getFileString(std::string pattern){
+  // Decrypt file pattern. Can't use file namer because we need to know position of date/time
 
   std::regex reg("\\$([0-9]*)(D|R|X)");
 
@@ -176,8 +178,13 @@ std::string CorryMonitor::getFileString(std::string pattern){
   
   EUDAQ_DEBUG("File string for matching is " + file_string);
 
+  
   //std::regex return_regex(file_string);
-  return file_string;
+
+  std::filesystem::path file_path(file_string);
+
+
+  return std::pair<std::string, std::string>(file_path.parent_path(), file_path.filename());
 
 }
  
@@ -234,38 +241,6 @@ void CorryMonitor::DoConfigure(){
 
   //m_fwtype = dc_conf->Get("EUDAQ_FW", "native");
   m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector 
-
-
-  
-
-  /*
-  if(std::regex_search(m_fwpatt, time_matches, time_reg)) {
-        std::cout << "Match found\n";
-        
-        for (size_t i = 0; i < time_matches.size(); ++i) {
-            std::cout << i << ": '" << time_matches[i].str() << "'\n";
-        }
-    } else {
-        std::cout << "Match not found\n";
-    }
-
-
-  
-  while(std::regex_search(m_fwpatt, time_matches, time_reg))
-    {
-        std::cout << time_matches.str() << '\n';
-        m_fwpatt = time_matches.suffix();
-    }
-
-  
-  while(std::regex_search(m_fwpatt, run_matches, run_reg))
-    {
-        std::cout << run_matches.str() << '\n';
-        m_fwpatt = run_matches.suffix();
-    }
-  */
-  // Decrypt file pattern. Can't use file namer because we need to know position of date/time
-
   
 }
 
@@ -273,7 +248,10 @@ void CorryMonitor::DoStartRun(){
 
   int fd, wd; // File descriptor and watch descriptor for inotify
 
-  std::string pattern_to_match = getFileString(m_fwpatt);
+  std::pair<std::string, std::string> full_file = getFileString(m_fwpatt);
+  std::string monitor_file_path((full_file.first=="") ? "./" : full_file.first);
+  std::string pattern_to_match = full_file.second;
+
   bool waiting_for_matching_file = true;
 
 
@@ -292,7 +270,7 @@ void CorryMonitor::DoStartRun(){
       perror( "Couldn't initialize inotify");
     }
 
-    wd = inotify_add_watch(fd, "./", IN_CREATE);
+    wd = inotify_add_watch(fd, monitor_file_path.c_str(), IN_CREATE);
 
     while(waiting_for_matching_file){
 
@@ -329,7 +307,6 @@ void CorryMonitor::DoStartRun(){
     }
 
     /*
-    std::cout<< eudaq::ReadLineFromFile("datacollector_const_file.txt") << std::endl;
     for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/")){
         std::cout << entry.path().filename() << std::endl;
         std::cout << "Is this a match? " << std::string((string_match(pattern_to_match.c_str(), entry.path().filename().c_str(), 0, 0)) ? "Yes" : "No") << std::endl;
