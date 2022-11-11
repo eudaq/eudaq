@@ -16,11 +16,10 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
-#include <filesystem>
-#include <map>
+#include <regex>
 
 #include <sys/inotify.h>
-/* // For cross platform monitoring of new files in folder
+/* // TODO: For cross platform monitoring of new files in folder need to adapt code with
 #include <QFileSystemWatcher>
 */
 
@@ -43,6 +42,8 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("CorryMonitor");
   
 private:
+  std::string getFileString(std::string pattern);
+
   bool m_en_print;
   bool m_en_std_converter;
   bool m_en_std_print;
@@ -104,6 +105,83 @@ static char **addArg (char **argv, size_t *pSz, size_t *pUsed, char *str) {
     return argv;
 }
 
+unsigned int countDigit(long long n)
+{
+    if (n/10 == 0)
+        return 1;
+    return 1 + countDigit(n / 10);
+}
+
+bool string_match(const char *pattern, const char *candidate, int p, int c) {
+  if (pattern[p] == '\0') {
+    return candidate[c] == '\0';
+  } else if (pattern[p] == '*') {
+    for (; candidate[c] != '\0'; c++) {
+      if (string_match(pattern, candidate, p+1, c))
+        return true;
+    }
+    return string_match(pattern, candidate, p+1, c);
+  } else if (pattern[p] != '?' && pattern[p] != candidate[c]) {
+    return false;
+  }  else {
+    return string_match(pattern, candidate, p+1, c+1);
+  }
+}
+
+std::string CorryMonitor::getFileString(std::string pattern){
+
+  std::regex reg("\\$([0-9]*)(D|R|X)");
+
+  std::sregex_iterator iter(m_fwpatt.begin(), m_fwpatt.end(), reg);
+  std::sregex_iterator end;
+
+  std::string file_string = "";
+
+  uint32_t run_number = GetRunNumber();
+  unsigned int run_number_digits = countDigit(run_number);
+  std::string run_number_str = std::to_string(run_number);
+
+  std::string time_placeholder(1, '*');
+
+  std::string suffix;
+
+  while (iter!=end){
+
+    file_string += (*iter).prefix();
+
+    uint16_t number (((*iter)[1] == "") ? 0 : std::stoi((*iter)[1]) );
+    std::cout<< "Number is " << std::to_string(number) << " while iter is " << (*iter)[1] << std::endl;
+
+    std::string letter = (*iter)[2];
+
+    if (letter == "D"){
+      file_string += time_placeholder;
+    }
+    else if (letter == "R") {
+      unsigned int leading_zeros((number>run_number_digits) ? number-run_number_digits : 0);
+      file_string += std::string(leading_zeros, '0')+run_number_str;
+    }
+    else if (letter == "X") {
+      file_string += ".raw";
+    }
+
+    // Overwrite suffix until final element in iter is reached
+    suffix = (*iter).suffix();
+
+    ++iter;
+  }
+
+  file_string += suffix;
+
+  
+  EUDAQ_DEBUG("File string for matching is " + file_string);
+
+  //std::regex return_regex(file_string);
+  return file_string;
+
+}
+ 
+
 void CorryMonitor::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
@@ -157,37 +235,50 @@ void CorryMonitor::DoConfigure(){
   //m_fwtype = dc_conf->Get("EUDAQ_FW", "native");
   m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector 
 
-  std::cout << "FILE PATTERN = " << m_fwpatt << std::endl;
-  std::cout<< "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<std::endl;
+
+  
+
+  /*
+  if(std::regex_search(m_fwpatt, time_matches, time_reg)) {
+        std::cout << "Match found\n";
+        
+        for (size_t i = 0; i < time_matches.size(); ++i) {
+            std::cout << i << ": '" << time_matches[i].str() << "'\n";
+        }
+    } else {
+        std::cout << "Match not found\n";
+    }
+
+
+  
+  while(std::regex_search(m_fwpatt, time_matches, time_reg))
+    {
+        std::cout << time_matches.str() << '\n';
+        m_fwpatt = time_matches.suffix();
+    }
+
+  
+  while(std::regex_search(m_fwpatt, run_matches, run_reg))
+    {
+        std::cout << run_matches.str() << '\n';
+        m_fwpatt = run_matches.suffix();
+    }
+  */
+  // Decrypt file pattern. Can't use file namer because we need to know position of date/time
+
+  
 }
 
 void CorryMonitor::DoStartRun(){
-  // Wait one second for file to be created and first events being written
-  //eudaq::mSleep(10000);
-  system("echo $PWD");
-  system("cd ..");
-  system("cd -");
-  std::string filename;
-  //std::cout<< "??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????"<<std::endl;
-  //std::cout<< eudaq::ReadLineFromFile("datacollector_const_file.txt") << std::endl;;
-  //for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/"))
-  //      std::cout << entry.path() << std::endl;
-      
-  int fd = inotify_init();
-  if ( fd < 0 ) {
-    perror( "Couldn't initialize inotify");
-  }
 
-  int wd = inotify_add_watch(fd, "./", IN_CREATE);
+  int fd, wd; // File descriptor and watch descriptor for inotify
 
-  char buffer[BUF_LEN];
-  //int length = read( fd, buffer, BUF_LEN );
-  int length, i = 0;
-  std::string event_name;
-
+  std::string pattern_to_match = getFileString(m_fwpatt);
+  bool waiting_for_matching_file = true;
 
 
   m_corry_pid = fork();
+
   switch (m_corry_pid)
   {
   case -1: // error
@@ -195,7 +286,18 @@ void CorryMonitor::DoStartRun(){
     exit(1);
 
   case 0: // child: start corryvreckan
-    while(1){
+    
+    fd = inotify_init();
+    if ( fd < 0 ) {
+      perror( "Couldn't initialize inotify");
+    }
+
+    wd = inotify_add_watch(fd, "./", IN_CREATE);
+
+    while(waiting_for_matching_file){
+
+      int length, i = 0;
+      char buffer[BUF_LEN];
 
       length = read( fd, buffer, BUF_LEN );
       if ( length < 0 ) {
@@ -204,28 +306,35 @@ void CorryMonitor::DoStartRun(){
 
       while ( i < length ) {
         struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
-        if ( event->len ) {
-          if ( event->mask & IN_CREATE ) {
-            if ( !(event->mask & IN_ISDIR) ) {
-              std::cout<< "??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????"<<std::endl;
+      
+        if ( event->mask & IN_CREATE ) {      // if event is a creation of object in directory
+          if ( !(event->mask & IN_ISDIR) ) {  // if object created is a file
+            if ( event->len ) {               // if filename is not empty 
               std::stringstream ss;
               ss << event->name;
-              event_name = ss.str();
-              std::cout << "The file "<<event_name << " was created" << std::endl;
-              std::cout<< "File pattern is " << m_fwpatt << std::endl; 
+              std::string event_name = ss.str();
+
+              EUDAQ_DEBUG("The file " + event_name + " was created");
+              EUDAQ_DEBUG("Pattern to match is  " + pattern_to_match); 
+
+              if (string_match(pattern_to_match.c_str(), event_name.c_str(), 0, 0)) waiting_for_matching_file = false;
             }
           }
         }
+
         i += EVENT_SIZE + event->len;
+
       }
 
-      break;
-
     }
-    std::cout<< eudaq::ReadLineFromFile("datacollector_const_file.txt") << std::endl;
-    for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/"))
-        std::cout << entry.path() << std::endl;
 
+    /*
+    std::cout<< eudaq::ReadLineFromFile("datacollector_const_file.txt") << std::endl;
+    for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/")){
+        std::cout << entry.path().filename() << std::endl;
+        std::cout << "Is this a match? " << std::string((string_match(pattern_to_match.c_str(), entry.path().filename().c_str(), 0, 0)) ? "Yes" : "No") << std::endl;
+    }
+    */
 
     execvp(argv[0], argv);
     perror("execv"); // execv doesn't return unless there is a problem
