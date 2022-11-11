@@ -256,6 +256,7 @@ CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std:
     }
 
     theConverter.nCols = nCols;
+    theConverter.nRows = nRows;
 
     if((cfg.find("25x100origR0C0") != std::string::npos) || (cfg.find("100x25origR0C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
