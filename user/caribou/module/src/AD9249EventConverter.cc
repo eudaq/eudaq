@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include "TF1.h"
 
 using namespace eudaq;
 

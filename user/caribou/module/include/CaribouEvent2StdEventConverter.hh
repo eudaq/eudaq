@@ -2,7 +2,8 @@
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 
-#include "TF1.h"
+// Foreward declaration of TF1, so that the header has no root dependecies
+class TF1;
 
 /**
  * Caribou event converter, converting from raw detector data to EUDAQ StandardEvent format
@@ -30,6 +31,7 @@ namespace eudaq {
     }
     return stream.str();
   }
+
   class AD9249Event2StdEventConverter: public eudaq::StdEventConverter{
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
