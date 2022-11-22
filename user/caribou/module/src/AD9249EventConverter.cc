@@ -15,7 +15,6 @@ auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
 
 size_t AD9249Event2StdEventConverter::trig_(0);
 bool AD9249Event2StdEventConverter::m_configured(0);
-bool AD9249Event2StdEventConverter::m_useTime(0);
 int64_t AD9249Event2StdEventConverter::m_runStartTime(-1);
 int AD9249Event2StdEventConverter::threshold_trig(1000);
 int AD9249Event2StdEventConverter::threshold_low(101);
@@ -87,7 +86,6 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     m_blEnd = conf->Get("blEnd", 100);
     m_calib_range_min = conf->Get("calib_range_min", m_calib_range_min);
     m_calib_range_max = conf->Get("calib_range_max", m_calib_range_max);
-    m_useTime = conf->Get("use_time_stamp", false);
     m_waveform_filename = conf->Get("waveform_filename", "");
 
     // read calibration functions
@@ -103,7 +101,6 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     EUDAQ_DEBUG("Using configuration:");
     EUDAQ_DEBUG(" threshold_low  = " + to_string(threshold_low));
     EUDAQ_DEBUG(" threshold_trig  = " + to_string(threshold_trig));
-    EUDAQ_DEBUG(" use_time_stamp  = " + to_string(m_useTime));
     EUDAQ_DEBUG("Calibration functions: ");
     if(EUDAQ_IS_LOGGED("DEBUG")){
       for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
@@ -266,16 +263,8 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
 
-  // use timestamps
-  if (m_useTime) {
-    d2->SetTimeBegin(timestamp0 - m_runStartTime);
-    d2->SetTimeEnd(timestamp0 - m_runStartTime);
-  }
-  // forcing corry to fall back on trigger IDs
-  else {
-    d2->SetTimeBegin(0);
-    d2->SetTimeEnd(0);
-  }
+  d2->SetTimeBegin(timestamp0 - m_runStartTime);
+  d2->SetTimeEnd(timestamp0 - m_runStartTime);
   d2->SetTriggerN(trig_);
   trig_++;
 
