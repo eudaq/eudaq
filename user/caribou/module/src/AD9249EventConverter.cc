@@ -27,10 +27,10 @@ int AD9249Event2StdEventConverter::m_blEnd(100);
 // calibration functions
 double AD9249Event2StdEventConverter::m_calib_range_min(0);
 double AD9249Event2StdEventConverter::m_calib_range_max(16384);
-std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,
-                                                                        "x");
+std::vector<std::string>
+AD9249Event2StdEventConverter::m_calib_strings(16, "x");
 std::vector<TF1>
-AD9249Event2StdEventConverter::m_calib_functions(16, TF1("name", "x"));
+AD9249Event2StdEventConverter::m_calib_functions(16, TF1());
 
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
