@@ -105,9 +105,11 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     EUDAQ_DEBUG(" threshold_trig  = " + to_string(threshold_trig));
     EUDAQ_DEBUG(" use_time_stamp  = " + to_string(m_useTime));
     EUDAQ_DEBUG("Calibration functions: ");
-    for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
-      EUDAQ_DEBUG(to_string(m_calib_functions.at(i).GetName()) + " " +
-                  to_string(m_calib_functions.at(i).GetExpFormula()));
+    if(EUDAQ_IS_LOGGED("DEBUG")){
+      for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
+        EUDAQ_DEBUG(to_string(m_calib_functions.at(i).GetName()) + " " +
+                    to_string(m_calib_functions.at(i).GetExpFormula()));
+      }
     }
     EUDAQ_DEBUG(" calib_range_min  = " + to_string(m_calib_range_min));
     EUDAQ_DEBUG(" calib_range_max  = " + to_string(m_calib_range_max));
