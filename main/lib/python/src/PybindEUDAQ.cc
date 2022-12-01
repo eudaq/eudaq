@@ -12,6 +12,7 @@ void init_pybind_runcontrol(py::module &);
 void init_pybind_monitor(py::module &);
 void init_pybind_filereader(py::module &);
 void init_pybind_filewriter(py::module &);
+void init_pybind_logger(py::module &);
 
 PYBIND11_MODULE(pyeudaq, m){
   m.doc() = "EUDAQ library for Python";
@@ -25,4 +26,5 @@ PYBIND11_MODULE(pyeudaq, m){
   init_pybind_filereader(m);
   init_pybind_filewriter(m);
   init_pybind_configuration(m);
+  init_pybind_logger(m);
 }

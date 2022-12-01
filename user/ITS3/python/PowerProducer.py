@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import pyeudaq
-import serial
-from HMP4040 import *
+from labequipment import HAMEG
 from time import sleep
 from datetime import datetime
 import threading
@@ -16,15 +15,16 @@ class PowerProducer(pyeudaq.Producer):
         self.idev=0
         self.isev=0
         self.lock=threading.Lock()
+        self.last_status=None
 
     def DoInitialise(self):
-        self.ps=HMP4040(self.GetInitConfiguration().as_dict()['path'])
+        self.ps=HAMEG(self.GetInitConfiguration().as_dict()['path'])
         self.idev=0
         self.isev=0
 
     def DoConfigure(self):
         conf=self.GetConfiguration().as_dict()
-        for ch in range(1,5):
+        for ch in range(1,self.ps.n_ch+1):
             if 'current_%d'%ch in conf: self.ps.set_curr(ch,float(conf['current_%d'%ch]))
             if 'voltage_%d'%ch in conf:
                 if 'steps_%d'%ch in conf:
@@ -51,10 +51,11 @@ class PowerProducer(pyeudaq.Producer):
     def DoStatus(self):
         self.SetStatusTag('StatusEventN','%d'%self.isev);
         self.SetStatusTag('DataEventN'  ,'%d'%self.idev);
-        #with self.lock:
-        #    if self.ps:
-        #        sel,volt_set,curr_set,volt_meas,curr_meas,fused=self.ps.status()
-        #        self.SetStatusMsg('%.1f | %.1f | %.1f | %.1f mA'%tuple(c/1e-3 for c in curr_meas))
+        if self.last_status:
+            sel,volt_set,curr_set,volt_meas,curr_meas,fused=self.last_status
+            self.SetStatusMsg(
+                ' | '.join([f"{'ON' if sel[ch] else 'OFF'}{' FUSE' if fused[ch] else ''} {volt_meas[ch]:.2f}V {curr_meas[ch]*1.e3:.1f}mA" for ch in range(self.ps.n_ch)])
+            )
 
 
     def RunLoop(self):
@@ -80,8 +81,9 @@ class PowerProducer(pyeudaq.Producer):
         ev=pyeudaq.Event('RawEvent',self.name+'_status')
         ev.SetTag('Time',time.isoformat())
         with self.lock:
-            sel,volt_set,curr_set,volt_meas,curr_meas,fused=self.ps.status()
-        for ch in range(1,5):
+            self.last_status = self.ps.status()
+            sel,volt_set,curr_set,volt_meas,curr_meas,fused=self.last_status
+        for ch in range(1,self.ps.n_ch+1):
             ev.SetTag('enabled_%d'     %ch,'%d'     %(sel      [ch-1]     ))
             ev.SetTag('fused_%d'       %ch,'%d'     %(fused    [ch-1]     ))
             ev.SetTag('voltage_set_%d' %ch,'%.2f V' %(volt_set [ch-1]     ))

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import pyeudaq
-import serial
-from pth import *
+from labequipment import PTH
 from time import sleep
 from datetime import datetime
 import threading
@@ -16,6 +15,9 @@ class PTHProducer(pyeudaq.Producer):
         self.idev=0
         self.isev=0
         self.lock=threading.Lock()
+        self.lastP=0
+        self.lastT=0
+        self.lastH=0
 
     def DoInitialise(self):
         self.pth=PTH()
@@ -38,11 +40,9 @@ class PTHProducer(pyeudaq.Producer):
         self.is_running=False
 
     def DoStatus(self):
-        self.SetStatusTag('StatusEventN','%d'%self.isev);
-        self.SetStatusTag('DataEventN'  ,'%d'%self.idev);
-        with self.lock:
-            if self.pth:
-                self.SetStatusMsg('%.2f degC | %.2f mbar | %.2f rel%%'%(self.pth.getT(),self.pth.getP(),self.pth.getH()))
+        self.SetStatusTag('StatusEventN','%d'%self.isev)
+        self.SetStatusTag('DataEventN'  ,'%d'%self.idev)
+        self.SetStatusMsg('%.2f degC | %.2f mbar | %.2f rel%%'%(self.lastT,self.lastP,self.lastH))
 
     def RunLoop(self):
         self.idev=0
@@ -67,9 +67,12 @@ class PTHProducer(pyeudaq.Producer):
         ev=pyeudaq.Event('RawEvent',self.name+'_status')
         ev.SetTag('Time'       ,time.isoformat())
         with self.lock:
-            ev.SetTag('Pressure'   ,'%.2f mbar' %self.pth.getP())
-            ev.SetTag('Temperature','%.2f degC' %self.pth.getT())
-            ev.SetTag('Humidity'   ,'%.2f rel%%'%self.pth.getH())
+            self.lastP = self.pth.getP()
+            self.lastT = self.pth.getT()
+            self.lastH = self.pth.getH()
+            ev.SetTag('Pressure'   ,'%.2f mbar' %self.lastP)
+            ev.SetTag('Temperature','%.2f degC' %self.lastT)
+            ev.SetTag('Humidity'   ,'%.2f rel%%'%self.lastH)
         if bore:
             ev.SetBORE()
         if eore:

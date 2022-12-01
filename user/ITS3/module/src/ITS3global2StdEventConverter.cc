@@ -1,6 +1,7 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 #include <iostream>
+#include <algorithm>
 
 class ITS3global2StdEventConverter:public eudaq::StdEventConverter{
 public:

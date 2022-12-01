@@ -10,9 +10,9 @@
 namespace eudaq {
   FileDeserializer::FileDeserializer(const std::string &fname, bool faileof,
                                      size_t buffersize)
-      : m_file(0), m_faileof(faileof), m_buf(buffersize), m_start(&m_buf[0]),
+    : m_filename(fname), m_file(0), m_faileof(faileof), m_buf(buffersize), m_start(&m_buf[0]),
         m_stop(m_start) {
-    m_file = fopen(fname.c_str(), "rb");
+    m_file = fopen(m_filename.c_str(), "rb");
     if (!m_file)
       EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
     // check if the file actually contains data. otherwise it will hang
@@ -42,6 +42,7 @@ namespace eudaq {
     clearerr(m_file);
     if (level() == 0)
       m_start = m_stop = &m_buf[0];
+
     uint8_t *end = &m_buf[0] + m_buf.size();
     if (size_t(end - m_stop) < min) {
       // not enough space remaining before end of buffer,
@@ -55,22 +56,33 @@ namespace eudaq {
       }
     }
     size_t read =
-        fread(reinterpret_cast<char *>(m_stop), 1, end - m_stop, m_file);
+      fread(reinterpret_cast<char *>(m_stop), sizeof(char), end - m_stop, m_file);
     m_stop += read;
+    int n_tries = 0;
+    const int max_tries = 1000;    
     while (read < min) {
       if (feof(m_file) && m_faileof) {
-        throw FileReadException("End of File encountered");
-      } else if (int err = ferror(m_file)) {
+        throw FileReadException("End of file '"+m_filename+"' encountered");
+      }
+      int errcode = ferror(m_file);
+      if (errcode!=0) {
         EUDAQ_THROWX(FileReadException,
-                     "Error reading from file: " + to_string(err));
-      } else if (m_interrupting) {
+                     "Error reading from file '"+m_filename+"': " + to_string(errcode));
+      }
+      if (m_interrupting) {
         m_interrupting = false;
         throw InterruptedException();
+      }
+      if(n_tries >= max_tries){
+        EUDAQ_THROWX(FileReadException,
+                     "Error reading from file '"+m_filename+"': too many failed attempts (reading 0 bytes)");
       }
       mSleep(10);
       clearerr(m_file);
       size_t bytes =
-          fread(reinterpret_cast<char *>(m_stop), 1, end - m_stop, m_file);
+	fread(reinterpret_cast<char *>(m_stop), sizeof(char), end - m_stop, m_file);
+      if(bytes == 0) ++n_tries;
+      else n_tries = 0;
       read += bytes;
       m_stop += bytes;
     }

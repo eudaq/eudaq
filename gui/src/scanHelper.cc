@@ -25,7 +25,9 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
 
     int i = 0 ;
     std::vector<ScanSection> sec;
+    std::unordered_map<int, std::vector<ScanSection>> mapSec;
     // having more than a thousand scans at once is pointless
+    int parallel = 0;
     while(i<1000) {
         if(scanConf->HasSection(std::to_string(i))) {
             scanConf->SetSection(std::to_string(i));
@@ -34,15 +36,17 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             double step     = scanConf->Get("step",std::numeric_limits<double>::min());
             double stop     = scanConf->Get("stop",std::numeric_limits<double>::min());
             double defaultV = scanConf->Get("default",start);
+            int scanParallelTo = scanConf->Get("scanParallelTo", parallel);
             std::string param    = scanConf->Get("parameter","wrongPara");
             std::string name     = scanConf->Get("name","wrongPara");
             std::string Counter  = scanConf->Get("eventCounter","wrongPara");
-
+            EUDAQ_INFO("Checking condition with start "+std::to_string(std::numeric_limits<double>::epsilon()>std::abs(start - std::numeric_limits<double>::min())));
+            EUDAQ_INFO("Checking condition with start epsilon "+std::to_string(std::numeric_limits<double>::epsilon()));
+            EUDAQ_INFO("Checking condition with start other "+std::to_string(std::abs(start - std::numeric_limits<double>::min())));
+            EUDAQ_INFO("Checking condition with start "+std::to_string(std::abs(start - std::numeric_limits<double>::min()) - std::numeric_limits<double>::epsilon()));
             if(!m_scan_is_time_based && Counter == "wrongPara")
                 return scanError("To run a scan based on a number of events, \"eventCounter\" needs to be specified in section"+std::to_string(i));
             if(name == "wrongPara" || param == "wrongPara"
-               || (std::numeric_limits<double>::epsilon()>std::abs(start - std::numeric_limits<double>::min()))
-               || (std::numeric_limits<double>::epsilon()>std::abs(stop - std::numeric_limits<double>::min()))
                || (std::numeric_limits<double>::epsilon()>std::abs(step - std::numeric_limits<double>::min())))
                 return scanError("Scan section "+std::to_string(i)+" is incomplete -> Please check");
 
@@ -53,18 +57,33 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
             if(!defaultConf->Has(param))
                 return scanError("Scan parameter "+std::to_string(i)+":"+param+" is not defined in default configuration");
 
-            sec.push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested));
+            sec.push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested, scanParallelTo));
+            EUDAQ_INFO("Found "+std::to_string(scanParallelTo));
+            mapSec[scanParallelTo].push_back(ScanSection(start,stop, step, name, param, Counter, defaultV,i,nested, scanParallelTo));
 
             defaultConf->SetSection("");
             defaultConf->SetSection(name);
             defaultConf->SetString(param,std::to_string(defaultV));
+            parallel++;
         }
         ++i;
+    }
+    for (unsigned int mapIndex = 0; mapIndex < mapSec.size(); mapIndex++){
+        if (mapSec[mapIndex].size() > 1){
+            unsigned int oldSteps;
+            for (unsigned int vecIndex = 0; vecIndex < mapSec[mapIndex].size(); vecIndex++){
+                unsigned int steps = std::abs(mapSec[mapIndex].at(vecIndex).start-mapSec[mapIndex].at(vecIndex).stop)/mapSec[mapIndex].at(vecIndex).step;
+                if (vecIndex > 0) {
+                    if (steps != oldSteps) return scanError("Parallel scan parameters require the same number of steps!");
+                }
+                oldSteps = steps;
+            }
+        }
     }
     EUDAQ_INFO("Found "+std::to_string(sec.size())+" scans");
     defaultConf->SetSection("");
 
-    createConfigs(0, defaultConf,sec);
+    createConfigsMulti(0, defaultConf, mapSec);
     if(!m_repeatScans)
         EUDAQ_INFO("Scan with "+std::to_string(m_config_files.size())+" steps initialized");
     else
@@ -73,41 +92,63 @@ bool Scan::setupScan(std::string globalConfFile, std::string scanConfFile) {
     return true;
 }
 
-void Scan::createConfigs(unsigned condition, eudaq::ConfigurationSP conf,std::vector<ScanSection> sec) {
-    if(condition == sec.size())
+void Scan::createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, std::unordered_map<int, std::vector<ScanSection>> mapSec) {
+    EUDAQ_INFO("Map size = " + std::to_string(mapSec.size()));
+    if(condition == mapSec.size())
         return;
     auto confsBefore = m_config_files.size();
-
-    // We can scan in both directions:
-    bool decreasing = (sec.at(condition).start > sec.at(condition).stop);
-    auto value = sec.at(condition).start;
-    auto steps = std::abs(sec.at(condition).start-sec.at(condition).stop)/sec.at(condition).step;
-    for(int nStep=0; nStep<steps; ++nStep)
+    std::vector<double> value;
+    std::vector<double> step;
+    auto nSteps = std::abs(mapSec[condition].at(0).start-mapSec[condition].at(0).stop)/mapSec[condition].at(0).step;
+    std::vector<bool> decreasing;
+    std::vector<std::string> name;
+    for (unsigned secCounter = 0; secCounter < mapSec[condition].size(); secCounter++){ // loop through all parallel scan parameters
+        decreasing.push_back((mapSec[condition].at(secCounter).start > mapSec[condition].at(secCounter).stop));
+        value.push_back(mapSec[condition].at(secCounter).start);
+        step.push_back(mapSec[condition].at(secCounter).step);
+    }
+    if (value.size() == 0){ // safety exit in case something went wrong.
+        return;
+    }
+    EUDAQ_INFO("nested = " + std::to_string(mapSec[condition].at(0).nested) + " for " + mapSec[condition].at(0).name);
+    for(int nStep=0; nStep<nSteps; ++nStep)
     {
         // if the scan is nested, all other data points from before need to be
-        // redone with each point of current scan
-        if(sec.at(condition).nested) {
+        // redone with each point of current
+        if(mapSec[condition].at(0).nested) {
             for(unsigned i =0; i < confsBefore;++i) {
                 eudaq::ConfigurationSP tmpConf = eudaq::Configuration::MakeUniqueReadFile(m_config_files.at(i));
-                tmpConf->SetSection(sec.at(condition).name);
-                tmpConf->Set(sec.at(condition).parameter, value);
+                for (unsigned int param = 0 ; param < value.size(); param++){
+                    tmpConf->SetSection(mapSec[condition].at(param).name);
+                    tmpConf->Set(mapSec[condition].at(param).parameter, value.at(param));
+                    EUDAQ_DEBUG("Nested "+mapSec[condition].at(param).name+":"+mapSec[condition].at(param).parameter+":"+std::to_string(value.at(param)));
+                    addSection(mapSec[condition].at(param));
+                }
                 storeConfigFile(tmpConf);
-                addSection(sec.at(condition));
             }
-        } else {
-            conf->SetSection(sec.at(condition).name);
-            conf->Set(sec.at(condition).parameter, value);
-            storeConfigFile(conf);
-            EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
-            addSection(sec.at(condition));
+            for (unsigned int param = 0; param < value.size(); param++){
+                value.at(param) += (decreasing.at(param)? -1: 1) *mapSec[condition].at(param).step;
+            }
         }
-        value+= (decreasing? -1: 1) *sec.at(condition).step;
+        else {
+            for (unsigned int param = 0; param < value.size(); param++){
+                conf->SetSection(mapSec[condition].at(param).name);
+                conf->Set(mapSec[condition].at(param).parameter, value.at(param));
+                EUDAQ_DEBUG("Non-Nested "+mapSec[condition].at(param).name+":"+mapSec[condition].at(param).parameter+":"+std::to_string(value.at(param)));
+                addSection(mapSec[condition].at(param));
+                value.at(param) += (decreasing.at(param)? -1: 1) *mapSec[condition].at(param).step;
+            }
+            storeConfigFile(conf);
+        }
     }
-    conf->SetSection(sec.at(condition).name);
-    conf->Set(sec.at(condition).parameter, sec.at(condition).defaultV);
-    EUDAQ_DEBUG(sec.at(condition).name+":"+sec.at(condition).parameter+":"+std::to_string(value));
-    createConfigs(condition+1,conf,sec);
+    for (unsigned int param = 0; param < value.size(); param++){
+        conf->SetSection(mapSec[condition].at(param).name);
+        conf->Set(mapSec[condition].at(param).parameter, mapSec[condition].at(param).defaultV);
+    }
+    EUDAQ_DEBUG("Moving to next parameter");
+    createConfigsMulti(condition+1,conf,mapSec);
 }
+
 
 bool Scan::storeConfigFile(eudaq::ConfigurationSP conf) {
     std::string filename = m_config_file_prefix+"_"+std::to_string(m_config_files.size())+".conf";

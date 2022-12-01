@@ -67,6 +67,7 @@ public:
   string GetSnapShotDir() const;
   OnlineMonWindow *getOnlineMon() const;
   OnlineMonConfiguration mon_configdata; // FIXME
+  std::shared_ptr<eudaq::Configuration> eu_cfgPtr;
 private:
   std::vector<BaseCollection *> _colls;
   OnlineMonWindow *onlinemon;

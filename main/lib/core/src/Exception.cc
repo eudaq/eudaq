@@ -4,38 +4,33 @@
 
 namespace eudaq {
 
-  Exception::Exception(const std::string &msg) : m_msg(msg), m_line(0) {}
-
-  const Exception &Exception::SetLocation(const std::string &file,
-                                          unsigned line,
-                                          const std::string &func) const {
-    m_file = file;
-    m_line = line;
-    m_func = func;
-    return *this;
-  }
-
-  void Exception::make_text() const {
-    m_text = m_msg;
-    if (m_file.length() > 0) {
-      m_text += "\n  From " + m_file;
-      if (m_line > 0) {
-        m_text += ":" + to_string(m_line);
+  Exception::Exception(const std::string &msg, const std::string &file,unsigned line,const std::string &func) {
+    m_text = msg;
+    if (file.length() > 0) {
+      m_text += "\n  From " + file;
+      if (line > 0) {
+	m_text += ":" + to_string(line);
       }
     }
-    if (m_func.length() > 0)
-      m_text += "\n  In " + m_func;
+    if (func.length() > 0)
+      m_text += "\n  In " + func;
   }
 
-  LoggedException::LoggedException(const std::string &msg)
-      : Exception(msg), m_logged(false) {}
+  const char* Exception::what() const noexcept {
+    return m_text.c_str();
+  }    
+  
+  LoggedException::LoggedException(const std::string &msg, const std::string &file,unsigned line,const std::string &func) 
+    : Exception(msg,file,line,func), m_logged(false) {
+    do_log(*this);
+  }
 
   void LoggedException::Log() const {
     if (m_logged)
       return;
     // Only log the message once
     eudaq::GetLogger().SendLogMessage(
-        eudaq::LogMessage(m_msg, eudaq::LogMessage::LVL_THROW));
+        eudaq::LogMessage(m_text, eudaq::LogMessage::LVL_THROW));
     m_logged = true;
   }
 

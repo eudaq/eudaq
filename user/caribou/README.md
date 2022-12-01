@@ -28,8 +28,18 @@ The producer interfaces the Peary device manager to add devices and to control t
 
     Both keys need to be set, of one or the other is missing, no change of configuration is attempted.
 
+    The key `adc_signal` and `adc_frequency` can be used to sample the slow ADC on the Carboard in regular intervals. Here, `adc_signal` is the name of the ADC input channel as assigned via the Peary periphery for the given device, and `adc_frequency` is the number of events after which a new reading is attempted, the default is 1000. If no `adc_signal` is set, no ADC reading is attempted. 
+
     The producer itself reads the value `number_of_subevents` which allows buffering. If set to a value larger than zero, events are first buffered and upon reaching the desired buffer depth, they are collectively sent as sub-events of a Caribou event of the same type.
     A value of, for example, `number_of_subevents = 100` would therefore result in one event being sent to the DataCollector every 100 events read from the device. This event would contain 100 sub-events with the individual data blocks. This is completely transparent to data analysis performed in Corryvreckan using the EventLoaderEUDAQ2 and can be used to reduce the number of packets sent via the network.
+
+* **Secondary Device**: Sometimes it is necessary to run two devices through Caribou, one of which only requires power and configuration, while the readout happens over the other. For this purpose, the parameter
+
+    ```toml
+    secondary_device = "deviceName"
+    ```
+
+    can be set. This device will only be powered (via `powerOn()`) and configured (via `configure()`) but no data will be attempted to retrieve. Readout is only performed for the primary device.
 
 * **DAQ Start / Stop**: During DAQ start and stop, the corresponding Peary device functions `daqStart()` and `daqStop()` are called.
 

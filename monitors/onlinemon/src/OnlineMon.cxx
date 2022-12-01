@@ -84,6 +84,9 @@ RootMonitor::RootMonitor(const std::string & runcontrol,
 
   onlinemon->setCollections(_colls);
 
+  // Config for converters
+  eu_cfgPtr = eudaq::Configuration::MakeUniqueReadFile(conffile);
+
   //initialize with default configuration
   mon_configdata.SetDefaults();
   configfilename.assign(conffile);
@@ -170,7 +173,7 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   auto stdev = std::dynamic_pointer_cast<eudaq::StandardEvent>(evsp);
   if(!stdev){
     stdev = eudaq::StandardEvent::MakeShared();
-    eudaq::StdEventConverter::Convert(evsp, stdev, nullptr); //no conf
+    eudaq::StdEventConverter::Convert(evsp, stdev, eu_cfgPtr);
   }
   
   uint32_t ev_plane_c = stdev->NumPlanes();
@@ -233,6 +236,16 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
             if (lvl1!=0) continue;
             hit.setTOT((int)plane.GetPixel(index));
             if (hit.getTOT() < 20){
+              continue;
+            }
+          }
+          if (simpPlane.is_APTS){
+            if ((hit.getTOT()<80)){ // TODO: make generic and configurable.
+              continue;
+            }
+          }
+          if (simpPlane.is_OPAMP){
+            if ((hit.getTOT()<80)){ // TODO: make generic and configurable.
               continue;
             }
           }

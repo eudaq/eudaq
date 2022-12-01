@@ -28,6 +28,22 @@ namespace eudaq {
     }
     return stream.str();
   }
+  class AD9249Event2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouAD9249Event");
+  private:
+    void decodeChannel(const size_t adc, const std::vector<uint8_t>& data, size_t size, size_t offset, std::vector<std::vector<uint16_t>>& waveforms, uint64_t& timestamp) const;
+    static size_t trig_;
+    static bool m_configured;
+    static bool m_useTime;
+    static int64_t m_runStartTime;
+    static int threshold_trig;
+    static int threshold_low;
+    static std::string m_waveform_filename;
+    static std::ofstream m_outfile_waveforms;
+};
+
 
   class CLICTDEvent2StdEventConverter: public eudaq::StdEventConverter{
   public:
@@ -37,6 +53,17 @@ namespace eudaq {
     static size_t t0_seen_;
     static bool t0_is_high_;
     static uint64_t last_shutter_open_;
+  };
+
+  class dSiPMEvent2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CariboudSiPMEvent");
+  private:
+    static bool m_configured;
+    static bool m_zeroSupp;
+    static uint64_t m_trigger;
+    static uint64_t m_frame;
   };
 
   class CLICpix2Event2StdEventConverter: public eudaq::StdEventConverter{
