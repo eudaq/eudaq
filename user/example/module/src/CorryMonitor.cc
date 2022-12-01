@@ -18,11 +18,18 @@
 #include <cstdio>
 #include <regex>
 #include <filesystem>
+#include <algorithm>
 
 #include <sys/inotify.h>
 /* // TODO: For cross platform monitoring of new files in folder need to adapt code with
 #include <QFileSystemWatcher>
 */
+
+struct CorryArgumentList {
+  char **argv;
+  size_t sz, used;
+} ;
+
 
 #define TOKEN " "
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
@@ -50,14 +57,17 @@ private:
   bool m_en_std_print;
   pid_t m_corry_pid;
   std::string m_datacollector_to_monitor;
+  std::string m_eventloader_type;
   std::string m_corry_path;
   std::string m_corry_config;
   std::string m_corry_options;
+  std::vector<std::string> m_detector_planes;
 
   std::string m_fwpatt;
   std::string m_fwtype;
 
-  char **argv;
+  char **m_argv;
+  CorryArgumentList m_args;
 
 };
 
@@ -196,6 +206,7 @@ void CorryMonitor::DoConfigure(){
   m_en_std_converter          = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
   m_en_std_print              = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
   m_datacollector_to_monitor  = conf->Get("DATACOLLECTOR_TO_MONITOR", "my_dc");
+  m_eventloader_type          = conf->Get("CORRESPONDING_EVENTLOADER_TYPE", "");
   m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
   m_corry_options             = conf->Get("CORRY_OPTIONS", "");
 
@@ -208,21 +219,25 @@ void CorryMonitor::DoConfigure(){
   std::string my_command = m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
 
   //    Initial size, used and array.
-
   size_t sz = 0, used = 0;
-  argv = 0;
+  m_argv = 0;
+
+  m_args.argv = 0;
+  m_args.sz = 0;
+  m_args.used = 0;
+
 
   char * cstr = new char[my_command.length()+1];
   std::strcpy(cstr, my_command.c_str());
 
   // Add the command itself.
-  argv = addArg (argv, &sz, &used, strtok (cstr, TOKEN));
+  m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, strtok (cstr, TOKEN));
 
   // Add each argument in turn, then the terminator.
-  while ((cstr = strtok (0, TOKEN)) != 0)
-        argv = addArg (argv, &sz, &used, cstr);
+  while ((cstr = strtok (0, TOKEN)) != 0){
+        m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, cstr);
+  }
 
-  argv = addArg (argv, &sz, &used, 0);
 
   std::string section = "DataCollector."+m_datacollector_to_monitor;
   std::string config_file_path = conf->Name();
@@ -241,7 +256,31 @@ void CorryMonitor::DoConfigure(){
 
   //m_fwtype = dc_conf->Get("EUDAQ_FW", "native");
   m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector 
+
+  // open corry config file to get geometry file
+  std::ifstream corry_file {m_corry_config};
+  std::shared_ptr<eudaq::Configuration> corry_conf = std::make_shared<eudaq::Configuration>(corry_file, "Corryvreckan");
+  corry_conf->Print();
+
+  // open geometry file (exploit same file strucutre for geometry file as for config file)
+  std::ifstream geo_file {corry_conf->Get("detectors_file", "")};
+  std::shared_ptr<eudaq::Configuration> corry_geo = std::make_shared<eudaq::Configuration>(geo_file, "");
+  corry_geo->Print();
+
+  // transform EvetLoader type to lower case letters
+  std::transform(m_eventloader_type.cbegin(), m_eventloader_type.cend(),
+                   m_eventloader_type.begin(), // write to the same location
+                   [](unsigned char c) { return std::tolower(c); });
   
+  // loop over all detector planes and save the ones which match m_eventloader_type
+  // needed to pass file to be monitored to corry at runtime
+  for (auto m: corry_geo->Sectionlist()){
+    corry_geo->SetSection(m);
+    if (corry_geo->Get("type","") == m_eventloader_type){
+      m_detector_planes.push_back(m);
+    }
+  }
+
 }
 
 void CorryMonitor::DoStartRun(){
@@ -249,8 +288,9 @@ void CorryMonitor::DoStartRun(){
   int fd, wd; // File descriptor and watch descriptor for inotify
 
   std::pair<std::string, std::string> full_file = getFileString(m_fwpatt);
-  std::string monitor_file_path((full_file.first=="") ? "./" : full_file.first);
+  std::string monitor_file_path((full_file.first=="") ? "./" : full_file.first+"/");
   std::string pattern_to_match = full_file.second;
+  std::string event_name;
 
   bool waiting_for_matching_file = true;
 
@@ -290,7 +330,7 @@ void CorryMonitor::DoStartRun(){
             if ( event->len ) {               // if filename is not empty 
               std::stringstream ss;
               ss << event->name;
-              std::string event_name = ss.str();
+              event_name = ss.str();
 
               EUDAQ_DEBUG("The file " + event_name + " was created");
               EUDAQ_DEBUG("Pattern to match is  " + pattern_to_match); 
@@ -306,6 +346,24 @@ void CorryMonitor::DoStartRun(){
 
     }
 
+    EUDAQ_INFO("File to be monitored is "+monitor_file_path+event_name);
+
+    for (auto m: m_detector_planes){
+      std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+monitor_file_path+event_name;
+      char * cstr = new char[my_command.length()+1];
+      std::strcpy(cstr, my_command.c_str());
+
+      // Add the command itself.
+      m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, strtok (cstr, TOKEN));
+
+      // Add each argument in turn, then the terminator.
+      while ((cstr = strtok (0, TOKEN)) != 0){
+        m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, cstr);
+      }
+    }
+
+    m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, 0);
+
     /*
     for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/")){
         std::cout << entry.path().filename() << std::endl;
@@ -313,7 +371,7 @@ void CorryMonitor::DoStartRun(){
     }
     */
 
-    execvp(argv[0], argv);
+    execvp(m_args.argv[0], m_args.argv);
     perror("execv"); // execv doesn't return unless there is a problem
     exit(1);
   
