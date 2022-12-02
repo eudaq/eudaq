@@ -1,0 +1,40 @@
+[global]
+repeatScans = 0
+allowNested = 1 # overrides local nested arguments
+#configPrefix = "path/to/folder/scanned" // optional
+timeBasedScan = 1 # 1 = true :)
+timePerStep = 10 #in seconds for now
+nEventsPerStep   = 200
+
+[0]
+scanParallelTo = 0
+default = 1
+start = 1
+stop = 4
+step = 1
+name = Producer.my_pd0
+#eventCounter = Producer.my_pd0
+parameter = EX0_PLANE_ID
+
+[1]
+scanParallelTo = 0
+default = 10
+start = 10
+stop = 40
+step = 10
+name = Producer.my_pd0
+#eventCounter = Producer.my_pd0
+parameter = EX0_DURATION_BUSY_MS
+
+
+[9]
+nested = 1
+scanParallelTo = 1
+default = 4
+start = 4
+stop = 1
+step = 1
+name = Producer.my_pd1
+eventCounter = Producer.my_pd1
+parameter = EX0_PLANE_ID
+

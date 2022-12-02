@@ -221,6 +221,7 @@ namespace eudaq {
     }
     catch(...){
       EUDAQ_ERROR("CommandReceiver: User's RunLoop throws an exception");
+      SetStatus(Status::STATE_ERROR, "RunLoop Error");
       throw;
     }
     bool msg_once = true;

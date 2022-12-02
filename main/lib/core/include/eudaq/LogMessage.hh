@@ -18,7 +18,7 @@ namespace eudaq {
     LogMessage(const std::string &msg = "", Level level = LVL_EXTRA,
                const Time &t = Time::Current());
     LogMessage(Deserializer &);
-    virtual void Serialize(Serializer &) const;
+    virtual void Serialize(Serializer &) const override;
     virtual void Print(std::ostream &, size_t offset = 0) const override;
     void Write(std::ostream &) const;
     static LogMessage Read(std::istream &);

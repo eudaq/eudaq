@@ -143,50 +143,53 @@ namespace eudaq {
 
   std::string Configuration::Get(const std::string &key,
                                  const std::string &def) const {
-    try {
-      return GetString(key);
-    } catch (const Exception &) {
-      // ignore: return default
-    }
-    return def;
+    std::string retval(def);
+    GetString(key,retval);
+    return retval;
+  }
+
+  float Configuration::Get(const std::string &key, float def) const {
+      std::string retval;
+      if(!GetString(key,retval)){
+        return def;
+      } else {
+        return from_string(retval, def);
+      }
   }
 
   double Configuration::Get(const std::string &key, double def) const {
-    try {
-      return from_string(GetString(key), def);
-    } catch (const Exception &) {
-      // ignore: return default
+    std::string retval;
+    if(!GetString(key,retval)){
+      return def;
+    } else {
+      return from_string(retval, def);
     }
-    return def;
   }
 
   int64_t Configuration::Get(const std::string &key, int64_t def) const {
-    try {
-      std::string s = GetString(key);
-      return std::strtoll(s.c_str(), 0, 0);
-    } catch (const Exception &) {
-      // ignore: return default
-    }
-    return def;
+    std::string retval;
+    if(!GetString(key,retval)){
+      return def;
+    } else {
+      return std::strtoll(retval.c_str(), 0, 0);
+    }    
   }
   uint64_t Configuration::Get(const std::string &key, uint64_t def) const {
-    try {
-      std::string s = GetString(key);
-      return std::strtoull(s.c_str(), 0, 0);
-    } catch (const Exception &) {
-      // ignore: return default
-    }
-    return def;
+    std::string retval;
+    if(!GetString(key,retval)){
+      return def;
+    } else {
+      return std::strtoull(retval.c_str(), 0, 0);
+    }        
   }
 
   int Configuration::Get(const std::string &key, int def) const {
-    try {
-      std::string s = GetString(key);
-      return std::strtol(s.c_str(), 0, 0);
-    } catch (const Exception &) {
-      // ignore: return default
-    }
-    return def;
+    std::string retval;
+    if(!GetString(key,retval)){
+      return def;
+    } else {
+      return std::strtol(retval.c_str(), 0, 0);
+    }            
   }
 
   void Configuration::Print(std::ostream &os, size_t offset) const {
@@ -203,12 +206,13 @@ namespace eudaq {
 
   void Configuration::Print() const { Print(std::cout); }
 
-  std::string Configuration::GetString(const std::string &key) const {
+  bool Configuration::GetString(const std::string &key, std::string& def) const {
     section_t::const_iterator i = m_cur->find(key);
     if (i != m_cur->end()) {
-      return i->second;
+      def = i->second;
+      return true;
     }
-    throw Exception("Configuration: key not found");
+    return false;
   }
 
   bool Configuration::Has(const std::string& key) const {

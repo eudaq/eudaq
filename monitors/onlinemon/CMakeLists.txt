@@ -3,9 +3,6 @@ if(WIN32)
   return()
 endif()
 
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-find_package(ROOT QUIET)
-
 cmake_dependent_option(EUDAQ_BUILD_STDEVENT_MONITOR "monitor/StdEventMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
@@ -22,10 +19,6 @@ else()
 endif()
 
 include_directories(${ROOT_INCLUDE_DIR})
-if(ROOT_USE_FILE)
-  include(${ROOT_USE_FILE})
-endif()
-
 include_directories(. include)
 include_directories(${CMAKE_BINARY_DIR})
 
@@ -34,7 +27,6 @@ if(ROOT_VERSION_MAJOR GREATER 5)
 endif()
 
 set(THISMON StdEventMonitor)
-
 set(THISMON_DICT_CXX ${CMAKE_CURRENT_BINARY_DIR}/${THISMON}_ROOT.cxx)
 root_generate_dictionary(${THISMON}_ROOT include/OnlineMonWindow.hh)
 

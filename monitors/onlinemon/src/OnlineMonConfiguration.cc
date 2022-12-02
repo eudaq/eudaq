@@ -99,6 +99,22 @@ int OnlineMonConfiguration::ReadConfigurationFile() {
         is_section_clusterizer = false;
         is_section_mimosa26 = true;
         continue;
+    } else if (stringbuffer.compare("[DPTS]") == 0) {
+        cout << "DPTS settings block found" << endl;
+        is_section_general = false;
+        is_section_correlations = false;
+        is_section_hotpixelfinder = false;
+        is_section_clusterizer = false;
+        is_section_mimosa26 = false;
+        continue;
+      } else if (stringbuffer.compare("[APTS]") == 0) {
+        cout << "APTS settings block found" << endl;
+        is_section_general = false;
+        is_section_correlations = false;
+        is_section_hotpixelfinder = false;
+        is_section_clusterizer = false;
+        is_section_mimosa26 = false;
+        continue;
       }
 
       if (stringbuffer.find('[') != string::npos) {

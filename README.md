@@ -62,6 +62,7 @@ ROOT 6 is required for the Online Monitor GUI.
 - MuPix8: No readme given, as only converter
 - [PI Stages](user/piStage/README.md): Producer to control the rotation and translation stages from PI
 - [experimental](user/experimental/README.md): developed, not tested (with hardware)
+- [ITS3](user/ITS3/README.md): producers, converters and miscellaneous sripts used in ITS3 testbeams
 
 
 ## Compiling and installation

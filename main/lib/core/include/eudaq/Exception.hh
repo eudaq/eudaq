@@ -11,14 +11,14 @@
 #endif
 
 #define EUDAQ_THROWX(exc, msg)                                                 \
-  throw ::eudaq::InitException(exc(msg), __FILE__, __LINE__, EUDAQ_FUNC)
-#define EUDAQ_THROW(msg) EUDAQ_THROWX(::eudaq::LoggedException, (msg))
-#define EUDAQ_THROW_NOLOG(msg) EUDAQ_THROWX(::eudaq::Exception, (msg))
+  throw exc(msg,__FILE__, __LINE__, EUDAQ_FUNC)
+#define EUDAQ_THROW(msg) EUDAQ_THROWX(::eudaq::LoggedException,msg)
+#define EUDAQ_THROW_NOLOG(msg) EUDAQ_THROWX(::eudaq::Exception,msg)
 
 #define EUDAQ_EXCEPTIONX(name, base)                                           \
   class name : public base {                                                   \
-  public:                                                                      \
-    name(const std::string &msg) : base(msg) {}                                \
+  public:					                               \
+    name(const std::string &msg, const std::string &file = "",unsigned line = 0,const std::string &func = "") : base(msg, file, line, func) {} \
   }
 
 #define EUDAQ_EXCEPTION(name) EUDAQ_EXCEPTIONX(name, ::eudaq::Exception)
@@ -32,32 +32,17 @@ namespace eudaq {
 
   class DLLEXPORT Exception : public std::exception {
   public:
-    Exception(const std::string &msg);
-    const char *what() const throw() {
-      if (m_text.length() == 0)
-        make_text();
-      return m_text.c_str();
-    }
-    // This shouldn't really be const, but it must be callable on temporary
-    // objects...
-    const Exception &SetLocation(const std::string &file = "",
-                                 unsigned line = 0,
-                                 const std::string &func = "") const;
+    Exception(const std::string &msg, const std::string &file = "",unsigned line = 0,const std::string &func = "");
+    const char* what() const noexcept override;
     virtual ~Exception() throw() {}
 
   protected:
-    std::string m_msg;
-
-  private:
-    void make_text() const;
-    mutable std::string m_text;
-    mutable std::string m_file, m_func;
-    mutable unsigned m_line;
+    std::string m_text;
   };
 
   class DLLEXPORT LoggedException : public Exception {
   public:
-    LoggedException(const std::string &msg);
+    LoggedException(const std::string &msg, const std::string &file = "",unsigned line = 0,const std::string &func = "");    
     void Log() const;
     virtual ~LoggedException() throw();
 
@@ -68,14 +53,6 @@ namespace eudaq {
   namespace {
     void do_log(const Exception &) {}
     void do_log(const LoggedException &e) { e.Log(); }
-  }
-
-  template <typename T>
-  const T &InitException(const T &e, const std::string &file, int line = 0,
-                         const std::string func = "") {
-    e.SetLocation(file, line, func);
-    do_log(e); // If it is a LoggedException, send it to be logged already
-    return e;
   }
 
   // Some useful predefined exceptions

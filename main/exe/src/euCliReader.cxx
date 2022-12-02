@@ -7,6 +7,7 @@
 int main(int /*argc*/, const char **argv) {
   eudaq::OptionParser op("EUDAQ Command Line FileReader modified for TLU", "2.1", "EUDAQ FileReader (TLU)");
   eudaq::Option<std::string> file_input(op, "i", "input", "", "string", "input file");
+  eudaq::Option<std::string> file_conf(op, "c", "config", "", "string", "configuration file");
   eudaq::Option<uint32_t> eventl(op, "e", "event", 0, "uint32_t", "event number low");
   eudaq::Option<uint32_t> eventh(op, "E", "eventhigh", 0, "uint32_t", "event number high");
   eudaq::Option<uint32_t> triggerl(op, "tg", "trigger", 0, "uint32_t", "trigger number low");
@@ -17,7 +18,6 @@ int main(int /*argc*/, const char **argv) {
   eudaq::OptionFlag stdev(op, "std", "stdevent", "enable converter of StdEvent");
 
   op.Parse(argv);
-
   std::string infile_path = file_input.Value();
   std::string type_in = infile_path.substr(infile_path.find_last_of(".")+1);
   if(type_in=="raw")
@@ -33,6 +33,25 @@ int main(int /*argc*/, const char **argv) {
   uint32_t timestampl_v = timestampl.Value();
   uint32_t timestamph_v = timestamph.Value();
   bool not_all_zero = eventl_v||eventh_v||triggerl_v||triggerh_v||timestampl_v||timestamph_v;
+
+
+  // load configuration
+    // empty configuration object, prevents crash if no config file given
+  eudaq::Configuration eu_cfg( "", "" );
+  std::ifstream conffile( file_conf.Value() );
+  if( conffile ){
+    eu_cfg.Load( conffile, std::string("euCliReader") );
+  }
+  // prevent warning if no config file name given
+  else if ( file_conf.Value().empty() ){}
+  // but warn if attempt failed
+  else{
+    std::cout << "WARNING, config file '" << file_conf.Value() << "' not found!" << std::endl;
+  }
+  // build shared pointer
+  const eudaq::Configuration const_eu_cfg = eu_cfg;
+  eudaq::ConfigurationSPC config_spc = std::make_shared<const eudaq::Configuration>(const_eu_cfg);
+
 
   eudaq::FileReaderUP reader;
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
@@ -78,11 +97,11 @@ int main(int /*argc*/, const char **argv) {
       ev->Print(std::cout);
       if(stdev_v){
         auto evstd = eudaq::StandardEvent::MakeShared();
-        eudaq::StdEventConverter::Convert(ev, evstd, nullptr);
+        eudaq::StdEventConverter::Convert(ev, evstd, config_spc);
         std::cout<< ">>>>>"<< evstd->NumPlanes() <<"<<<<"<<std::endl;
       }
     }
-    
+
     event_count ++;
   }
   std::cout<< "There are "<< event_count << "Events"<<std::endl;

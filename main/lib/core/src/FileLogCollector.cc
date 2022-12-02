@@ -27,10 +27,14 @@ namespace eudaq{
     auto dummy0 = eudaq::Factory<eudaq::LogCollector>::
       Register<FileLogCollector, const std::string&, const std::string&>(FileLogCollector::m_id_factory);
   }
+  namespace{
+    auto dummy1 = eudaq::Factory<eudaq::LogCollector>::
+      Register<FileLogCollector, const std::string&, const std::string&>(eudaq::cstr2hash("log"));
+  }
 
   FileLogCollector::FileLogCollector(const std::string &name, const std::string &runcontrol)
     :eudaq::LogCollector(name, runcontrol){
-    m_file_pattern = "FileLog$12D$.log";
+    m_file_pattern = "FileLog$12D.log";
     m_level_write = 0;
     m_level_print = 0;
 
@@ -44,7 +48,7 @@ namespace eudaq{
   
   void FileLogCollector::DoInitialise(){
     auto ini = GetInitConfiguration();
-    m_file_pattern = "FileLog$12D$.log";
+    m_file_pattern = "FileLog$12D.log";
     m_level_write = 0;
     m_level_print = 0;
     if(ini){

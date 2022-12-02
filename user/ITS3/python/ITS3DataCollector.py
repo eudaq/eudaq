@@ -2,6 +2,8 @@
 import pyeudaq
 from time import sleep
 from collections import deque
+import argparse
+from datetime import datetime
 
 class ITS3DataCollector(pyeudaq.DataCollector):
     def __init__(self, name, runctrl):
@@ -9,6 +11,7 @@ class ITS3DataCollector(pyeudaq.DataCollector):
         self.producer_queues={}
         self.nsev=0
         self.ndev=0
+        self.async_check = datetime.now()
 
     def DoInitialise(self):
         conf=self.GetInitConfiguration().as_dict()
@@ -36,8 +39,20 @@ class ITS3DataCollector(pyeudaq.DataCollector):
         pass
 
     def DoStatus(self):
-        self.SetStatusTag('StatusEventN','%d'%self.nsev);
-        self.SetStatusTag('DataEventN'  ,'%d'%self.ndev);
+        self.SetStatusTag('StatusEventN','%d'%self.nsev)
+        self.SetStatusTag('DataEventN'  ,'%d'%self.ndev)
+        qd=sum(len(q) for q in self.producer_queues.values())
+        if self.async_check:
+            if qd==0:
+                self.async_check = False
+                self.SetStatusMsg('Running')
+            elif (datetime.now()-self.async_check).total_seconds()>=10:
+                self.SetStatusMsg('Warning! Out of sync! ' + ' '.join(sorted( \
+                    f"{k.GetName()[:2]}{k.GetName()[-1]}:{len(v)}" \
+                        for k,v in self.producer_queues.items() if len(v) )))
+        elif qd:
+            self.async_check = datetime.now()
+    
 
     def DoConnect(self, con):
 #        t = con.GetType()
@@ -78,7 +93,12 @@ class ITS3DataCollector(pyeudaq.DataCollector):
 
         
 if __name__=='__main__':
-    dc=ITS3DataCollector('dc','tcp://localhost:44000')
+    parser=argparse.ArgumentParser(description='ITS3 Data Collector',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--name' ,'-n',default='dc')
+    parser.add_argument('--run-control' ,'--rc',default='tcp://localhost:44000')
+    args=parser.parse_args()
+
+    dc=ITS3DataCollector(args.name,args.run_control)
     dc.Connect()
     sleep(2) # TODO: less sleep
     while dc.IsConnected():

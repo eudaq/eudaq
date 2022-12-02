@@ -1,6 +1,5 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
-#include  <cmath>
 
 class TluRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
@@ -101,7 +100,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   for(int i=1; i<finets_vec.size(); i++) {
       // 128 = half the fineTS counter range -> 128*780ps = 99ns = 3m (TOF)
       // For a time difference larger than 99ns, the overflow detection doesn't work anymore.
-      if(fabs(finets_avg - finets_vec.at(i)) > 128) { // 128*780ps = 99ns
+    if(abs(static_cast<long>(finets_avg - finets_vec.at(i))) > 128) { // 128*780ps = 99ns
           finets_vec.at(i) += 0xFF; // overflow compensation
       }
       // Need to weight average with previous number of iterations:
@@ -114,20 +113,20 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   auto coarse_ts = static_cast<uint64_t>(d1->GetTimestampBegin() / 25);
 
-  uint8_t coarse_3lsb = 0x3 & coarse_ts;
+  // Coarse ts runs at 40 MHz, fine ts at 1280 MHz - 3 lsb of coarse and 3 msb of fine are in sync
+  uint8_t coarse_3lsb = 0x7 & coarse_ts;
   uint8_t finets_avg_3msb = (0xE0 & finets_avg) >> 5;
 
-  // Casting to 32 bit is essential to detect the overflow in the 8th bit!
-  // 0x100 = 200ns (range of 3 bits with 25ns binning)
-  if((static_cast<uint32_t>(coarse_3lsb) - finets_avg_3msb) > 0x100) {
-      // coarse_ts is delayed by 2 clock cycles -> roll back
-      coarse_ts -= 2;
+  // fine ts is sampled when the discriminator registers the edge and always earlier than coarse ts. If not, the 4th lsb of the coarse must have flipped. Correct for this here.
+  if(coarse_3lsb<finets_avg_3msb){
+      coarse_ts-=0x8;
   }
 
-  // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets_avg:
+  // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets_avg and add the 4 lsb of fine ts at the end:
   auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets_avg & 0xFF))) * 1000.);
 
-  // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
+
+   // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
   d2->SetTimeBegin(ts);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
   d2->SetTimestamp(ts, d1->GetTimestampEnd(), d1->IsFlagTimestamp());
@@ -164,14 +163,14 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   d2->SetTag("DIFF_FINETS14_del_ns", std::to_string((finets1_ns - finets4_ns)).c_str());
   d2->SetTag("DIFF_FINETS15_del_ns", std::to_string((finets1_ns - finets5_ns)).c_str());
 
-  d2->SetTag("DIFF_FINETS23_del_ns", std::to_string((finets3_ns - finets3_ns)).c_str());
-  d2->SetTag("DIFF_FINETS24_del_ns", std::to_string((finets3_ns - finets4_ns)).c_str());
-  d2->SetTag("DIFF_FINETS25_del_ns", std::to_string((finets3_ns - finets5_ns)).c_str());
+  d2->SetTag("DIFF_FINETS23_del_ns", std::to_string((finets2_ns - finets3_ns)).c_str());
+  d2->SetTag("DIFF_FINETS24_del_ns", std::to_string((finets2_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS25_del_ns", std::to_string((finets2_ns - finets5_ns)).c_str());
 
-  d2->SetTag("DIFF_FINETS34_del_ns", std::to_string((finets4_ns - finets4_ns)).c_str());
-  d2->SetTag("DIFF_FINETS35_del_ns", std::to_string((finets4_ns - finets5_ns)).c_str());
+  d2->SetTag("DIFF_FINETS34_del_ns", std::to_string((finets3_ns - finets4_ns)).c_str());
+  d2->SetTag("DIFF_FINETS35_del_ns", std::to_string((finets3_ns - finets5_ns)).c_str());
 
-  d2->SetTag("DIFF_FINETS45_del_ns", std::to_string((finets5_ns - finets5_ns)).c_str());
+  d2->SetTag("DIFF_FINETS45_del_ns", std::to_string((finets4_ns - finets5_ns)).c_str());
 
   return true;
 }

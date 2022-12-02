@@ -58,9 +58,12 @@ namespace eudaq {
     bool SetSection(const std::string &section);
     std::string GetCurrentSectionName() const {return m_section;};
     std::string operator[](const std::string &key) const {
-      return GetString(key);
+      std::string retval;
+      if(GetString(key,retval)) return retval;
+      throw Exception("unable to find key "+key);
     }
     std::string Get(const std::string &key, const std::string &def) const;
+    float Get(const std::string &key, float def) const;
     double Get(const std::string &key, double def) const;
     int64_t Get(const std::string &key, int64_t def) const;
     uint64_t Get(const std::string &key, uint64_t def) const;
@@ -91,7 +94,7 @@ namespace eudaq {
     void SetString(const std::string &key, const std::string &val);
 
   private:
-    std::string GetString(const std::string &key) const;
+    bool GetString(const std::string &key, std::string& value) const;
     typedef std::map<std::string, std::string> section_t;
     typedef std::map<std::string, section_t> map_t;
     map_t m_config;

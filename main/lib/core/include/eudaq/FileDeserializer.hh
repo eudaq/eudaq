@@ -23,6 +23,7 @@ namespace eudaq{
     virtual void PreDeserialize(uint8_t *data, size_t len);
     size_t FillBuffer(size_t min = 0);
     size_t level() const { return m_stop - m_start; }
+    std::string m_filename;
     FILE *m_file;
     bool m_faileof;
     std::vector<uint8_t> m_buf;

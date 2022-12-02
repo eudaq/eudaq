@@ -1,44 +1,61 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # load binary lib/pyeudaq.so
 import pyeudaq
+from pyeudaq import EUDAQ_INFO, EUDAQ_ERROR
 import time
 from collections import deque
+
+def exception_handler(method):
+    def inner(*args, **kwargs):
+        try:
+            return method(*args, **kwargs)
+        except Exception as e:
+            EUDAQ_ERROR(str(e))
+            raise e
+    return inner
 
 class ExamplePyDataCollector(pyeudaq.DataCollector):
     def __init__(self, name, runctrl):
         pyeudaq.DataCollector.__init__(self, 'PyDataCollector', name, runctrl)
-        print ('New instance of ExamplePyDataCollector')
+        EUDAQ_INFO('New instance of ExamplePyDataCollector')
         self.dict_con_ev = {}
 
+    @exception_handler
     def DoInitialise(self):
-        print ('DoInitialise')
-        print ('key_a(init) = ', self.GetInitItem("key_a"))
+        EUDAQ_INFO('DoInitialise')
+        # print ('key_a(init) = ', self.GetInitItem("key_a"))
 
+    @exception_handler
     def DoConfigure(self):
-        print ('DoConfigure')
-        print ('key_b(conf) = ', self.GetConfigItem("key_b"))
+        EUDAQ_INFO('DoConfigure')
+        # print ('key_b(conf) = ', self.GetConfigItem("key_b"))
 
+    @exception_handler
     def DoStartRun(self):
-        print ('DoStartRun')
+        EUDAQ_INFO('DoStartRun')
         self.dict_con_ev = {}
-        
-    def DoReset(self):
-        print ('DoReset')
 
+    @exception_handler        
+    def DoReset(self):
+        EUDAQ_INFO('DoReset')
+
+    @exception_handler
     def DoConnect(self, con):
         t = con.GetType()
         n = con.GetName()
         r = con.GetRemote()
-        print ("new producer connection: ", t, n, "from ", r)
+        EUDAQ_INFO("new producer connection: ", t, n, "from ", r)
         self.dict_con_ev[con] = deque()
-        
+
+    @exception_handler
     def DoDisconnect(self, con):
         t = con.GetType()
         n = con.GetName()
         r = con.GetRemote()
-        print ("delete producer connection: ", t, n, "from ", r)
+        EUDAQ_INFO("delete producer connection: ", t, n, "from ", r)
         del self.dict_con_ev[con]
-        
+
+    @exception_handler
     def DoReceive(self, con, ev):
         
         self.dict_con_ev[con].append(ev)

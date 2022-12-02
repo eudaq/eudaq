@@ -7,6 +7,7 @@ import asyncio
 import re
 import sys
 from time import sleep
+import argparse
 
 urwid_timed_progress.FancyProgressBar.get_text=lambda self: '%d/%d %s (%.1f%%)'%(self.current,self.done,self.units[0][0],self.current/self.done*100)
 
@@ -97,6 +98,7 @@ class ITS3TUI():
             a.set_text(b)
         self.loop.draw_screen()
     def update_collector(self,collector,state,ndev,nsev,info):
+        if 'warning' in info.lower(): info = ('state-conf', info)
         cols=[collector,self.CONNECTION_STATES[state],'%8d'%ndev,'%8d'%nsev,info]
         asyncio.run_coroutine_threadsafe(self.update_collector_(collector,cols),self.aloop).result()
 
@@ -307,7 +309,12 @@ class ITS3RunControl(pyeudaq.RunControl):
         self.framework_runner.join()
        
 if __name__=='__main__':
-    rc=ITS3RunControl('44000','ITS3.ini')
+    parser=argparse.ArgumentParser(description='ITS3 Run Control',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--address',default='44000')
+    parser.add_argument('--ini',default='ITS3.ini')
+    args=parser.parse_args()
+
+    rc=ITS3RunControl(args.address,args.ini)
     rc.start()
     rc.tui.run()
 
