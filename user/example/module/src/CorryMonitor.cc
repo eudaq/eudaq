@@ -66,7 +66,6 @@ private:
   std::string m_fwpatt;
   std::string m_fwtype;
 
-  char **m_argv;
   CorryArgumentList m_args;
 
 };
@@ -123,6 +122,7 @@ unsigned int countDigit(long long n)
     return 1 + countDigit(n / 10);
 }
 
+// String matching with wildcards taken from https://stackoverflow.com/questions/23457305/compare-strings-with-wildcard
 bool string_match(const char *pattern, const char *candidate, int p, int c) {
   if (pattern[p] == '\0') {
     return candidate[c] == '\0';
@@ -161,8 +161,10 @@ std::pair<std::string, std::string> CorryMonitor::getFileString(std::string patt
 
     file_string += (*iter).prefix();
 
+    // number is numerical value attached to the letter in the file pattern
+    // e.g. 12 for $12D
     uint16_t number (((*iter)[1] == "") ? 0 : std::stoi((*iter)[1]) );
-    std::cout<< "Number is " << std::to_string(number) << " while iter is " << (*iter)[1] << std::endl;
+    //std::cout<< "Number is " << std::to_string(number) << " while iter is " << (*iter)[1] << std::endl;
 
     std::string letter = (*iter)[2];
 
@@ -202,7 +204,7 @@ std::pair<std::string, std::string> CorryMonitor::getFileString(std::string patt
 void CorryMonitor::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_en_print                  = conf->Get("CORRY_ENABLE_PRINT", 1);
+  m_en_print                  = conf->Get("CORRY_ENABLE_PRINT", 0);
   m_en_std_converter          = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
   m_en_std_print              = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
   m_datacollector_to_monitor  = conf->Get("DATACOLLECTOR_TO_MONITOR", "my_dc");
@@ -216,16 +218,13 @@ void CorryMonitor::DoConfigure(){
     EUDAQ_THROW("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
 
 
+  // command to be exectued in DoStartRun(), stored tokenized in m_args.argv
   std::string my_command = m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
 
   //    Initial size, used and array.
-  size_t sz = 0, used = 0;
-  m_argv = 0;
-
   m_args.argv = 0;
   m_args.sz = 0;
   m_args.used = 0;
-
 
   char * cstr = new char[my_command.length()+1];
   std::strcpy(cstr, my_command.c_str());
@@ -233,14 +232,15 @@ void CorryMonitor::DoConfigure(){
   // Add the command itself.
   m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, strtok (cstr, TOKEN));
 
-  // Add each argument in turn, then the terminator.
+  // Add each argument in turn, then the terminator (added later in DoStartRun()).
   while ((cstr = strtok (0, TOKEN)) != 0){
         m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, cstr);
   }
 
 
+  // Get the file naming pattern from the DataCollector config section
   std::string section = "DataCollector."+m_datacollector_to_monitor;
-  std::string config_file_path = conf->Name();
+  std::string eudaq_config_file_path = conf->Name();
 
   // Check if DataCollector with name m_datacollector_to_monitor is found
   conf->SetSection("");
@@ -249,20 +249,20 @@ void CorryMonitor::DoConfigure(){
   else 
     EUDAQ_DEBUG("DataCollector to be monitored is " + section);
 
-  std::ifstream file {config_file_path};
+  std::ifstream eudaq_conf {eudaq_config_file_path};
 
-	std::shared_ptr<eudaq::Configuration> dc_conf = std::make_shared<eudaq::Configuration>(file, section);
+  // open eudaq config file and get the DataCollector section
+	std::shared_ptr<eudaq::Configuration> dc_conf = std::make_shared<eudaq::Configuration>(eudaq_conf, section);
   dc_conf->Print();
 
-  //m_fwtype = dc_conf->Get("EUDAQ_FW", "native");
-  m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector 
+  m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector.cc
 
   // open corry config file to get geometry file
   std::ifstream corry_file {m_corry_config};
   std::shared_ptr<eudaq::Configuration> corry_conf = std::make_shared<eudaq::Configuration>(corry_file, "Corryvreckan");
   corry_conf->Print();
 
-  // open geometry file (exploit same file strucutre for geometry file as for config file)
+  // open geometry file (exploit same file structure for geometry file as for config file)
   std::ifstream geo_file {corry_conf->Get("detectors_file", "")};
   std::shared_ptr<eudaq::Configuration> corry_geo = std::make_shared<eudaq::Configuration>(geo_file, "");
   corry_geo->Print();
@@ -305,6 +305,7 @@ void CorryMonitor::DoStartRun(){
 
   case 0: // child: start corryvreckan
     
+    // Setting up inotify
     fd = inotify_init();
     if ( fd < 0 ) {
       perror( "Couldn't initialize inotify");
@@ -314,6 +315,7 @@ void CorryMonitor::DoStartRun(){
 
     while(waiting_for_matching_file){
 
+      // reading the event (change in directory)
       int length, i = 0;
       char buffer[BUF_LEN];
 
@@ -322,6 +324,7 @@ void CorryMonitor::DoStartRun(){
         perror( "read" );
       }  
 
+      // loop over changes in directory and check if any of them is creation of desired file
       while ( i < length ) {
         struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
       
@@ -335,7 +338,8 @@ void CorryMonitor::DoStartRun(){
               EUDAQ_DEBUG("The file " + event_name + " was created");
               EUDAQ_DEBUG("Pattern to match is  " + pattern_to_match); 
 
-              if (string_match(pattern_to_match.c_str(), event_name.c_str(), 0, 0)) waiting_for_matching_file = false;
+              if (string_match(pattern_to_match.c_str(), event_name.c_str(), 0, 0)) 
+                waiting_for_matching_file = false;
             }
           }
         }
@@ -346,8 +350,10 @@ void CorryMonitor::DoStartRun(){
 
     }
 
+    // Found file name is now stored in event_name
     EUDAQ_INFO("File to be monitored is "+monitor_file_path+event_name);
 
+    // add passing the file name to corry to the command
     for (auto m: m_detector_planes){
       std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+monitor_file_path+event_name;
       char * cstr = new char[my_command.length()+1];
