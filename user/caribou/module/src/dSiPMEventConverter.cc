@@ -98,7 +98,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
       ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
       ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
       ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
-    EUDAQ_INFO("\tcol \trow \thit \tvalid \tbc \tcclck \tfclck \tts \tfs \tfe");
+    EUDAQ_INFO("\tcol \trow \thit \tvalid \tbc \t\tcclck \tfclck \tts \t\tfs \t\tfe");
   }
 
   // go through pixels and add info to plane
@@ -181,25 +181,18 @@ bool dSiPMEvent2StdEventConverter::Converting(
     frameStart = thisPixFrameStart;
     frameEnd = thisPixFrameEnd;
 
-    // check valid bits
-    // if (hitBit == true && validBit == false) {
-    // EUDAQ_WARN("This pixel is hit, but the valid bit for the quadrant is not
-    // set"); EUDAQ_WARN("  col and row " + to_string(col) + " " +
-    // to_string(row)); return false;
-    //}
-
     // print some info for some events:
     if (1) {
       //    if (ev->GetEventNumber() == 1 ||
       // ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
       // ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
       // ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
-      EUDAQ_INFO("\t" + to_string(col) + "\t" + to_string(row) + "\t" +
-                 to_string(hitBit) + "\t" + to_string(validBit) + "\t" +
-                 to_string(bunchCount) + "\t" +
-                 to_string(static_cast<uint64_t>(clockCoarse)) + "\t" +
-                 to_string(static_cast<uint64_t>(clockFine)) + "\t" +
-                 to_string(timestamp) + "\t" + to_string(frameStart) + "\t" +
+      EUDAQ_INFO(" \t" + to_string(col) + " \t" + to_string(row) + " \t" +
+                 to_string(hitBit) + " \t" + to_string(validBit) + " \t" +
+                 to_string(bunchCount) + " \t" +
+                 to_string(static_cast<uint64_t>(clockCoarse)) + " \t" +
+                 to_string(static_cast<uint64_t>(clockFine)) + " \t" +
+                 to_string(timestamp) + " \t" + to_string(frameStart) + " \t" +
                  to_string(frameEnd));
     }
 
