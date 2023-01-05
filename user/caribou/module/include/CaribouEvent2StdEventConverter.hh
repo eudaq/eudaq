@@ -62,6 +62,7 @@ namespace eudaq {
   private:
     static bool m_configured;
     static bool m_zeroSupp;
+    static bool m_checkValid;
     static uint64_t m_trigger;
     static uint64_t m_frame;
   };

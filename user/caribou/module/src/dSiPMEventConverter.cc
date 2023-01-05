@@ -13,6 +13,7 @@ namespace {
 
 bool dSiPMEvent2StdEventConverter::m_configured(0);
 bool dSiPMEvent2StdEventConverter::m_zeroSupp(1);
+bool dSiPMEvent2StdEventConverter::m_checkValid(0);
 uint64_t dSiPMEvent2StdEventConverter::m_trigger(0);
 uint64_t dSiPMEvent2StdEventConverter::m_frame(0);
 
@@ -23,9 +24,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
   if (!m_configured && conf != NULL) {
     m_zeroSupp = conf->Get("zero_suppression", true);
+    m_checkValid = conf->Get("check_valid", false);
 
     EUDAQ_INFO("Using configuration:");
     EUDAQ_INFO("  zero_suppression = " + to_string(m_zeroSupp));
+    EUDAQ_INFO("  check_valid = " + to_string(m_checkValid));
 
     m_configured = true;
   }
@@ -118,6 +121,13 @@ bool dSiPMEvent2StdEventConverter::Converting(
     auto bunchCount = ds_pix->getBunchCounter();
     auto clockCoarse = ds_pix->getCoarseTime();
     auto clockFine = ds_pix->getFineTime();
+
+    // check valid bits if requested
+    if (m_checkValid == true && hitBit == true && validBit == false) {
+       EUDAQ_WARN("This pixel is hit, but the valid bit for the quadrant is not set"); EUDAQ_WARN("  col and row " + to_string(col) + " " + to_string(row));
+       return false;
+    }
+
 
     // assemble time info from bunchCounter and clocks. we have a dead time of
     // 4 * 1 / 204 MHz due between read going low and frame reset going high.
