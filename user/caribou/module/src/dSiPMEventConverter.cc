@@ -83,7 +83,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
   auto [ts_control_fpga, ts_fine_fpga, ts_readout_fpga, trigger_id_fpga] =
       decoder.decodeTrailer(rawdata);
   // derive frame counter (inside trigger number)
-  m_frame = (trigger_id_fpga == m_trigger) ? m_frame++ : 0;
+  m_frame = (trigger_id_fpga == m_trigger ? m_frame+1 : 0);
   // store for next frame
   m_trigger = trigger_id_fpga;
 
