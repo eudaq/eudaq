@@ -173,8 +173,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
                               (clockCoarse - 1) * 1e6 / 408. +
                               (clockFine - 1) * 1e6 / (408. * nBitEff));
 
-    // check frame start
-    if (frameStart > 0 && frameStart != thisPixFrameStart) {
+    // check frame start if we want valid check
+    if (m_checkValid && frameStart > 0 && frameStart != thisPixFrameStart) {
       EUDAQ_ERROR("This frame start does not match prev. pixels frame start "
                   "(from same event)");
       EUDAQ_ERROR("  bunch counter ID " + to_string(bunchCount));
