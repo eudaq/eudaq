@@ -16,6 +16,7 @@ bool dSiPMEvent2StdEventConverter::m_zeroSupp(1);
 bool dSiPMEvent2StdEventConverter::m_checkValid(0);
 uint64_t dSiPMEvent2StdEventConverter::m_trigger(0);
 uint64_t dSiPMEvent2StdEventConverter::m_frame(0);
+double dSiPMEvent2StdEventConverter::m_fine_ts_effective_bits[4];
 
 bool dSiPMEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
@@ -25,10 +26,19 @@ bool dSiPMEvent2StdEventConverter::Converting(
   if (!m_configured && conf != NULL) {
     m_zeroSupp = conf->Get("zero_suppression", true);
     m_checkValid = conf->Get("check_valid", false);
+    m_fine_ts_effective_bits[0] = conf->Get("fine_ts_effective_bits_q0", 32.);
+    m_fine_ts_effective_bits[1] = conf->Get("fine_ts_effective_bits_q1", 32.);
+    m_fine_ts_effective_bits[2] = conf->Get("fine_ts_effective_bits_q2", 32.);
+    m_fine_ts_effective_bits[3] = conf->Get("fine_ts_effective_bits_q3", 32.);
 
     EUDAQ_INFO("Using configuration:");
     EUDAQ_INFO("  zero_suppression = " + to_string(m_zeroSupp));
     EUDAQ_INFO("  check_valid = " + to_string(m_checkValid));
+    EUDAQ_INFO("  fine_ts_effective_bits");
+    EUDAQ_INFO("    _q0 " + to_string(m_fine_ts_effective_bits[0]));
+    EUDAQ_INFO("    _q1 " + to_string(m_fine_ts_effective_bits[1]));
+    EUDAQ_INFO("    _q2 " + to_string(m_fine_ts_effective_bits[2]));
+    EUDAQ_INFO("    _q3 " + to_string(m_fine_ts_effective_bits[3]));
 
     m_configured = true;
   }
@@ -99,6 +109,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // pearydata is a map of a pair (col,row) and a pointer to a dsipm_pixel
     auto col = pixel.first.first;
     auto row = pixel.first.second;
+    auto quad = getQuadrant(col, row);
     // cast into right type of pixel and retrieve stored data
     auto ds_pix = dynamic_cast<caribou::dsipm_pixel *>(pixel.second.get());
     // binary hit information
@@ -141,21 +152,26 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // a fixed offset for the first part of the dead time, 3 cycles of the 408
     // MHz clock in ps
     uint64_t thisPixFrameStart =
-      static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408.);
+        static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408.);
 
     // frame end
     // frame start + frame length (3 MHz clock - rest of the dead time)
     uint64_t thisPixFrameEnd =
-      static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
+        static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
+
+    // Get the effective number of bits for the fine TDC time stamp.
+    // This is 32 bit nominally.
+    double nBitEff = m_fine_ts_effective_bits[quad];
 
     // timestamp
     // frame start + partial dead time shift
     // coarse clock runs with 408 MHz in ps +
-    // fine clock runs with (408 * 32 = 13056) MHz in ps +
+    // fine clock runs with nominally 13056 MHz (408 MHz * nBitEff) in ps +
     // shift by dead time.
-    uint64_t timestamp = static_cast<uint64_t>(
-      (bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
-      (clockCoarse - 1) * 1e6 / 408. + (clockFine - 1) * 1e6 / 13056.);
+    uint64_t timestamp =
+        static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
+                              (clockCoarse - 1) * 1e6 / 408. +
+                              (clockFine - 1) * 1e6 / (408. * nBitEff));
 
     // check frame start
     if (frameStart > 0 && frameStart != thisPixFrameStart) {
@@ -202,4 +218,15 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
   // Indicate that data was successfully converted
   return true;
+}
+
+uint8_t dSiPMEvent2StdEventConverter::getQuadrant(const uint16_t &col,
+                                                  const uint16_t &row) const {
+  if (col < 16 && row << 16)
+    return 3;
+  if (col < 16)
+    return 1;
+  if (row < 16)
+    return 4;
+  return 2;
 }
