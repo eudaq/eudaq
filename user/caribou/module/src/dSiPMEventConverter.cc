@@ -60,14 +60,6 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
     // print some info
     EUDAQ_DEBUG("Data block contains " + to_string(data_length) + " words.");
-    // for(const auto &word : datablock){
-    //  std::cout << std::hex << (uint16_t)word;
-    //}
-    // std::cout << std::endl;
-    // for(const auto &word : rawdata){
-    //  std::cout << std::hex << (uintptr_t)word;
-    //}
-    // std::cout << std::endl;
 
   } // data from good event
   else {
@@ -84,7 +76,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
   // decode trailer with time info from FPGA
   auto [ts_control_fpga, ts_fine_fpga, ts_readout_fpga, trigger_id_fpga] =
-      decoder.decodeTrailer(rawdata);
+    decoder.decodeTrailer(rawdata);
   // derive frame counter (inside trigger number)
   m_frame = (trigger_id_fpga == m_trigger ? m_frame+1 : 0);
   // store for next frame
@@ -93,13 +85,9 @@ bool dSiPMEvent2StdEventConverter::Converting(
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(0, "Caribou", "dSiPM");
 
-  // prepare for info
-  if (ev->GetEventNumber() == 1 ||
-      ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
-      ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
-      ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
-    EUDAQ_INFO("\tcol \trow \thit \tvalid \tbc \t\tcclck \tfclck \tts \t\tfs \t\tfe");
-  }
+  // prepare for info printing
+  EUDAQ_DEBUG("\ttrigger \tframe \tcol \trow \thit \tvalid \tbc \t\tcclck "
+              "\tfclck \tts \t\tfs \t\tfe");
 
   // go through pixels and add info to plane
   plane.SetSizeZS(32, 32, 0);
@@ -124,10 +112,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
     // check valid bits if requested
     if (m_checkValid == true && hitBit == true && validBit == false) {
-       EUDAQ_WARN("This pixel is hit, but the valid bit for the quadrant is not set"); EUDAQ_WARN("  col and row " + to_string(col) + " " + to_string(row));
-       return false;
+      EUDAQ_ERROR(
+        "This pixel is hit, but the valid bit for the quadrant is not set");
+      EUDAQ_ERROR("  col and row " + to_string(col) + " " + to_string(row));
+      return false;
     }
-
 
     // assemble time info from bunchCounter and clocks. we have a dead time of
     // 4 * 1 / 204 MHz due between read going low and frame reset going high.
@@ -137,12 +126,12 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // clock 0 should never appear, unless the clocks and frame reset are out
     // of sync. for the fine clock 0 may appear but should be mapped to 32.
     // we should check if we ever actually read 31.
-    // if (clockCoarse == 0) {
-    //  EUDAQ_ERROR("Coarse clock == 0. This should not happen");
-    //}
-    // if (clockFine == 31) {
-    //  EUDAQ_DEBUG("Fine clock == 31. Interesting!");
-    //}
+    if (clockCoarse == 0) {
+      EUDAQ_WARN("Coarse clock == 0. This should not happen.");
+    }
+    if (clockFine == 31) {
+      EUDAQ_WARN("Fine clock == 31. Interesting!");
+    }
     if (clockFine == 0) {
       clockFine = 32;
     }
@@ -152,12 +141,12 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // a fixed offset for the first part of the dead time, 3 cycles of the 408
     // MHz clock in ps
     uint64_t thisPixFrameStart =
-        static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408.);
+      static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408.);
 
     // frame end
     // frame start + frame length (3 MHz clock - rest of the dead time)
     uint64_t thisPixFrameEnd =
-        static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
+      static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
 
     // timestamp
     // frame start + partial dead time shift
@@ -165,36 +154,30 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // fine clock runs with (408 * 32 = 13056) MHz in ps +
     // shift by dead time.
     uint64_t timestamp = static_cast<uint64_t>(
-        (bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
-        (clockCoarse - 1) * 1e6 / 408. + (clockFine - 1) * 1e6 / 13056.);
+      (bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
+      (clockCoarse - 1) * 1e6 / 408. + (clockFine - 1) * 1e6 / 13056.);
 
     // check frame start
-    // if (frameStart > 0 && frameStart != thisPixFrameStart) {
-    //  EUDAQ_WARN("This frame start does not match prev. pixels frame start
-    //  (from same event)");
-    // EUDAQ_WARN("  bunch counter ID " + to_string(bunchCount));
-    // EUDAQ_WARN("  this frame start " + to_string(thisPixFrameStart));
-    // EUDAQ_WARN("  previous frame start " + to_string(frameStart));
-    // return false;
-    //}
+    if (frameStart > 0 && frameStart != thisPixFrameStart) {
+      EUDAQ_ERROR("This frame start does not match prev. pixels frame start "
+                  "(from same event)");
+      EUDAQ_ERROR("  bunch counter ID " + to_string(bunchCount));
+      EUDAQ_ERROR("  this frame start " + to_string(thisPixFrameStart));
+      EUDAQ_ERROR("  previous frame start " + to_string(frameStart));
+      return false;
+    }
     // update frame start and end
     frameStart = thisPixFrameStart;
     frameEnd = thisPixFrameEnd;
 
-    // print some info for some events:
-    if (1) {
-      //    if (ev->GetEventNumber() == 1 ||
-      // ev->GetEventNumber() < 100 && ev->GetEventNumber() % 10 == 0 ||
-      // ev->GetEventNumber() < 1000 && ev->GetEventNumber() % 100 == 0 ||
-      // ev->GetEventNumber() < 10000 && ev->GetEventNumber() % 1000 == 0) {
-      EUDAQ_INFO(" \t" + to_string(col) + " \t" + to_string(row) + " \t" +
-                 to_string(hitBit) + " \t" + to_string(validBit) + " \t" +
-                 to_string(bunchCount) + " \t" +
-                 to_string(static_cast<uint64_t>(clockCoarse)) + " \t" +
-                 to_string(static_cast<uint64_t>(clockFine)) + " \t" +
-                 to_string(timestamp) + " \t" + to_string(frameStart) + " \t" +
-                 to_string(frameEnd));
-    }
+    EUDAQ_DEBUG(" \t" + to_string(m_trigger) + " \t" + to_string(m_frame) +
+                " \t" + to_string(col) + " \t" + to_string(row) + " \t" +
+                to_string(hitBit) + " \t" + to_string(validBit) + " \t" +
+                to_string(bunchCount) + " \t" +
+                to_string(static_cast<uint64_t>(clockCoarse)) + " \t" +
+                to_string(static_cast<uint64_t>(clockFine)) + " \t" +
+                to_string(timestamp) + " \t" + to_string(frameStart) + " \t" +
+                to_string(frameEnd));
 
     // assemble pixel and add to plane
     plane.PushPixel(col, row, hitBit, timestamp);
@@ -209,20 +192,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
   d2->SetTimeEnd(frameEnd);
   d2->SetTriggerN(trigger_id_fpga);
 
-  /*
-  std::cout << "TIMEINFO_DSIPM: itrg itrg_fpga framestart frameend ts_fpga " <<
-  m_trigger
-            << " " << trigger_id_fpga
-            << " " << frameStart
-            << " " << frameEnd
-            << " " << ts_readout_fpga << std::endl;
-  */
-
   // Identify the detetor type
   d2->SetDetectorType("dSiPM");
 
   // Copy tags
-  for(const auto& tag : d1->GetTags()) {
+  for (const auto &tag : d1->GetTags()) {
     d2->SetTag(tag.first, tag.second);
   }
 
