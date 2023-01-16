@@ -205,13 +205,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
   d2->AddPlane(plane);
 
   // Store frame begin and end in picoseconds
-  // d2->SetTimeBegin(frameStart);
-  // d2->SetTimeEnd(frameEnd);
-  // d2->SetTriggerN(trigger_id_fpga);
-
-  // FIXME sync with timestamps
-  d2->SetTimeBegin(0);
-  d2->SetTimeEnd(0);
+  d2->SetTimeBegin(frameStart);
+  d2->SetTimeEnd(frameEnd);
   d2->SetTriggerN(trigger_id_fpga);
 
   /*
@@ -222,11 +217,6 @@ bool dSiPMEvent2StdEventConverter::Converting(
             << " " << frameEnd
             << " " << ts_readout_fpga << std::endl;
   */
-
-  // Fixme sync via triggers
-  // d2->SetTimeBegin(0);
-  // d2->SetTimeEnd(0);
-  // d2->SetTriggerN(m_trigger);
 
   // Identify the detetor type
   d2->SetDetectorType("dSiPM");
