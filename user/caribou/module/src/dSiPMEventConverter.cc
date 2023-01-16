@@ -96,7 +96,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
   eudaq::StandardPlane plane(0, "Caribou", "dSiPM");
 
   // prepare for info printing
-  EUDAQ_DEBUG("\ttrigger \tframe \tcol \trow \thit \tvalid \tbc \t\tcclck "
+  EUDAQ_DEBUG("\ttrigger frame \tcol \trow \thit \tvalid \tbc \t\tcclck "
               "\tfclck \tts \t\tfs \t\tfe");
 
   // go through pixels and add info to plane
@@ -222,11 +222,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
 uint8_t dSiPMEvent2StdEventConverter::getQuadrant(const uint16_t &col,
                                                   const uint16_t &row) const {
-  if (col < 16 && row << 16)
-    return 3;
+  if (col < 16 && row < 16)
+    return 2;
   if (col < 16)
-    return 1;
+    return 0;
   if (row < 16)
-    return 4;
-  return 2;
+    return 3;
+  return 1;
 }
