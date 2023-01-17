@@ -221,7 +221,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
 }
 
 uint8_t dSiPMEvent2StdEventConverter::getQuadrant(const uint16_t &col,
-                                                  const uint16_t &row) const {
+                                                  const uint16_t &row) {
   if (col < 16 && row < 16)
     return 2;
   if (col < 16)

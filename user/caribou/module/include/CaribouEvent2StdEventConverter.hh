@@ -60,7 +60,7 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CariboudSiPMEvent");
   private:
-    uint8_t getQuadrant(const uint16_t& col, const uint16_t& row) const;
+    static uint8_t getQuadrant(const uint16_t& col, const uint16_t& row);
     static bool m_configured;
     static bool m_zeroSupp;
     static bool m_checkValid;
