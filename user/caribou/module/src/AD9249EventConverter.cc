@@ -21,8 +21,11 @@ int AD9249Event2StdEventConverter::threshold_low(101);
 std::string AD9249Event2StdEventConverter::m_waveform_filename("");
 std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 // baseline evaluation
-int AD9249Event2StdEventConverter::m_blStart(200);
-int AD9249Event2StdEventConverter::m_blEnd(100);
+int AD9249Event2StdEventConverter::m_blStart(150);
+int AD9249Event2StdEventConverter::m_blEnd(80);
+// amplitude evaluation
+int AD9249Event2StdEventConverter::m_ampStart(170);
+int AD9249Event2StdEventConverter::m_ampEnd(270);
 // calibration functions
 double AD9249Event2StdEventConverter::m_calib_range_min(0);
 double AD9249Event2StdEventConverter::m_calib_range_max(16384);
@@ -80,10 +83,12 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
                                           eudaq::ConfigurationSPC conf) const {
 
   if (!m_configured) {
-    threshold_trig = conf->Get("threshold_trig", 1000);
-    threshold_low = conf->Get("threshold_low", 101);
-    m_blStart = conf->Get("blStart", 200);
-    m_blEnd = conf->Get("blEnd", 100);
+    threshold_trig = conf->Get("threshold_trig", threshold_trig);
+    threshold_low = conf->Get("threshold_low", threshold_low);
+    m_blStart = conf->Get("blStart", m_blStart);
+    m_blEnd = conf->Get("blEnd", m_blEnd);
+    m_ampStart = conf->Get("blStart", m_ampStart);
+    m_ampEnd = conf->Get("blEnd", m_ampEnd);
     m_calib_range_min = conf->Get("calib_range_min", m_calib_range_min);
     m_calib_range_max = conf->Get("calib_range_max", m_calib_range_max);
     m_waveform_filename = conf->Get("waveform_filename", "");
@@ -203,7 +208,7 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
 
     // find waveform maximum
-    auto max = std::max_element(waveforms[ch].begin(), waveforms[ch].end());
+    auto max = std::max_element(waveforms[ch].begin()+m_ampStart, waveforms[ch].begin()+m_ampEnd);
     auto max_posizion = std::distance(waveforms[ch].begin(), max);
 
     // this means that we will not have an amplitude for some noise events.
@@ -219,7 +224,7 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     }
     baseline /= m_blStart - m_blEnd;
 
-    // caclulate amplitude and apply calibration
+    // calculate amplitude and apply calibration
     double amplitude = m_calib_functions.at(ch).Eval(*max - baseline);
     if (amplitude > m_calib_range_max)
       amplitude = m_calib_range_max;

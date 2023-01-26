@@ -47,6 +47,8 @@ namespace eudaq {
     static std::ofstream m_outfile_waveforms;
     static int m_blStart;
     static int m_blEnd;
+    static int m_ampStart;
+    static int m_ampEnd;
     static double m_calib_range_min;
     static double m_calib_range_max;
     static std::vector<std::string> m_calib_strings;
