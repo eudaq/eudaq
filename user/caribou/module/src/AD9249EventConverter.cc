@@ -100,6 +100,12 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     }
 
     EUDAQ_DEBUG("Using configuration:");
+    EUDAQ_DEBUG(" blStart   = " + to_string(m_blStart));
+    EUDAQ_DEBUG(" blEnd     = " + to_string(m_blEnd));
+    EUDAQ_DEBUG(" ampStart  = " + to_string(m_ampStart));
+    EUDAQ_DEBUG(" ampEnd    = " + to_string(m_ampStart));
+    EUDAQ_DEBUG(" calib_range_min = " + to_string(m_calib_range_min));
+    EUDAQ_DEBUG(" calib_range_max = " + to_string(m_calib_range_max));
     EUDAQ_DEBUG("Calibration functions: ");
     if(EUDAQ_IS_LOGGED("DEBUG")){
       for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
