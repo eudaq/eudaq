@@ -41,8 +41,6 @@ namespace eudaq {
     static size_t trig_;
     static bool m_configured;
     static int64_t m_runStartTime;
-    static int threshold_trig;
-    static int threshold_low;
     static std::string m_waveform_filename;
     static std::ofstream m_outfile_waveforms;
     static int m_blStart;

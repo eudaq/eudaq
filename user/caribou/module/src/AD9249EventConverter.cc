@@ -16,8 +16,6 @@ auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
 size_t AD9249Event2StdEventConverter::trig_(0);
 bool AD9249Event2StdEventConverter::m_configured(0);
 int64_t AD9249Event2StdEventConverter::m_runStartTime(-1);
-int AD9249Event2StdEventConverter::threshold_trig(1000);
-int AD9249Event2StdEventConverter::threshold_low(101);
 std::string AD9249Event2StdEventConverter::m_waveform_filename("");
 std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 // baseline evaluation
@@ -83,8 +81,6 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
                                           eudaq::ConfigurationSPC conf) const {
 
   if (!m_configured) {
-    threshold_trig = conf->Get("threshold_trig", threshold_trig);
-    threshold_low = conf->Get("threshold_low", threshold_low);
     m_blStart = conf->Get("blStart", m_blStart);
     m_blEnd = conf->Get("blEnd", m_blEnd);
     m_ampStart = conf->Get("blStart", m_ampStart);
@@ -104,8 +100,6 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     }
 
     EUDAQ_DEBUG("Using configuration:");
-    EUDAQ_DEBUG(" threshold_low  = " + to_string(threshold_low));
-    EUDAQ_DEBUG(" threshold_trig  = " + to_string(threshold_trig));
     EUDAQ_DEBUG("Calibration functions: ");
     if(EUDAQ_IS_LOGGED("DEBUG")){
       for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
@@ -204,7 +198,6 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
   EUDAQ_DEBUG("_______________ Event " + to_string(ev->GetEventN()) + " trig " +
               to_string(trig_) + " __________");
 
-  std::map<std::pair<int, int>, std::pair<int, bool> > amplitudes;
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
 
     // find waveform maximum
@@ -231,38 +224,7 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     if (amplitude < m_calib_range_min)
       amplitude = 0;
 
-    amplitudes[mapping.at(ch)] = std::pair<int, bool>(amplitude, false);
-  }
-
-  for (auto &p : amplitudes) {
-    if (p.second.first > threshold_trig) {
-      // add the seed pixel if not added
-      if (!p.second.second) {
-        plane.PushPixel(p.first.first, p.first.second, p.second.first,
-                        timestamp0);
-        p.second.second = true;
-        EUDAQ_DEBUG("  High threshold: Adding pixel (col, row, amp) " +
-                    to_string(p.first.first) + " " + to_string(p.first.second) +
-                    " " + to_string(p.second.first));
-      }
-      // loop over all surrounding once
-      for (auto &pp : amplitudes) {
-        if ((std::abs(pp.first.first - p.first.first) <= 1) &&
-            (std::abs(pp.first.second - p.first.second) <= 1)) {
-          if (pp.second.first > threshold_low) {
-            if (!pp.second.second) {
-              plane.PushPixel(pp.first.first, pp.first.second, pp.second.first,
-                              timestamp0);
-              pp.second.second = true;
-              EUDAQ_DEBUG("  Low threshold: Adding pixel (col, row, amp) " +
-                          to_string(p.first.first) + " " +
-                          to_string(p.first.second) + " " +
-                          to_string(p.second.first));
-            }
-          }
-        }
-      }
-    }
+    plane.PushPixel(mapping.at(ch).first, mapping.at(ch).second,amplitude,timestamp0);
   }
 
   // Add the plane to the StandardEvent
