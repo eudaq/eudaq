@@ -83,8 +83,8 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
   if (!m_configured) {
     m_blStart = conf->Get("blStart", m_blStart);
     m_blEnd = conf->Get("blEnd", m_blEnd);
-    m_ampStart = conf->Get("blStart", m_ampStart);
-    m_ampEnd = conf->Get("blEnd", m_ampEnd);
+    m_ampStart = conf->Get("ampStart", m_ampStart);
+    m_ampEnd = conf->Get("ampEnd", m_ampEnd);
     m_calib_range_min = conf->Get("calib_range_min", m_calib_range_min);
     m_calib_range_max = conf->Get("calib_range_max", m_calib_range_max);
     m_waveform_filename = conf->Get("waveform_filename", "");
