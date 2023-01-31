@@ -230,7 +230,8 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     if (amplitude < m_calib_range_min)
       amplitude = 0;
 
-    plane.PushPixel(mapping.at(ch).first, mapping.at(ch).second,amplitude,timestamp0);
+    plane.PushPixel(mapping.at(ch).first, mapping.at(ch).second,
+                    amplitude, timestamp0 - m_runStartTime);
   }
 
   // Add the plane to the StandardEvent
