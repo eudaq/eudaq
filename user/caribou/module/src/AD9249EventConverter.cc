@@ -27,9 +27,9 @@ int AD9249Event2StdEventConverter::m_ampEnd(270);
 double AD9249Event2StdEventConverter::m_calib_range_min(0);
 double AD9249Event2StdEventConverter::m_calib_range_max(16384);
 std::vector<std::string>
-AD9249Event2StdEventConverter::m_calib_strings(16, "x");
+  AD9249Event2StdEventConverter::m_calib_strings(16,"x");
 std::vector<TF1>
-AD9249Event2StdEventConverter::m_calib_functions(16, TF1());
+  AD9249Event2StdEventConverter::m_calib_functions(16, TF1());
 
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
@@ -43,12 +43,14 @@ void AD9249Event2StdEventConverter::decodeChannel(
     // Channel is ADC half times channels plus channel number within data block
     size_t ch = adc * 8 + ((i - offset) / 2) % 8;
 
-    // Get waveform data
+    // Get waveform data from least significant 14bit of the 16bit word
     uint16_t val =
         data.at(i) + ((static_cast<uint16_t>(data.at(i + 1)) & 0x3F) << 8);
     waveforms.at(ch).push_back(val);
 
-    // If we have a full timestamp, skip the rest:
+    // If we have a full timestamp (56 bit from 2bitx28), skip parsing the
+    // timestamps for the rest of the burst, we only care about the first
+    // fully-contained:
     if (ts_i >= 28) {
       continue;
     }
@@ -56,10 +58,15 @@ void AD9249Event2StdEventConverter::decodeChannel(
     // Treat timestamp data
     uint64_t ts = (data.at(i + 1) >> 6);
 
-    // Channel 7 (or 15) have status bits only:
+    // Channel 7 (or 15) have status bits only, let's check them:
     if (ch == adc * 8 + 7) {
-      // Check if this is a timestamp start - if not, reset timestamp index to
-      // zero:
+      // Check if this channel has the marker for timestamp begin.
+      // The timestamp spans multiple samplings and the sampling where it starts
+      // is marked with 0x1 in the status bits. The status bits are carried in
+      // Channel 7, i.e. the last one - which means only after reading and
+      // storing 7x2 bits of the timestamp already, we know if they were at the
+      // begin of a new timestamp. If not, we need to rewind the index and start
+      // over again unti we find a timestamp start.
       if (ts_i < 8 && (ts & 0x1) == 0) {
         ts_i = 0;
       }
@@ -94,7 +101,8 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
       std::string name = "calibration_px" + to_string(mapping.at(i).first) +
                          to_string(mapping.at(i).second);
       m_calib_strings.at(i) = conf->Get(name, m_calib_strings.at(i));
-      m_calib_functions.emplace_back(name.c_str(), m_calib_strings.at(i).c_str(),
+      m_calib_functions.emplace_back(name.c_str(),
+                                     m_calib_strings.at(i).c_str(),
                                      m_calib_range_min, m_calib_range_max);
     }
 
@@ -106,7 +114,7 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     EUDAQ_DEBUG(" calib_range_min = " + to_string(m_calib_range_min));
     EUDAQ_DEBUG(" calib_range_max = " + to_string(m_calib_range_max));
     EUDAQ_DEBUG("Calibration functions: ");
-    if(EUDAQ_IS_LOGGED("DEBUG")){
+    if (EUDAQ_IS_LOGGED("DEBUG")) {
       for (unsigned int i = 0; i < m_calib_strings.size(); i++) {
         EUDAQ_DEBUG(to_string(m_calib_functions.at(i).GetName()) + " " +
                     to_string(m_calib_functions.at(i).GetExpFormula()));
@@ -118,16 +126,11 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     m_configured = true;
   }
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  EUDAQ_DEBUG("Decoding AD event " + to_string(ev->GetEventN()) + " trig " +
+  EUDAQ_DEBUG("Decoding AD event " + to_string(ev->GetEventN() / 2) + " trig " +
               to_string(trig_));
 
   const size_t header_offset = 8;
   auto datablock0 = ev->GetBlock(0);
-
-  // std::ofstream out;
-  // out.open("/tmp/out.dat", std::ofstream::out | std::ofstream::binary |
-  // std::ofstream::app); out.write(reinterpret_cast<char*>(datablock0.data()),
-  // datablock0.size()); out.close();
 
   // Get configured burst length from header:
   uint32_t burst_length =
@@ -136,13 +139,10 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
   // Check total available data against expected event size:
   const size_t evt_length = burst_length * 128 * 2 * 16 + 16;
   if (datablock0.size() < evt_length) {
-    // FIXME throw something at someone?
-    // std::cout << "Event length " << datablock0.size() << " not enough for
-    // full event, requires " << evt_length << std::endl;
+    EUDAQ_WARN("Available date does not match expected event length in event " +
+               std::to_string(ev->GetEventNumber()));
     return false;
   }
-
-  EUDAQ_DEBUG("Burst: " + to_string(burst_length));
 
   // Read waveforms
   std::vector<std::vector<uint16_t> > waveforms;
@@ -160,6 +160,9 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
       (static_cast<uint32_t>(datablock0.at(header_offset + size_ADC0 + 5))
        << 8) +
       (datablock0.at(header_offset + size_ADC0 + 4) << 0);
+
+  EUDAQ_DEBUG("Bursts, size_ADC0, size_ADC1 " + to_string(burst_length) + ", " +
+              to_string(size_ADC0) + ", " + to_string(size_ADC1));
 
   // Decode channels:
   uint64_t timestamp0 = 0;
@@ -201,13 +204,11 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     return false;
   }
 
-  EUDAQ_DEBUG("_______________ Event " + to_string(ev->GetEventN()) + " trig " +
-              to_string(trig_) + " __________");
-
   for (size_t ch = 0; ch < waveforms.size(); ch++) {
 
     // find waveform maximum
-    auto max = std::max_element(waveforms[ch].begin()+m_ampStart, waveforms[ch].begin()+m_ampEnd);
+    auto max = std::max_element(waveforms[ch].begin() + m_ampStart,
+                                waveforms[ch].begin() + m_ampEnd);
     auto max_posizion = std::distance(waveforms[ch].begin(), max);
 
     // this means that we will not have an amplitude for some noise events.
@@ -247,62 +248,7 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
 
   // Identify the detetor type
   d2->SetDetectorType("AD9249");
+
   // Indicate that data was successfully converted
   return true;
 }
-
-/*
- *  Erics python reference
- *
-channels = 8
-
-while True:
-    h = file.read(4)
-    header = struct.unpack('HH', h)
-    bursts = header[1]
-    points = 128 * bursts
-    print("Channel", header[0], "Burst", header[1])
-
-    s = file.read(4)
-    size = struct.unpack('I', s)[0]
-    print("Block size", size)
-
-    while size > 0:
-        data = file.read(points*2*channels)
-        print("Reading", points*2*channels, "bytes")
-        size -= points*2*channels
-
-        val = [(i[0] & 0x3FFF) for i in struct.iter_unpack('<H', data)]
-        val2 = np.reshape(val, (channels, -1), order='F')
-
-        aux = [(i[0] >> 14) for i in struct.iter_unpack('<H', data)]
-        aux2 = np.reshape(aux, (-1, channels))
-
-        foo = []
-
-        for i in aux2:
-            if i[-1] & 2:
-                print('trigger')
-
-            if i[-1] & 1:
-                out = 0
-                for j in foo[::-1]:
-                    out <<= 2
-                    out |= j
-                print(out/65000000.0)
-                foo = []
-            foo.extend(i[:-1])
-
-
-        #fig, ax = plt.subplots(2,4, figsize=(16,9), sharex='col', sharey='row')
-        fig, ax = plt.subplots(2,4, figsize=(16,9), sharex='all', sharey='all')
-        for x in range(0, 4):
-            for y in range(0, 2):
-                i = y*4+x
-                channel = i + 8*header[0]
-                ax[y][x].plot(np.arange(0, len(val2[i]))*(1.0/65), val2[i])
-                ax[y][x].set_title('ch {}'.format(channel))
-
-        plt.show()
-
- */
