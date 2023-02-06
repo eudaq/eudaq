@@ -38,6 +38,7 @@ void AD9249Event2StdEventConverter::decodeChannel(
 
   // Timestamp index
   size_t ts_i = 0;
+  size_t ts_lost = 0;
 
   for (size_t i = offset; i < offset + size; i += 2) {
     // Channel is ADC half times channels plus channel number within data block
@@ -69,6 +70,8 @@ void AD9249Event2StdEventConverter::decodeChannel(
       // over again unti we find a timestamp start.
       if (ts_i < 8 && (ts & 0x1) == 0) {
         ts_i = 0;
+        ts_lost++;
+        timestamp = 0;
       }
     } else {
       timestamp += (ts << 2 * ts_i);
@@ -77,8 +80,7 @@ void AD9249Event2StdEventConverter::decodeChannel(
   }
 
   // Convert timestamp to picoseconds from the 65MHz clock (~15ns cycle):
-  //  timestamp *= static_cast<uint64_t>(1. / 65. * 1e6);
-  timestamp = static_cast<uint64_t>(timestamp * 1e6 / 65.);
+  timestamp = static_cast<uint64_t>((timestamp - ts_lost) * 1e6 / 65.);
 }
 
 bool
