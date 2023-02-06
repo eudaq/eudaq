@@ -15,7 +15,6 @@ auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
 
 size_t AD9249Event2StdEventConverter::trig_(0);
 bool AD9249Event2StdEventConverter::m_configured(0);
-int64_t AD9249Event2StdEventConverter::m_runStartTime(-1);
 std::string AD9249Event2StdEventConverter::m_waveform_filename("");
 std::ofstream AD9249Event2StdEventConverter::m_outfile_waveforms;
 // baseline evaluation
@@ -169,9 +168,10 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
   decodeChannel(1, datablock0, size_ADC1, 2 * header_offset + size_ADC0,
                 waveforms, timestamp1);
 
-  // store time of the run start
-  if (trig_ <= 1) {
-    m_runStartTime = timestamp0; // just use one of them for now
+  if (timestamp0 != timestamp1) {
+    EUDAQ_WARN("Timestamp inconsistency in event " +
+               std::to_string(ev->GetEventNumber()));
+    return false;
   }
 
   // Prepare output plane:
@@ -230,15 +230,18 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
     if (amplitude < m_calib_range_min)
       amplitude = 0;
 
-    plane.PushPixel(mapping.at(ch).first, mapping.at(ch).second,
-                    amplitude, timestamp0 - m_runStartTime);
+    plane.PushPixel(mapping.at(ch).first, mapping.at(ch).second, amplitude,
+                    timestamp0);
   }
 
   // Add the plane to the StandardEvent
   d2->AddPlane(plane);
 
-  d2->SetTimeBegin(timestamp0 - m_runStartTime);
-  d2->SetTimeEnd(timestamp0 - m_runStartTime);
+  d2->SetTimeBegin(timestamp0);
+  d2->SetTimeEnd(timestamp0);
+  // This does not work with the TLU, as it also reads this data and discards it
+  // later. In any case, if we are using the TLU, we can also sync by timestamp.
+  // Also this is probably fixed in corry merge requests !598.
   d2->SetTriggerN(trig_);
   trig_++;
 

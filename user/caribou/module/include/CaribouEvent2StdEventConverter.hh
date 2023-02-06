@@ -40,7 +40,6 @@ namespace eudaq {
     void decodeChannel(const size_t adc, const std::vector<uint8_t>& data, size_t size, size_t offset, std::vector<std::vector<uint16_t>>& waveforms, uint64_t& timestamp) const;
     static size_t trig_;
     static bool m_configured;
-    static int64_t m_runStartTime;
     static std::string m_waveform_filename;
     static std::ofstream m_outfile_waveforms;
     static int m_blStart;
