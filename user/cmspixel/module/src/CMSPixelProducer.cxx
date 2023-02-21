@@ -52,18 +52,10 @@ void CMSPixelProducer::DoInitialise(){
   auto ini = GetInitConfiguration();
 
   try {
-    if (m_api != nullptr) {
-      delete m_api;
-    }
-
-    std::string usbId = ini->Get("usbId", "*");
-    EUDAQ_USER("Trying to connect to USB id: " + usbId + "\n");
+    m_usbId = ini->Get("usbId", "*");
 
     // Allow overwriting of verbosity level via command line:
     m_verbosity = ini->Get("verbosity", m_verbosity);
-
-    // Get a new pxar instance:
-    m_api = new pxar::pxarCore(usbId, m_verbosity);
   } catch (...) {
     EUDAQ_ERROR("Error occurred in initialization phase of CMSPixelProducer");
     throw;
@@ -155,11 +147,13 @@ void CMSPixelProducer::DoConfigure() {
 
     // Set the type of the TBM and read registers if any:
     m_tbmtype = config->Get("tbmtype", "notbm");
+    std::cout << "TBM type: " << m_tbmtype << std::endl;
     try {
       tbmDACs.push_back(GetConfDACs(config, 0, true));
       tbmDACs.push_back(GetConfDACs(config, 1, true));
       m_channels = 2;
     } catch (pxar::InvalidConfig) {
+      std::cout << "Could not read TBM configs..." << std::endl;
     }
 
     // Set the type of the ROC correctly:
@@ -186,12 +180,23 @@ void CMSPixelProducer::DoConfigure() {
       }
     }
 
+    if (m_api != nullptr) {
+      delete m_api;
+    }
+
+    // Get a new pxar instance:
+    m_api = new pxar::pxarCore(m_usbId, m_verbosity);
+    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+
     // Initialize the testboard:
     if (!m_api->initTestboard(sig_delays, power_settings, pg_setup)) {
       EUDAQ_ERROR(string("Firmware mismatch."));
       throw pxar::pxarException("Firmware mismatch");
     }
 
+    std::cout << "TBMDACs: " << tbmDACs.size() << std::endl;
+    std::cout << "ROCDACs: " << rocDACs.size() << std::endl;
+    
     // Initialize the DUT as configured above:
     m_api->initDUT(hubid, m_tbmtype, tbmDACs, m_roctype, rocDACs, rocPixels,
                    rocI2C);
