@@ -86,14 +86,7 @@ void CorryMonitor::DoInitialise(){
   
   struct stat buffer;   
   if(stat(m_corry_path.c_str(), &buffer) != 0)
-    EUDAQ_THROW("Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)");
-
-  /* 
-  if (FILE *file = fopen(m_corry_path.c_str(), "r")) {
-        fclose(file);
-    } else {
-        EUDAQ_THROW("Corryvreckan cannot be found! Please check your /path/to/corry.");
-    } */ 
+    EUDAQ_ERROR("Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)");
 
 }
 
@@ -216,7 +209,7 @@ void CorryMonitor::DoConfigure(){
   // Check if corryvreckan is found
   struct stat buffer;   
   if(stat(m_corry_config.c_str(), &buffer) != 0)
-    EUDAQ_THROW("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
+    EUDAQ_ERROR("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
 
 
   // command to be exectued in DoStartRun(), stored tokenized in m_args.argv
@@ -388,6 +381,7 @@ void CorryMonitor::DoStartRun(){
   
 }
 
+// Killing child process (corry) (adapted from https://stackoverflow.com/questions/13273836/how-to-kill-child-of-fork)
 void CorryMonitor::DoStopRun(){
   kill(m_corry_pid, SIGINT);
 
