@@ -10,7 +10,7 @@
 #include <random>
 #include <unistd.h>
 #include <signal.h>
-#include <wait.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <iterator>
 #include <cstring>
@@ -97,6 +97,7 @@ void CorryMonitor::DoInitialise(){
 
 }
 
+// Store execvp() arguments in char array according to https://stackoverflow.com/questions/29484366/how-to-make-execvp-handle-multiple-arguments
 static char **addArg (char **argv, size_t *pSz, size_t *pUsed, char *str) {
     // Make sure enough space for another one.
 
