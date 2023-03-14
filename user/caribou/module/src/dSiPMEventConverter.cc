@@ -51,6 +51,10 @@ bool dSiPMEvent2StdEventConverter::Converting(
     return false;
   }
 
+  // Set eudaq::StandardPlane::ID
+  uint32_t plane_id = conf->Get("plane_id", 0);
+  EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
+
   // Data container:
   std::vector<uint32_t> rawdata;
 
@@ -93,7 +97,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
   m_trigger = trigger_id_fpga;
 
   // Create a StandardPlane representing one sensor plane
-  eudaq::StandardPlane plane(0, "Caribou", "dSiPM");
+  eudaq::StandardPlane plane(plane_id, "Caribou", "dSiPM");
 
   // prepare for info printing
   EUDAQ_DEBUG("\ttrigger frame \tcol \trow \thit \tvalid \tbc \t\tcclck "

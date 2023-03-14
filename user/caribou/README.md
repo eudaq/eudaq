@@ -17,7 +17,8 @@ The producer interfaces the Peary device manager to add devices and to control t
     * `log_level`: Set the Peary-internal logging verbosity for output on the terminal of the producer. Please refer to the Peary documentation for more information
     * `config_file`: Configuration file in Peary-format to be passed to the device. It should be noted, that the file access will happen locally by the producer, i.e. the value has to point to a file locally available to the producer on the Caribou system.
 
-    The Caribou device name is also taken as the producer name (supplied via the `-t` CLI argument). If multiple producer operating the same device type in different Caribou setups are supposed to be operated, an identifier can be appended to the device name, separated by an underscore, e.g. `CLICpix2_upstream`. The CaribouProducer will strip everything after the last underscore from the device name before attempting to instantiate the device object.
+    The Caribou device name is also taken as the producer name (supplied via the `-t` CLI argument). If multiple producer operating the same device type in different Caribou setups are supposed to be operated, an identifier can be appended to the device name, separated by an underscore, e.g. `dSiPM_upstream`. The CaribouProducer will strip everything after the last underscore from the device name before attempting to instantiate the device object.
+    Note that by default all devices have a plane ID of `0`, which can lead to problem whens reading the data. This can be changed by setting `plane_id` to a different value for other devices (currently only supported by `dSiPMEventConverter`).
 
 * **Configuration**: During configuration, the device is powered using Peary's `powerOn()` command. After this, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the `configure()` command of the Peary device interface is called.
 
@@ -77,3 +78,9 @@ The following parameters can be passed in the configuration in order to influenc
 
 * `clkdivend2`: Value of clkdivend2 register in ATLASPix specifying the speed of TS2 counter. Default is `7`.
 * `clock_cycle`:  Clock period of the hit timestamps, defaults to `8` (ns). The value needs to be provided in `ns`.
+
+### dSiPMEventConverter
+
+The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
+
+* `plane_id`: Value that will be set `eudaq::StandardPlane::ID`. This setting can be used to support multiple devices in the same run. Default is `0`.
