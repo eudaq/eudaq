@@ -2,6 +2,7 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Utils.hh"
 #include <iostream>
 #include <fstream>
 #include <ratio>
@@ -31,6 +32,22 @@ struct CorryArgumentList {
 } ;
 
 
+struct DataCollectorAttributes {
+  std::string name;
+  std::string eventloader_type;
+  std::vector<std::string> detector_planes;
+  std::string fwpatt;
+
+  std::pair<std::string, std::string> full_file;
+  std::string monitor_file_path;
+  std::string pattern_to_match;
+  std::string event_name;
+
+  bool found_matching_file = false;
+
+} ;
+
+
 #define TOKEN " "
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
@@ -56,6 +73,8 @@ private:
   bool m_en_std_converter;
   bool m_en_std_print;
   pid_t m_corry_pid;
+  std::vector<std::string> m_datacollectors_to_monitor; 
+  std::vector<std::string> m_eventloader_types;
   std::string m_datacollector_to_monitor;
   std::string m_eventloader_type;
   std::string m_corry_path;
@@ -67,6 +86,10 @@ private:
   std::string m_fwtype;
 
   CorryArgumentList m_args;
+
+  std::string m_test_string;
+  std::string m_test_string_2;
+  std::vector<DataCollectorAttributes> m_datacollector_vector;
 
 };
 
@@ -133,12 +156,12 @@ bool string_match(const char *pattern, const char *candidate, int p, int c) {
   }
 }
 
-std::pair<std::string, std::string> CorryMonitor::getFileString(std::string pattern){
+std::pair<std::string, std::string> CorryMonitor::getFileString(std::string pattern) {
   // Decrypt file pattern. Can't use file namer because we need to know position of date/time
 
   std::regex reg("\\$([0-9]*)(D|R|X)");
 
-  std::sregex_iterator iter(m_fwpatt.begin(), m_fwpatt.end(), reg);
+  std::sregex_iterator iter(pattern.begin(), pattern.end(), reg);
   std::sregex_iterator end;
 
   std::string file_string = "";
@@ -193,11 +216,11 @@ std::pair<std::string, std::string> CorryMonitor::getFileString(std::string patt
   return std::pair<std::string, std::string>(file_path.parent_path(), file_path.filename());
 
 }
- 
+
 
 void CorryMonitor::DoConfigure(){
   auto conf = GetConfiguration();
-  conf->Print(std::cout);
+  //conf->Print(std::cout);
   m_en_print                  = conf->Get("CORRY_ENABLE_PRINT", 0);
   m_en_std_converter          = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
   m_en_std_print              = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
@@ -205,6 +228,9 @@ void CorryMonitor::DoConfigure(){
   m_eventloader_type          = conf->Get("CORRESPONDING_EVENTLOADER_TYPE", "");
   m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
   m_corry_options             = conf->Get("CORRY_OPTIONS", "");
+
+  m_test_string               = conf->Get("TEST_STRING", "test1, test2");
+  m_test_string_2             = conf->Get("TEST_STRING_2", "test4, test3");
 
   // Check if corryvreckan is found
   struct stat buffer;   
@@ -231,6 +257,36 @@ void CorryMonitor::DoConfigure(){
         m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, cstr);
   }
 
+  // open corry config file to get geometry file
+  std::ifstream corry_file {m_corry_config};
+  std::shared_ptr<eudaq::Configuration> corry_conf = std::make_shared<eudaq::Configuration>(corry_file, "Corryvreckan");
+  //corry_conf->Print();
+
+  // open geometry file (exploit same file structure for geometry file as for config file)
+  std::ifstream geo_file {corry_conf->Get("detectors_file", "")};
+  std::shared_ptr<eudaq::Configuration> corry_geo = std::make_shared<eudaq::Configuration>(geo_file, "");
+  //corry_geo->Print();
+
+
+  // Test out best way to split string
+  std::stringstream ss(m_test_string);
+  while( ss.good() )
+  {
+      std::string substr;
+      getline( ss, substr, ',' );
+      m_datacollectors_to_monitor.push_back( eudaq::trim(substr) );
+  }
+
+  // Test out best way to split string
+  std::stringstream ss2(m_test_string_2);
+  while( ss2.good() )
+  {
+      std::string substr;
+      getline( ss2, substr, ',' );
+      m_eventloader_types.push_back( eudaq::trim(substr) );
+  }
+
+
 
   // Get the file naming pattern from the DataCollector config section
   std::string section = "DataCollector."+m_datacollector_to_monitor;
@@ -247,20 +303,13 @@ void CorryMonitor::DoConfigure(){
 
   // open eudaq config file and get the DataCollector section
 	std::shared_ptr<eudaq::Configuration> dc_conf = std::make_shared<eudaq::Configuration>(eudaq_conf, section);
-  dc_conf->Print();
+  //dc_conf->Print();
 
   m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector.cc
 
-  // open corry config file to get geometry file
-  std::ifstream corry_file {m_corry_config};
-  std::shared_ptr<eudaq::Configuration> corry_conf = std::make_shared<eudaq::Configuration>(corry_file, "Corryvreckan");
-  corry_conf->Print();
+  
 
-  // open geometry file (exploit same file structure for geometry file as for config file)
-  std::ifstream geo_file {corry_conf->Get("detectors_file", "")};
-  std::shared_ptr<eudaq::Configuration> corry_geo = std::make_shared<eudaq::Configuration>(geo_file, "");
-  corry_geo->Print();
-
+  //TODO: check if using lcase() from Utils works too
   // transform EvetLoader type to lower case letters
   std::transform(m_eventloader_type.cbegin(), m_eventloader_type.cend(),
                    m_eventloader_type.begin(), // write to the same location
@@ -274,6 +323,71 @@ void CorryMonitor::DoConfigure(){
       m_detector_planes.push_back(m);
     }
   }
+  
+  for (auto s: m_eventloader_types)
+  {
+    std::cout<<s<<std::endl;
+  }
+
+  
+  //std::ifstream eudaq_conf {eudaq_config_file_path};
+  for (int i=0; i<m_datacollectors_to_monitor.size(); i++)
+  {
+    //std::string key;
+    DataCollectorAttributes value;
+    value.name = m_datacollectors_to_monitor[i];
+    // Get the file naming pattern from the DataCollector config section
+    std::string section_2 = "DataCollector."+value.name;
+    std::string eudaq_config_file_path = conf->Name();
+
+    // Check if DataCollector with name m_datacollector_to_monitor is found
+    conf->SetSection("");
+    if (!(conf->Has(section_2)))
+      EUDAQ_THROW("DataCollector to be monitored (\"" + section_2 + "\") not found!");
+    else 
+      EUDAQ_DEBUG("DataCollector to be monitored is " + section_2);
+
+    
+    // ifstream needs to be newly created for each conf (declare in loop)
+    std::ifstream eudaq_conf_2 {eudaq_config_file_path};
+    // open eudaq config file and get the DataCollector section
+    auto dc_conf_2 = new eudaq::Configuration(eudaq_conf_2, section_2);
+    std::cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<std::endl;
+    std::cout<<"SECTION IS " <<section_2<<std::endl;
+    dc_conf_2->Print();
+    std::cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<std::endl;
+
+    value.fwpatt = dc_conf_2->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector.cc
+    delete(dc_conf_2);
+
+    
+
+    //TODO: check if using lcase() from Utils works too
+    // transform EvetLoader type to lower case letters
+    //std::transform(m_eventloader_type.cbegin(), m_eventloader_type.cend(),
+    //                m_eventloader_type.begin(), // write to the same location
+    //                [](unsigned char c) { return std::tolower(c); });
+    value.eventloader_type = eudaq::lcase(m_eventloader_types[i]);
+    
+    // loop over all detector planes and save the ones which match m_eventloader_type
+    // needed to pass file to be monitored to corry at runtime
+    for (auto m: corry_geo->Sectionlist()){
+      corry_geo->SetSection(m);
+      if (corry_geo->Get("type","") == value.eventloader_type){
+        value.detector_planes.push_back(m);
+      }
+    }
+
+    m_datacollector_vector.push_back(value);
+
+  }
+  
+  for ( auto const& it : m_datacollector_vector)
+  {
+    std::cout<<"###############################~~##########################~~~###~~~##~~~##~~###~~###~~~#~~~~##"<<std::endl;
+    std::cout<<it.name<<" : " <<it.eventloader_type << " " << it.detector_planes[0] << std::endl;
+  }
+
 
 }
 
@@ -286,8 +400,24 @@ void CorryMonitor::DoStartRun(){
   std::string pattern_to_match = full_file.second;
   std::string event_name;
 
+
+  for (auto & it : m_datacollector_vector)
+  {
+    // can only call getFileString after run has started because of GetRunNumber()
+    it.full_file = getFileString(it.fwpatt);
+    it.monitor_file_path = std::string((it.full_file.first=="") ? "./" : it.full_file.first+"/");
+    it.pattern_to_match = it.full_file.second;
+  }
+
+    for ( auto const& it : m_datacollector_vector)
+  {
+    std::cout<<"###############################~~##########################~~~###~~~##~~~##~~###~~###~~~#~~~~##"<<std::endl;
+    std::cout<<it.name<<" : " <<it.monitor_file_path << " " << it.fwpatt << " " << it.pattern_to_match << std::endl;
+  }
+
   bool waiting_for_matching_file = true;
 
+  bool all_wait_true = false;
 
   m_corry_pid = fork();
 
@@ -330,10 +460,32 @@ void CorryMonitor::DoStartRun(){
               event_name = ss.str();
 
               EUDAQ_DEBUG("The file " + event_name + " was created");
-              EUDAQ_DEBUG("Pattern to match is  " + pattern_to_match); 
+              //EUDAQ_DEBUG("Pattern to match is  " + pattern_to_match); 
 
-              if (string_match(pattern_to_match.c_str(), event_name.c_str(), 0, 0)) 
-                waiting_for_matching_file = false;
+              for (auto & it : m_datacollector_vector){
+                if (it.found_matching_file == false){
+                  EUDAQ_DEBUG("Testing pattern " + it.pattern_to_match);
+                  if (string_match(it.pattern_to_match.c_str(), event_name.c_str(), 0, 0)) {
+                    EUDAQ_DEBUG("Found a match with pattern " + it.pattern_to_match);
+                    it.found_matching_file = true;
+                    break;
+                  }
+                }
+              }
+
+              all_wait_true = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
+                    return v.found_matching_file;
+                });
+
+              if (all_wait_true) {
+                std::cout<<":::::::::::::::::::::::::::::::::::::::::::::::::::::::::FINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFIFNFINFINFINFINFINFINFIN"<<std::endl;
+                waiting_for_matching_file =false;
+              }
+
+
+              
+              //if (string_match(pattern_to_match.c_str(), event_name.c_str(), 0, 0)) 
+              //  waiting_for_matching_file = false;
             }
           }
         }
