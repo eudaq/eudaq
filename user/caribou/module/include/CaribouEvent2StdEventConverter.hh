@@ -2,6 +2,8 @@
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 
+#include <array>
+
 // Foreward declaration of TF1, so that the header has no root dependecies
 class TF1;
 
@@ -79,12 +81,12 @@ namespace eudaq {
     static const uint32_t m_id_factory = eudaq::cstr2hash("CariboudSiPMEvent");
   private:
     static uint8_t getQuadrant(const uint16_t& col, const uint16_t& row);
-    static bool m_configured;
-    static bool m_zeroSupp;
-    static bool m_checkValid;
+    static std::vector<bool> m_configured;
+    static std::vector<bool> m_zeroSupp;
+    static std::vector<bool> m_checkValid;
+    static std::vector<std::array<double, 4>> m_fine_ts_effective_bits;
     static std::vector<uint64_t> m_trigger;
     static std::vector<uint64_t> m_frame;
-    static double m_fine_ts_effective_bits[4];
   };
 
   class CLICpix2Event2StdEventConverter: public eudaq::StdEventConverter{

@@ -11,54 +11,60 @@ namespace {
       dSiPMEvent2StdEventConverter>(dSiPMEvent2StdEventConverter::m_id_factory);
 }
 
-bool dSiPMEvent2StdEventConverter::m_configured(0);
-bool dSiPMEvent2StdEventConverter::m_zeroSupp(1);
-bool dSiPMEvent2StdEventConverter::m_checkValid(0);
+std::vector<bool> dSiPMEvent2StdEventConverter::m_configured({});
+std::vector<bool> dSiPMEvent2StdEventConverter::m_zeroSupp({});
+std::vector<bool> dSiPMEvent2StdEventConverter::m_checkValid({});
+std::vector<std::array<double, 4>> dSiPMEvent2StdEventConverter::m_fine_ts_effective_bits({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_trigger({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_frame({});
-double dSiPMEvent2StdEventConverter::m_fine_ts_effective_bits[4];
 
 bool dSiPMEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
     eudaq::ConfigurationSPC conf) const {
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
-  if (!m_configured && conf != NULL) {
-    m_zeroSupp = conf->Get("zero_suppression", true);
-    m_checkValid = conf->Get("check_valid", false);
-    m_fine_ts_effective_bits[0] = conf->Get("fine_ts_effective_bits_q0", 32.);
-    m_fine_ts_effective_bits[1] = conf->Get("fine_ts_effective_bits_q1", 32.);
-    m_fine_ts_effective_bits[2] = conf->Get("fine_ts_effective_bits_q2", 32.);
-    m_fine_ts_effective_bits[3] = conf->Get("fine_ts_effective_bits_q3", 32.);
-
-    EUDAQ_INFO("Using configuration:");
-    EUDAQ_INFO("  zero_suppression = " + to_string(m_zeroSupp));
-    EUDAQ_INFO("  check_valid = " + to_string(m_checkValid));
-    EUDAQ_INFO("  fine_ts_effective_bits");
-    EUDAQ_INFO("    _q0 " + to_string(m_fine_ts_effective_bits[0]));
-    EUDAQ_INFO("    _q1 " + to_string(m_fine_ts_effective_bits[1]));
-    EUDAQ_INFO("    _q2 " + to_string(m_fine_ts_effective_bits[2]));
-    EUDAQ_INFO("    _q3 " + to_string(m_fine_ts_effective_bits[3]));
-
-    m_configured = true;
-  }
-
-  // get an instance of the frame decoder
-  static caribou::dSiPMFrameDecoder decoder;
-
   // No event
   if (!ev) {
     return false;
   }
 
-  // Set eudaq::StandardPlane::ID
+  // Set eudaq::StandardPlane::ID for multiple detectors
   uint32_t plane_id = conf->Get("plane_id", 0);
   EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
-  if (m_trigger.size() < plane_id + 1) {
-    EUDAQ_DEBUG("Resizing m_trigger and m_frame for new plane");
+
+  if (m_configured.size() < plane_id + 1) {
+    EUDAQ_DEBUG("Resizing static members for new plane");
+
+    m_configured.push_back(false);
+    m_zeroSupp.push_back(true);
+    m_checkValid.push_back(false);
+    m_fine_ts_effective_bits.push_back({32., 32., 32., 32.});
     m_trigger.push_back(0);
     m_frame.push_back(0);
   }
+
+  if (!m_configured[plane_id] && conf != NULL) {
+    m_zeroSupp[plane_id] = conf->Get("zero_suppression", true);
+    m_checkValid[plane_id] = conf->Get("check_valid", false);
+    m_fine_ts_effective_bits[plane_id][0] = conf->Get("fine_ts_effective_bits_q0", 32.);
+    m_fine_ts_effective_bits[plane_id][1] = conf->Get("fine_ts_effective_bits_q1", 32.);
+    m_fine_ts_effective_bits[plane_id][2] = conf->Get("fine_ts_effective_bits_q2", 32.);
+    m_fine_ts_effective_bits[plane_id][3] = conf->Get("fine_ts_effective_bits_q3", 32.);
+
+    EUDAQ_INFO("Using configuration for plane ID " + to_string(plane_id) + ":");
+    EUDAQ_INFO("  zero_suppression = " + to_string(m_zeroSupp[plane_id]));
+    EUDAQ_INFO("  check_valid = " + to_string(m_checkValid[plane_id]));
+    EUDAQ_INFO("  fine_ts_effective_bits");
+    EUDAQ_INFO("    _q0 " + to_string(m_fine_ts_effective_bits[plane_id][0]));
+    EUDAQ_INFO("    _q1 " + to_string(m_fine_ts_effective_bits[plane_id][1]));
+    EUDAQ_INFO("    _q2 " + to_string(m_fine_ts_effective_bits[plane_id][2]));
+    EUDAQ_INFO("    _q3 " + to_string(m_fine_ts_effective_bits[plane_id][3]));
+
+    m_configured[plane_id] = true;
+  }
+
+  // get an instance of the frame decoder
+  static caribou::dSiPMFrameDecoder decoder;
 
   // Data container:
   std::vector<uint32_t> rawdata;
@@ -88,8 +94,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
   // call frame decoder from dSiPM device in peary, to translate pearyRawData to
   // pearydata
-  auto frame = decoder.decodeFrame(rawdata, 1);
-  //  auto frame = decoder.decodeFrame(rawdata, m_zeroSupp);
+  auto frame = decoder.decodeFrame(rawdata, m_zeroSupp[plane_id]);
   EUDAQ_DEBUG("Found " + to_string(rawdata.size()) + " words in frame.");
   EUDAQ_DEBUG("Decoded into " + to_string(frame.size()) + " pixels in frame.");
 
@@ -131,7 +136,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     auto clockFine = ds_pix->getFineTime();
 
     // check valid bits if requested
-    if (m_checkValid == true && hitBit == true && validBit == false) {
+    if (m_checkValid[plane_id] == true && hitBit == true && validBit == false) {
       EUDAQ_ERROR(
         "This pixel is hit, but the valid bit for the quadrant is not set");
       EUDAQ_ERROR("  col and row " + to_string(col) + " " + to_string(row));
@@ -170,7 +175,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
     // Get the effective number of bits for the fine TDC time stamp.
     // This is 32 bit nominally.
-    double nBitEff = m_fine_ts_effective_bits[quad];
+    double nBitEff = m_fine_ts_effective_bits[plane_id][quad];
 
     // timestamp
     // frame start + partial dead time shift
@@ -183,7 +188,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
                               (clockFine - 1) * 1e6 / (408. * nBitEff));
 
     // check frame start if we want valid check
-    if (m_checkValid && frameStart > 0 && frameStart != thisPixFrameStart) {
+    if (m_checkValid[plane_id] && frameStart > 0 && frameStart != thisPixFrameStart) {
       EUDAQ_ERROR("This frame start does not match prev. pixels frame start "
                   "(from same event)");
       EUDAQ_ERROR("  bunch counter ID " + to_string(bunchCount));
@@ -195,7 +200,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     frameStart = thisPixFrameStart;
     frameEnd = thisPixFrameEnd;
 
-    EUDAQ_DEBUG(" \t" + to_string(m_trigger) + " \t" + to_string(m_frame) +
+    EUDAQ_DEBUG(" \t" + to_string(m_trigger[plane_id]) + " \t" + to_string(m_frame[plane_id]) +
                 " \t" + to_string(col) + " \t" + to_string(row) + " \t" +
                 to_string(hitBit) + " \t" + to_string(validBit) + " \t" +
                 to_string(bunchCount) + " \t" +
