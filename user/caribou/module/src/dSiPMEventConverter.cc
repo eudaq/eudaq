@@ -14,8 +14,8 @@ namespace {
 bool dSiPMEvent2StdEventConverter::m_configured(0);
 bool dSiPMEvent2StdEventConverter::m_zeroSupp(1);
 bool dSiPMEvent2StdEventConverter::m_checkValid(0);
-uint64_t dSiPMEvent2StdEventConverter::m_trigger(0);
-uint64_t dSiPMEvent2StdEventConverter::m_frame(0);
+std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_trigger({});
+std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_frame({});
 double dSiPMEvent2StdEventConverter::m_fine_ts_effective_bits[4];
 
 bool dSiPMEvent2StdEventConverter::Converting(
@@ -54,6 +54,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
   // Set eudaq::StandardPlane::ID
   uint32_t plane_id = conf->Get("plane_id", 0);
   EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
+  if (m_trigger.size() < plane_id + 1) {
+    EUDAQ_DEBUG("Resizing m_trigger and m_frame for new plane");
+    m_trigger.push_back(0);
+    m_frame.push_back(0);
+  }
 
   // Data container:
   std::vector<uint32_t> rawdata;
@@ -92,9 +97,9 @@ bool dSiPMEvent2StdEventConverter::Converting(
   auto [ts_control_fpga, ts_fine_fpga, ts_readout_fpga, trigger_id_fpga] =
     decoder.decodeTrailer(rawdata);
   // derive frame counter (inside trigger number)
-  m_frame = (trigger_id_fpga == m_trigger ? m_frame+1 : 0);
+  m_frame[plane_id] = (trigger_id_fpga == m_trigger[plane_id] ? m_frame[plane_id]+1 : 0);
   // store for next frame
-  m_trigger = trigger_id_fpga;
+  m_trigger[plane_id] = trigger_id_fpga;
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(plane_id, "Caribou", "dSiPM");

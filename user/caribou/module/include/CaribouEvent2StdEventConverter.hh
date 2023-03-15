@@ -82,8 +82,8 @@ namespace eudaq {
     static bool m_configured;
     static bool m_zeroSupp;
     static bool m_checkValid;
-    static uint64_t m_trigger;
-    static uint64_t m_frame;
+    static std::vector<uint64_t> m_trigger;
+    static std::vector<uint64_t> m_frame;
     static double m_fine_ts_effective_bits[4];
   };
 
