@@ -14,6 +14,8 @@ namespace {
 std::vector<bool> dSiPMEvent2StdEventConverter::m_configured({});
 std::vector<bool> dSiPMEvent2StdEventConverter::m_zeroSupp({});
 std::vector<bool> dSiPMEvent2StdEventConverter::m_checkValid({});
+std::vector<uint64_t> dSiPMEvent2StdEventConverter::frame_start({});
+std::vector<uint64_t> dSiPMEvent2StdEventConverter::frame_stop({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_trigger({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_frame({});
 
@@ -37,6 +39,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
     m_configured.push_back(false);
     m_zeroSupp.push_back(true);
     m_checkValid.push_back(false);
+    frame_start.push_back(0);
+    frame_stop.push_back(2);
     m_trigger.push_back(0);
     m_frame.push_back(0);
   }
@@ -44,10 +48,14 @@ bool dSiPMEvent2StdEventConverter::Converting(
   if (!m_configured[plane_id] && conf != NULL) {
     m_zeroSupp[plane_id] = conf->Get("zero_suppression", true);
     m_checkValid[plane_id] = conf->Get("check_valid", false);
+    frame_start[plane_id] = conf->Get("frame_start", 0);
+    frame_stop[plane_id] = conf->Get("frame_stop", 2);
 
     EUDAQ_INFO("Using configuration for plane ID " + to_string(plane_id) + ":");
     EUDAQ_INFO("  zero_suppression = " + to_string(m_zeroSupp[plane_id]));
     EUDAQ_INFO("  check_valid = " + to_string(m_checkValid[plane_id]));
+    EUDAQ_INFO("  frame_start = " + to_string(frame_start[plane_id]));
+    EUDAQ_INFO("  frame_end = " + to_string(frame_stop[plane_id]));
 
     m_configured[plane_id] = true;
   }
@@ -94,6 +102,12 @@ bool dSiPMEvent2StdEventConverter::Converting(
   m_frame[plane_id] = (trigger_id_fpga == m_trigger[plane_id] ? m_frame[plane_id]+1 : 0);
   // store for next frame
   m_trigger[plane_id] = trigger_id_fpga;
+
+  EUDAQ_DEBUG("Decoded trigger "  + to_string(m_trigger[plane_id]) + " frame " + to_string(m_frame[plane_id]));
+  if (m_frame[plane_id] < frame_start[plane_id] || m_frame[plane_id] > frame_stop[plane_id]) {
+    EUDAQ_DEBUG("Skipping frame");
+    return false;
+  }
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(plane_id, "Caribou", "dSiPM");
