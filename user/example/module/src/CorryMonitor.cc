@@ -273,7 +273,6 @@ void CorryMonitor::DoConfigure(){
   //corry_geo->Print();
 
 
-  // Test out best way to split string
   std::stringstream ss(m_test_string);
   while( ss.good() )
   {
@@ -282,7 +281,6 @@ void CorryMonitor::DoConfigure(){
       m_datacollectors_to_monitor.push_back( eudaq::trim(substr) );
   }
 
-  // Test out best way to split string
   std::stringstream ss2(m_test_string_2);
   while( ss2.good() )
   {
@@ -290,88 +288,33 @@ void CorryMonitor::DoConfigure(){
       getline( ss2, substr, ',' );
       m_eventloader_types.push_back( eudaq::trim(substr) );
   }
-
-
-
-  // Get the file naming pattern from the DataCollector config section
-  std::string section = "DataCollector."+m_datacollector_to_monitor;
-  std::string eudaq_config_file_path = conf->Name();
-
-  // Check if DataCollector with name m_datacollector_to_monitor is found
-  conf->SetSection("");
-  if (!(conf->Has(section)))
-    EUDAQ_THROW("DataCollector to be monitored (\"" + section + "\") not found!");
-  else 
-    EUDAQ_DEBUG("DataCollector to be monitored is " + section);
-
-  std::ifstream eudaq_conf {eudaq_config_file_path};
-
-  // open eudaq config file and get the DataCollector section
-	std::shared_ptr<eudaq::Configuration> dc_conf = std::make_shared<eudaq::Configuration>(eudaq_conf, section);
-  //dc_conf->Print();
-
-  m_fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector.cc
-
   
-
-  //TODO: check if using lcase() from Utils works too
-  // transform EvetLoader type to lower case letters
-  std::transform(m_eventloader_type.cbegin(), m_eventloader_type.cend(),
-                   m_eventloader_type.begin(), // write to the same location
-                   [](unsigned char c) { return std::tolower(c); });
-  
-  // loop over all detector planes and save the ones which match m_eventloader_type
-  // needed to pass file to be monitored to corry at runtime
-  for (auto m: corry_geo->Sectionlist()){
-    corry_geo->SetSection(m);
-    if (corry_geo->Get("type","") == m_eventloader_type){
-      m_detector_planes.push_back(m);
-    }
-  }
-  
-  for (auto s: m_eventloader_types)
-  {
-    std::cout<<s<<std::endl;
-  }
-
-  
-  //std::ifstream eudaq_conf {eudaq_config_file_path};
   for (int i=0; i<m_datacollectors_to_monitor.size(); i++)
   {
-    //std::string key;
     DataCollectorAttributes value;
     value.name = m_datacollectors_to_monitor[i];
+
     // Get the file naming pattern from the DataCollector config section
-    std::string section_2 = "DataCollector."+value.name;
+    std::string section = "DataCollector."+value.name;
     std::string eudaq_config_file_path = conf->Name();
 
     // Check if DataCollector with name m_datacollector_to_monitor is found
     conf->SetSection("");
-    if (!(conf->Has(section_2)))
-      EUDAQ_THROW("DataCollector to be monitored (\"" + section_2 + "\") not found!");
+    if (!(conf->Has(section)))
+      EUDAQ_THROW("DataCollector to be monitored (\"" + section + "\") not found!");
     else 
-      EUDAQ_DEBUG("DataCollector to be monitored is " + section_2);
+      EUDAQ_DEBUG("DataCollector to be monitored is " + section);
 
     
     // ifstream needs to be newly created for each conf (declare in loop)
-    std::ifstream eudaq_conf_2 {eudaq_config_file_path};
+    std::ifstream eudaq_conf {eudaq_config_file_path};
     // open eudaq config file and get the DataCollector section
-    auto dc_conf_2 = new eudaq::Configuration(eudaq_conf_2, section_2);
-    std::cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<std::endl;
-    std::cout<<"SECTION IS " <<section_2<<std::endl;
-    dc_conf_2->Print();
-    std::cout<<"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"<<std::endl;
+    auto dc_conf = new eudaq::Configuration(eudaq_conf, section);
+    //dc_conf->Print();
 
-    value.fwpatt = dc_conf_2->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector.cc
-    delete(dc_conf_2);
+    value.fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector.cc
+    delete(dc_conf);
 
-    
-
-    //TODO: check if using lcase() from Utils works too
-    // transform EvetLoader type to lower case letters
-    //std::transform(m_eventloader_type.cbegin(), m_eventloader_type.cend(),
-    //                m_eventloader_type.begin(), // write to the same location
-    //                [](unsigned char c) { return std::tolower(c); });
     value.eventloader_type = eudaq::lcase(m_eventloader_types[i]);
     
     // loop over all detector planes and save the ones which match m_eventloader_type
@@ -386,13 +329,6 @@ void CorryMonitor::DoConfigure(){
     m_datacollector_vector.push_back(value);
 
   }
-  
-  for ( auto const& it : m_datacollector_vector)
-  {
-    std::cout<<"###############################~~##########################~~~###~~~##~~~##~~###~~###~~~#~~~~##"<<std::endl;
-    std::cout<<it.name<<" : " <<it.eventloader_type << " " << it.detector_planes[0] << std::endl;
-  }
-
 
 }
 
@@ -410,7 +346,7 @@ void CorryMonitor::DoStartRun(){
   }
 
   bool waiting_for_matching_file = true;
-  bool all_wait_true = false;
+  bool found_all_files_to_monitor = false;
 
   m_corry_pid = fork();
 
@@ -432,7 +368,7 @@ void CorryMonitor::DoStartRun(){
       wd[i] = inotify_add_watch(fd, m_datacollector_vector[i].monitor_file_path.c_str(), IN_CREATE);
     }
 
-    while(waiting_for_matching_file){
+    while(!found_all_files_to_monitor){
 
       // reading the event (change in directory)
       int length, i = 0;
@@ -447,6 +383,7 @@ void CorryMonitor::DoStartRun(){
       while ( i < length ) {
         struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
       
+        //TODO: Consider inverting if statements to reduce nesting (requires moving incrementation of i up)
         if ( event->mask & IN_CREATE ) {      // if event is a creation of object in directory
           if ( !(event->mask & IN_ISDIR) ) {  // if object created is a file
             if ( event->len ) {               // if filename is not empty 
@@ -472,14 +409,9 @@ void CorryMonitor::DoStartRun(){
                 break;
               }
 
-              all_wait_true = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
+              found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
                     return v.found_matching_file;
-                });
-
-              if (all_wait_true) {
-                std::cout<<":::::::::::::::::::::::::::::::::::::::::::::::::::::::::FINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFINFIFNFINFINFINFINFINFINFIN"<<std::endl;
-                waiting_for_matching_file =false;
-              }
+              });
             }
           }
         }
