@@ -156,12 +156,6 @@ bool string_match(const char *pattern, const char *candidate, int p, int c) {
   }
 }
 
-void printCharPointerArray(char** arr, int size) {
-  for (int i = 0; i < size; i++) {
-    std::cout << arr[i] << std::endl;
-  }
-}
-
 std::pair<std::string, std::string> CorryMonitor::getFileString(std::string pattern) {
   // Decrypt file pattern. Can't use file namer because we need to know position of date/time
 
@@ -405,12 +399,15 @@ void CorryMonitor::DoConfigure(){
 void CorryMonitor::DoStartRun(){
 
   int fd, wd; // File descriptor and watch descriptor for inotify
+  int wd2[m_datacollector_vector.size()];
 
+  
   std::pair<std::string, std::string> full_file = getFileString(m_fwpatt);
   std::string monitor_file_path((full_file.first=="") ? "./" : full_file.first+"/");
   std::string pattern_to_match = full_file.second;
   std::string event_name;
-
+  int event_wd;
+  
 
   for (auto & it : m_datacollector_vector)
   {
@@ -450,6 +447,10 @@ void CorryMonitor::DoStartRun(){
 
     wd = inotify_add_watch(fd, monitor_file_path.c_str(), IN_CREATE);
 
+    for (int i=0; i<m_datacollector_vector.size(); i++){
+      wd2[i] = inotify_add_watch(fd, m_datacollector_vector[i].monitor_file_path.c_str(), IN_CREATE);
+    }
+
     while(waiting_for_matching_file){
 
       // reading the event (change in directory)
@@ -472,19 +473,23 @@ void CorryMonitor::DoStartRun(){
               ss << event->name;
               event_name = ss.str();
 
+              event_wd = event->wd;
+
               EUDAQ_DEBUG("The file " + event_name + " was created");
               //EUDAQ_DEBUG("Pattern to match is  " + pattern_to_match); 
+              int index = 0;
+              for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++, index++){
 
-              for (auto & it : m_datacollector_vector){
-                if (it.found_matching_file == false){
-                  EUDAQ_DEBUG("Testing pattern " + it.pattern_to_match);
-                  if (string_match(it.pattern_to_match.c_str(), event_name.c_str(), 0, 0)) {
-                    EUDAQ_DEBUG("Found a match with pattern " + it.pattern_to_match);
-                    it.event_name = event_name;
-                    it.found_matching_file = true;
-                    break;
-                  }
-                }
+                if (event_wd != wd2[index])           continue; // Skip this DataCollector because the directory does not match directory of creation
+                if (it->found_matching_file == true)  continue; // Skip because file for this DataCollector has been found
+
+                EUDAQ_DEBUG("Testing pattern " + it->pattern_to_match);
+                if (!string_match(it->pattern_to_match.c_str(), event_name.c_str(), 0, 0)) continue; // Continue with next DataCollector because it's not a match
+
+                EUDAQ_DEBUG("Found a match with pattern " + it->pattern_to_match);
+                it->event_name = event_name;
+                it->found_matching_file = true;
+                break;
               }
 
               all_wait_true = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
@@ -540,8 +545,6 @@ void CorryMonitor::DoStartRun(){
     */
 
     EUDAQ_DEBUG("Full corryvreckan command options : "+std::to_string(**m_args.argv));
-
-    //printCharPointerArray(m_args.argv, m_args.sz);
 
     execvp(m_args.argv[0], m_args.argv);
     perror("execv"); // execv doesn't return unless there is a problem
