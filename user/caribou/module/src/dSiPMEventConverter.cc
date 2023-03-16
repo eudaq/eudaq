@@ -14,7 +14,6 @@ namespace {
 std::vector<bool> dSiPMEvent2StdEventConverter::m_configured({});
 std::vector<bool> dSiPMEvent2StdEventConverter::m_zeroSupp({});
 std::vector<bool> dSiPMEvent2StdEventConverter::m_checkValid({});
-std::vector<std::array<double, 4>> dSiPMEvent2StdEventConverter::m_fine_ts_effective_bits({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_trigger({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_frame({});
 
@@ -38,7 +37,6 @@ bool dSiPMEvent2StdEventConverter::Converting(
     m_configured.push_back(false);
     m_zeroSupp.push_back(true);
     m_checkValid.push_back(false);
-    m_fine_ts_effective_bits.push_back({32., 32., 32., 32.});
     m_trigger.push_back(0);
     m_frame.push_back(0);
   }
@@ -46,19 +44,10 @@ bool dSiPMEvent2StdEventConverter::Converting(
   if (!m_configured[plane_id] && conf != NULL) {
     m_zeroSupp[plane_id] = conf->Get("zero_suppression", true);
     m_checkValid[plane_id] = conf->Get("check_valid", false);
-    m_fine_ts_effective_bits[plane_id][0] = conf->Get("fine_ts_effective_bits_q0", 32.);
-    m_fine_ts_effective_bits[plane_id][1] = conf->Get("fine_ts_effective_bits_q1", 32.);
-    m_fine_ts_effective_bits[plane_id][2] = conf->Get("fine_ts_effective_bits_q2", 32.);
-    m_fine_ts_effective_bits[plane_id][3] = conf->Get("fine_ts_effective_bits_q3", 32.);
 
     EUDAQ_INFO("Using configuration for plane ID " + to_string(plane_id) + ":");
     EUDAQ_INFO("  zero_suppression = " + to_string(m_zeroSupp[plane_id]));
     EUDAQ_INFO("  check_valid = " + to_string(m_checkValid[plane_id]));
-    EUDAQ_INFO("  fine_ts_effective_bits");
-    EUDAQ_INFO("    _q0 " + to_string(m_fine_ts_effective_bits[plane_id][0]));
-    EUDAQ_INFO("    _q1 " + to_string(m_fine_ts_effective_bits[plane_id][1]));
-    EUDAQ_INFO("    _q2 " + to_string(m_fine_ts_effective_bits[plane_id][2]));
-    EUDAQ_INFO("    _q3 " + to_string(m_fine_ts_effective_bits[plane_id][3]));
 
     m_configured[plane_id] = true;
   }
@@ -173,9 +162,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
     uint64_t thisPixFrameEnd =
         static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
 
-    // Get the effective number of bits for the fine TDC time stamp.
-    // This is 32 bit nominally.
-    double nBitEff = m_fine_ts_effective_bits[plane_id][quad];
+    // Effective number of bits 26 execpt if clockCoarse mod 4 == 0, then 25
+    double nBitEff = clockCoarse % 4 == 0 ? 25 : 26;
 
     // timestamp
     // frame start + partial dead time shift
