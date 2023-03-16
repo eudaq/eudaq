@@ -156,6 +156,12 @@ bool string_match(const char *pattern, const char *candidate, int p, int c) {
   }
 }
 
+void printCharPointerArray(char** arr, int size) {
+  for (int i = 0; i < size; i++) {
+    std::cout << arr[i] << std::endl;
+  }
+}
+
 std::pair<std::string, std::string> CorryMonitor::getFileString(std::string pattern) {
   // Decrypt file pattern. Can't use file namer because we need to know position of date/time
 
@@ -245,6 +251,11 @@ void CorryMonitor::DoConfigure(){
   m_args.argv = 0;
   m_args.sz = 0;
   m_args.used = 0;
+
+  // Clear vector with datacollectors
+  m_datacollectors_to_monitor.clear();
+  m_eventloader_types.clear();
+  m_datacollector_vector.clear();
 
   char * cstr = new char[my_command.length()+1];
   std::strcpy(cstr, my_command.c_str());
@@ -419,6 +430,8 @@ void CorryMonitor::DoStartRun(){
 
   bool all_wait_true = false;
 
+  int size;
+
   m_corry_pid = fork();
 
   switch (m_corry_pid)
@@ -467,6 +480,7 @@ void CorryMonitor::DoStartRun(){
                   EUDAQ_DEBUG("Testing pattern " + it.pattern_to_match);
                   if (string_match(it.pattern_to_match.c_str(), event_name.c_str(), 0, 0)) {
                     EUDAQ_DEBUG("Found a match with pattern " + it.pattern_to_match);
+                    it.event_name = event_name;
                     it.found_matching_file = true;
                     break;
                   }
@@ -499,18 +513,20 @@ void CorryMonitor::DoStartRun(){
     // Found file name is now stored in event_name
     EUDAQ_INFO("File to be monitored is "+monitor_file_path+event_name);
 
-    // add passing the file name to corry to the command
-    for (auto m: m_detector_planes){
-      std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+monitor_file_path+event_name;
-      char * cstr = new char[my_command.length()+1];
-      std::strcpy(cstr, my_command.c_str());
+    for (auto & it : m_datacollector_vector){
+      // add passing the file name to corry to the command
+      for (auto m: it.detector_planes){
+        std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.monitor_file_path+it.event_name;
+        char * cstr = new char[my_command.length()+1];
+        std::strcpy(cstr, my_command.c_str());
 
-      // Add the command itself.
-      m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, strtok (cstr, TOKEN));
+        // Add the command itself.
+        m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, strtok (cstr, TOKEN));
 
-      // Add each argument in turn, then the terminator.
-      while ((cstr = strtok (0, TOKEN)) != 0){
-        m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, cstr);
+        // Add each argument in turn, then the terminator.
+        while ((cstr = strtok (0, TOKEN)) != 0){
+          m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, cstr);
+        }
       }
     }
 
@@ -522,6 +538,10 @@ void CorryMonitor::DoStartRun(){
         std::cout << "Is this a match? " << std::string((string_match(pattern_to_match.c_str(), entry.path().filename().c_str(), 0, 0)) ? "Yes" : "No") << std::endl;
     }
     */
+
+    EUDAQ_DEBUG("Full corryvreckan command options : "+std::to_string(**m_args.argv));
+
+    //printCharPointerArray(m_args.argv, m_args.sz);
 
     execvp(m_args.argv[0], m_args.argv);
     perror("execv"); // execv doesn't return unless there is a problem
