@@ -18,6 +18,8 @@ std::vector<uint64_t> dSiPMEvent2StdEventConverter::frame_start({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::frame_stop({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_trigger({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_frame({});
+TTree* dSiPMEvent2StdEventConverter::m_ttree_ugly(nullptr);
+std::mutex dSiPMEvent2StdEventConverter::m_ttree_mutex({});
 
 bool dSiPMEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
@@ -107,6 +109,34 @@ bool dSiPMEvent2StdEventConverter::Converting(
   if (m_frame[plane_id] < frame_start[plane_id] || m_frame[plane_id] > frame_stop[plane_id]) {
     EUDAQ_DEBUG("Skipping frame");
     return false;
+  }
+
+    // TTree yeah
+  uint8_t tt_quadrant;
+  uint16_t tt_col, tt_row;
+  uint8_t tt_hitBit;
+  bool tt_validBit;
+  uint64_t tt_bunchCount;
+  uint8_t tt_clockCoarse, tt_clockFine;
+  uint64_t tt_timestamp;
+  {
+    auto lock = std::unique_lock(m_ttree_mutex);
+    if (m_ttree_ugly == nullptr) {
+      m_ttree_ugly = new TTree("ugly", "ugly");
+      m_ttree_ugly->Branch("plane_id", &plane_id);
+      m_ttree_ugly->Branch("trigger", &m_trigger[plane_id]);
+      m_ttree_ugly->Branch("frame", &m_frame[plane_id]);
+      m_ttree_ugly->Branch("quadrant", &tt_quadrant);
+      m_ttree_ugly->Branch("col", &tt_col);
+      m_ttree_ugly->Branch("row", &tt_row);
+      m_ttree_ugly->Branch("hitBit", &tt_hitBit);
+      m_ttree_ugly->Branch("validBit", &tt_validBit);
+      m_ttree_ugly->Branch("bunchCount", &tt_bunchCount);
+      m_ttree_ugly->Branch("clockCoarse", &tt_clockCoarse);
+      m_ttree_ugly->Branch("clockFine", &tt_clockFine);
+      m_ttree_ugly->Branch("timestamp", &tt_timestamp);
+    }
+    lock.unlock();
   }
 
   // Create a StandardPlane representing one sensor plane
@@ -213,6 +243,20 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
     // assemble pixel and add to plane
     plane.PushPixel(col, row, hitBit, timestamp);
+
+    // Fill TTree
+    tt_quadrant = getQuadrant(col, row);
+    tt_col = col;
+    tt_row = row;
+    tt_hitBit = hitBit;
+    tt_validBit = validBit;
+    tt_bunchCount = bunchCount;
+    tt_clockCoarse = clockCoarse;
+    tt_clockFine = clockFine;
+    tt_timestamp = timestamp;
+    auto lock = std::unique_lock(m_ttree_mutex);
+    m_ttree_ugly->Fill();
+    lock.unlock();
 
   } // pixels in frame
 

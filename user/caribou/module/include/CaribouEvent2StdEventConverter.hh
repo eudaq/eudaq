@@ -4,6 +4,9 @@
 
 #include <array>
 
+#include <mutex>
+#include <TTree.h>
+
 // Foreward declaration of TF1, so that the header has no root dependecies
 class TF1;
 
@@ -88,6 +91,8 @@ namespace eudaq {
     static std::vector<uint64_t> frame_stop;
     static std::vector<uint64_t> m_trigger;
     static std::vector<uint64_t> m_frame;
+    static TTree* m_ttree_ugly;
+    static std::mutex m_ttree_mutex;
   };
 
   class CLICpix2Event2StdEventConverter: public eudaq::StdEventConverter{
