@@ -184,7 +184,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // clock 0 should never appear, unless the clocks and frame reset are out
     // of sync. for the fine clock 0 may appear but should be mapped to 32.
     // we should check if we ever actually read 31.
-    if (clockCoarse == 0) {
+    /*if (clockCoarse == 0) {
       EUDAQ_WARN("Coarse clock == 0. This should not happen.");
     }
     if (clockFine == 31) {
@@ -192,7 +192,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     }
     if (clockFine == 0) {
       clockFine = 32;
-    }
+    }*/
 
     // frame start
     // bunch counter (starts with 1) runs with 3 MHz clock in ps +
@@ -216,8 +216,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // shift by dead time.
     uint64_t timestamp =
         static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
-                              (clockCoarse - 1) * 1e6 / 408. +
-                              (clockFine - 1) * 1e6 / (408. * nBitEff));
+                              (clockCoarse) * 1e6 / 408. +
+                              (clockFine) * 1e6 / (408. * nBitEff));
 
     // check frame start if we want valid check
     if (m_checkValid[plane_id] && frameStart > 0 && frameStart != thisPixFrameStart) {
