@@ -32,7 +32,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
   }
 
   // Set eudaq::StandardPlane::ID for multiple detectors
-  static uint32_t plane_id = conf->Get("plane_id", 0);
+  static uint32_t plane_id = 0;
+  plane_id = conf->Get("plane_id", 0);
   EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
 
   if (m_configured.size() < plane_id + 1) {
