@@ -224,6 +224,9 @@ bool dSiPMEvent2StdEventConverter::Converting(
   d2->SetTimeEnd(frameEnd);
   d2->SetTriggerN(trigger_id_fpga);
 
+  // Add tag with frame number for additional information
+  d2->SetTag("frame", m_frame[plane_id]);
+
   // Identify the detetor type
   d2->SetDetectorType("dSiPM");
 
