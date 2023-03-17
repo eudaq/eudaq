@@ -73,22 +73,14 @@ private:
   bool m_en_std_converter;
   bool m_en_std_print;
   pid_t m_corry_pid;
-  std::vector<std::string> m_datacollectors_to_monitor; 
-  std::vector<std::string> m_eventloader_types;
-  std::string m_datacollector_to_monitor;
-  std::string m_eventloader_type;
+  std::string m_datacollectors_to_monitor;
+  std::string m_eventloader_types;
   std::string m_corry_path;
   std::string m_corry_config;
   std::string m_corry_options;
-  std::vector<std::string> m_detector_planes;
-
-  std::string m_fwpatt;
-  std::string m_fwtype;
 
   CorryArgumentList m_args;
 
-  std::string m_test_string;
-  std::string m_test_string_2;
   std::vector<DataCollectorAttributes> m_datacollector_vector;
 
 };
@@ -107,6 +99,7 @@ void CorryMonitor::DoInitialise(){
   ini->Print(std::cout);
   m_corry_path = ini->Get("CORRY_PATH", "/path/to/corry");
   
+  // Check if corryvreckan is found
   struct stat buffer;   
   if(stat(m_corry_path.c_str(), &buffer) != 0)
     EUDAQ_ERROR("Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)");
@@ -132,6 +125,7 @@ static char **addArg (char **argv, size_t *pSz, size_t *pUsed, char *str) {
     return argv;
 }
 
+// Count number of digits taken from https://www.geeksforgeeks.org/program-count-digits-integer-3-different-methods/
 unsigned int countDigit(long long n)
 {
     if (n/10 == 0)
@@ -203,16 +197,10 @@ std::pair<std::string, std::string> CorryMonitor::getFileString(std::string patt
   }
 
   file_string += suffix;
-
   
   EUDAQ_DEBUG("File string for matching is " + file_string);
 
-  
-  //std::regex return_regex(file_string);
-
   std::filesystem::path file_path(file_string);
-
-
   return std::pair<std::string, std::string>(file_path.parent_path(), file_path.filename());
 
 }
@@ -224,15 +212,12 @@ void CorryMonitor::DoConfigure(){
   m_en_print                  = conf->Get("CORRY_ENABLE_PRINT", 0);
   m_en_std_converter          = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
   m_en_std_print              = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
-  m_datacollector_to_monitor  = conf->Get("DATACOLLECTOR_TO_MONITOR", "my_dc");
-  m_eventloader_type          = conf->Get("CORRESPONDING_EVENTLOADER_TYPE", "");
+  m_datacollectors_to_monitor = conf->Get("DATACOLLECTORS_TO_MONITOR", "my_dc");
+  m_eventloader_types         = conf->Get("CORRESPONDING_EVENTLOADER_TYPES", "");
   m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
   m_corry_options             = conf->Get("CORRY_OPTIONS", "");
 
-  m_test_string               = conf->Get("TEST_STRING", "test1, test2");
-  m_test_string_2             = conf->Get("TEST_STRING_2", "test4, test3");
-
-  // Check if corryvreckan is found
+  // Check if config for corryvreckan is found
   struct stat buffer;   
   if(stat(m_corry_config.c_str(), &buffer) != 0)
     EUDAQ_ERROR("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
@@ -241,15 +226,13 @@ void CorryMonitor::DoConfigure(){
   // command to be exectued in DoStartRun(), stored tokenized in m_args.argv
   std::string my_command = m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
 
+  // Clear vector with datacollectors
+  m_datacollector_vector.clear();
+
   //    Initial size, used and array.
   m_args.argv = 0;
   m_args.sz = 0;
   m_args.used = 0;
-
-  // Clear vector with datacollectors
-  m_datacollectors_to_monitor.clear();
-  m_eventloader_types.clear();
-  m_datacollector_vector.clear();
 
   char * cstr = new char[my_command.length()+1];
   std::strcpy(cstr, my_command.c_str());
@@ -262,6 +245,10 @@ void CorryMonitor::DoConfigure(){
         m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, cstr);
   }
 
+  /*
+   * Open configuration/geo files for corryvreckan
+   */
+
   // open corry config file to get geometry file
   std::ifstream corry_file {m_corry_config};
   std::shared_ptr<eudaq::Configuration> corry_conf = std::make_shared<eudaq::Configuration>(corry_file, "Corryvreckan");
@@ -273,32 +260,25 @@ void CorryMonitor::DoConfigure(){
   //corry_geo->Print();
 
 
-  std::stringstream ss(m_test_string);
-  while( ss.good() )
+  std::stringstream ss_dcol(m_datacollectors_to_monitor);
+  std::stringstream ss_type(m_eventloader_types);
+  // Parse the string to get datacollectors and eventloader types
+  // and fill the information into the DataCollectorAttributes
+  while (ss_dcol.good() && ss_type.good())
   {
-      std::string substr;
-      getline( ss, substr, ',' );
-      m_datacollectors_to_monitor.push_back( eudaq::trim(substr) );
-  }
 
-  std::stringstream ss2(m_test_string_2);
-  while( ss2.good() )
-  {
-      std::string substr;
-      getline( ss2, substr, ',' );
-      m_eventloader_types.push_back( eudaq::trim(substr) );
-  }
-  
-  for (int i=0; i<m_datacollectors_to_monitor.size(); i++)
-  {
+    std::string substr_dcol, substr_type;
+    getline(ss_dcol, substr_dcol, ',');
+    getline(ss_type, substr_type, ',');
+
     DataCollectorAttributes value;
-    value.name = m_datacollectors_to_monitor[i];
+    value.name = eudaq::trim(substr_dcol);
 
     // Get the file naming pattern from the DataCollector config section
     std::string section = "DataCollector."+value.name;
     std::string eudaq_config_file_path = conf->Name();
 
-    // Check if DataCollector with name m_datacollector_to_monitor is found
+    // Check if DataCollector with name from m_datacollectors_to_monitor is found
     conf->SetSection("");
     if (!(conf->Has(section)))
       EUDAQ_THROW("DataCollector to be monitored (\"" + section + "\") not found!");
@@ -315,7 +295,7 @@ void CorryMonitor::DoConfigure(){
     value.fwpatt = dc_conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X"); // Default value hard-coded. Must be same as in DataCollector.cc
     delete(dc_conf);
 
-    value.eventloader_type = eudaq::lcase(m_eventloader_types[i]);
+    value.eventloader_type = eudaq::lcase(eudaq::trim(substr_type));
     
     // loop over all detector planes and save the ones which match m_eventloader_type
     // needed to pass file to be monitored to corry at runtime
@@ -327,6 +307,10 @@ void CorryMonitor::DoConfigure(){
     }
 
     m_datacollector_vector.push_back(value);
+
+    if ( (ss_dcol.good()&&!ss_type.good()) || (!ss_dcol.good()&&ss_type.good()) ) {
+      EUDAQ_ERROR("Error when parsing DATACOLLECTORS_TO_MONITOR and CORRESPONDING_EVENTLOADER_TYPES! Check if they have the same length!");
+    }
 
   }
 
@@ -345,7 +329,6 @@ void CorryMonitor::DoStartRun(){
     it.pattern_to_match = it.full_file.second;
   }
 
-  bool waiting_for_matching_file = true;
   bool found_all_files_to_monitor = false;
 
   m_corry_pid = fork();
@@ -424,7 +407,7 @@ void CorryMonitor::DoStartRun(){
 
 
     for (auto & it : m_datacollector_vector){
-      EUDAQ_INFO("File to be monitored is "+it.monitor_file_path+it.event_name);
+      EUDAQ_INFO("Found file "+it.monitor_file_path+it.event_name+" for monitorung");
       // add passing the file name to corry to the command
       for (auto m: it.detector_planes){
         std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.monitor_file_path+it.event_name;
