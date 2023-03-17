@@ -32,7 +32,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
   }
 
   // Set eudaq::StandardPlane::ID for multiple detectors
-  uint32_t plane_id = conf->Get("plane_id", 0);
+  static uint32_t plane_id = conf->Get("plane_id", 0);
   EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
 
   if (m_configured.size() < plane_id + 1) {
@@ -112,13 +112,13 @@ bool dSiPMEvent2StdEventConverter::Converting(
   }
 
     // TTree yeah
-  uint8_t tt_quadrant;
-  uint16_t tt_col, tt_row;
-  uint8_t tt_hitBit;
-  bool tt_validBit;
-  uint64_t tt_bunchCount;
-  uint8_t tt_clockCoarse, tt_clockFine;
-  uint64_t tt_timestamp;
+  static uint8_t tt_quadrant;
+  static uint16_t tt_col, tt_row;
+  static uint8_t tt_hitBit;
+  static bool tt_validBit;
+  static uint64_t tt_bunchCount;
+  static uint8_t tt_clockCoarse, tt_clockFine;
+  static uint64_t tt_timestamp;
   {
     auto lock = std::unique_lock(m_ttree_mutex);
     if (m_ttree_ugly == nullptr) {
