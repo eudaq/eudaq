@@ -51,8 +51,9 @@ void TheConverter::ConverterFor25x100origR1C0(int& row, int& col, int& charge, c
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
 
     if(theSensor == TheConverter::SensorType::QuadChip)
-      TheConverter::ConverterForQuad(row, col, chipIdMod4);
-    else if(theSensor == TheConverter::SensorType::DualChip) TheConverter::ConverterForDual(row, col, chipIdMod4);
+        TheConverter::ConverterForQuad(row, col, chipIdMod4);
+    else if(theSensor == TheConverter::SensorType::DualChip)
+        TheConverter::ConverterForDual(row, col, chipIdMod4);
 
     row = (2 * row + 1) - (col % 2);
     col = floor(col / 2.);
@@ -63,8 +64,9 @@ void TheConverter::ConverterFor25x100origR0C0(int& row, int& col, int& charge, c
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
 
     if(theSensor == TheConverter::SensorType::QuadChip)
-      TheConverter::ConverterForQuad(row, col, chipIdMod4);
-    else if(theSensor == TheConverter::SensorType::DualChip) TheConverter::ConverterForDual(row, col, chipIdMod4);
+        TheConverter::ConverterForQuad(row, col, chipIdMod4);
+    else if(theSensor == TheConverter::SensorType::DualChip)
+        TheConverter::ConverterForDual(row, col, chipIdMod4);
 
     row = 2 * row + (col % 2);
     col = floor(col / 2.);
@@ -75,9 +77,9 @@ void TheConverter::ConverterFor50x50(int& row, int& col, int& charge, const int&
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
 
     if(theSensor == SensorType::QuadChip)
-    TheConverter::ConverterForQuad(row, col, chipIdMod4);
+        TheConverter::ConverterForQuad(row, col, chipIdMod4);
     else if(theSensor == SensorType::DualChip)
-    TheConverter::ConverterForDual(row, col, chipIdMod4);
+        TheConverter::ConverterForDual(row, col, chipIdMod4);
 }
 
 void TheConverter::operator()(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut)
