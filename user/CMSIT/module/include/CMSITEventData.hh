@@ -35,6 +35,7 @@ struct ChipEventData
 {
     std::string          chipType;
     uint32_t             chipId;
+    uint32_t             chipIdMod4;
     uint32_t             chipLane;
     uint32_t             hybridId;
     uint32_t             triggerId;
@@ -47,6 +48,7 @@ struct ChipEventData
     {
         ar& chipType;
         ar& chipId;
+        ar& chipIdMod4;
         ar& chipLane;
         ar& hybridId;
         ar& triggerId;
