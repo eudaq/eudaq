@@ -113,7 +113,7 @@ class TheConverter
     void operator()(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut);
 
     int        nCols, nRows;
-    SensorTYpe theSensor;
+    SensorType theSensor;
     void (TheConverter::*whichConverter)(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut);
 
   private:

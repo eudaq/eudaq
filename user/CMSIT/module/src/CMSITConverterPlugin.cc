@@ -15,7 +15,7 @@ using namespace eudaq;
 // #####################################
 // # Row, Column, and Charge converter #
 // #####################################
-void ConverterForQuad::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
+void TheConverter::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
 {
     if(chipIdMod4 == 0)
     {
@@ -39,7 +39,7 @@ void ConverterForQuad::ConverterForQuad(int& row, int& col, const int& chipIdMod
     }
 }
 
-void ConverterForQuad::ConverterForDual(int& row, int& col, const int& chipIdMod4)
+void TheConverter::ConverterForDual(int& row, int& col, const int& chipIdMod4)
 {
     row = row;
     col = col;
@@ -50,10 +50,11 @@ void TheConverter::ConverterFor25x100origR1C0(int& row, int& col, int& charge, c
 {
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
 
-    if(theSensor == SensorType::QuadChip)
-        TheConverter::ConverterForQuad(row, col, chipIdMod4) else if(theSensor == SensorType::DualChip) TheConverter::ConverterForDual(row, col, chipIdMod4)
+    if(theSensor == TheConverter::SensorType::QuadChip)
+      TheConverter::ConverterForQuad(row, col, chipIdMod4);
+    else if(theSensor == TheConverter::SensorType::DualChip) TheConverter::ConverterForDual(row, col, chipIdMod4);
 
-            row = (2 * row + 1) - (col % 2);
+    row = (2 * row + 1) - (col % 2);
     col = floor(col / 2.);
 }
 
@@ -61,10 +62,11 @@ void TheConverter::ConverterFor25x100origR0C0(int& row, int& col, int& charge, c
 {
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
 
-    if(theSensor == SensorType::QuadChip)
-        TheConverter::ConverterForQuad(row, col, chipIdMod4) else if(theSensor == SensorType::DualChip) TheConverter::ConverterForDual(row, col, chipIdMod4)
+    if(theSensor == TheConverter::SensorType::QuadChip)
+      TheConverter::ConverterForQuad(row, col, chipIdMod4);
+    else if(theSensor == TheConverter::SensorType::DualChip) TheConverter::ConverterForDual(row, col, chipIdMod4);
 
-            row = 2 * row + (col % 2);
+    row = 2 * row + (col % 2);
     col = floor(col / 2.);
 }
 
@@ -72,7 +74,10 @@ void TheConverter::ConverterFor50x50(int& row, int& col, int& charge, const int&
 {
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
 
-    if(theSensor == SensorType::QuadChip) TheConverter::ConverterForQuad(row, col, chipIdMod4) else if(theSensor == SensorType::DualChip) TheConverter::ConverterForDual(row, col, chipIdMod4)
+    if(theSensor == SensorType::QuadChip)
+    TheConverter::ConverterForQuad(row, col, chipIdMod4);
+    else if(theSensor == SensorType::DualChip)
+    TheConverter::ConverterForDual(row, col, chipIdMod4);
 }
 
 void TheConverter::operator()(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut)
@@ -274,7 +279,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     ChipType         = (cfg.find("RD53A") != std::string::npos ? CHIPTYPE_RD53A : CHIPTYPE_RD53B);
 
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
-    theConverter.theSensor      = SensorType::SingleChip;
+    theConverter.theSensor      = TheConverter::SensorType::SingleChip;
 
     if((cfg.find("25x100") != std::string::npos) || (cfg.find("100x25") != std::string::npos))
     {
@@ -286,12 +291,12 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 
     if(cfg.find("dual") != std::string::npos)
     {
-        theConverter.theSensor = SensorType::DualChip;
+        theConverter.theSensor = TheConverter::SensorType::DualChip;
         nCols *= 2;
     }
     else if(cfg.find("quad") != std::string::npos)
     {
-        theConverter.theSensor = SensorType::QuadChip;
+        theConverter.theSensor = TheConverter::SensorType::QuadChip;
         nCols *= 2;
         nRows *= 2;
     }
