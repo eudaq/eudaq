@@ -38,8 +38,8 @@ namespace eudaq
 // # Internal constants #
 // ######################
 static constexpr char    EVENT_TYPE[] = "CMSIT";
-static const std::string SENSORTYPE_RD53A("RD53A");
-static const std::string SENSORTYPE_RD53B("RD53B");
+static const std::string CHIPTYPE_RD53A("RD53A");
+static const std::string CHIPTYPE_RD53B("RD53B");
 static const int         NROWS_RD53A = 192, NCOLS_RD53A = 400;
 static const int         NROWS_RD53B = 336, NCOLS_RD53B = 432;
 static const int         MAXFRAMES = 32;
@@ -98,14 +98,23 @@ class TheConverter
         float interceptVCal2Charge;
     };
 
-    void ConverterFor25x100origR1C0(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
-    void ConverterFor25x100origR0C0(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
-    void ConverterFor50x50(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
-    void operator()(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
+    enum class SensorType : uint8_t
+    {
+        SingleChip,
+        QuadChip,
+        DualChip
+    };
 
-    int  nCols, nRows;
-    bool isSingleChip;
-    void (TheConverter::*whichConverter)(int& row, int& col, int& charge, const int& lane, const calibrationParameters& calibPar, const int& chargeCut);
+    void ConverterForQuad(int& row, int& col, const int& chipIdMod4);
+    void ConverterForDual(int& row, int& col, const int& chipIdMod4);
+    void ConverterFor25x100origR1C0(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut);
+    void ConverterFor25x100origR0C0(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut);
+    void ConverterFor50x50(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut);
+    void operator()(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut);
+
+    int        nCols, nRows;
+    SensorType theSensor;
+    void (TheConverter::*whichConverter)(int& row, int& col, int& charge, const int& chipIdMod4, const calibrationParameters& calibPar, const int& chargeCut);
 
   private:
     int ChargeConverter(const int row, const int col, const int ToT, const calibrationParameters& calibPar, const int& chargeCut);
@@ -123,7 +132,7 @@ class CMSITConverterPlugin : public StdEventConverter
 
   private:
     void         Initialize();
-    TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY, std::string& SensorType) const;
+    TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY, std::string& ChipType) const;
 #ifdef ROOTSYS
     TH2D* FindHistogram(const std::string& nameInHisto, uint16_t hybridId, uint16_t chipId);
 #endif
