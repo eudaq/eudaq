@@ -68,28 +68,31 @@ private:
     }
   struct Config { //Variables for Baseline and signal extraction
     int device_n;
-    int sample_baseline_opamp;
-    int first_sample_minimum_finder_opamp;
-    int last_sample_minimum_finder_opamp;
-    int n_samples_after_min_signal_opamp;
-    int n_samples_before_min_signal_opamp;
-    float daq_charge_conversion_factor_opamp;
-    int n_samples_baseline_opamp_scope;
-    int n_samples_signal_opamp_scope;
-    int baseline_shifting_from_t0_opamp_scope;
-    int underline_delay_from_t0_opamp_scope;
-    float threshold_cut_t0_finder_opamp_scope;
-    int n_points_t0_finder_opamp_scope;
-    float scope_charge_conversion_factor_opamp_scope;
-    double gain[npixels];
-    double errgain[npixels];
+    int sample_baseline_opamp;                // Sample of waveform to be used for baseline calculation in DAQ pixels
+    int first_sample_minimum_finder_opamp;    // First sample to be used for minimum finder in DAQ pixels
+    int last_sample_minimum_finder_opamp;     // Last sample to be used for minimum finder in DAQ pixels
+    int n_samples_after_min_signal_opamp;     // Number of samples after minimum to be used for signal calculation in DAQ pixels
+    int n_samples_before_min_signal_opamp;    // Number of samples before minimum to be used for signal calculation in DAQ pixels
+    float daq_charge_conversion_factor_opamp; // measured ratio between 1 DAQ ADC unit (nominal value 38.1uV) and 1 scope ADC unit (nominal value 0.625mV) 
+    int n_samples_baseline_opamp_scope;               // Number of samples to be used for baseline calculation in scope pixels
+    int n_samples_signal_opamp_scope;                 // Number of samples to be used for signal calculation in scope pixels
+    int baseline_shifting_from_t0_opamp_scope;        // Number of samples to be shifted from t0 to be used for baseline calculation in scope pixels
+    int underline_delay_from_t0_opamp_scope;          // Number of samples to be delayed from t0 to be used for underline calculation in scope pixels
+    float threshold_cut_t0_finder_opamp_scope;        // Threshold for t0 finder in scope pixels
+    int n_points_t0_finder_opamp_scope;               // Number of points to be used for t0 finder in scope pixels
+    float scope_charge_conversion_factor_opamp_scope; // Oscilloscope ADC->mV conversion factor
+    double gain[npixels];    // Gain of each pixel 
+    double errgain[npixels]; // Error on the gain of each pixel
+    bool estimate_noise_daq;   // Togle to estimate noise in DAQ pixels
+    bool estimate_noise_scope; // Togle to estimate noise in scope pixels
+    int noise_t0_sample_scope; // Sample of waveform to be used for the t0 sample for noise estimation in scope pixels
   };
   Config& LoadConf(eudaq::ConfigSPC config_) const;
   static std::map<eudaq::ConfigSPC,Config> confs;
-  const int ref_px_idx = 5;         // pixel chosen as the reference for the relative gain correction
+  const int ref_px_idx = 5;                     // pixel chosen as the reference for the relative gain correction
   const std::array<int,2> px_idx_scope = {5,9}; //index of the pixels readout via scope
-  const std::array<int,2> px_x_scope = {1,1}; //x-coordinate of the pixels readout via scope
-  const std::array<int,2> px_y_scope = {1,2}; //y-coordinate of the pixels readout via scope
+  const std::array<int,2> px_x_scope = {1,1};   //x-coordinate of the pixels readout via scope
+  const std::array<int,2> px_y_scope = {1,2};   //y-coordinate of the pixels readout via scope
   
 };
 std::map<eudaq::ConfigSPC,OPAMPRawEvent2StdEventConverter::Config> OPAMPRawEvent2StdEventConverter::confs;
@@ -104,23 +107,27 @@ REGISTER_CONVERTER(OPAMP_5)
 
 OPAMPRawEvent2StdEventConverter::Config& OPAMPRawEvent2StdEventConverter::LoadConf(eudaq::ConfigSPC conf_) const {
   if(confs.find(conf_)!=confs.end()) return confs[conf_];
-  Config conf; //getting parameters for opamp DAQ and scope
-  conf.device_n = -1; // fallback
+  Config conf; // Getting parameters for opamp DAQ and scope
+  conf.device_n = -1; // Fallback
   // DAQ parameters
-  conf.sample_baseline_opamp = 50; // Sample of waveform to be used for baseline calculation in DAQ pixels
-  conf.first_sample_minimum_finder_opamp = 95; // First sample to be used for minimum finder in DAQ pixels
-  conf.last_sample_minimum_finder_opamp = 110; // Last sample to be used for minimum finder in DAQ pixels
-  conf.n_samples_after_min_signal_opamp = 0; // Number of samples after minimum to be used for signal calculation in DAQ pixels
-  conf.n_samples_before_min_signal_opamp = 0; // Number of samples before minimum to be used for signal calculation in DAQ pixels
-  conf.daq_charge_conversion_factor_opamp = 0.062; // DAQ ADC->mV conversion factor (nominal value 38.1uV/ADC)
+  conf.sample_baseline_opamp = 0;                 // Sample of waveform to be used for baseline calculation in DAQ pixels
+  conf.first_sample_minimum_finder_opamp = 95;     // First sample to be used for minimum finder in DAQ pixels
+  conf.last_sample_minimum_finder_opamp = 110;     // Last sample to be used for minimum finder in DAQ pixels
+  conf.n_samples_after_min_signal_opamp = 0;       // Number of samples after minimum to be used for signal calculation in DAQ pixels
+  conf.n_samples_before_min_signal_opamp = 0;      // Number of samples before minimum to be used for signal calculation in DAQ pixels
+  conf.daq_charge_conversion_factor_opamp = 0.062; //  measured ratio between 1 DAQ ADC unit (nominal value 38.1uV) and 1 scope ADC unit (nominal value 0.625mV) 
   // Scope parameters
-  conf.n_samples_signal_opamp_scope = 50; // Number of samples to be used for signal calculation in scope pixels
-  conf.n_samples_baseline_opamp_scope = 100; // Number of samples to be used for baseline calculation in scope pixels
-  conf.baseline_shifting_from_t0_opamp_scope = 700; // Number of samples to be shifted from t0 to be used for baseline calculation in scope pixels
-  conf.underline_delay_from_t0_opamp_scope = 850; // Number of samples to be delayed from t0 to be used for underline calculation in scope pixels
-  conf.threshold_cut_t0_finder_opamp_scope = 7; // Threshold for t0 finder in scope pixels
-  conf.n_points_t0_finder_opamp_scope = 10; // Number of points to be used for t0 finder in scope pixels
+  conf.n_samples_signal_opamp_scope = 50;                  // Number of samples to be used for signal calculation in scope pixels
+  conf.n_samples_baseline_opamp_scope = 100;               // Number of samples to be used for baseline calculation in scope pixels
+  conf.baseline_shifting_from_t0_opamp_scope = 700;        // Number of samples to be shifted from t0 to be used for baseline calculation in scope pixels
+  conf.underline_delay_from_t0_opamp_scope = 850;          // Number of samples to be delayed from t0 to be used for underline calculation in scope pixels
+  conf.threshold_cut_t0_finder_opamp_scope = 7;            // Threshold for t0 finder in scope pixels
+  conf.n_points_t0_finder_opamp_scope = 10;                // Number of points to be used for t0 finder in scope pixels
   conf.scope_charge_conversion_factor_opamp_scope = 0.625; // Oscilloscope ADC->mV conversion factor
+  // Noise estimation parameters
+  conf.estimate_noise_daq    = false; // Togle to estimate noise in DAQ pixels
+  conf.estimate_noise_scope  = false; // Togle to estimate noise in scope pixels
+  conf.noise_t0_sample_scope = -1;    // Sample of waveform to be used for the t0 sample for noise estimation in scope pixels
   // Initialize the gain and error gain vectors
   for (int i=0; i<npixels; i++) {
     conf.gain[i] = 1.0;
@@ -155,7 +162,7 @@ OPAMPRawEvent2StdEventConverter::Config& OPAMPRawEvent2StdEventConverter::LoadCo
     std::string name;
     // DAQ parameters
     name="sample_baseline_opamp";
-    conf.sample_baseline_opamp = conf_->Get(name, 50); // get baseline parameter for DAQ signals from config. If no baseline specified, take 50
+    conf.sample_baseline_opamp = conf_->Get(name, 0); // get baseline parameter for DAQ signals from config. If no baseline specified, take 50
     EUDAQ_DEBUG(name+" set to "+std::to_string(conf.sample_baseline_opamp));
     name="first_sample_minimum_finder_opamp";
     conf.first_sample_minimum_finder_opamp = conf_->Get(name, conf.sample_baseline_opamp +1 ); // get minimum value of the sampling from from config. If no value is specified, take conf.sample_baseline_opamp + 1
@@ -194,15 +201,25 @@ OPAMPRawEvent2StdEventConverter::Config& OPAMPRawEvent2StdEventConverter::LoadCo
     name="scope_charge_conversion_factor_opamp_scope";
     conf.scope_charge_conversion_factor_opamp_scope = conf_->Get(name, 0.625); // get conversion factor to convert the charge from scope to fC
     EUDAQ_DEBUG(name+" set to "+std::to_string(conf.scope_charge_conversion_factor_opamp_scope));
+    name="estimate_noise_daq";
+    std::string estimation_daq = conf_->Get("estimate_noise_daq","false");
+    conf.estimate_noise_daq = estimation_daq == "true";
+    EUDAQ_DEBUG(name+" set to "+std::to_string(conf.estimate_noise_daq));
+    name="estimate_noise_scope";
+    std::string estimation_scope = conf_->Get("estimate_noise_scope","false");
+    conf.estimate_noise_scope = estimation_scope == "true";
+    EUDAQ_DEBUG(name+" set to "+std::to_string(conf.estimate_noise_scope));
+    name="noise_t0_sample_scope";
+    conf.noise_t0_sample_scope = conf_->Get(name, -1); // default value for t0 sample
+    EUDAQ_DEBUG(name+" set to "+std::to_string(conf.noise_t0_sample_scope));
 
     std::string filename = conf_->Get("calibration_file", ""); //GAIN CALIBRATION FILE
     EUDAQ_INFO("Reading calibration file: "+filename);
     std::stringstream infile(filename.c_str());
     std::ifstream input(infile.str().c_str(), std::ifstream::in);
     if (!input.good()) {
-      EUDAQ_WARN("Warning: No calibration file found in path: "+filename);
-    }
-    else {
+      EUDAQ_WARN("Warning: No calibration file found in path: " + filename);
+    } else {
       double gain, gain_err;
       std::string px;
       for(int pixel_idx=0;pixel_idx<npixels;pixel_idx++) {
@@ -215,12 +232,17 @@ OPAMPRawEvent2StdEventConverter::Config& OPAMPRawEvent2StdEventConverter::LoadCo
       }
     }
 
-     if(conf.first_sample_minimum_finder_opamp>conf.last_sample_minimum_finder_opamp) {
-      EUDAQ_THROW("Error: The lowest value allowed for the sampling frame ("+std::to_string(conf.first_sample_minimum_finder_opamp)+") exceeds the highest ("+std::to_string(conf.last_sample_minimum_finder_opamp)+")");
+    if (conf.first_sample_minimum_finder_opamp > conf.last_sample_minimum_finder_opamp) {
+      EUDAQ_THROW("Error: The lowest value allowed for the sampling frame (" +std::to_string(conf.first_sample_minimum_finder_opamp) +") exceeds the highest (" +std::to_string(conf.last_sample_minimum_finder_opamp) + ")");
     }
 
-     if(conf.sample_baseline_opamp > conf.first_sample_minimum_finder_opamp-conf.n_samples_before_min_signal_opamp && conf.sample_baseline_opamp < conf.first_sample_minimum_finder_opamp+conf.n_samples_after_min_signal_opamp) {
-      EUDAQ_THROW("Error: The value used for the baseline estimation ("+std::to_string(conf.sample_baseline_opamp)+") is in the frame used for computing the signal");
+    if (conf.sample_baseline_opamp > conf.first_sample_minimum_finder_opamp - conf.n_samples_before_min_signal_opamp &&
+        conf.sample_baseline_opamp < conf.first_sample_minimum_finder_opamp + conf.n_samples_after_min_signal_opamp) {
+      EUDAQ_THROW("Error: The value used for the baseline estimation (" +std::to_string(conf.sample_baseline_opamp) +") is in the frame used for computing the signal");
+    }
+
+    if (conf.estimate_noise_scope && conf.noise_t0_sample_scope < conf.baseline_shifting_from_t0_opamp_scope) {
+      EUDAQ_THROW("Error: Can't find the noise t0 sample (" +std::to_string(conf.noise_t0_sample_scope) +") before the baseline shifting from t0 (" +std::to_string(conf.baseline_shifting_from_t0_opamp_scope) +")");
     }
   }
 
@@ -286,7 +308,14 @@ bool OPAMPRawEvent2StdEventConverter::Converting(eudaq::EventSPC in,
     return false;
     }
   float signal[npixels]={0};
-  for(int is=imin-conf.n_samples_before_min_signal_opamp;is!=imin+conf.n_samples_after_min_signal_opamp+1;++is) { //starting ns_b points before minimum (up until ns_a points after minimum) 
+  int is_in = imin-conf.n_samples_before_min_signal_opamp;  //starting ns_b points before minimum (up until ns_a points after minimum)
+  int is_fin = imin+conf.n_samples_after_min_signal_opamp+1;
+  if(conf.estimate_noise_daq){ //save the pixel values before the frames used for the estimation of the baseline
+    is_in = 2*conf.sample_baseline_opamp-imin-conf.n_samples_after_min_signal_opamp;
+    is_fin = 2*conf.sample_baseline_opamp-imin+conf.n_samples_before_min_signal_opamp+1;
+  }
+
+  for(int is=is_in; is!=is_fin; ++is) {
     uint16_t adcs[npixels];
     unscramble(data+is*frame_size_in_byte,adcs);
     for(int i=0;i!=npixels;++i) {
@@ -299,10 +328,12 @@ bool OPAMPRawEvent2StdEventConverter::Converting(eudaq::EventSPC in,
       signal[i] = signal[i] / (conf.gain[i] / conf.gain[ref_px_idx]); //signal with relative gain correction applied
   }
   plane.SetSizeRaw(4,4);
-  for(int y=0;y!=4;++y) 
-    for(int x=0;x!=4;++x)
-      plane.SetPixel((y*4)+x, x, y, -signal[y*4+x]*conf.daq_charge_conversion_factor_opamp*conf.scope_charge_conversion_factor_opamp_scope); // equalized and converted in mV
-
+  for(int y=0;y!=4;++y){ 
+    for(int x=0;x!=4;++x){
+    if(conf.estimate_noise_scope && !conf.estimate_noise_daq) plane.SetPixel((y*4)+x, x, y, std::numeric_limits<float>::max()); // prevent to have a 0 peak from the daq pixels
+    else plane.SetPixel((y*4)+x, x, y, -signal[y*4+x]*conf.daq_charge_conversion_factor_opamp*conf.scope_charge_conversion_factor_opamp_scope); // equalized and converted in mV
+    }
+  }
   // Signal from the scope
   const std::vector<uint8_t> & raw_block_osch1 = rawev->GetBlock(2);
   const std::vector<uint8_t> & raw_block_osch2 = rawev->GetBlock(3);
@@ -316,11 +347,18 @@ bool OPAMPRawEvent2StdEventConverter::Converting(eudaq::EventSPC in,
     EUDAQ_ERROR("Error: Baseline sample number ("+std::to_string(conf.n_samples_baseline_opamp_scope)+") exceeds total number of samples ("+std::to_string(raw_block_osch1.size())+")");
     return false;
   }
+  if(conf.estimate_noise_scope && conf.noise_t0_sample_scope > raw_block_osch1.size() - conf.underline_delay_from_t0_opamp_scope){
+    EUDAQ_ERROR("Error: t0 sample number ("+std::to_string(conf.noise_t0_sample_scope)+") exceeds total number of samples ("+std::to_string(raw_block_osch1.size())+")");
+    return false;
+  }
 
   //find t0 
   int osc_t0[2];
-  for (int i = 0; i != 2; ++i)
-    osc_t0[i] = FindT0(wave[i],GetMinSample(wave[i],raw_block_osch1.size()),conf.threshold_cut_t0_finder_opamp_scope,conf.n_points_t0_finder_opamp_scope);
+  for (int i = 0; i != 2; ++i){
+    if (!conf.estimate_noise_scope)
+      osc_t0[i] = FindT0(wave[i],GetMinSample(wave[i],raw_block_osch1.size()),conf.threshold_cut_t0_finder_opamp_scope,conf.n_points_t0_finder_opamp_scope);
+    else osc_t0[i]=conf.noise_t0_sample_scope; //set artifically t0 sample in a region in which there's no signal
+  }
 
   // BASELINE -> line
   float osc_baseline[2];
@@ -330,7 +368,9 @@ bool OPAMPRawEvent2StdEventConverter::Converting(eudaq::EventSPC in,
   for (int i = 0; i != 2; ++i){
     if (osc_t0[i] < 0) signal[i] = 0; // without t0 amplitude is meaningless.
     else signal[i] = WaveformAverage(wave[i],conf.n_samples_signal_opamp_scope,osc_t0[i]+conf.underline_delay_from_t0_opamp_scope)-osc_baseline[i];
+    
     plane.SetPixel(px_idx_scope[i],px_x_scope[i],px_y_scope[i], -signal[i] / (conf.gain[px_idx_scope[i]]) * conf.gain[ref_px_idx] * conf.scope_charge_conversion_factor_opamp_scope); // pixel readout via scope, 0.625mV is the scope amplitude unit 
+    if(conf.estimate_noise_daq && !conf.estimate_noise_scope) plane.SetPixel(px_idx_scope[i],px_x_scope[i],px_y_scope[i], std::numeric_limits<float>::max()); // to prevent to have a 0 peak from the scope pixels
   }
   out->AddPlane(plane);
   return true;
