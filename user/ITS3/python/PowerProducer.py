@@ -5,6 +5,7 @@ from labequipment import HAMEG
 from time import sleep
 from datetime import datetime
 import threading
+from utils import exception_handler
 
 class PowerProducer(pyeudaq.Producer):
     def __init__(self,name,runctrl):
@@ -17,11 +18,13 @@ class PowerProducer(pyeudaq.Producer):
         self.lock=threading.Lock()
         self.last_status=None
 
+    @exception_handler
     def DoInitialise(self):
         self.ps=HAMEG(self.GetInitConfiguration().as_dict()['path'])
         self.idev=0
         self.isev=0
 
+    @exception_handler
     def DoConfigure(self):
         conf=self.GetConfiguration().as_dict()
         for ch in range(1,self.ps.n_ch+1):
@@ -37,17 +40,21 @@ class PowerProducer(pyeudaq.Producer):
         self.idev=0
         self.isev=0
 
+    @exception_handler
     def DoStartRun(self):
         self.is_running=True
         self.idev=0
         self.isev=0
-        
+
+    @exception_handler
     def DoStopRun(self):
         self.is_running=False
 
+    @exception_handler
     def DoReset(self):
         self.is_running=False
 
+    @exception_handler
     def DoStatus(self):
         self.SetStatusTag('StatusEventN','%d'%self.isev);
         self.SetStatusTag('DataEventN'  ,'%d'%self.idev);
@@ -57,17 +64,8 @@ class PowerProducer(pyeudaq.Producer):
                 ' | '.join([f"{'ON' if sel[ch] else 'OFF'}{' FUSE' if fused[ch] else ''} {volt_meas[ch]:.2f}V {curr_meas[ch]*1.e3:.1f}mA" for ch in range(self.ps.n_ch)])
             )
 
-
+    @exception_handler
     def RunLoop(self):
-        self.idev=0
-        self.isev=0
-        # TODO: status events
-        try:
-            self.foo()
-        except Exception as e:
-            print(e)
-            raise
-    def foo(self):
         self.send_status_event(time=datetime.now(),bore=True)
         self.isev+=1
         while self.is_running:
