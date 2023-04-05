@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 import pyeudaq
-import pico_daq as daq
+from pyeudaq import EUDAQ_INFO, EUDAQ_DEBUG
 import trigger
 import mlr1daqboard
+from mlr1daqboard import pico_daq as daq
 from datetime import datetime,timedelta
 from time import sleep
 import subprocess
 import numpy as np
 import os
-import logging
+from utils import exception_handler, logging_to_eudaq
 
 def get_software_git(module):
     try:
@@ -36,7 +37,6 @@ def get_software_diff(module):
 class DPTSProducer(pyeudaq.Producer):
     def __init__(self,name,runctrl):
         pyeudaq.Producer.__init__(self,name,runctrl)
-        logging.info(name)
         self.name=name # TODO: better make available and use GetName()?
         self.dpts=None
         self.daq=None
@@ -45,9 +45,10 @@ class DPTSProducer(pyeudaq.Producer):
         self.idev=0
         self.isev=0
         self.iwav=0
-        self.via_daq_board=False
+        self.via_daq_board=True
         self.smart_rdo=None
 
+    @exception_handler
     def DoInitialise(self):
         conf=self.GetInitConfiguration().as_dict()
         if 'smart_scope_readout' in conf:
@@ -60,15 +61,18 @@ class DPTSProducer(pyeudaq.Producer):
             nsegments=int(conf['nsegments']) if 'nsegments' in conf else 1)
         assert self.daq.dt*1e9 <= 0.2, f"Expected picosopce time bins of 0.2 ns, but got {self.daq.dt*1e9} ns"
         if 'ctrl_ports' in conf:
+            import dpts_ctrl # dpts-utils path must be set to use this (experts only)
             ctrl_ports = [p.strip() for p in conf['ctrl_ports'].split(',')]
-            import dpts_ctrl
             self.dpts = {p:dpts_ctrl.PmodCtrlDPTS(p) for p in ctrl_ports}
+            self.via_daq_board=False
         elif 'serials' in conf and 'proximities' in conf:
-            self.via_daq_board=True
             serials = [s.strip() for s in conf['serials'].split(',')]
             proxies = [p.strip() for p in conf['proximities'].split(',')]
             self.dpts = {p:mlr1daqboard.DPTSDAQBoard(calibration=p,serial=s) for p,s in zip(proxies,serials)}
+        else:
+            raise ValueError("Neither 'ctrl_ports' nor 'serials' and 'proximities' defined in conf file.")
 
+    @exception_handler
     def DoConfigure(self):
         self.idev=0
         self.isev=0
@@ -99,6 +103,7 @@ class DPTSProducer(pyeudaq.Producer):
                 if key in conf: regs[reg] = int(conf[key],16)
             self.dpts[d].write_shreg(**regs)
 
+    @exception_handler
     def DoStartRun(self):
         self.idev=0
         self.isev=0
@@ -107,26 +112,23 @@ class DPTSProducer(pyeudaq.Producer):
         self.armtrigger()
         self.is_running=True
 
+    @exception_handler
     def DoStopRun(self):
         self.is_running=False
 
+    @exception_handler
     def DoReset(self):
         self.is_running=False
         # TODO: cleanup!?
 
+    @exception_handler
     def DoStatus(self):
         self.SetStatusTag('StatusEventN','%d'%self.isev)
         self.SetStatusTag('DataEventN'  ,'%d'%self.idev)
         self.SetStatusMsg(f'Waveforms with signal: {self.iwav}')
 
+    @exception_handler
     def RunLoop(self):
-        try:
-            self._RunLoop()
-        except Exception as e:
-            logging.exception(e)
-            raise
-
-    def _RunLoop(self):
         # status events: roughly every 10s (time checked at least every 1000 events or at receive timeout)
         tlast=datetime.now()
         ilast=0
@@ -137,13 +139,13 @@ class DPTSProducer(pyeudaq.Producer):
             if self.daq.ready():
                 self.read_and_send_events()
             elif not self.is_running:
-                logging.info('stopping picoscope')
+                EUDAQ_INFO('stopping picoscope')
                 self.daq.stop()
                 ncap=self.daq.get_ncaptures()
                 if ncap>0:
-                    logging.info(f'{ncap} segments left to be read')
+                    EUDAQ_INFO(f'{ncap} segments left to be read')
                     self.read_and_send_events(ncap)
-                logging.info('all picoscope data read')
+                EUDAQ_INFO('all picoscope data read')
             elif self.smart_rdo is not None:
                 ncap=self.daq.get_ncaptures()
                 if ncap>0 and ilast_cap==ncap:
@@ -205,12 +207,12 @@ class DPTSProducer(pyeudaq.Producer):
     def armtrigger(self):
         self.daq.arm()
         if self.trigger_on=='AUX':
-            logging.debug('release bsy')
+            # print('release bsy')
             self.trigger.write(trigger.Trigger.MOD_SOFTBUSY,0,0x2,commit=True) # releases software busy and arms setting it right after receiving of trigger        
 
     def read_and_send_events(self,nevents=None):
         if nevents is None: nevents=self.daq.nsegments
-        logging.debug(f"rdo {nevents} event(s)")
+        EUDAQ_DEBUG(f"rdo {nevents} event(s)")
         if nevents==1:
             data_array=[self.daq.rdo(nevents)]
         else:
@@ -237,21 +239,9 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description='DPTS EUDAQ2 Producer',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--run-control' ,'-r',default='tcp://localhost:44000')
     parser.add_argument('--name' ,'-n',default='DPTS_XXX')
-    parser.add_argument('--log-level' ,'-l',default='DEBUG')
-    parser.add_argument('--log-file' ,'-f')
     args=parser.parse_args()
 
-    if args.log_file is None:
-        args.log_file = f"logs/{args.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-    if os.path.dirname(args.log_file) and not os.path.exists(os.path.dirname(args.log_file)):
-        os.makedirs(os.path.dirname(args.log_file))
-
-    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',filename=args.log_file)
-    log_term = logging.StreamHandler()
-    log_term.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    log_term.setLevel(logging.getLevelName(args.log_level.upper()))
-    logging.getLogger().addHandler(log_term)
-
+    logging_to_eudaq()
 
     myproducer=DPTSProducer(args.name,args.run_control)
     myproducer.Connect()
