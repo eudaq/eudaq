@@ -18,8 +18,6 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
 
-set(CMAKE_SHARED_LIBRARY_PREFIX libeudaq_)
-set(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
 set(EUDAQ_CORE_LIBRARY core)
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
 
