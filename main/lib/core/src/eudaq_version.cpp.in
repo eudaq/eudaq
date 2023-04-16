@@ -1,0 +1,58 @@
+#include <string>
+#include "eudaq/eudaq_version.hh"
+
+namespace eudaq {
+namespace  version {
+
+   std::string getEudaqVersion()
+   {
+	return "@PROJECT_VERSION@";
+   }
+
+   unsigned getEudaqVersionMajor()
+   {
+	return @PROJECT_VERSION_MAJOR@;
+   }
+
+   unsigned getEudaqVersionMinor()
+   {
+	return @PROJECT_VERSION_MINOR@ +0;
+   }
+
+   unsigned getEudaqVersionPatch()
+   {
+	return @PROJECT_VERSION_PATCH@ +0;
+   }
+
+   unsigned getEudaqVersionTweak()
+   {
+        return @PROJECT_VERSION_TWEAK@ +0;
+   }
+   static const std::string git_branch="@EUDAQ_GIT_BRANCH@";
+   static const std::string git_tag="@EUDAQ_GIT_TAG@";
+   static const std::string git_hash="@EUDAQ_GIT_HASH@";
+   static const std::string git_date="@EUDAQ_GIT_DATE@";
+   static const std::string git_subject="@EUDAQ_GIT_SUBJECT@";
+
+   std::string getEudaqGitBranch()
+   {
+        return git_branch;
+   }
+   std::string getEudaqGitTag()
+   {
+        return git_tag;
+   }
+   std::string getEudaqGitHash()
+   {
+        return git_hash;
+   }
+   std::string getEudaqGitDate()
+   {
+        return git_date;
+   }
+   std::string getEudaqGitSubject()
+   {
+        return git_subject;
+   }
+}
+}
