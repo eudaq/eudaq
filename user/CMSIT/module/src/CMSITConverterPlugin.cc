@@ -17,6 +17,9 @@ using namespace eudaq;
 // #####################################
 void TheConverter::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
 {
+    // ###########################################
+    // # @TMP@: mapping quad chips is hard-coded #
+    // ###########################################
     if(chipIdMod4 == 0)
     {
         row = nRows + row;
@@ -306,9 +309,11 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     else if((cfg.find("25x100origR1C0") != std::string::npos) || (cfg.find("100x25origR1C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR1C0;
 
-    // ###################################
-    // # Compute plane ID from device ID #
-    // ###################################
+    // #############################################
+    // # @TMP@: compute plane ID from device ID    #
+    // # Quad modules are coded as chipId = QUADID #
+    // # Dual modules are coded as chipId = DUALID #
+    // #############################################
     planeId = deviceId;
     if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
         planeId = round(deviceId / CMSITplaneIdOffset) + QUADID;
