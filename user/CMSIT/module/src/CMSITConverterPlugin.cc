@@ -17,6 +17,9 @@ using namespace eudaq;
 // #####################################
 void TheConverter::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
 {
+    // ###########################################
+    // # @TMP@: mapping quad chips is hard-coded #
+    // ###########################################
     if(chipIdMod4 == 0)
     {
         row = nRows + row;
@@ -110,7 +113,7 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
     CMSITEventData::EventData theEvent;
     if(CMSITConverterPlugin::Deserialize(ev, theEvent) == true)
     {
-        std::vector<int> planeIDs;
+        std::vector<int> deviceIDs;
         for(auto i = 0; i < theEvent.chipData.size(); i++)
         {
             int                                 chargeCut;
@@ -119,17 +122,16 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
             TheConverter::calibrationParameters theCalibPar;
             std::string                         chipTypeFromFile;
             const auto&                         theChip = theEvent.chipData[i];
-            const auto                          planeId = CMSITConverterPlugin::ComputePlaneId(theChip.hybridId, theChip.chipId, chipTypeFromFile, theCalibPar, chargeCut, triggerIdLow, triggerIdHigh);
+            const auto deviceId = CMSITConverterPlugin::ReadConfigurationAndComputeDeviceId(theChip.hybridId, theChip.chipId, chipTypeFromFile, theCalibPar, chargeCut, triggerIdLow, triggerIdHigh);
 
-            if(std::find(planeIDs.begin(), planeIDs.end(), planeId) == planeIDs.end())
+            if(std::find(deviceIDs.begin(), deviceIDs.end(), deviceId) == deviceIDs.end())
             {
-                int         nRows, nCols;
-                double      pitchX, pitchY;
+                int         nRows, nCols, planeId;
                 std::string ChipType;
-                auto        theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, pitchX, pitchY, ChipType);
+                auto        theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
 
                 StandardPlane plane(planeId, EVENT_TYPE, ChipType);
-                planeIDs.push_back(planeId);
+                deviceIDs.push_back(deviceId);
                 plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
                 // #######################################
@@ -270,14 +272,12 @@ void CMSITConverterPlugin::Initialize()
     }
 }
 
-TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY, std::string& ChipType) const
+TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, std::string& ChipType, int deviceId, int& planeId) const
 {
     TheConverter theConverter;
     std::string  cfg = (cfgFromFile != "" ? cfgFromFile : cfgFromData);
     nRows            = (cfg.find("RD53A") != std::string::npos ? NROWS_RD53A : NROWS_RD53B);
     nCols            = (cfg.find("RD53A") != std::string::npos ? NCOLS_RD53A : NCOLS_RD53B);
-    pitchX           = PITCHX; // [mm]
-    pitchY           = PITCHY; // [mm]
     ChipType         = (cfg.find("RD53A") != std::string::npos ? CHIPTYPE_RD53A : CHIPTYPE_RD53B);
 
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
@@ -287,8 +287,6 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     {
         nCols /= 2;
         nRows *= 2;
-        pitchX = 0.100;
-        pitchY = 0.025;
     }
 
     if(cfg.find("dual") != std::string::npos)
@@ -310,6 +308,17 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
     else if((cfg.find("25x100origR1C0") != std::string::npos) || (cfg.find("100x25origR1C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR1C0;
+
+    // #############################################
+    // # @TMP@: compute plane ID from device ID    #
+    // # Quad modules are coded as chipId = QUADID #
+    // # Dual modules are coded as chipId = DUALID #
+    // #############################################
+    planeId = deviceId;
+    if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
+        planeId = round(deviceId / CMSITplaneIdOffset) + QUADID;
+    else if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
+        planeId = round(deviceId / CMSITplaneIdOffset) + DUALID;
 
     return theConverter;
 }
@@ -388,23 +397,14 @@ bool CMSITConverterPlugin::Deserialize(const EventSPC ev, CMSITEventData::EventD
     return false;
 }
 
-int CMSITConverterPlugin::ComputePlaneId(const uint32_t                       hybridId,
-                                         const uint32_t                       chipId,
-                                         std::string&                         chipTypeFromFile,
-                                         TheConverter::calibrationParameters& calibPar,
-                                         int&                                 chargeCut,
-                                         int&                                 triggerIdLow,
-                                         int&                                 triggerIdHigh) const
+int CMSITConverterPlugin::ReadConfigurationAndComputeDeviceId(const uint32_t                       hybridId,
+                                                              const uint32_t                       chipId,
+                                                              std::string&                         chipTypeFromFile,
+                                                              TheConverter::calibrationParameters& calibPar,
+                                                              int&                                 chargeCut,
+                                                              int&                                 triggerIdLow,
+                                                              int&                                 triggerIdHigh) const
 {
-    // #######################################################################################################
-    // # Generate a unique planeId: 100 (CMSIT offset) + 100 * hybridId (hybrid index) + chipId (chip index) #
-    // # Don't use these ranges (Needs to be unique to each ROC):                                            #
-    // # (-) 0-10:  used by NIConverter/MIMOSA                                                               #
-    // # (-) 25-30: used by USBPixGen3Converter/FEI-4                                                        #
-    // # (-) 30+:   used by BDAQ53Converter/RD53 with same model (30 [BDAQ offset] + 10 * boardId + chipId)  #
-    // #######################################################################################################
-    int planeId = CMSITplaneIdOffset + 100 * hybridId + chipId;
-
     // #################
     // # Set chip type #
     // #################
@@ -452,7 +452,14 @@ int CMSITConverterPlugin::ComputePlaneId(const uint32_t                       hy
         triggerIdHigh = -1;
     }
 
-    return planeId;
+    // ########################################################################################################
+    // # Generate a unique deviceId: 100 (CMSIT offset) + 100 * hybridId (hybrid index) + chipId (chip index) #
+    // # Don't use these ranges (Needs to be unique to each ROC):                                             #
+    // # (-) 0-10:  used by NIConverter/MIMOSA                                                                #
+    // # (-) 25-30: used by USBPixGen3Converter/FEI-4                                                         #
+    // # (-) 30+:   used by BDAQ53Converter/RD53 with same model (30 [BDAQ offset] + 10 * boardId + chipId)   #
+    // ########################################################################################################
+    return CMSITplaneIdOffset + 100 * hybridId + chipId;
 }
 
 bool                                                       CMSITConverterPlugin::exitIfOutOfSync          = false;

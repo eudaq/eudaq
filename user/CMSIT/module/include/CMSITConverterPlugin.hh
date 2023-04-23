@@ -46,6 +46,8 @@ static const int         MAXFRAMES = 32;
 static const int         MAXHYBRID = 9, MAXCHIPID = 32;
 static const double      PITCHX = 0.050, PITCHY = 0.050; // [mm]
 static const int         CMSITplaneIdOffset = 100;
+static const int         QUADID             = 40;
+static const int         DUALID             = 80;
 static const int         MAXTRIGIDCNT       = 32767;
 // #####################################################################
 // # Layout example:                                                   #
@@ -132,18 +134,18 @@ class CMSITConverterPlugin : public StdEventConverter
 
   private:
     void         Initialize();
-    TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, double& pitchX, double& pitchY, std::string& ChipType) const;
+    TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, std::string& ChipType, int deviceId, int& planeId) const;
 #ifdef ROOTSYS
     TH2D* FindHistogram(const std::string& nameInHisto, uint16_t hybridId, uint16_t chipId);
 #endif
     bool Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const;
-    int  ComputePlaneId(const uint32_t                       hybridId,
-                        const uint32_t                       chipId,
-                        std::string&                         chipTypeFromFile,
-                        TheConverter::calibrationParameters& calibPar,
-                        int&                                 chargeCut,
-                        int&                                 triggerIdLow,
-                        int&                                 triggerIdHigh) const;
+    int  ReadConfigurationAndComputeDeviceId(const uint32_t                       hybridId,
+                                             const uint32_t                       chipId,
+                                             std::string&                         chipTypeFromFile,
+                                             TheConverter::calibrationParameters& calibPar,
+                                             int&                                 chargeCut,
+                                             int&                                 triggerIdLow,
+                                             int&                                 triggerIdHigh) const;
 
     static bool                                                       exitIfOutOfSync;
     static int                                                        theTLUtriggerId_previous;
