@@ -12,6 +12,7 @@ endif()
 
 if(NOT ROOT_FOUND)
   list(REMOVE_ITEM MODULE_SRC src/AD9249EventConverter.cc)
+  list(REMOVE_ITEM MODULE_SRC src/DSO9254AEventConverter.cc)
 endif()
 
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
