@@ -14,9 +14,8 @@
 
 3. Install `alpide-daq-software` (<https://gitlab.cern.ch/alice-its3-wp3/alpide-daq-software.git>) following the instructions in the respective `README` file.
 4. For trigger board clone <https://gitlab.cern.ch/alice-its3-wp3/trigger> and read respective `README`.
-5. For PTH200 and HAMEG power supplies clone <https://gitlab.cern.ch/alice-its3-wp3/lab-equipment.git> and install (see respective `README`).
-6. For DPTS clone <https://gitlab.cern.ch/alice-its3-wp3/dpts-utils.git> and follow the `README` for Picoscope driver installation.
-7. For MLR1 DAQ board based planes clone <https://gitlab.cern.ch/alice-its3-wp3/apts-dpts-ce65-daq-software.git> and follow the `README` to install the software.
+5. For PTH200, RTD23, ZABER moving stages and HAMEG power supplies clone <https://gitlab.cern.ch/alice-its3-wp3/lab-equipment.git> and install (see respective `README`).
+6. For MLR1 DAQ board based planes clone <https://gitlab.cern.ch/alice-its3-wp3/apts-dpts-ce65-daq-software.git> and follow the `README` to install the software.
 
 ## Configuration
 
@@ -29,6 +28,15 @@ The following command will start the tmux session named ITS3 with multiple windo
     ./ITS3start.py path/to/file.ini
 
 N.B. For DPTS trigger board must be connected to the same PC where DPTS is running.
+
+### QA information in Run Control
+
+The following information can be read from the Run Control window to asses the quality of the data being acquired:
+
+- `DATA EV#` counters should be the same among all the telescope planes. Discrepancies can be allowed while triggers/spills are incoming, but within 2 seconds of spill end / stopping the trigger they should all match.
+- `Warning! Out of sync!` message from data collector is related to the above point. It can appear during a spill but must dissaper within 2 seconds after the spill ends.
+
+In case behavour is different than described, there is a problem and run is to be considered *BAD*.
 
 ## Stopping
 
@@ -52,6 +60,19 @@ From anywhere:
 In addition to the above mentioned `READMEs`, it is recommended to read the following documentation:
 
 - [ALPIDE DAQ FPGA Firmware](https://gitlab.cern.ch/alice-its3-wp3/alpide-daq-fpga-firmware/-/blob/master/README.md)
+
+### Hints on setting up trigger and busy
+
+In every trigger/busy chain there should be one and only one trigger/busy logic controller. All the other devices should just receive and propagate trigger and busy signals.
+The most common trigger/busy logic controller is the trigger board. Alternative options are ALPIDE DAQ board set in `primary` mode or a Picoscope as a part of DPTS Producer.
+
+To use DPTS / Picoscope as trigger/busy logic controller:
+- DPTS Producer has to be set up to trigger on one of the two Picoscope channels connected to DPTS
+- AWG output of the Picoscope provides the TRIGGER signal (for other devices)
+- AUX input of the Picoscope is the BUSY input - to be connected to the output of the busy chain
+
+The Picoscope acquisition window length acts as trigger seperation time (equivalent to `dt_trg` in trigger board).
+
 
 ### Hints on using Zaber moving stages
 
@@ -95,3 +116,23 @@ You can create a calibration file using `scripts/DPTS_calib.py`, e.g.:
     ./DPTS_calib.py -i 0 30 DPTSOW22B7_VBB-1.2V_calibration.npy a 1.02 1.02 -i 1 30 DPTSOW22B6_VBB-1.2V_calibration.npy a 1.02 1.02 -o 2022-05_PS_B7_B6_1.2V.calib
 
 The `npy` files can be obtained from CERNBox/EOS DPTS file storage.
+
+### Reading TRGMON counters
+
+Every beginning of run event (BORE) and end of run event (EORE) of an ALPIDE plane includes the status of the trigger monitoring registers.
+The trigger monitoring counts the number of incoming trigger reuqests and the decisions on their acceptance or rejection, as well as the reasons for the latter. In addition, the accumulated time spent in any of the busy conditions is counted.
+
+The EORE and BORE status events for each plane appear in the datacollector window of the tmux session.
+Offline, the TRGMON counters can be accessed by reading the run file via `euCliReader` and piping it to grep to search for the relevant register.
+
+    ./euCliReader -d run123456.raw | grep 'NTRGACC' (or any other TRGMON register)
+
+Alternatively, without having eudaq2 installed, a terminal file viewer of one's choice can be used in place of `euCliReader`, piping the output then to `grep -a`, e.g.:
+
+    less run123456.raw | grep -a 'NTRGBSY'
+
+The number of triggers requested (`NTRGREQ`) and accepted (`NTRGACC`) correspond to the number of events that were recorded and should be **equal**.
+The number of triggers rejected for any reason (`NTRGBSY_*`) should be 0.
+Should this not be the case, the trigger logic/chain needs to be adjusted.
+
+Details on the output can be found here: <https://gitlab.cern.ch/alice-its3-wp3/alpide-daq-fpga-firmware#trigger-monitor>
