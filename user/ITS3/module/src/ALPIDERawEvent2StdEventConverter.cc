@@ -10,8 +10,6 @@ private:
   void Dump(const std::vector<uint8_t> &data,size_t i) const;
   struct Config {
     int device_n;
-    bool useTime;
-    int64_t runStartTime;
   };
   Config& LoadConf(eudaq::ConfigSPC config_) const;
   static std::map<eudaq::ConfigSPC,Config> confs;
@@ -44,9 +42,6 @@ ALPIDERawEvent2StdEventConverter::Config& ALPIDERawEvent2StdEventConverter::Load
   EUDAQ_DEBUG("Load configuration for ALPIDE");
   Config conf;
   conf.device_n = -1; // decode all fallback (used in online monitor)
-  conf.runStartTime = -1; // not set
-  conf.useTime = conf_->Get("use_time_stamp", false);
-  EUDAQ_DEBUG( " use_time_stamp  = " + conf.useTime ? "true" : "false");
 
   // pass configuration via Corryvreckan EUDAQ2EventLoader
   std::string id=conf_?conf_->Get("identifier",""):""; // set by corry
@@ -87,25 +82,9 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
   for (int j=0;j<8;++j) tev|=((uint64_t)data[i+8+j])<<(j*8);
   tev*=12500; // 80Mhz clks to 1ps
 
-  // store time of the run start for each plane
-  if(iev == 1){
-    conf.runStartTime = tev;
-  }
-
-  // use timestamps
-  if(conf.useTime && conf.runStartTime < 0){
-    out->SetTimeBegin(0);
-    out->SetTimeEnd(0);
-  }
-  else if(conf.useTime){
-    out->SetTimeBegin(tev - conf.runStartTime);
-    out->SetTimeEnd(tev - conf.runStartTime);
-  }
   // forcing corry to fall back on trigger IDs
-  else{
-    out->SetTimeBegin(0);
-    out->SetTimeEnd(0);
-  }
+  out->SetTimeBegin(0);
+  out->SetTimeEnd(0);
   out->SetTriggerN(iev);
 
   i+=16;
