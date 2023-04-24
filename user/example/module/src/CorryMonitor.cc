@@ -1,30 +1,11 @@
 #include "eudaq/Monitor.hh"
-#include "eudaq/StandardEvent.hh"
-#include "eudaq/StdEventConverter.hh"
 #include "eudaq/Configuration.hh"
-#include "eudaq/Utils.hh"
-#include <iostream>
-#include <fstream>
-#include <ratio>
-#include <chrono>
-#include <thread>
-#include <random>
-#include <unistd.h>
-#include <signal.h>
+
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <iterator>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
+#include <sys/inotify.h>
 #include <regex>
 #include <filesystem>
-#include <algorithm>
-
-#include <sys/inotify.h>
-/* // TODO: For cross platform monitoring of new files in folder need to adapt code with
-#include <QFileSystemWatcher>
-*/
 
 struct CorryArgumentList {
   char **argv;
@@ -209,9 +190,6 @@ std::pair<std::string, std::string> CorryMonitor::getFileString(std::string patt
 void CorryMonitor::DoConfigure(){
   auto conf = GetConfiguration();
   //conf->Print(std::cout);
-  m_en_print                  = conf->Get("CORRY_ENABLE_PRINT", 0);
-  m_en_std_converter          = conf->Get("CORRY_ENABLE_STD_CONVERTER", 0);
-  m_en_std_print              = conf->Get("CORRY_ENABLE_STD_PRINT", 0);
   m_datacollectors_to_monitor = conf->Get("DATACOLLECTORS_TO_MONITOR", "my_dc");
   m_eventloader_types         = conf->Get("CORRESPONDING_EVENTLOADER_TYPES", "");
   m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
@@ -467,15 +445,4 @@ void CorryMonitor::DoTerminate(){
 }
 
 void CorryMonitor::DoReceive(eudaq::EventSP ev){
-  if(m_en_print)
-    ev->Print(std::cout);
-  if(m_en_std_converter){
-    auto stdev = std::dynamic_pointer_cast<eudaq::StandardEvent>(ev);
-    if(!stdev){
-      stdev = eudaq::StandardEvent::MakeShared();
-      eudaq::StdEventConverter::Convert(ev, stdev, nullptr); //no conf
-      if(m_en_std_print)
-	stdev->Print(std::cout);
-    }
-  }
 }
