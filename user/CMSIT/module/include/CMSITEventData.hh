@@ -18,6 +18,15 @@
 
 namespace CMSITEventData
 {
+// ##################################################################
+// # Hardcoded number incremented at every change of the dataformat #
+// ##################################################################
+static int& DataFormatVersion()
+{
+    static int value = 0;
+    return value;
+}
+
 struct HitData
 {
     uint32_t row, col, tot;
