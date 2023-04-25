@@ -21,11 +21,7 @@ namespace CMSITEventData
 // ##################################################################
 // # Hardcoded number incremented at every change of the dataformat #
 // ##################################################################
-static int& DataFormatVersion()
-{
-    static int value = 0;
-    return value;
-}
+const int DataFormatVersion = 0;
 
 struct HitData
 {
