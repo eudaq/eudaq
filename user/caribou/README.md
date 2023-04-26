@@ -84,3 +84,9 @@ The following parameters can be passed in the configuration in order to influenc
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
 * `plane_id`: Value that will be set `eudaq::StandardPlane::ID`. This setting can be used to support multiple devices in the same run. Default is `0`.
+* `zero_suppression`: If `1`, frames with no hits will *not* be skipped by the converter. Defaults to `0`.
+* `discard_during_reset`: If `0`, frames that appear during the frame reset will not be ignored. Default is `1`.
+* `check_valid`: If `1`, frames where the valid bit is not set will be skipped. Defaults to `0`.
+* `fine_ts_effective_bits_qX`: Sets the effective number of time bins for the fine TDC, where `X` is the number of the quadrant. Default value is `26` for all quadrants.
+* `frame_start`: First frame to be used in an event for a given trigger. Can be set to a higher value to ignore the first frame(s). Defaults to `0`.
+* `frame_stop`: Last frame to be used in an event for a given trigger. Can be set to a lower value to ignore the last frame(s). Defaults to `2`. Might need to be adjusted depending on the peary configuration.

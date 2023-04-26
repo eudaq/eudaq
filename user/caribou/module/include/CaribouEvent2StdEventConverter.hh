@@ -2,6 +2,9 @@
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 
+#include <array>
+#include <vector>
+
 // Foreward declaration of TF1, so that the header has no root dependecies
 class TF1;
 
@@ -78,13 +81,19 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CariboudSiPMEvent");
   private:
+    struct PlaneConfiguration {
+      bool configured {false};
+      bool zeroSupp {true};
+      bool discardDuringReset {true};
+      bool checkValid {false};
+      std::array<double, 4> fine_ts_effective_bits {26., 26., 26., 26.};
+      uint64_t frame_start {0};
+      uint64_t frame_stop {2};
+    };
     static uint8_t getQuadrant(const uint16_t& col, const uint16_t& row);
-    static bool m_configured;
-    static bool m_zeroSupp;
-    static bool m_checkValid;
-    static uint64_t m_trigger;
-    static uint64_t m_frame;
-    static double m_fine_ts_effective_bits[4];
+    static std::vector<PlaneConfiguration> m_configuration;
+    static std::vector<uint64_t> m_trigger;
+    static std::vector<uint64_t> m_frame;
   };
 
   class CLICpix2Event2StdEventConverter: public eudaq::StdEventConverter{
