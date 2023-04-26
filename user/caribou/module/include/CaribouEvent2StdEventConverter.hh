@@ -81,14 +81,17 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CariboudSiPMEvent");
   private:
+    struct PlaneConfiguration {
+      bool configured {false};
+      bool zeroSupp {true};
+      bool discardDuringReset {true};
+      bool checkValid {false};
+      std::array<double, 4> fine_ts_effective_bits {26., 26., 26., 26.};
+      uint64_t frame_start {0};
+      uint64_t frame_stop {2};
+    };
     static uint8_t getQuadrant(const uint16_t& col, const uint16_t& row);
-    static std::vector<bool> m_configured;
-    static std::vector<bool> m_zeroSupp;
-    static std::vector<bool> m_discardDuringReset;
-    static std::vector<bool> m_checkValid;
-    static std::vector<std::array<double, 4>> m_fine_ts_effective_bits;
-    static std::vector<uint64_t> m_frame_start;
-    static std::vector<uint64_t> m_frame_stop;
+    static std::vector<PlaneConfiguration> m_configuration;
     static std::vector<uint64_t> m_trigger;
     static std::vector<uint64_t> m_frame;
   };
