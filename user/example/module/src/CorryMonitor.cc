@@ -1,5 +1,6 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Logger.hh"
 
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -82,9 +83,12 @@ void CorryMonitor::DoInitialise(){
   
   // Check if corryvreckan is found
   struct stat buffer;   
-  if(stat(m_corry_path.c_str(), &buffer) != 0)
-    EUDAQ_ERROR("Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)");
-
+  if(stat(m_corry_path.c_str(), &buffer) != 0){
+    std::string msg = "Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)";
+    EUDAQ_ERROR(msg);
+    //TODO: Fix that SetStatus currently does nothing
+    eudaq::CommandReceiver::SetStatus(eudaq::Status::STATE_ERROR, msg);
+  }
 }
 
 // Store execvp() arguments in char array according to https://stackoverflow.com/questions/29484366/how-to-make-execvp-handle-multiple-arguments
