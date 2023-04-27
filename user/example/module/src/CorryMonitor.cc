@@ -309,6 +309,11 @@ void CorryMonitor::DoStartRun(){
 
   bool found_all_files_to_monitor = false;
 
+  // Char** for debugging: Used to extract m_args.argv 
+  char** command_ptr;
+  // String that will contain full command with which corry is called
+  std::string full_command = "";
+
   m_corry_pid = fork();
 
   switch (m_corry_pid)
@@ -411,7 +416,12 @@ void CorryMonitor::DoStartRun(){
     }
     */
 
-    EUDAQ_DEBUG("Full corryvreckan command options : "+std::to_string(**m_args.argv));
+    // save the full command with which corry is called for debugging purposes
+    command_ptr = m_args.argv;
+    for (char* c=*command_ptr; c; c=*++command_ptr) {
+      full_command += std::string(c) + " ";
+    }
+    EUDAQ_DEBUG("Full command passed to execvp calling corryvreckan : "+full_command);
 
     execvp(m_args.argv[0], m_args.argv);
     perror("execv"); // execv doesn't return unless there is a problem
