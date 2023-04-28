@@ -137,9 +137,17 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                 std::string ChipType;
                 auto        theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
 
-                StandardPlane plane(planeId, EVENT_TYPE, ChipType);
+                StandardPlane plane;
+                try
+                {
+                    plane = sev->GetPlane(planeId);
+                }
+                catch(...)
+                {
+                    plane = StandardPlane(planeId, EVENT_TYPE, ChipType);
+                    plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+                }
                 deviceIDs.push_back(deviceId);
-                plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
                 // #######################################
                 // # Check possible synchronization loss #
@@ -180,7 +188,14 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                         triggerId++;
                     }
 
-                sev->AddPlane(plane);
+                try
+                {
+                    sev->GetPlane(planeId);
+                }
+                catch(...)
+                {
+                    sev->AddPlane(plane);
+                }
             }
             else
                 break;
