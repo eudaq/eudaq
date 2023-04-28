@@ -20,22 +20,22 @@ void TheConverter::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
     // ###########################################
     // # @TMP@: mapping quad chips is hard-coded #
     // ###########################################
-    if(chipIdMod4 == 0)
+    if(chipIdMod4 == 15)
     {
         row = nRows + row;
         col = nCols + col;
     }
-    else if(chipIdMod4 == 1)
+    else if(chipIdMod4 == 14)
     {
         row = nRows + row;
         col = col;
     }
-    else if(chipIdMod4 == 2)
+    else if(chipIdMod4 == 13)
     {
         row = nRows - 1 - row;
         col = nCols - 1 - col;
     }
-    else if(chipIdMod4 == 3)
+    else if(chipIdMod4 == 12)
     {
         row = nRows - 1 - row;
         col = nCols + nCols - 1 - col;
