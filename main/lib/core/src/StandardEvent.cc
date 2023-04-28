@@ -49,10 +49,10 @@ namespace eudaq {
 
   size_t StandardEvent::NumPlanes() const { return m_planes.size(); }
 
-  StandardPlane &StandardEvent::GetPlane(size_t i) { return m_planes.at(i); }
+  StandardPlane &StandardEvent::GetPlane(size_t i) { return m_planes[i]; }
 
   const StandardPlane &StandardEvent::GetPlane(size_t i) const {
-    return m_planes.at(i);
+    return m_planes[i];
   }
 
   uint64_t StandardEvent::GetTimeBegin() const {
