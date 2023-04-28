@@ -121,6 +121,7 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
     if(CMSITConverterPlugin::Deserialize(ev, theEvent) == true)
     {
         std::vector<int> deviceIDs;
+        std::vector<int> planePositions;
         for(auto i = 0; i < theEvent.chipData.size(); i++)
         {
             int                                 chargeCut;
@@ -133,21 +134,22 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
 
             if(std::find(deviceIDs.begin(), deviceIDs.end(), deviceId) == deviceIDs.end())
             {
-                int         nRows, nCols, planeId;
-                std::string ChipType;
-                auto        theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
-
                 StandardPlane plane;
-                try
-                {
-                    plane = sev->GetPlane(planeId);
-                }
-                catch(...)
+                std::string   ChipType;
+                int           nRows, nCols, planeId;
+                auto          theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
+
+                // ##########################################################################
+                // # Check if the plane was already created: neded for quad or dual modules #
+                // ##########################################################################
+                auto planePosition = std::find(planePositions.begin(), planePositions.end(), planeId);
+                if(planePosition == planePositions.end())
                 {
                     plane = StandardPlane(planeId, EVENT_TYPE, ChipType);
                     plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
                 }
-                deviceIDs.push_back(deviceId);
+                else
+                    plane = sev->GetPlane(planePosition - planePositions.begin());
 
                 // #######################################
                 // # Check possible synchronization loss #
@@ -188,13 +190,14 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                         triggerId++;
                     }
 
-                try
-                {
-                    sev->GetPlane(planeId);
-                }
-                catch(...)
+                // ######################
+                // # Save plane and IDs #
+                // ######################
+                deviceIDs.push_back(deviceId);
+                if(planePosition == planePositions.end())
                 {
                     sev->AddPlane(plane);
+                    planePositions.push_back(planeId);
                 }
             }
             else
