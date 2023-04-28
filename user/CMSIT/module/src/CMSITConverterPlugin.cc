@@ -323,9 +323,9 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     // #############################################
     planeId = deviceId;
     if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
-        planeId = round(deviceId / CMSITplaneIdOffset) + QUADID;
+        planeId = round(deviceId / CMSITplaneIdOffset) * CMSITplaneIdOffset + QUADID;
     else if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
-        planeId = round(deviceId / CMSITplaneIdOffset) + DUALID;
+        planeId = round(deviceId / CMSITplaneIdOffset) * CMSITplaneIdOffset + DUALID;
 
     return theConverter;
 }
