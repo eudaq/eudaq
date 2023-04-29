@@ -139,9 +139,9 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                 int           nRows, nCols, planeId;
                 auto          theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
 
-                // ##########################################################################
-                // # Check if the plane was already created: neded for quad or dual modules #
-                // ##########################################################################
+                // ###########################################################################
+                // # Check if the plane was already created: needed for quad or dual modules #
+                // ###########################################################################
                 auto planePosition = std::find(planePositions.begin(), planePositions.end(), planeId);
                 if(planePosition == planePositions.end())
                 {
