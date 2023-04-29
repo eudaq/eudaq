@@ -20,22 +20,22 @@ void TheConverter::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
     // ###########################################
     // # @TMP@: mapping quad chips is hard-coded #
     // ###########################################
-    if(chipIdMod4 == 0)
+    if(chipIdMod4 == 15)
     {
         row = nRows + row;
         col = nCols + col;
     }
-    else if(chipIdMod4 == 1)
+    else if(chipIdMod4 == 14)
     {
         row = nRows + row;
         col = col;
     }
-    else if(chipIdMod4 == 2)
+    else if(chipIdMod4 == 13)
     {
         row = nRows - 1 - row;
         col = nCols - 1 - col;
     }
-    else if(chipIdMod4 == 3)
+    else if(chipIdMod4 == 12)
     {
         row = nRows - 1 - row;
         col = nCols + nCols - 1 - col;
@@ -113,12 +113,15 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
     // #########################################################
     // # Check if dataformat and encoder versions are the same #
     // #########################################################
-    if(ev->GetTag("Dataformat version") != CMSITEventData::DataFormatVersion) throw std::runtime_error("[EUDAQ::CMSITConverterPlugin::Converting] ERROR: version mismatch between dataformat and encoder");
+    if(stoi(ev->GetTag("Dataformat version")) != CMSITEventData::DataFormatVersion)
+        throw std::runtime_error("[EUDAQ::CMSITConverterPlugin::Converting] ERROR: version mismatch between dataformat " + ev->GetTag("Dataformat version") + " and encoder " +
+                                 std::to_string(CMSITEventData::DataFormatVersion));
 
     CMSITEventData::EventData theEvent;
     if(CMSITConverterPlugin::Deserialize(ev, theEvent) == true)
     {
         std::vector<int> deviceIDs;
+        std::vector<int> planePositions;
         for(auto i = 0; i < theEvent.chipData.size(); i++)
         {
             int                                 chargeCut;
@@ -131,13 +134,22 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
 
             if(std::find(deviceIDs.begin(), deviceIDs.end(), deviceId) == deviceIDs.end())
             {
-                int         nRows, nCols, planeId;
-                std::string ChipType;
-                auto        theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
+                StandardPlane plane;
+                std::string   ChipType;
+                int           nRows, nCols, planeId;
+                auto          theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
 
-                StandardPlane plane(planeId, EVENT_TYPE, ChipType);
-                deviceIDs.push_back(deviceId);
-                plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+                // ###########################################################################
+                // # Check if the plane was already created: needed for quad or dual modules #
+                // ###########################################################################
+                auto planePosition = std::find(planePositions.begin(), planePositions.end(), planeId);
+                if(planePosition == planePositions.end())
+                {
+                    plane = StandardPlane(planeId, EVENT_TYPE, ChipType);
+                    plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+                }
+                else
+                    plane = sev->GetPlane(planePosition - planePositions.begin());
 
                 // #######################################
                 // # Check possible synchronization loss #
@@ -178,7 +190,15 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                         triggerId++;
                     }
 
-                sev->AddPlane(plane);
+                // ######################
+                // # Save plane and IDs #
+                // ######################
+                deviceIDs.push_back(deviceId);
+                if(planePosition == planePositions.end())
+                {
+                    sev->AddPlane(plane);
+                    planePositions.push_back(planeId);
+                }
             }
             else
                 break;
@@ -321,9 +341,9 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     // #############################################
     planeId = deviceId;
     if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
-        planeId = round(deviceId / CMSITplaneIdOffset) + QUADID;
+        planeId = round(deviceId / CMSITplaneIdOffset) * CMSITplaneIdOffset + QUADID;
     else if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
-        planeId = round(deviceId / CMSITplaneIdOffset) + DUALID;
+        planeId = round(deviceId / CMSITplaneIdOffset) * CMSITplaneIdOffset + DUALID;
 
     return theConverter;
 }
