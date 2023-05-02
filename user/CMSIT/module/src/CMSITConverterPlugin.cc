@@ -20,22 +20,22 @@ void TheConverter::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
     // ###########################################
     // # @TMP@: mapping quad chips is hard-coded #
     // ###########################################
-    if(chipIdMod4 == 15)
+    if(chipIdMod4 == 3)
     {
         row = nRows + row;
         col = nCols + col;
     }
-    else if(chipIdMod4 == 14)
+    else if(chipIdMod4 == 2)
     {
         row = nRows + row;
         col = col;
     }
-    else if(chipIdMod4 == 13)
+    else if(chipIdMod4 == 1)
     {
         row = nRows - 1 - row;
         col = nCols - 1 - col;
     }
-    else if(chipIdMod4 == 12)
+    else if(chipIdMod4 == 0)
     {
         row = nRows - 1 - row;
         col = nCols + nCols - 1 - col;
@@ -108,14 +108,16 @@ int TheConverter::ChargeConverter(const int row, const int col, const int ToT, c
 
 bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, ConfigurationSPC conf) const
 {
-    if(ev->IsEORE() == true) return true;
-
-    // #########################################################
-    // # Check if dataformat and encoder versions are the same #
-    // #########################################################
-    if(stoi(ev->GetTag("Dataformat version")) != CMSITEventData::DataFormatVersion)
-        throw std::runtime_error("[EUDAQ::CMSITConverterPlugin::Converting] ERROR: version mismatch between dataformat " + ev->GetTag("Dataformat version") + " and encoder " +
-                                 std::to_string(CMSITEventData::DataFormatVersion));
+    if(ev->IsEORE() == true)
+    {
+        // #########################################################
+        // # Check if dataformat and encoder versions are the same #
+        // #########################################################
+        if(stoi(ev->GetTag("Dataformat version")) != CMSITEventData::DataFormatVersion)
+            throw std::runtime_error("[EUDAQ::CMSITConverterPlugin::Converting] ERROR: version mismatch between dataformat " + ev->GetTag("Dataformat version") + " and encoder " +
+                                     std::to_string(CMSITEventData::DataFormatVersion));
+        return true;
+    }
 
     CMSITEventData::EventData theEvent;
     if(CMSITConverterPlugin::Deserialize(ev, theEvent) == true)
@@ -307,6 +309,8 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
     theConverter.theSensor      = TheConverter::SensorType::SingleChip;
+    theConverter.nCols          = nCols;
+    theConverter.nRows          = nRows;
 
     if((cfg.find("25x100") != std::string::npos) || (cfg.find("100x25") != std::string::npos))
     {
@@ -325,9 +329,6 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
         nCols *= 2;
         nRows *= 2;
     }
-
-    theConverter.nCols = nCols;
-    theConverter.nRows = nRows;
 
     if((cfg.find("25x100origR0C0") != std::string::npos) || (cfg.find("100x25origR0C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
