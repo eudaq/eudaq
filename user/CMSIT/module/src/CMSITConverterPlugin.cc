@@ -309,6 +309,8 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
     theConverter.theSensor      = TheConverter::SensorType::SingleChip;
+    theConverter.nCols          = nCols;
+    theConverter.nRows          = nRows;
 
     if((cfg.find("25x100") != std::string::npos) || (cfg.find("100x25") != std::string::npos))
     {
@@ -327,9 +329,6 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
         nCols *= 2;
         nRows *= 2;
     }
-
-    theConverter.nCols = nCols;
-    theConverter.nRows = nRows;
 
     if((cfg.find("25x100origR0C0") != std::string::npos) || (cfg.find("100x25origR0C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
