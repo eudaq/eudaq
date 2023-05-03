@@ -124,14 +124,13 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
     {
         std::vector<int> deviceIDs;
         std::vector<int> planePositions;
-        for(auto i = 0; i < theEvent.chipData.size(); i++)
+        for(auto& theChip: theEvent.chipData)
         {
             int                                 chargeCut;
             int                                 triggerIdLow;
             int                                 triggerIdHigh;
             TheConverter::calibrationParameters theCalibPar;
             std::string                         chipTypeFromFile;
-            const auto&                         theChip = theEvent.chipData[i];
             const auto deviceId = CMSITConverterPlugin::ReadConfigurationAndComputeDeviceId(theChip.hybridId, theChip.chipId, chipTypeFromFile, theCalibPar, chargeCut, triggerIdLow, triggerIdHigh);
 
             if(std::find(deviceIDs.begin(), deviceIDs.end(), deviceId) == deviceIDs.end())
@@ -175,16 +174,16 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                 // # Search for frames #
                 // #####################
                 int triggerId = 0;
-                for(auto j = i; j < theEvent.chipData.size(); j++)
-                    if((theEvent.chipData[j].hybridId == theChip.hybridId) && (theEvent.chipData[j].chipId == theChip.chipId))
+                for(auto& chip: theEvent.chipData)
+                    if((chip.hybridId == theChip.hybridId) && (chip.chipId == theChip.chipId))
                     {
                         if((triggerId >= triggerIdLow) && ((triggerIdHigh >= 0) && (triggerId <= triggerIdHigh)) || (triggerIdHigh < 0))
-                            for(const auto& hit: theEvent.chipData[j].hits)
+                            for(const auto& hit: chip.hits)
                             {
                                 int row    = hit.row;
                                 int col    = hit.col;
                                 int charge = hit.tot;
-                                theConverter(row, col, charge, theEvent.chipData[j].chipIdMod4, theCalibPar, chargeCut);
+                                theConverter(row, col, charge, chip.chipIdMod4, theCalibPar, chargeCut);
                                 if((chargeCut >= 0) && (charge < 0)) continue;
                                 plane.PushPixel((uint32_t)col, (uint32_t)row, charge, (uint32_t)triggerId);
                             }
