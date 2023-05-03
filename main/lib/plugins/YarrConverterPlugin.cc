@@ -141,7 +141,7 @@ namespace eudaq {
 		for(const auto& uid : m_chip_info_by_uid[prodID]) {
 		   m_module_size_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleType;
 		   m_plane_id_by_module_index[prodID][uid.internalModuleIndex] = base_id + uid.internalModuleIndex;
-		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleID;
+		   m_module_name_by_module_index[prodID][uid.internalModuleIndex] = uid.moduleName;
 		   std::cout << "Assigning plane ID " << m_plane_id_by_module_index[prodID][uid.internalModuleIndex] << " to module " << uid.internalModuleIndex << " which is called " << m_module_name_by_module_index[prodID][uid.internalModuleIndex] << " and has chip " << uid.name << std::endl;
 		} 
 		
