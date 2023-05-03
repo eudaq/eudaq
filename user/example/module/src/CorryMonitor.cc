@@ -283,7 +283,7 @@ void CorryMonitor::DoConfigure(){
     // needed to pass file to be monitored to corry at runtime
     for (auto m: corry_geo->Sectionlist()){
       corry_geo->SetSection(m);
-      if (corry_geo->Get("type","") == value.eventloader_type){
+      if (eudaq::lcase(corry_geo->Get("type","")) == value.eventloader_type){
         value.detector_planes.push_back(m);
       }
     }
