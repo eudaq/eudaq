@@ -122,8 +122,9 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
     CMSITEventData::EventData theEvent;
     if(CMSITConverterPlugin::Deserialize(ev, theEvent) == true)
     {
-        std::vector<int> deviceIDs;
-        std::vector<int> planePositions;
+        std::vector<int>           deviceIDs;
+        std::vector<int>           planePositions;
+        std::vector<StandardPlane> planes;
         for(auto& theChip: theEvent.chipData)
         {
             int                                 chargeCut;
@@ -135,22 +136,29 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
 
             if(std::find(deviceIDs.begin(), deviceIDs.end(), deviceId) == deviceIDs.end())
             {
-                StandardPlane plane;
-                std::string   ChipType;
-                int           nRows, nCols, planeId;
-                auto          theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
+                StandardPlane* plane;
+                std::string    ChipType;
+                int            nRows, nCols, planeId;
+                auto           theConverter = CMSITConverterPlugin::GetChipGeometry(theChip.chipType, chipTypeFromFile, nRows, nCols, ChipType, deviceId, planeId);
 
                 // ###########################################################################
                 // # Check if the plane was already created: needed for quad or dual modules #
                 // ###########################################################################
+                deviceIDs.push_back(deviceId);
                 auto planePosition = std::find(planePositions.begin(), planePositions.end(), planeId);
                 if(planePosition == planePositions.end())
                 {
-                    plane = StandardPlane(planeId, EVENT_TYPE, ChipType);
-                    plane.SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+                    // ######################
+                    // # Save plane and IDs #
+                    // ######################
+                    planes.push_back(StandardPlane(planeId, EVENT_TYPE, ChipType));
+                    planePositions.push_back(planeId);
+
+                    plane = &planes.back();
+                    plane->SetSizeZS(nCols, nRows, 0, MAXFRAMES, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
                 }
                 else
-                    plane = sev->GetPlane(planePosition - planePositions.begin());
+                    plane = &planes.at(planePosition - planePositions.begin());
 
                 // #######################################
                 // # Check possible synchronization loss #
@@ -185,26 +193,17 @@ bool CMSITConverterPlugin::Converting(EventSPC ev, StandardEventSP sev, Configur
                                 int charge = hit.tot;
                                 theConverter(row, col, charge, chip.chipIdMod4, theCalibPar, chargeCut);
                                 if((chargeCut >= 0) && (charge < 0)) continue;
-                                plane.PushPixel((uint32_t)col, (uint32_t)row, charge, (uint32_t)triggerId);
+                                plane->PushPixel((uint32_t)col, (uint32_t)row, charge, (uint32_t)triggerId);
                             }
 
                         triggerId++;
                     }
-
-                // ######################
-                // # Save plane and IDs #
-                // ######################
-                deviceIDs.push_back(deviceId);
-                if(planePosition == planePositions.end())
-                {
-                    sev->AddPlane(plane);
-                    planePositions.push_back(planeId);
-                }
             }
             else
                 break;
         }
 
+        for(auto& it: planes) sev->AddPlane(it);
         return true;
     }
 
