@@ -77,6 +77,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
        lvl1_bin = 32;
      }
     _lvl1Distr = new TH1I(out2, out, lvl1_bin, 0, lvl1_bin);
+    SetHistoAxisLabelx(_lvl1Distr, "Lvl1 [25 ns]");
 
     sprintf(out, "%s %i LVL1 Cluster Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1cluster_%s_%i", _sensor.c_str(), _id);
@@ -84,7 +85,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i LVL1 Clusterwidth", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1width_%s_%i", _sensor.c_str(), _id);
-    _lvl1Width = new TH1I(out2, out, 16, 0, 16);
+    _lvl1Width = new TH1I(out2, out, lvl1_bin, 0, lvl1_bin);
 
     sprintf(out, "%s %i TOT Single Pixels", _sensor.c_str(), _id);
     sprintf(out2, "h_totsingle_%s_%i", _sensor.c_str(), _id);
