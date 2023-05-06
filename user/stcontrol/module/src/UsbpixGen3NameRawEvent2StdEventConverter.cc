@@ -20,9 +20,9 @@ public:
 private:
   unsigned GetTriggerID(const eudaq::Event & ev) const;
   
-  mutable std::vector<int> attachedBoards;
-  mutable std::map<int, bool> boardInitialized;
-  mutable std::map<int, std::vector<int>> boardChannels;  
+  static std::vector<int> attachedBoards;
+  static std::map<int, bool> boardInitialized;
+  static std::map<int, std::vector<int>> boardChannels;  
 
 };
 
@@ -37,19 +37,26 @@ Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSP
    std::map<int, eudaq::StandardPlane> StandardPlaneMap;   
    auto evRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
    auto block_n_list = evRaw->GetBlockNumList();   
+   
+   //if it is a BORE it is the begin of run and thus config could have changed and has to be re-read
+   if(evRaw->IsBORE()) {
+     attachedBoards.clear();
+     boardInitialized.clear();
+     boardChannels.clear();
+   }
 
    //In the Gen3 producer we will only have one data block, always!
    auto pixelVec = eudaq::decodeFEI4Data(evRaw->GetBlock(0));
    int boardID = evRaw->GetTag("board", -999);
    auto triggerID = GetTriggerID(*evRaw);
-   std::cout << "TriggerID board " << boardID << " : " << triggerID << std::endl;
+   //std::cout << "TriggerID board " << boardID << " : " << triggerID << std::endl;
 
    
    if(std::find(attachedBoards.begin(), attachedBoards.end(), boardID) == attachedBoards.end()) {
       attachedBoards.push_back(boardID);
       boardChannels[boardID] = std::vector<int>();
       boardInitialized[boardID] = false;
-      std::cout << "Added USBPix Board: " << boardID << " to list!" << std::endl;
+      //std::cout << "Added USBPix Board: " << boardID << " to list!" << std::endl;
    } 
 
    if(!boardInitialized.at(boardID)) {
@@ -97,5 +104,9 @@ unsigned UsbpixGen3NameRawEvent2StdEventConverter::GetTriggerID(const eudaq::Eve
                     ( static_cast<uint32_t>(data[0]) );
 	return i;
 }
+
+std::vector<int> UsbpixGen3NameRawEvent2StdEventConverter::attachedBoards ={};
+std::map<int, bool> UsbpixGen3NameRawEvent2StdEventConverter::boardInitialized={};
+std::map<int, std::vector<int>> UsbpixGen3NameRawEvent2StdEventConverter::boardChannels={};
 
 
