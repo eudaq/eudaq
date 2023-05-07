@@ -67,18 +67,16 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("Yarr");
 private:
   void decodeBORE(std::shared_ptr<const eudaq::RawEvent> bore) const;
-  bool producerBOREdecoded(unsigned int prodID) {
-     return m_decodedInRun.find(prodID) != m_decodedInRun.end();
-  };
   
   // Information extracted in decodeBORE()
-  mutable std::map<int,std::string> m_FrontEndType;
-  mutable std::map<int,Version> m_EventVersion;
-  mutable std::map<int,unsigned int> m_decodedInRun;
-  mutable std::map<int,std::vector<chipInfo> > m_chip_info_by_uid;
-  mutable std::map<int,std::map<unsigned int,std::string> > m_module_size_by_module_index;
-  mutable std::map<int,std::map<unsigned int, unsigned int> > m_plane_id_by_module_index;            
-  mutable std::map<int,std::map<unsigned int, std::string> > m_module_name_by_module_index;                        
+  static std::map<int,std::string> m_FrontEndType;
+  static std::map<int,Version> m_EventVersion;
+  static std::map<int,std::vector<chipInfo> > m_chip_info_by_uid;
+  static std::map<int,std::map<unsigned int,std::string> > m_module_size_by_module_index;
+  static std::map<int,std::map<unsigned int, unsigned int> > m_plane_id_by_module_index;            
+  static std::map<int,std::map<unsigned int, std::string> > m_module_name_by_module_index;  
+  static std::vector<int> m_producerBOREread;
+                        
   unsigned m_run;  
 };
 
@@ -139,10 +137,26 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   size_t nblocks= ev->NumBlocks();
   
-  if(ev->IsBORE()) this->decodeBORE(ev);
-  
   // Differentiate between different sensors
   int prodID = std::stoi(ev->GetTag("PRODID"));  
+  
+  // if it is a BORE it is the begin of run and thus config could have changed and has in principle to be re-read
+  // assuming that if a BORE comes for the second time for a producer a new run has started and we re-read everything
+  if(ev->IsBORE()) {
+    if(std::count(m_producerBOREread.begin(), m_producerBOREread.end(), prodID)){
+    // FIXME implement re-read
+    // m_FrontEndType;
+    // m_EventVersion;
+    // m_decodedInRun;
+    // m_chip_info_by_uid;
+    // m_module_size_by_module_index;
+    // m_plane_id_by_module_index;            
+    // m_module_name_by_module_index; 
+    } else {
+      this->decodeBORE(ev);
+      m_producerBOREread.push_back(prodID);
+      }
+   }  
   
 		std::map<unsigned int, eudaq::StandardPlane> standard_plane_by_module_index;
 		for (std::size_t currentPlaneIndex = 0; currentPlaneIndex < m_plane_id_by_module_index[prodID].size(); ++currentPlaneIndex) {
@@ -229,3 +243,11 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 		                		  
   return true;
 }
+
+std::map<int,std::string> YarrRawEvent2StdEventConverter::m_FrontEndType ={};
+std::map<int,Version> YarrRawEvent2StdEventConverter::m_EventVersion ={};
+std::map<int,std::vector<chipInfo> > YarrRawEvent2StdEventConverter::m_chip_info_by_uid ={};
+std::map<int,std::map<unsigned int,std::string> > YarrRawEvent2StdEventConverter::m_module_size_by_module_index ={};
+std::map<int,std::map<unsigned int, unsigned int> > YarrRawEvent2StdEventConverter::m_plane_id_by_module_index ={};            
+std::map<int,std::map<unsigned int, std::string> > YarrRawEvent2StdEventConverter::m_module_name_by_module_index ={};
+std::vector<int> YarrRawEvent2StdEventConverter::m_producerBOREread ={};

@@ -37,13 +37,15 @@ Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSP
    std::map<int, eudaq::StandardPlane> StandardPlaneMap;   
    auto evRaw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
    auto block_n_list = evRaw->GetBlockNumList();   
-   
-   //if it is a BORE it is the begin of run and thus config could have changed and has to be re-read
-   if(evRaw->IsBORE()) {
-     attachedBoards.clear();
-     boardInitialized.clear();
-     boardChannels.clear();
-   }
+
+   //FIXME   
+   //if it is a BORE it is the begin of run and thus config could have changed and has in principle to be re-read
+   //but assuming here that everything stays the same as otherwise for multiple producers one has to add more intricate logic 
+   //if(evRaw->IsBORE()) {
+   //  attachedBoards.clear();
+   //  boardInitialized.clear();
+   //  boardChannels.clear();
+   //}
 
    //In the Gen3 producer we will only have one data block, always!
    auto pixelVec = eudaq::decodeFEI4Data(evRaw->GetBlock(0));
