@@ -446,17 +446,35 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     for( int s = 0; s<peds.at(0).size(); s++ ){
       for( int c = 0; c<peds.size(); c++ ){
 
-        // calculate pedestal
+        // calculate index range for pedestal
         int i_pedStart = (m_pedStartTime - time.at(0))/dx.at(c);
         int i_pedEnd = (m_pedEndTime - time.at(0))/dx.at(c);
         int n_ped = (m_pedEndTime-m_pedStartTime)/dx.at(c);
-        for( int p = i_pedStart; p<i_pedEnd; p++ ){
+	// check index range for pedestal
+	if(i_pedStart < 0 || i_pedEnd >= wavess.at(c).at(s).size()){
+	  EUDAQ_WARN("Parameter pedStartTime [ns] " + to_string(m_pedStartTime) + " or pedEndTime " + to_string(m_pedEndTime));
+	  EUDAQ_WARN("  Yields invalid index " + to_string(i_pedStart) + " or " + to_string(i_pedEnd));
+	  EUDAQ_WARN("  Setting pedestal to 0!");
+	  peds.at(c).at(s) = 0;
+	  continue;
+	}
+        // calculate pedestal
+	for( int p = i_pedStart; p<i_pedEnd; p++ ){
           peds.at(c).at(s) += wavess.at(c).at(s).at(p) / n_ped;
         }
 
-        // calculate maximum amplitude in range
+        // calculate index range for amplitude
         int i_ampStart = (m_ampStartTime - time.at(0))/dx.at(c);
         int i_ampEnd = (m_ampEndTime - time.at(0))/dx.at(c);
+	// check index range for amplitude
+	if(i_ampStart < 0 || i_ampEnd >= wavess.at(c).at(s).size()){
+	  EUDAQ_WARN("Parameter ampStartTime [ns] " + to_string(m_ampStartTime) + " or ampEndTime " + to_string(m_ampEndTime));
+	  EUDAQ_WARN("  Yields invalid index " + to_string(i_ampStart) + " or " + to_string(i_ampEnd));
+	  EUDAQ_WARN("  Setting amplitude to 0!");
+	  amps.at(c).at(s) = 0;
+	  continue;
+	}
+	// calculate maximum amplitude in range
         for( int p = i_ampStart; p<i_ampEnd; p++ ){
           if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
             amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
