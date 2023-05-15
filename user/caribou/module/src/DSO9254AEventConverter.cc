@@ -208,8 +208,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
     EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
     EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
-    EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + "size of data rawdata");
+    EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
 
+    // Check our own sixth-graders math: The block header minus peamble minus channel data minus the counters is zero
+    if(block_words - pream_words - 2 - chann_words) {
+      EUDAQ_WARN("Go back to school, 6th grade - math doesn't check out! :/");
+    }
 
     // read preamble:
     std::string preamble = "";
@@ -226,6 +230,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     std::istringstream stream(preamble);
     while(std::getline(stream,val,',')){
       vals.push_back(val);
+      EUDAQ_DEBUG( " " + to_string(vals.size()-1) + ": " + to_string(vals.back()));
     }
 
     // Pick needed preamble elements
@@ -234,15 +239,32 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     x0.push_back( stod( vals[5]) * 1e9 );
     dy.push_back( stod( vals[7]) );
     y0.push_back( stod( vals[8]) );
+
+    EUDAQ_DEBUG("Acq mode (2=SEGM): " + to_string(vals[18]));
     if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
+      EUDAQ_DEBUG( "Segments: " + to_string(vals[24]));
       sgmnt_count = stoi( vals[24] );
     }
+
+    // Check our own seventh-graders math: total data size minus four times the data of a channel minus four block header words = 0
+    if(rawdata.size() - 4 * block_words - 4) {
+      EUDAQ_WARN("Go back to school 7th grade - math doesn't check out! :/ " + to_string(rawdata.size() - 4 * block_words) + " is not 0!");
+    }
+
     int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
+    if(chann_words % sgmnt_count != 0) {
+      EUDAQ_WARN("Segment count and channel words don't match: " + to_string(chann_words) + "/" + to_string(sgmnt_count));
+    }
     if( np.at(nch) % (chann_words/sgmnt_count) ){ // check
       EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
                  + ", channel " + to_string(nch) );
     }
+    EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
 
+    // Check our own eighth-graders math: the number of words in the channel times 4 points per word minus the number of points times number of segments is 0
+    if(4 * chann_words - np.at(nch) * sgmnt_count) {
+      EUDAQ_WARN("Go back to school 8th grade - math doesn't check out! :/ " + to_string(chann_words - np.at(nch) * sgmnt_count) + " is not 0!");
+    }
 
     // set run start time to 0 ms, using  timestamps from preamble which are 10 ms precision
     if( m_runStartTime < 0 ){
