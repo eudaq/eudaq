@@ -191,7 +191,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   uint64_t block_words;
   uint64_t pream_words;
   uint64_t chann_words;
-  uint64_t block_posit = 0;
+  uint64_t block_position = 0;
   uint64_t sgmnt_count = 1;
 
 
@@ -201,10 +201,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "Reading channel " + to_string(nch));
 
     // Obtaining Data Stucture
-    block_words = rawdata[block_posit + 0];
-    pream_words = rawdata[block_posit + 1];
-    chann_words = rawdata[block_posit + 2 + pream_words];
-    EUDAQ_DEBUG( "  " + to_string(block_posit) + " current position in block");
+    block_words = rawdata[block_position + 0];
+    pream_words = rawdata[block_position + 1];
+    chann_words = rawdata[block_position + 2 + pream_words];
+    EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
     EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
     EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
     EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
@@ -213,8 +213,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     // read preamble:
     std::string preamble = "";
-    for(int i=block_posit + 2;
-        i<block_posit + 2 + pream_words;
+    for(int i=block_position + 2;
+        i<block_position + 2 + pream_words;
         i++ ){
       preamble += (char)rawdata[i];
     }
@@ -340,11 +340,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       std::vector<int16_t> words;
       words.resize(points_per_words); // rawdata contains 8 byte words, scope sends 2 byte words
       int16_t wfi = 0;
-      for(int i=block_posit + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
-          i<block_posit + 3 + pream_words + (s+1)*chann_words/sgmnt_count;
+      // Read from segment start until the next segment begins:
+      for(int i=block_position + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
+          i<block_position + 3 + pream_words + (s+1)*chann_words/sgmnt_count;
           i++){
 
-        // coppy channel data from whole data block
+        // copy channel data from entire segment data block
         memcpy(&words.front(), &rawdata[i], points_per_words*sizeof(int16_t));
 
         for( auto word : words ){
@@ -391,7 +392,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 
     // update position for next iteration
-    block_posit += block_words+1;
+    block_position += block_words+1;
 
 
   } // for channel
