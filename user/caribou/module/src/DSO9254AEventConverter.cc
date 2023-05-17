@@ -430,11 +430,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // declare map between scope channel number and 2D pixel index
   // TODO make this configurable
   std::map<int,std::vector<int>> chanToPix;
-  chanToPix[0] = {1,1};
-  chanToPix[1] = {1,0};
-  chanToPix[2] = {0,0};
+  chanToPix[0] = {1,0};
+  chanToPix[1] = {0,0};
+  chanToPix[2] = {1,1};
   chanToPix[3] = {0,1};
-
 
   // process waveform data
   if(time.size() > 0 &&      // only if there are waveform data
