@@ -385,12 +385,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
 
       // derive trigger number from block number
-      // take missed events into account
-      int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s;
-      // why is this necessary?
-      if(ev->GetEventN()==1 && to_string(peds.at(0).size()) > 1){
-        triggerN++;
-      }
+      int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s + 1;
 
       EUDAQ_INFO("Block number " + to_string(ev->GetEventN()) + " " +
                   " block size " + to_string(peds.at(0).size()) +
