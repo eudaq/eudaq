@@ -1,7 +1,6 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
-#include "EventTime.hh"
 #include <set>
 
 #include <array>
@@ -92,22 +91,9 @@ namespace eudaq {
     static double m_chargeScale;
     static double m_chargeCut;
     static bool m_generateRoot;
-    static bool m_printTimeStamps;
-    static std::string m_timeStampFileName;
-    static std::string m_fileNameEventTimesExt;
-    static std::string m_fileNameEventTimesInt;
-    static int m_nMissedEvents;
-    static int m_nMissedBlocks;
-    // container for time sorted pairs of alpide event numbers and time stamps
-    static std::set<EventTime> m_eventTimesExt;
-    static std::set<EventTime> m_eventTimesInt;
     // covert scope ascii time stamps
     static uint64_t timeConverter(std::string date, std::string time);
     // parse event number, time stamp pairs from file to EventTime set
-    static void readEventTimeFile(std::string filename, std::set<EventTime>* eventtime);
-    // find external time stamps marking the end of a data block
-    static std::set<EventTime>::iterator getBlockEnd(std::set<EventTime>::iterator external,
-                                                     std::set<EventTime>::iterator internal);
   };
 
   class dSiPMEvent2StdEventConverter: public eudaq::StdEventConverter{

@@ -9,7 +9,7 @@ using namespace eudaq;
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
-  Register<DSO9254AEvent2StdEventConverter>(DSO9254AEvent2StdEventConverter::m_id_factory);
+    Register<DSO9254AEvent2StdEventConverter>(DSO9254AEvent2StdEventConverter::m_id_factory);
 }
 
 
@@ -24,16 +24,6 @@ double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
 double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
 
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(0);
-
-bool DSO9254AEvent2StdEventConverter::m_printTimeStamps(0);
-std::string DSO9254AEvent2StdEventConverter::m_timeStampFileName("");
-
-std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimesExt("");
-std::string DSO9254AEvent2StdEventConverter::m_fileNameEventTimesInt("");
-std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesExt;
-std::set<EventTime> DSO9254AEvent2StdEventConverter::m_eventTimesInt;
-int DSO9254AEvent2StdEventConverter::m_nMissedEvents(0);
-int DSO9254AEvent2StdEventConverter::m_nMissedBlocks(0);
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -56,9 +46,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_chargeScale  = conf->Get("chargeScale" , 0);
     m_chargeCut    = conf->Get("chargeCut"   , 0);
     m_generateRoot = conf->Get("generateRoot", 0);
-    m_timeStampFileName = conf->Get("timestamp_file_name", "empty");
-    m_fileNameEventTimesExt = conf->Get("fileNameEventTimesExt", "empty");
-    m_fileNameEventTimesInt = conf->Get("fileNameEventTimesInt", "empty");
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
     EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
@@ -68,9 +55,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
     EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
     EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
-    EUDAQ_DEBUG( "  timestamp_file_name = " + m_timeStampFileName);
-    EUDAQ_DEBUG( "  fileNameEventTimesExt = " + m_fileNameEventTimesExt);
-    EUDAQ_DEBUG( "  fileNameEventTimesInt = " + m_fileNameEventTimesInt);
 
     // check configuration
     bool noData = false;
@@ -89,44 +73,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     if( noData && noHist ){
       EUDAQ_ERROR( "Writing no output data and no root file... Abort");
       return false;
-    }
-
-    // set flag and prepare output file if file name is given
-    if(m_timeStampFileName.compare("empty")){
-      m_printTimeStamps = true;
-      // need to strip quotation marks?
-      if(!m_timeStampFileName.substr(0,1).compare("\"")){
-        m_timeStampFileName = m_timeStampFileName.substr( 1, m_timeStampFileName.length()-2 );
-      }
-      outfileTimestamps.open(m_timeStampFileName.c_str(), std::ios_base::trunc); // recreate
-      if(outfileTimestamps.is_open()){
-        EUDAQ_DEBUG( "writing time stamps to " + m_timeStampFileName );
-      }
-      else{
-        EUDAQ_ERROR( "Failed to open " + m_timeStampFileName );
-      }
-      outfileTimestamps.close();
-    }
-
-    // read event numbers and time stamps from filename if filename is given
-    // this needs to be done twice
-    // for this detector (Int)
-    // for reference detector (Ext)
-    if(m_fileNameEventTimesExt.compare("empty")){
-      // need to strip quotation marks?
-      if(!m_fileNameEventTimesExt.substr(0,1).compare("\"")){
-        m_fileNameEventTimesExt =
-          m_fileNameEventTimesExt.substr(1, m_fileNameEventTimesExt.length()-2);
-      }
-      readEventTimeFile(m_fileNameEventTimesExt, &m_eventTimesExt);
-    }
-    if(m_fileNameEventTimesInt.compare("empty")){
-      // need to strip quotation marks?
-      if(!m_fileNameEventTimesInt.substr(0,1).compare("\"")){
-        m_fileNameEventTimesInt =
-          m_fileNameEventTimesInt.substr(1, m_fileNameEventTimesInt.length()-2);
-      }
-      readEventTimeFile(m_fileNameEventTimesInt, &m_eventTimesInt);
     }
 
     m_configured = true;
@@ -151,16 +97,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   std::vector<double> dy;
   std::vector<double> y0;
 
-  // number of missed events for re-sync
-  int thisBlockMissed = 0;
-
-
   // Bad event
   if(ev->NumBlocks() != 1) {
     EUDAQ_WARN("Ignoring bad packet " + std::to_string(ev->GetEventNumber()));
     return false;
   }
-
 
   // generate rootfile to write waveforms as TH1D
   TFile * histoFile = nullptr;
@@ -171,7 +112,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       return false;
     }
   }
-
 
   // all four scope channels in one data block
   auto datablock = ev->GetBlock(0);
@@ -186,14 +126,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   rawdata.resize( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) );
   std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
 
-
   // needed per event
   uint64_t block_words;
   uint64_t pream_words;
   uint64_t chann_words;
   uint64_t block_position = 0;
   uint64_t sgmnt_count = 1;
-
 
   // loop 4 channels
   for( int nch = 0; nch < 4; nch++ ){
@@ -273,65 +211,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     timestamp = ( DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] )
                   - m_runStartTime ) * 1e9; // ms to ps
 
-
-    // print time stamps to file
-    if(m_printTimeStamps && nch == 0){ // once per event
-      // need to re-open, each time we want to fill
-      outfileTimestamps.open(m_timeStampFileName.c_str(), std::ios_base::app);
-      outfileTimestamps << ev->GetEventN() << " " << timestamp << std::endl;
-      outfileTimestamps.close();
-    }
-
-    // if there are two time stamp files we can try to resync
-    if(m_eventTimesInt.size() > 0 && m_eventTimesExt.size() > 0 &&
-       nch == 0){ // time stamps are identical for all channels
-
-      EUDAQ_DEBUG("Compare time stamps event " + to_string(ev->GetEventN()) +
-                  " timestamp " + to_string(timestamp));
-      EventTime findme(ev->GetEventN(),timestamp);
-
-      // get scope time stamps for this and the next block
-      auto thisBlockTimeInt = m_eventTimesInt.find(findme);
-      auto nextBlockTimeInt = thisBlockTimeInt;
-      nextBlockTimeInt++;
-
-      // we have no scope timestamp to mark the end of the last block
-      // we can not know if it is complete or not -> discard
-      if(nextBlockTimeInt==m_eventTimesInt.end()){
-        thisBlockMissed = 1;
-      }
-      else{
-        // get next larger time stamps from reference detector
-        auto thisBlockStart = m_eventTimesExt.upper_bound(*thisBlockTimeInt);
-        auto thisBlockEnd   = m_eventTimesExt.upper_bound(*nextBlockTimeInt);
-
-        // using getBlockEnd, trying to find the gap in cases where the time stamps are off
-        // see commit e5a3193e for version without
-        if(thisBlockTimeInt->time > 0){ // do not go ealier than run start
-          thisBlockStart = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockStart,
-                                                                        thisBlockTimeInt);
-          thisBlockStart++; // blockend++ ~ blockstart
-        }
-        else{ // first
-          thisBlockStart = m_eventTimesExt.begin();
-        }
-        thisBlockEnd = DSO9254AEvent2StdEventConverter::getBlockEnd(thisBlockEnd,
-                                                                    nextBlockTimeInt);
-
-        // calculate number of missed events
-        uint64_t deltaIev = thisBlockEnd->iev - thisBlockStart->iev;
-        thisBlockMissed = sgmnt_count - (deltaIev+1);
-        m_nMissedEvents += thisBlockMissed;
-
-        EUDAQ_DEBUG("  Reference event numbers range" + to_string(thisBlockStart->iev) +
-                    " " + to_string(thisBlockEnd->iev) +
-                    " this block misses " + to_string(thisBlockMissed));
-
-      }
-
-    } // have time stamp files
-
-
     // need once per channel
     std::vector<double> ped;
     std::vector<double> amp;
@@ -347,12 +226,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       TH1D* hist = nullptr;
       if( m_generateRoot ){
         TH1D* hist_init = new TH1D(
-              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(), nch, s ),
-              Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(), nch, s ),
-              np.at(nch),
-              x0.at(nch) - dx.at(nch)/2.,
-              x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
-        );
+                                   Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(), nch, s ),
+                                   Form( "waveform_run%i_ev%i_ch%i_s%i", ev->GetRunN(), ev->GetEventN(), nch, s ),
+                                   np.at(nch),
+                                   x0.at(nch) - dx.at(nch)/2.,
+                                   x0.at(nch) - dx.at(nch)/2. + dx.at(nch)*np.at(nch)
+                                   );
         hist = hist_init;
         hist->GetXaxis()->SetTitle("time [ns]");
         hist->GetYaxis()->SetTitle("signal [V]");
@@ -391,7 +270,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
       } // waveform
 
-
       // store waveform vector and create vector entries for pedestal and amplitude
       waves.push_back( wave );
       ped.push_back( 0. );
@@ -403,11 +281,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
       delete hist;
 
-
     } // segments
 
 
-      // not only for each semgent but for each channel
+    // not only for each semgent but for each channel
     wavess.push_back( waves );
     peds.push_back( ped );
     amps.push_back( amp );
@@ -436,8 +313,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   chanToPix[3] = {0,1};
 
   // process waveform data
-  if(time.size() > 0 &&      // only if there are waveform data
-     thisBlockMissed == 0 ){ // and if we are not missing events in external detector
+  if(time.size() > 0 ){      // only if there are waveform data
 
     // re-iterate waveforms
     // wavess.at(channel).at(segment).at(point)
@@ -449,31 +325,31 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         int i_pedStart = (m_pedStartTime - time.at(0))/dx.at(c);
         int i_pedEnd = (m_pedEndTime - time.at(0))/dx.at(c);
         int n_ped = (m_pedEndTime-m_pedStartTime)/dx.at(c);
-	// check index range for pedestal
-	if(i_pedStart < 0 || i_pedEnd >= wavess.at(c).at(s).size()){
-	  EUDAQ_WARN("Parameter pedStartTime [ns] " + to_string(m_pedStartTime) + " or pedEndTime " + to_string(m_pedEndTime));
-	  EUDAQ_WARN("  Yields invalid index " + to_string(i_pedStart) + " or " + to_string(i_pedEnd));
-	  EUDAQ_WARN("  Setting pedestal to 0!");
-	  peds.at(c).at(s) = 0;
-	  continue;
-	}
+        // check index range for pedestal
+        if(i_pedStart < 0 || i_pedEnd >= wavess.at(c).at(s).size()){
+          EUDAQ_WARN("Parameter pedStartTime [ns] " + to_string(m_pedStartTime) + " or pedEndTime " + to_string(m_pedEndTime));
+          EUDAQ_WARN("  Yields invalid index " + to_string(i_pedStart) + " or " + to_string(i_pedEnd));
+          EUDAQ_WARN("  Setting pedestal to 0!");
+          peds.at(c).at(s) = 0;
+          continue;
+        }
         // calculate pedestal
-	for( int p = i_pedStart; p<i_pedEnd; p++ ){
+        for( int p = i_pedStart; p<i_pedEnd; p++ ){
           peds.at(c).at(s) += wavess.at(c).at(s).at(p) / n_ped;
         }
 
         // calculate index range for amplitude
         int i_ampStart = (m_ampStartTime - time.at(0))/dx.at(c);
         int i_ampEnd = (m_ampEndTime - time.at(0))/dx.at(c);
-	// check index range for amplitude
-	if(i_ampStart < 0 || i_ampEnd >= wavess.at(c).at(s).size()){
-	  EUDAQ_WARN("Parameter ampStartTime [ns] " + to_string(m_ampStartTime) + " or ampEndTime " + to_string(m_ampEndTime));
-	  EUDAQ_WARN("  Yields invalid index " + to_string(i_ampStart) + " or " + to_string(i_ampEnd));
-	  EUDAQ_WARN("  Setting amplitude to 0!");
-	  amps.at(c).at(s) = 0;
-	  continue;
-	}
-	// calculate maximum amplitude in range
+        // check index range for amplitude
+        if(i_ampStart < 0 || i_ampEnd >= wavess.at(c).at(s).size()){
+          EUDAQ_WARN("Parameter ampStartTime [ns] " + to_string(m_ampStartTime) + " or ampEndTime " + to_string(m_ampEndTime));
+          EUDAQ_WARN("  Yields invalid index " + to_string(i_ampStart) + " or " + to_string(i_ampEnd));
+          EUDAQ_WARN("  Setting amplitude to 0!");
+          amps.at(c).at(s) = 0;
+          continue;
+        }
+        // calculate maximum amplitude in range
         for( int p = i_ampStart; p<i_ampEnd; p++ ){
           if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
             amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
@@ -510,16 +386,15 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
       // derive trigger number from block number
       // take missed events into account
-      int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s - m_nMissedEvents;
+      int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s;
       // why is this necessary?
       if(ev->GetEventN()==1 && to_string(peds.at(0).size()) > 1){
         triggerN++;
       }
 
-      EUDAQ_DEBUG("Block number " + to_string(ev->GetEventN()) + " " +
+      EUDAQ_INFO("Block number " + to_string(ev->GetEventN()) + " " +
                   " block size " + to_string(peds.at(0).size()) +
                   " segments, segment number " + to_string(s) +
-                  " subtracting missed " + to_string(m_nMissedEvents) +
                   " trigger number " + to_string(triggerN));
 
       sub_event->AddPlane(plane);
@@ -537,20 +412,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     d2->SetDetectorType("DSO9254A");
   }
-  else if(thisBlockMissed != 0){
-    EUDAQ_DEBUG("Missed " + to_string(thisBlockMissed) +
-                " events in block " + to_string(ev->GetEventN()));
-    m_nMissedBlocks++;
-    return false;
-    }
   else{
     EUDAQ_WARN("No scope data in block " + to_string(ev->GetEventN()));
     return false;
-  }
-
-  // print resync yield
-  if(!m_eventTimesExt.empty() && !m_eventTimesInt.empty()){ // are we even trying
-    EUDAQ_INFO("Resync yield: " + to_string(1-(double)m_nMissedBlocks/(double)ev->GetEventN()));
   }
 
   // Indicate that data were successfully converted
@@ -611,88 +475,3 @@ uint64_t DSO9254AEvent2StdEventConverter::timeConverter( std::string date, std::
 
   return result;
 } // timeConverter
-
-void DSO9254AEvent2StdEventConverter::readEventTimeFile(std::string filename,
-                                                        std::set<EventTime>* eventtime){
-
-  // open
-  std::ifstream infileTimestamps;
-  infileTimestamps.open(filename.c_str(), std::ios_base::in);
-  if(infileTimestamps.is_open()){
-    EUDAQ_DEBUG("Reading time stamps from " + filename);
-  }
-  else{
-    EUDAQ_ERROR("Failed to open " + filename);
-    return;
-  }
-
-  // parse to EventTime set
-  while(!infileTimestamps.eof()){
-
-    uint64_t iev, tev;
-
-    std::string line_string;
-    std::getline(infileTimestamps, line_string);
-    std::stringstream line_stream(line_string);
-    line_stream >> iev;
-    line_stream >> tev;
-    EventTime et(iev, tev);
-
-    // check if there is already a time stamp with the same value and event number
-    if(!eventtime->empty() && eventtime->find(et)->iev==iev){
-      continue;
-    }
-
-    // make entry otherwise
-    eventtime->insert(et);
-
-  } // file good
-
-  // close
-  infileTimestamps.close();
-
-  return;
-} // readEventTimeFile
-
-// FIXME not using internal
-// this might need some fine tuning. right now it is searching for the largest gap
-// within +- 5 events around the external event.
-// might want to try something like closest gap larger than e.g. 0.5 s
-std::set<EventTime>::iterator DSO9254AEvent2StdEventConverter::getBlockEnd(
-  std::set<EventTime>::iterator external, std::set<EventTime>::iterator internal){
-
-  Long64_t largeGap = 0;
-  std::set<EventTime>::iterator blockEnd;
-
-  // check gaps in preceeding alpide time stamps
-  for(int prev = 0; prev < 5; prev++){
-    Long64_t gap = (external)->time - (--external)->time;
-    // update gap lenght and event
-    if(gap > largeGap){
-      largeGap = gap;
-      blockEnd = external;
-    }
-  }
-  std::advance(external,5);// reset iterator
-
-  // check gaps in following alpide time stamps
-  for(int next = 0; next < 5; next++){
-    Long64_t gap = -(external->time) + (++external)->time;
-    // update gap length and event
-    if(gap > largeGap){
-      largeGap = gap;
-      external--; // blockEnd should be the one with the lower timestamp
-      blockEnd = external;
-      external++;
-    }
-  }
-  std::advance(external,-5); // reset iterator
-
-  EUDAQ_DEBUG("  getBlockEnd: Internal event " + to_string(internal->iev) +
-              " time " + to_string(internal->time));
-  EUDAQ_DEBUG("  getBlockEnd: External event " + to_string(blockEnd->iev) +
-              " time " + to_string(blockEnd->time));
-
-
-  return blockEnd;
-} // getBlockEnd
