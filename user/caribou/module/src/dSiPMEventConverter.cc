@@ -327,18 +327,18 @@ std::array<std::array<double, 32>, 32> dSiPMEvent2StdEventConverter::getPixelDel
 
   // no config, no delays
   if (config == "") {
-    for (size_t n = 0; n < out.size(); ++n) {
-      for (size_t m = 0; m < out[n].size(); ++n) {
-        out[n][m] = 0.;
+    for (size_t col = 0; col < out.size(); ++col) {
+      for (size_t row = 0; row < out[col].size(); ++row) {
+        out[col][row] = 0.;
       }
     }
     return out;
   }
 
   auto tmp = convert_config_to_double_array<32*32>(config);
-  for (size_t n = 0; n < out.size(); ++n) {
-    for (size_t m = 0; m < out[n].size(); ++m) {
-      out[n][m] = tmp[n * 32 + m];
+  for (size_t col = 0; col < out.size(); ++col) {
+    for (size_t row = 0; row < out[col].size(); ++row) {
+      out[col][row] = tmp[col * 32 + row];
     }
   }
 
