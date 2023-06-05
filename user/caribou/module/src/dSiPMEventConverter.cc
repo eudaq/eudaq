@@ -1,8 +1,13 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
+#include "eudaq/Exception.hh"
+
 #include "dSiPMFrameDecoder.hpp"
 #include "dSiPMPixels.hpp"
 #include "utils/log.hpp"
+
+#include <string>
+#include <algorithm>
 
 using namespace eudaq;
 
@@ -10,6 +15,8 @@ namespace {
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
       dSiPMEvent2StdEventConverter>(dSiPMEvent2StdEventConverter::m_id_factory);
 }
+
+constexpr double design_width = 1e6/(32*408);
 
 std::vector<dSiPMEvent2StdEventConverter::PlaneConfiguration> dSiPMEvent2StdEventConverter::m_configuration({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_trigger({});
@@ -44,10 +51,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
     plane_conf->zeroSupp = conf->Get("zero_suppression", true);
     plane_conf->discardDuringReset = conf->Get("discard_during_reset", true);
     plane_conf->checkValid = conf->Get("check_valid", false);
-    plane_conf->fine_ts_effective_bits[0] = conf->Get("fine_ts_effective_bits_q0", 26.);
-    plane_conf->fine_ts_effective_bits[1] = conf->Get("fine_ts_effective_bits_q1", 26.);
-    plane_conf->fine_ts_effective_bits[2] = conf->Get("fine_ts_effective_bits_q2", 26.);
-    plane_conf->fine_ts_effective_bits[3] = conf->Get("fine_ts_effective_bits_q3", 26.);
+    plane_conf->fine_tdc_bin_widths = {
+      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q0", "")),
+      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q1", "")),
+      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q2", "")),
+      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q3", ""))};
     plane_conf->frame_start = conf->Get("frame_start", 0);
     plane_conf->frame_stop = conf->Get("frame_stop", 2);
 
@@ -57,11 +65,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
     EUDAQ_INFO("  check_valid = " + to_string(plane_conf->checkValid));
     EUDAQ_INFO("  frame_start = " + to_string(plane_conf->frame_start));
     EUDAQ_INFO("  frame_stop = " + to_string(plane_conf->frame_stop));
-    EUDAQ_INFO("  fine_ts_effective_bits");
-    EUDAQ_INFO("    _q0 " + to_string(plane_conf->fine_ts_effective_bits[0]));
-    EUDAQ_INFO("    _q1 " + to_string(plane_conf->fine_ts_effective_bits[1]));
-    EUDAQ_INFO("    _q2 " + to_string(plane_conf->fine_ts_effective_bits[2]));
-    EUDAQ_INFO("    _q3 " + to_string(plane_conf->fine_ts_effective_bits[3]));
+    EUDAQ_INFO("  fine_tdc_bin_widths");
+    EUDAQ_INFO("    _q0 " + to_string(plane_conf->fine_tdc_bin_widths[0]));
+    EUDAQ_INFO("    _q1 " + to_string(plane_conf->fine_tdc_bin_widths[1]));
+    EUDAQ_INFO("    _q2 " + to_string(plane_conf->fine_tdc_bin_widths[2]));
+    EUDAQ_INFO("    _q3 " + to_string(plane_conf->fine_tdc_bin_widths[3]));
 
     plane_conf->configured = true;
   }
@@ -173,6 +181,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
       }
       else {
         EUDAQ_WARN("clockFine == 0. This might screw up timing analysis.");
+        // 0 comes after 31
+        clockFine = 32;
       }
     }
 
@@ -188,8 +198,17 @@ bool dSiPMEvent2StdEventConverter::Converting(
     uint64_t thisPixFrameEnd =
         static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
 
-    // Get the effective number of bits for the fine TDC time stamp.
-    double nBitEff = plane_conf->fine_ts_effective_bits[quad];
+    // Calculate fine timestamp by summing over fine bin widths
+    // Remember: fine clock starts at 1, so we need to subtract 1 for array access
+    double fine_ts = 0.;
+    for (size_t n = 0; n < clockFine - 1; ++n) {
+      fine_ts += plane_conf->fine_tdc_bin_widths[quad][n];
+    }
+    // Place timestamp in the middle of the last bin
+    fine_ts += plane_conf->fine_tdc_bin_widths[quad][clockFine - 1];
+
+    // Pixel delay due to cable length
+    auto pixel_delay = plane_conf->pixel_delays[col][row];
 
     // timestamp
     // frame start + partial dead time shift
@@ -198,8 +217,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // shift by dead time.
     uint64_t timestamp =
         static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
-                              (clockCoarse - 1) * 1e6 / 408. +
-                              (clockFine - 1) * 1e6 / (408. * nBitEff));
+                              (clockCoarse - 1) * 1e6 / 408. + fine_ts - pixel_delay);
 
     // check frame start if we want valid check
     if (plane_conf->checkValid && (frameStart > 0 && frameStart != thisPixFrameStart)) {
@@ -257,4 +275,72 @@ uint8_t dSiPMEvent2StdEventConverter::getQuadrant(const uint16_t &col,
   if (row < 16)
     return 3;
   return 1;
+}
+
+template<size_t N> std::array<double, N> convert_config_to_double_array(std::string& config) {
+  auto out = std::array<double, N>();
+
+  // remove whitespaces and quotes
+  config.erase(std::remove(config.begin(), config.end(), ' '), config.end());
+  config.erase(std::remove(config.begin(), config.end(), '"'), config.end());
+
+  // split by comma
+  std::vector<std::string> substrs {};
+  size_t pos_start = 0, pos_end = 0;
+  while ((pos_end = config.find(',', pos_start)) != std::string::npos) {
+    substrs.push_back(config.substr(pos_start, pos_end - pos_start));
+    pos_start = pos_end + 1;
+  }
+
+  // check size: we need N substrings
+  if (substrs.size() != N) {
+    throw Exception("Wrong array size in config");
+  }
+
+  // convert substrings to doubles
+  for (size_t n = 0; n < out.size(); ++n) {
+    try {
+      out[n] = std::stod(substrs[n]);
+    } catch(std::invalid_argument& error) {
+      throw Exception("Failed to convert substring to double in config");
+    }
+  }
+
+  return out;
+}
+
+std::array<double, 32> dSiPMEvent2StdEventConverter::getFineTDCWidths(std::string config) {
+  // no config, use defaults
+  if (config == "") {
+    auto out = std::array<double, 32>();
+    for (size_t n = 0; n < out.size(); ++n) {
+      out[n] = design_width;
+    }
+    return out;
+  }
+
+  return convert_config_to_double_array<32>(config);
+}
+
+std::array<std::array<double, 32>, 32> dSiPMEvent2StdEventConverter::getPixelDelays(std::string config) {
+  auto out = std::array<std::array<double, 32>, 32>();
+
+  // no config, no delays
+  if (config == "") {
+    for (size_t n = 0; n < out.size(); ++n) {
+      for (size_t m = 0; m < out[n].size(); ++n) {
+        out[n][m] = 0.;
+      }
+    }
+    return out;
+  }
+
+  auto tmp = convert_config_to_double_array<32*32>(config);
+  for (size_t n = 0; n < out.size(); ++n) {
+    for (size_t m = 0; m < out[n].size(); ++m) {
+      out[n][m] = tmp[n * 32 + m];
+    }
+  }
+
+  return out;
 }

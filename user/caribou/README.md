@@ -31,7 +31,7 @@ The producer interfaces the Peary device manager to add devices and to control t
 
     Both keys need to be set, of one or the other is missing, no change of configuration is attempted.
 
-    The key `adc_signal` and `adc_frequency` can be used to sample the slow ADC on the Carboard in regular intervals. Here, `adc_signal` is the name of the ADC input channel as assigned via the Peary periphery for the given device, and `adc_frequency` is the number of events after which a new reading is attempted, the default is 1000. If no `adc_signal` is set, no ADC reading is attempted. 
+    The key `adc_signal` and `adc_frequency` can be used to sample the slow ADC on the Carboard in regular intervals. Here, `adc_signal` is the name of the ADC input channel as assigned via the Peary periphery for the given device, and `adc_frequency` is the number of events after which a new reading is attempted, the default is 1000. If no `adc_signal` is set, no ADC reading is attempted.
 
     The producer itself reads the value `number_of_subevents` which allows buffering. If set to a value larger than zero, events are first buffered and upon reaching the desired buffer depth, they are collectively sent as sub-events of a Caribou event of the same type.
     A value of, for example, `number_of_subevents = 100` would therefore result in one event being sent to the DataCollector every 100 events read from the device. This event would contain 100 sub-events with the individual data blocks. This is completely transparent to data analysis performed in Corryvreckan using the EventLoaderEUDAQ2 and can be used to reduce the number of packets sent via the network.
@@ -87,6 +87,7 @@ The following parameters can be passed in the configuration in order to influenc
 * `zero_suppression`: If `1`, frames with no hits will *not* be skipped by the converter. Defaults to `0`.
 * `discard_during_reset`: If `0`, frames that appear during the frame reset will not be ignored. Default is `1`.
 * `check_valid`: If `1`, frames where the valid bit is not set will be skipped. Defaults to `0`.
-* `fine_ts_effective_bits_qX`: Sets the effective number of time bins for the fine TDC, where `X` is the number of the quadrant. Default value is `26` for all quadrants.
+* `fine_tdc_bin_widths_qX`: Sets the bin width in picoseconds for every bin of the fine TDC, where `X` is the number of the quadrant. Has to be given as string formatted like `"95.2,120.3,80.7,...,95.6,"` with exactly 32 entries. Note that the trailing comma at the end is required. Default value is the design value for all bins in every quadrants.
+* `pixel_delays`: Sets the delay for every pixel in picoseconds. Has to be given as string formatted like `"10.7,9.33,,...,313.5,"` with exactly 32*32 entries. Note that the trailing comma at the end is required. The first 32 entries are for the first colum, the next 32 entries are for the second row and so on. Default value is zero for every pixel.
 * `frame_start`: First frame to be used in an event for a given trigger. Can be set to a higher value to ignore the first frame(s). Defaults to `0`.
 * `frame_stop`: Last frame to be used in an event for a given trigger. Can be set to a lower value to ignore the last frame(s). Defaults to `2`. Might need to be adjusted depending on the peary configuration.
