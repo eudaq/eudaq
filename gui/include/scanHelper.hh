@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <map>
+#include <unordered_map>
 
 #include "eudaq/Config.hh"
 #include "eudaq/Logger.hh"
@@ -26,10 +28,11 @@ public:
         double start, step, stop, defaultV;
         int secIndex;
         bool nested;
+        int scanParallelTo;
         std::string name, parameter, eventCounter;
 
-        ScanSection(double start, double stop, double step, std::string name,std::string parameter,std::string eventCounter, double defaultV, int idx, bool nested = false)
-            : start(start), stop(stop), step(step), name(name), nested(nested), parameter(parameter), eventCounter(eventCounter), defaultV(defaultV), secIndex(idx)
+        ScanSection(double start, double stop, double step, std::string name,std::string parameter,std::string eventCounter, double defaultV, int idx, bool nested = false, int scanParallelTo = 0)
+            : start(start), stop(stop), step(step), name(name), nested(nested), parameter(parameter), eventCounter(eventCounter), defaultV(defaultV), secIndex(idx), scanParallelTo(scanParallelTo)
         {}
     };
     Scan():m_allow_nested_scan(false), m_scan_is_time_based(true), m_time_per_step(0), m_repeatScans(false),
@@ -119,13 +122,15 @@ private:
      * @return True if file created
      */
     bool storeConfigFile(eudaq::ConfigurationSP conf);
+
     /**
      * @brief Creates the configuration files for each scan
      * @param condition Recursvice iterator over the scan secctions 'sec'
      * @param conf Default configuration
      * @param sec Scan section beeing read
      */
-    void createConfigs(unsigned condition, eudaq::ConfigurationSP conf, std::vector<ScanSection> sec);
+    void createConfigsMulti(unsigned condition, eudaq::ConfigurationSP conf, std::unordered_map<int, std::vector<ScanSection>> mapSec);
+
     /**
      * @brief add additional information for each section
      * @param s Section read in

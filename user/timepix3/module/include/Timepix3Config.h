@@ -84,7 +84,7 @@ inline vector<TString> tokenise( TString line, const char* delim=" " ) {
   line = line.Strip();
   TObjArray* tokens = line.Tokenize( delim );
   for (int i=0; i<tokens->GetSize(); i++) {
-    if (tokens->At(i) >0) {
+    if (tokens->At(i) != nullptr) {
       TString t = dynamic_cast<TObjString *>(tokens->At(i))->GetString();
       retvec.push_back( t );
     }

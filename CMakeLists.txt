@@ -6,6 +6,9 @@ set(${PROJECT_NAME}_VERSION_PATCH 2 )
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    include(CTest)
+endif()
 
 if(COMMAND CMAKE_POLICY)
   if(${CMAKE_VERSION} VERSION_GREATER "3.13")

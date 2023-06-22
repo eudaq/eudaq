@@ -7,11 +7,43 @@ set(EUDAQ_INCLUDE_DIRS
   ${CMAKE_CURRENT_LIST_DIR}/include/eudaq
   CACHE INTERNAL "directory of eudaq include")
 
+
 include_directories(include)
 include_directories(include/eudaq)
 
 aux_source_directory(src CORE_SRC)
 add_library(${EUDAQ_CORE_LIBRARY} SHARED ${CORE_SRC})
+
+# generate the dictionary source code if ROOT is available
+FIND_PACKAGE(root QUIET)
+IF(ROOT_FOUND)
+  ROOT_GENERATE_DICTIONARY(eudaqCoreDict
+    include/eudaq/Exception.hh
+    LINKDEF
+    src/LinkDef.h
+    OPTIONS
+    -inlineInputHeader
+    -I${CMAKE_CURRENT_SOURCE_DIR}
+    -I${CMAKE_CURRENT_SOURCE_DIR}/src
+    MODULE
+    ${EUDAQ_CORE_LIBRARY}
+  )
+  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/eudaqCoreDict.cxx
+    PROPERTIES
+    GENERATED TRUE
+    COMPILE_FLAGS "-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+
+  TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
+
+  # Also install the dictionary objects
+  INSTALL(FILES
+      ${CMAKE_CURRENT_BINARY_DIR}/libcore_rdict.pcm
+      ${CMAKE_CURRENT_BINARY_DIR}/libcore.rootmap
+      DESTINATION lib)
+ENDIF()
+
+
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES DEFINE_SYMBOL "core_EXPORTS" )
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR})
 
@@ -30,7 +62,6 @@ install(TARGETS ${EUDAQ_CORE_LIBRARY}
   ARCHIVE DESTINATION lib
   # PUBLIC_HEADER DESTINATION include/eudaq
   )
-
 
 file(GLOB INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/eudaq/*.hh")
 install(FILES ${INC_FILES} DESTINATION include/eudaq)

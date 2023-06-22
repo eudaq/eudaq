@@ -5,9 +5,10 @@ import urwid
 import urwid_timed_progress
 import asyncio
 import re
-import sys
 from time import sleep
 import argparse
+import traceback
+from utils import exception_handler
 
 urwid_timed_progress.FancyProgressBar.get_text=lambda self: '%d/%d %s (%.1f%%)'%(self.current,self.done,self.units[0][0],self.current/self.done*100)
 
@@ -102,6 +103,14 @@ class ITS3TUI():
         cols=[collector,self.CONNECTION_STATES[state],'%8d'%ndev,'%8d'%nsev,info]
         asyncio.run_coroutine_threadsafe(self.update_collector_(collector,cols),self.aloop).result()
 
+    async def update_logger_(self,logger,cols):
+        for a,b in zip(self.collectors[logger],cols):
+            a.set_text(b)
+        self.loop.draw_screen()
+    def update_logger(self,logger,state,info):
+        cols=[logger,self.CONNECTION_STATES[state],'','',info]
+        asyncio.run_coroutine_threadsafe(self.update_logger_(logger,cols),self.aloop).result()
+
     async def update_progress_run_(self,nev):
         if self.progress_run.current+nev>self.progress_run.done:
             self.progress_run.add_progress(nev,self.progress_run.current+nev)
@@ -166,7 +175,7 @@ class ITS3TUI():
           urwid.LineBox(urwid.Padding(self.state,'center',None),title='Status'),
           urwid.LineBox(progress,title='Progress'),
           urwid.LineBox(self.build_table(self.rc.dataproducers+self.rc.moreproducers,self.producers),title='Producers'),
-          urwid.LineBox(self.build_table(self.rc.collectors,self.collectors),title='Collector(s)'),
+          urwid.LineBox(self.build_table(self.rc.collectors+self.rc.loggers,self.collectors),title='Collector(s)'),
           urwid.LineBox(self.configs_list, title='Pending configs')
         ])
         return urwid.Frame(main,header=header,footer=footer)
@@ -209,14 +218,24 @@ class ITS3RunControl(pyeudaq.RunControl):
         self.ndev={}
         self.ReadInitialiseFile(init_fname)
         init=self.GetInitConfiguration()
+        self.loggers      =list(filter(None,re.split('[ ,]+',init.Get('loggers'))))
         self.dataproducers=list(filter(None,re.split('[ ,]+',init.Get('dataproducers'))))
         self.moreproducers=list(filter(None,re.split('[ ,]+',init.Get('moreproducers'))))
         self.collectors   =list(filter(None,re.split('[ ,]+',init.Get('collectors'   ))))
         self.configs      =list(filter(None,re.split('[ ,]+',init.Get('configs'      ))))
+        for text,n in [
+            ('producers', len(self.dataproducers)+len(self.moreproducers)),
+            ('collectors', len(self.collectors)),
+            ('configs files', len(self.configs))]:
+            if n==0:
+                print(f"\nERROR! No {text} to run! Check the ini file!\n")
+                exit()
         self.tui=ITS3TUI(self)
         self.lock=threading.Lock()
         self.running=False
         self.halt=False
+    
+    @exception_handler
     def DoConnect(self,c):
         with self.lock:
             self.connections[c.GetName()]=c
@@ -227,11 +246,15 @@ class ITS3RunControl(pyeudaq.RunControl):
                 self.tui.update_producer(c.GetName(),0,0,0,'XXX')
             else:
                 pass
+    
+    @exception_handler
     def DoDisconnect(self,c):
         with self.lock:
             del self.connections[c.GetName()]
             if c.GetName() in self.dataproducers+self.moreproducers:
                 self.tui.update_producer(c.GetName(),0,0,0,'XXX')
+    
+    @exception_handler
     def DoStatus(self,c,s):
         with self.lock:
             self.status[c.GetName()]=s.GetState()
@@ -240,14 +263,32 @@ class ITS3RunControl(pyeudaq.RunControl):
             msg=s.GetMessage()
             if c.GetName() in self.dataproducers+self.moreproducers:
                 self.tui.update_producer(c.GetName(),s.GetState(),self.ndev[c.GetName()],self.nsev[c.GetName()],msg)
-            if c.GetName() in self.collectors:
+            elif c.GetName() in self.collectors:
                 self.tui.update_collector(c.GetName(),s.GetState(),self.ndev[c.GetName()],self.nsev[c.GetName()],msg)
+            elif c.GetName() in self.loggers:
+                self.tui.update_logger(c.GetName(),s.GetState(),msg)
+    
+    @exception_handler
     def framework_runner_(self):
         self.Exec()
+
+    def check_status(self):
+        with self.lock:
+            in_error = [c for c,s in self.status.items() if s == pyeudaq.Status.STATE_ERROR]
+        for c in in_error:
+            pyeudaq.EUDAQ_ERROR(f"{c} in ERROR state")
+        if in_error:
+            raise RuntimeError("One or more conections in ERROR state.")
+
     def wait_replicas(self,state):
         wait=True
         while wait:
             wait=False
+            for logger in self.loggers:
+                with self.lock:
+                    if not logger in self.status or self.status[logger]!=state:
+                        wait=True
+                        break
             for producer in self.dataproducers+self.moreproducers:
                 with self.lock:
                     if not producer in self.status or self.status[producer]!=state:
@@ -259,9 +300,23 @@ class ITS3RunControl(pyeudaq.RunControl):
                         wait=True
                         break
             sleep(0.01)
+            self.check_status()
+
+    def userlogic_wrapper(self):
+        try:
+            self.userlogic_runner_()
+        except Exception as e:
+            pyeudaq.EUDAQ_ERROR(str(e))
+            pyeudaq.EUDAQ_ERROR(traceback.format_exc())
+            self.tui.set_state('ERROR')
+            if self.running:
+                self.StopRun()
+
     def userlogic_runner_(self):
         self.tui.set_state('CONWAIT')
         self.wait_replicas(pyeudaq.Status.STATE_UNINIT)
+        if self.loggers:
+            pyeudaq.EUDAQ_LOG_CONNECT("RunControl","RC-TUI","tcp://localhost:55000") # TODO make nicer
         self.Initialise()
         self.wait_replicas(pyeudaq.Status.STATE_UNCONF)
         self.tui.set_state('UNCONF')
@@ -289,6 +344,7 @@ class ITS3RunControl(pyeudaq.RunControl):
                         self.running = False
                 if not self.running:
                     break
+                self.check_status()
                 sleep(0.1)
             self.tui.update_progress_tot()
             self.StopRun()
@@ -301,9 +357,10 @@ class ITS3RunControl(pyeudaq.RunControl):
 
     def start(self):
         self.framework_runner=threading.Thread(target=self.framework_runner_)
-        self.userlogic_runner=threading.Thread(target=self.userlogic_runner_)
+        self.userlogic_runner=threading.Thread(target=self.userlogic_wrapper)
         self.framework_runner.start()
         self.userlogic_runner.start()
+        
     def join(self):
         self.userlogic_runner.join()
         self.framework_runner.join()

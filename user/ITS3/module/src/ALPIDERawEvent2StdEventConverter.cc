@@ -2,11 +2,17 @@
 #include "eudaq/RawEvent.hh"
 #include <iostream>
 
+
 class ALPIDERawEvent2StdEventConverter:public eudaq::StdEventConverter{
 public:
-  bool Converting(eudaq::EventSPC rawev,eudaq::StdEventSP stdev,eudaq::ConfigSPC conf) const override;
+  bool Converting(eudaq::EventSPC rawev,eudaq::StdEventSP stdev,eudaq::ConfigSPC conf_) const override;
 private:
   void Dump(const std::vector<uint8_t> &data,size_t i) const;
+  struct Config {
+    int device_n;
+  };
+  Config& LoadConf(eudaq::ConfigSPC config_) const;
+  static std::map<eudaq::ConfigSPC,Config> confs;
 };
 
 #define REGISTER_CONVERTER(name) namespace{auto dummy##name=eudaq::Factory<eudaq::StdEventConverter>::Register<ALPIDERawEvent2StdEventConverter>(eudaq::cstr2hash(#name));}
@@ -31,9 +37,37 @@ REGISTER_CONVERTER(ALPIDE_plane_17)
 REGISTER_CONVERTER(ALPIDE_plane_18)
 REGISTER_CONVERTER(ALPIDE_plane_19)
 
-bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdEventSP out,eudaq::ConfigSPC conf) const{
+ALPIDERawEvent2StdEventConverter::Config& ALPIDERawEvent2StdEventConverter::LoadConf(eudaq::ConfigSPC conf_) const {
+  if(confs.find(conf_)!=confs.end()) return confs[conf_];
+  EUDAQ_DEBUG("Load configuration for ALPIDE");
+  Config conf;
+  conf.device_n = -1; // decode all fallback (used in online monitor)
+
+  // pass configuration via Corryvreckan EUDAQ2EventLoader
+  std::string id=conf_?conf_->Get("identifier",""):""; // set by corry
+  if(id!="") {
+    size_t p=id.find("ALPIDE_"); // TODO: no idea why the identifier is quoted in the config, may change in future?
+    if(p==std::string::npos) {
+      conf.device_n = -2; // other plane is looked for, bail out early to not waste time in full decoding
+    }
+    else {
+      p+=7;
+      conf.device_n=std::stoi(id.substr(p));
+      EUDAQ_DEBUG(" set device number `"+id+"` from Corryvreckan");
+    }
+  }
+  confs[conf_]=std::move(conf);
+  return confs[conf_];
+}
+
+std::map<eudaq::ConfigSPC,ALPIDERawEvent2StdEventConverter::Config> ALPIDERawEvent2StdEventConverter::confs;
+
+bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdEventSP out,eudaq::ConfigSPC conf_) const{
+  Config &conf=LoadConf(conf_);
+  if(conf.device_n==-2) return false; // Corry event loader is looking for another plane
   auto rawev=std::dynamic_pointer_cast<const eudaq::RawEvent>(in);
   std::vector<uint8_t> data=rawev->GetBlock(0); // FIXME: copy?
+  if(conf.device_n>=0 && conf.device_n!=rawev->GetDeviceN()) return false;
   eudaq::StandardPlane plane(rawev->GetDeviceN(),"ITS3DAQ","ALPIDE");
   plane.SetSizeZS(1024,512,0,1); // 0 hits so far + 1 frame
   size_t i=0;
@@ -47,12 +81,12 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
   for (int j=0;j<4;++j) iev|=((uint32_t)data[i+4+j])<<(j*8);
   for (int j=0;j<8;++j) tev|=((uint64_t)data[i+8+j])<<(j*8);
   tev*=12500; // 80Mhz clks to 1ps
-  
+
   // forcing corry to fall back on trigger IDs
   out->SetTimeBegin(0);
   out->SetTimeEnd(0);
   out->SetTriggerN(iev);
-  
+
   i+=16;
   uint8_t reg;
   if((data[i]&0xF0)==0xE0) {// chip empty frame
@@ -102,7 +136,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
           Dump(data,i);
           return false;
         }
-      } 
+      }
     }
   else {
     EUDAQ_WARN("BAD WORD. No event start? Skipping raw event.");
@@ -113,7 +147,7 @@ bool ALPIDERawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdE
     EUDAQ_WARN("BAD WORD. Bad/no event trailer? Skipping raw event.");
     Dump(data,i);
     return false;
-  }  
+  }
   out->AddPlane(plane);
   return true;
 }
@@ -124,7 +158,7 @@ void ALPIDERawEvent2StdEventConverter::Dump(const std::vector<uint8_t> &data,siz
   for (size_t j=0;j<data.size();++j) {
     if (i==j)
       sprintf(buf,"%06zX: %02X <-- problem around here?",j,data[j]);
-    else 
+    else
       sprintf(buf,"%06zX: %02X",j,data[j]);
     EUDAQ_WARN(buf);
   }
