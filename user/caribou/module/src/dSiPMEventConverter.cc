@@ -163,27 +163,25 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // 4 * 1 / 204 MHz due between read going low and frame reset going high.
     // 3 * 1 / 408 MHz of that dead time are at the begin of a bunch, the rest
     // is at the end.
-    // all three clocks should start with 1, which is subtracted. For the coarse
-    // clock 0 should never appear, unless the clocks and frame reset are out
+    // all three clocks should start with 1, which is subtracted. For the bunch
+    // counter 0 should never appear, unless the clocks and frame reset are out
     // of sync or a trigger appears in the frame reset.
-    if (clockCoarse == 0) {
-      if (plane_conf->discardDuringReset == true) {
+    // for the fine clock, 0 (i.e. 32) is never reached on the chip.
+    if (plane_conf->discardDuringReset == true) {
+      if (bunchCount == 0 || clockFine == 0) {
         return false;
       }
       else {
-        EUDAQ_WARN("Coarse clock == 0. This might screw up timing analysis.");
+        EUDAQ_WARN("Bunch counter == 0. This might screw up timing analysis.");
       }
     }
-    // According to Inge this needs to be discarded
     if (clockFine == 0) {
-      if (plane_conf->discardDuringReset == true) {
-        return false;
-      }
-      else {
-        EUDAQ_WARN("clockFine == 0. This might screw up timing analysis.");
-        // 0 comes after 31
-        clockFine = 32;
-      }
+      // 0 comes after 31
+      clockFine = 32;
+    }
+    if (clockCoarse == 0) {
+      // 0 comes after 127
+      clockCoarse = 128;
     }
 
     // frame start
@@ -205,7 +203,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
       fine_ts += plane_conf->fine_tdc_bin_widths[quad][n];
     }
     // Place timestamp in the middle of the last bin
-    fine_ts += plane_conf->fine_tdc_bin_widths[quad][clockFine - 1];
+    fine_ts += 0.5 * plane_conf->fine_tdc_bin_widths[quad][clockFine - 1];
 
     // Pixel delay due to cable length
     auto pixel_delay = plane_conf->pixel_delays[col][row];
