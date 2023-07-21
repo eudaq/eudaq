@@ -89,7 +89,7 @@ namespace eudaq {
       std::array<std::array<double, 32>, 4> fine_tdc_bin_widths {};
       std::array<std::array<double, 32>, 32> pixel_delays {};
       uint64_t frame_start {0};
-      uint64_t frame_stop {2};
+      uint64_t frame_stop {INT8_MAX};
     };
     static uint8_t getQuadrant(const uint16_t& col, const uint16_t& row);
     static std::array<double, 32> getFineTDCWidths(std::string config);

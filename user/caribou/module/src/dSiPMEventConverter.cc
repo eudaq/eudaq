@@ -57,7 +57,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
       getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q2", "")),
       getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q3", ""))};
     plane_conf->frame_start = conf->Get("frame_start", 0);
-    plane_conf->frame_stop = conf->Get("frame_stop", 2);
+    plane_conf->frame_stop = conf->Get("frame_stop", INT8_MAX);
 
     EUDAQ_INFO("Using configuration for plane ID " + to_string(plane_id) + ":");
     EUDAQ_INFO("  zero_suppression = " + to_string(plane_conf->zeroSupp));
