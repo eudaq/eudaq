@@ -3,10 +3,10 @@ if(NOT EUDAQ_BUILD_PYTHON)
   return()
 endif()
 #find_package(PythonLibsNew REQUIRED)
-find_package(PythonLibs REQUIRED)
+find_package(Python REQUIRED COMPONENTS Development)
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
-include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${Python_INCLUDE_DIRS})
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
 set(PYBIND_NAME_VER pybind11-2.5.0)
@@ -28,7 +28,7 @@ add_custom_command(
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 set(CMAKE_SHARED_MODULE_PREFIX  "")
 add_library(pyeudaq SHARED ${EUDAQ_COMPONENT_SRC} ${PYBIND_HEADER_FILE})
-target_link_libraries(pyeudaq ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${PYTHON_LIBRARIES})
+target_link_libraries(pyeudaq ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${Python_LIBRARIES})
 
 if (APPLE)
     set_property(TARGET pyeudaq PROPERTY OUTPUT_NAME "pyeudaq.so")
