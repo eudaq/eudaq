@@ -206,7 +206,7 @@ void CorryMonitor::DoConfigure(){
 
 
   // command to be exectued in DoStartRun(), stored tokenized in m_args.argv
-  std::string my_command = m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
+  std::string my_command = "xterm -e " + m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
 
   // Clear vector with datacollectors
   m_datacollector_vector.clear();
