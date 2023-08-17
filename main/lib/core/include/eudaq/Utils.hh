@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include <sstream>
 #include <iomanip>
 #include <stdexcept>
@@ -11,7 +12,7 @@
 #include "Platform.hh"
 
 namespace eudaq {
-  
+
   std::string DLLEXPORT ucase(const std::string &);
   std::string DLLEXPORT lcase(const std::string &);
   std::string DLLEXPORT trim(const std::string &s);
@@ -67,6 +68,17 @@ namespace eudaq {
 
   template <typename T>
   inline std::string to_string(const std::vector<T> &x, int digits = 0) {
+    return to_string(x, ",", digits);
+  }
+
+  template <typename T, size_t N>
+  inline std::string to_string(const std::array<T, N> &x, const std::string &sep,
+                               int digits = 0) {
+    return to_string(std::vector<T>(x.begin(), x.end()), sep, digits);
+  }
+
+  template <typename T, size_t N>
+  inline std::string to_string(const std::array<T, N> &x, int digits = 0) {
     return to_string(x, ",", digits);
   }
 
@@ -153,7 +165,7 @@ namespace eudaq {
   from_string(const std::string &x, const uint16_t &def) {
     return static_cast<uint16_t>(from_string(x, (uint64_t)def));
   }
-  
+
   template <typename T> struct hexdec_t {
     enum { DIGITS = 2 * sizeof(T) };
     hexdec_t(T val, unsigned hexdigits) : m_val(val), m_dig(hexdigits) {}
@@ -236,7 +248,7 @@ namespace eudaq {
   }
 
 
-  
+
   template <typename T>
   inline void setbigendian(unsigned char *ptr, const T &val) {
 #if (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) ||                 \
