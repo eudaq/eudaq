@@ -1,5 +1,4 @@
 #include "CaribouEvent2StdEventConverter.hh"
-
 #include "eudaq/Exception.hh"
 
 #include "H2MFrameDecoder.hpp"
@@ -73,7 +72,7 @@ bool H2MEvent2StdEventConverter::Converting(
   static caribou::H2MFrameDecoder decoder;
 
   // Data container:
-  caribou::pearyRawData rawdata;
+  std::vector<uint32_t> rawdata;
 
   // Retrieve data from event
   if (ev->NumBlocks() == 1) {
@@ -106,7 +105,7 @@ bool H2MEvent2StdEventConverter::Converting(
        counti ++;
   }
   //  first decode the header
-  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, t0] = decoder.decodeHeader<uint32_t>(rawdata);
+  //  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, t0] = decoder.decodeHeader<uint32_t>(rawdata);
   // remove the 6 elements from the header
   rawdata.erase(rawdata.begin(),rawdata.begin()+6);
 // Decode the event raw data - no zero supression
@@ -121,7 +120,7 @@ bool H2MEvent2StdEventConverter::Converting(
   int _100MHz_to_ps = 10000;
   uint64_t frameStart = ts_sh_open*_100MHz_to_ps;
   uint64_t frameEnd = ts_sh_close*_100MHz_to_ps;
-
+  EUDAQ_DEBUG("FrameID: "+ to_string(frameID) +"\t Shutter open: "+to_string(frameStart)+"\t shutter close "+to_string(frameEnd) +"\t t_0: "+to_string(t0));
   for (const auto &pixel : frame) {
 
     // get pixel information
@@ -145,7 +144,8 @@ bool H2MEvent2StdEventConverter::Converting(
     }
     // assemble pixel and add to plane
     plane.PushPixel(col, row, tot, timestamp);
-    EUDAQ_DEBUG("Col/row: " + to_string(col) + "/" + to_string(row) + " in mode "+ to_string(int(mode)) + " with ts: " + to_string(timestamp) + " tot: " + to_string(tot));
+    if(col == 1 && row ==1)
+        EUDAQ_DEBUG("Col/row: " + to_string(col) + "/" + to_string(row) + " in mode "+ to_string(int(mode)) + " with ts: " + to_string(timestamp) + " tot: " + to_string(tot));
   } // pixels in frame
 
   // Add the plane to the StandardEvent
