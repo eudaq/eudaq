@@ -32,48 +32,48 @@ bool H2MEvent2StdEventConverter::Converting(
   EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
 
   // Check if this is the first encounter of the plane
-  if (m_configuration.size() < plane_id + 1) {
-    EUDAQ_DEBUG("Resizing static members for new plane");
-    m_configuration.push_back({});
-    m_trigger.push_back(0);
-    m_frame.push_back(0);
-  }
+//  if (m_configuration.size() < plane_id + 1) {
+//    EUDAQ_DEBUG("Resizing static members for new plane");
+//    m_configuration.push_back({});
+//    m_trigger.push_back(0);
+//    m_frame.push_back(0);
+//  }
 
-  // Shorthand for the configuration of this plane
-  auto* plane_conf = &m_configuration[plane_id];
+//  // Shorthand for the configuration of this plane
+//  auto* plane_conf = &m_configuration[plane_id];
 
-  if (!plane_conf->configured && conf != NULL) {
-    plane_conf->zeroSupp = conf->Get("zero_suppression", true);
-    plane_conf->discardDuringReset = conf->Get("discard_during_reset", true);
-    plane_conf->checkValid = conf->Get("check_valid", false);
-    plane_conf->fine_tdc_bin_widths = {
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q0", "")),
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q1", "")),
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q2", "")),
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q3", ""))};
-    plane_conf->frame_start = conf->Get("frame_start", 0);
-    plane_conf->frame_stop = conf->Get("frame_stop", INT8_MAX);
+//  if (!plane_conf->configured && conf != NULL) {
+//    plane_conf->zeroSupp = conf->Get("zero_suppression", true);
+//    plane_conf->discardDuringReset = conf->Get("discard_during_reset", true);
+//    plane_conf->checkValid = conf->Get("check_valid", false);
+//    plane_conf->fine_tdc_bin_widths = {
+//      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q0", "")),
+//      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q1", "")),
+//      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q2", "")),
+//      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q3", ""))};
+//    plane_conf->frame_start = conf->Get("frame_start", 0);
+//    plane_conf->frame_stop = conf->Get("frame_stop", INT8_MAX);
 
-    EUDAQ_INFO("Using configuration for plane ID " + to_string(plane_id) + ":");
-    EUDAQ_INFO("  zero_suppression = " + to_string(plane_conf->zeroSupp));
-    EUDAQ_INFO("  discard_during_reset = " + to_string(plane_conf->discardDuringReset));
-    EUDAQ_INFO("  check_valid = " + to_string(plane_conf->checkValid));
-    EUDAQ_INFO("  frame_start = " + to_string(plane_conf->frame_start));
-    EUDAQ_INFO("  frame_stop = " + to_string(plane_conf->frame_stop));
-    EUDAQ_INFO("  fine_tdc_bin_widths");
-    EUDAQ_INFO("    _q0 " + to_string(plane_conf->fine_tdc_bin_widths[0]));
-    EUDAQ_INFO("    _q1 " + to_string(plane_conf->fine_tdc_bin_widths[1]));
-    EUDAQ_INFO("    _q2 " + to_string(plane_conf->fine_tdc_bin_widths[2]));
-    EUDAQ_INFO("    _q3 " + to_string(plane_conf->fine_tdc_bin_widths[3]));
+//    EUDAQ_INFO("Using configuration for plane ID " + to_string(plane_id) + ":");
+//    EUDAQ_INFO("  zero_suppression = " + to_string(plane_conf->zeroSupp));
+//    EUDAQ_INFO("  discard_during_reset = " + to_string(plane_conf->discardDuringReset));
+//    EUDAQ_INFO("  check_valid = " + to_string(plane_conf->checkValid));
+//    EUDAQ_INFO("  frame_start = " + to_string(plane_conf->frame_start));
+//    EUDAQ_INFO("  frame_stop = " + to_string(plane_conf->frame_stop));
+//    EUDAQ_INFO("  fine_tdc_bin_widths");
+//    EUDAQ_INFO("    _q0 " + to_string(plane_conf->fine_tdc_bin_widths[0]));
+//    EUDAQ_INFO("    _q1 " + to_string(plane_conf->fine_tdc_bin_widths[1]));
+//    EUDAQ_INFO("    _q2 " + to_string(plane_conf->fine_tdc_bin_widths[2]));
+//    EUDAQ_INFO("    _q3 " + to_string(plane_conf->fine_tdc_bin_widths[3]));
 
-    plane_conf->configured = true;
-  }
+//    plane_conf->configured = true;
+//  }
 
   // get an instance of the frame decoder
   static caribou::H2MFrameDecoder decoder;
 
   // Data container:
-  std::vector<uint32_t> rawdata;
+  caribou::pearyRawData rawdata;
 
   // Retrieve data from event
   if (ev->NumBlocks() == 1) {
@@ -98,12 +98,19 @@ bool H2MEvent2StdEventConverter::Converting(
     return false;
   } // bad event
 
+  EUDAQ_DEBUG("Length of rawdata (should be 262): " +to_string(rawdata.size()));
+  int counti =0;
+  for(auto e: rawdata){
+
+      EUDAQ_DEBUG(to_string(counti)+": "+to_string(e));
+       counti ++;
+  }
   //  first decode the header
-  std::tuple<uint64_t, uint64_t, uint64_t, size_t, bool>  header = decoder.decodeHeader(&rawdata);
+  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, t0] = decoder.decodeHeader<uint32_t>(rawdata);
   // remove the 6 elements from the header
   rawdata.erase(rawdata.begin(),rawdata.begin()+6);
 // Decode the event raw data - no zero supression
-  auto frame = decoder.decodeFrame(rawdata,0);
+  auto frame = decoder.decodeFrame<uint32_t>(rawdata,0x0);
 
 
   // Create a StandardPlane representing one sensor plane
@@ -112,10 +119,8 @@ bool H2MEvent2StdEventConverter::Converting(
   plane.SetSizeZS(64, 16, 0);
   // start and end are in 100MHz units -> to ps
   int _100MHz_to_ps = 10000;
-  uint64_t frameStart = std::get<1>(header)*_100MHz_to_ps;
-  uint64_t frameEnd = std::get<2>(header)*_100MHz_to_ps;
-  uint64_t frameID = std::get<3>(header);
-  bool t0_seen = std::get<bool>(header);
+  uint64_t frameStart = ts_sh_open*_100MHz_to_ps;
+  uint64_t frameEnd = ts_sh_close*_100MHz_to_ps;
 
   for (const auto &pixel : frame) {
 
@@ -136,11 +141,11 @@ bool H2MEvent2StdEventConverter::Converting(
       tot = 1;
     } else if(mode==caribou::ACQ_MODE_TOT){
       timestamp = (frameStart+frameEnd)/2;
-      tot = pixHit->getToT()*_100MHz_to_ps;
+      tot = pixHit->GetToT()*_100MHz_to_ps;
     }
     // assemble pixel and add to plane
     plane.PushPixel(col, row, tot, timestamp);
-
+    EUDAQ_DEBUG("Col/row: " + to_string(col) + "/" + to_string(row) + " in mode "+ to_string(int(mode)) + " with ts: " + to_string(timestamp) + " tot: " + to_string(tot));
   } // pixels in frame
 
   // Add the plane to the StandardEvent
