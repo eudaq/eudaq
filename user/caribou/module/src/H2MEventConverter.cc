@@ -99,7 +99,7 @@ bool H2MEvent2StdEventConverter::Converting(
 
   EUDAQ_DEBUG("Length of rawdata (should be 262): " +to_string(rawdata.size()));
   //  first decode the header
-  //  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, t0] = decoder.decodeHeader<uint32_t>(rawdata);
+  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, t0] = decoder.decodeHeader<uint32_t>(rawdata);
   // remove the 6 elements from the header
   rawdata.erase(rawdata.begin(),rawdata.begin()+6);
 // Decode the event raw data - no zero supression
