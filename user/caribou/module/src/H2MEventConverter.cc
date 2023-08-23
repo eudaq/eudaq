@@ -30,8 +30,6 @@ bool H2MEvent2StdEventConverter::Converting(
   uint32_t plane_id = conf->Get("plane_id", 0);
   EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
 
-  }
-
   // get an instance of the frame decoder
   static caribou::H2MFrameDecoder decoder;
 
