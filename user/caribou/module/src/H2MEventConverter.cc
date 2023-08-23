@@ -95,6 +95,13 @@ bool H2MEvent2StdEventConverter::Converting(
     // cast into right type of pixel and retrieve stored data
     auto pixHit = dynamic_cast<caribou::h2m_pixel_readout *>(pixel.second.get());
 
+
+
+    // Pixel value of whatever equals zero means: no hit
+    if(pixHit->GetData() == 0) {
+      continue;
+    }
+
     // Get the pixel timestamp if in ToA, else frame center
     // ToT if existing, else 1
     auto mode = pixHit->GetMode();
