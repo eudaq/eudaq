@@ -90,35 +90,20 @@ bool H2MEvent2StdEventConverter::Converting(
   for (const auto &pixel : frame) {
 
     // get pixel information
-    // pearydata is a map of a pair (col,row) and a pointer to a dsipm_pixel
-    auto col = pixel.first.first;
-    auto row = pixel.first.second;
+    // pearydata is a map of a pair (col,row) and a pointer to a h2m_pixel
+    auto [col, row] = pixel.first;
+
     // cast into right type of pixel and retrieve stored data
     auto pixHit = dynamic_cast<caribou::h2m_pixel_readout *>(pixel.second.get());
-
-
 
     // Pixel value of whatever equals zero means: no hit
     if(pixHit->GetData() == 0) {
       continue;
     }
 
-    // Get the pixel timestamp if in ToA, else frame center
-    // ToT if existing, else 1
-    auto mode = pixHit->GetMode();
-    uint64_t timestamp =0x0;
-    uint64_t tot = 0x0;
-    if(mode == caribou::ACQ_MODE_TOA){
-      timestamp = frameEnd-(pixHit->GetToA()*_100MHz_to_ps);
-      tot = 1;
-    } else if(mode==caribou::ACQ_MODE_TOT){
-      timestamp = (frameStart+frameEnd)/2;
-      tot = pixHit->GetToT()*_100MHz_to_ps;
-    } else { // counting mode or triggered mode
-      timestamp = (frameStart+frameEnd)/2;  
-      tot = 1;
-
-    }
+    // Fetch timestamp from pixel if on ToA mode, otherwise set to frame center:
+    uint64_t timestamp = (pixHit->GetMode() == caribou::ACQ_MODE_TOA ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps)) : ((frameStart + frameEnd) / 2));
+    uint64_t tot = pixHit->GetToT();
 
     // assemble pixel and add to plane
     plane.PushPixel(col, row, tot, timestamp);
