@@ -127,5 +127,9 @@ private:
     static bool new_ts2_;
     static size_t t0_seen_;
   };
-
+  class H2MEvent2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouH2MEvent");
+  };
 } // namespace eudaq
