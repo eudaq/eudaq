@@ -91,3 +91,9 @@ The following parameters can be passed in the configuration in order to influenc
 * `pixel_delays`: Sets the delay for every pixel in picoseconds. Has to be given as string formatted like `"10.7,9.33,,...,313.5,"` with exactly 32*32 entries. Note that the trailing comma at the end is required. The first 32 entries are for the first column, the next 32 entries are for the second column (`n = col * 32 + row`). Default value is zero for every pixel.
 * `frame_start`: First frame to be used in an event for a given trigger. Can be set to a higher value to ignore the first frame(s). Defaults to `0`.
 * `frame_stop`: Last frame to be used in an event for a given trigger. Can be set to a lower value to ignore the last frame(s). Defaults to `127`. Might need to be adjusted depending on the peary configuration.
+
+### H2MEventConverter
+
+The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
+
+* `acq_mode`: Select value of acquisition mode of the H2M pixel matrix, defaults to `1` (ToT).
