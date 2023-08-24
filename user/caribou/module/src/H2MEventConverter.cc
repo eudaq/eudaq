@@ -30,6 +30,9 @@ bool H2MEvent2StdEventConverter::Converting(
   uint32_t plane_id = conf->Get("plane_id", 0);
   EUDAQ_DEBUG("Setting eudaq::StandardPlane::ID to " + to_string(plane_id));
 
+  // Read acquisition mode from configuration, defaulting to ToT.
+  uint8_t acq_mode = conf->Get("acq_mode", 0x1);
+
   // get an instance of the frame decoder
   static caribou::H2MFrameDecoder decoder;
 
@@ -72,7 +75,7 @@ bool H2MEvent2StdEventConverter::Converting(
   rawdata.erase(rawdata.begin(),rawdata.begin()+6);
 
   // Decode the event raw data - no zero suppression
-  auto frame = decoder.decodeFrame<uint32_t>(rawdata,0x0);
+  auto frame = decoder.decodeFrame<uint32_t>(rawdata, acq_mode);
 
 
   // Create a StandardPlane representing one sensor plane
