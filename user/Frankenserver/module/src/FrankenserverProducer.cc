@@ -157,8 +157,13 @@ void FrankenserverProducer::RunLoop(){
         cmd_recognised = true;
         EUDAQ_INFO("Received run stop command!");
 
-        std::cout << "Received run stop command!" << std::endl;
+        // Updating event number & forcing an update
         m_evt_c=0x1;
+        OnStatus();
+
+
+        // Ending run:
+        break;
       }
 
       // If we don't recognise the command
