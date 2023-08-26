@@ -163,8 +163,7 @@ void FrankenserverProducer::RunLoop(){
 
       // If we don't recognise the command
       if(!cmd_recognised && (cmd_length > 0)) {
-        sprintf(buffer, "FAILED unknown command");
-        std::cout << "Unknown command: " << buffer << std::endl;
+        std::cout << "Victor, my server & master, what do you mean by command  \"" << buffer << "\"" << std::endl;
       }
 
       // Don't finish until /q received
