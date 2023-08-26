@@ -121,7 +121,6 @@ void FrankenserverProducer::RunLoop(){
     do {
 
       // Wait for new command
-      // cmd_length = recv(my_socket, buffer, bufsize, 0);
       struct timeval timeout;
       timeout.tv_sec = 0;
       timeout.tv_usec = 100;
@@ -130,37 +129,31 @@ void FrankenserverProducer::RunLoop(){
       FD_ZERO(&set);           /* clear the set */
       FD_SET(my_socket, &set); /* add our file descriptor to the set */
 
-      int rv = select(my_socket + 1, &set, nullptr, nullptr, &timeout);
-      // LOG(DEBUG) <<rv;
-      /*if (rv == SOCKET_ERROR)
-    {
-        // select error...
-      }
-    else*/
-      if(rv == 0) {
+      if(select(my_socket + 1, &set, nullptr, nullptr, &timeout) == 0) {
         // timeout, socket does not have anything to read
         cmd_length = 0;
       } else {
         cmd_length = recv(my_socket, buffer, bufsize, 0);
       }
-      // socket has something to read
+
+      // Socket has something to read
       cmd_recognised = false;
 
       if(commands.size() > 0 || cmd_length > 0) {
         buffer[cmd_length] = '\0';
         EUDAQ_DEBUG("Message received: " + std::string(buffer));
-        std::vector<std::string> spl;
-        spl = split(std::string(buffer), '\n');
+        std::vector<std::string> spl = split(std::string(buffer), '\n');
         for(unsigned int k = 0; k < spl.size(); k++) {
           commands.push_back(spl[k]);
-          std::cout << "commands[" << k << "]: " << commands[k] << std::endl;
+          EUDAQ_DEBUG("commands[" + std::to_string(k) + "]: " + commands[k]);
         }
         sscanf(commands[0].c_str(), "%s", cmd);
         sprintf(buffer, "%s", commands[0].c_str());
-        std::cout << buffer << std::endl;
+        EUDAQ_DEBUG(std::string(buffer));
         commands.erase(commands.begin());
-      } else
-        sprintf(cmd, "no_cmd");
+      } else{
+              sprintf(cmd, "no_cmd");
+      }
 
       if(strcmp(cmd, "stop_run") == 0) {
         cmd_recognised = true;
@@ -170,12 +163,11 @@ void FrankenserverProducer::RunLoop(){
         m_evt_c=0x1;
         OnStatus();
 
-
         // Ending run:
         break;
       }
 
-      // If we don't recognise the command
+      // If we don't recognize the command
       if(!cmd_recognised && (cmd_length > 0)) {
         EUDAQ_USER("Victor, my server & master, what do you mean by command  \"" + std::string(buffer) + "\"");
       }
