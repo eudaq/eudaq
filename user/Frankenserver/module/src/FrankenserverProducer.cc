@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstring>
 #include <sstream>
+#include <unistd.h>
 
 #include "eudaq/Producer.hh"
 
