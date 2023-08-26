@@ -1,10 +1,7 @@
 #include <arpa/inet.h>
-#include <fstream>
-#include <signal.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <vector>
-#include <iostream>
 #include <cstring>
 #include <sstream>
 #include <unistd.h>
@@ -23,16 +20,14 @@ class FrankenserverProducer : public eudaq::Producer {
   void RunLoop() override;
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("FrankenserverProducer");
-private:
 
+private:
   int my_socket;
   bool m_exit_of_run{false};
-
   size_t bufsize = 1024;
   char* buffer = static_cast<char*>(malloc(bufsize));
 
   std::vector<std::string> split(std::string str, char delimiter);
-  // Setting up the stage relies on he fact, that the PI stage copmmand set GCS holds for the device, tested with C-863 and c-884
   void setupStage(std::string axisname, double refPos, double rangeNegative, double rangePositive, double Speed = 1);
 };
 
@@ -44,8 +39,6 @@ namespace{
 FrankenserverProducer::FrankenserverProducer(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol){
 }
-
-
 
 void FrankenserverProducer::DoInitialise(){
   EUDAQ_USER("Initializing Frankenstein's Producer! Rising from the dead!");
@@ -75,7 +68,6 @@ void FrankenserverProducer::DoInitialise(){
 
 }
 
-//----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
 void FrankenserverProducer::DoConfigure(){
   EUDAQ_USER("Configure? What is there to configure in Frankenstein's Producer?!");
   m_evt_c =0x0;
@@ -129,16 +121,11 @@ void FrankenserverProducer::RunLoop(){
       FD_ZERO(&set);           /* clear the set */
       FD_SET(my_socket, &set); /* add our file descriptor to the set */
 
-      if(select(my_socket + 1, &set, nullptr, nullptr, &timeout) == 0) {
-        // timeout, socket does not have anything to read
-        cmd_length = 0;
-      } else {
-        cmd_length = recv(my_socket, buffer, bufsize, 0);
-      }
+      // Timeout if socket does not have anything to read, otherwise read command
+      int rv = select(my_socket + 1, &set, nullptr, nullptr, &timeout);
+      cmd_length = (rv == 0 ? 0 : recv(my_socket, buffer, bufsize, 0));
 
-      // Socket has something to read
       cmd_recognised = false;
-
       if(commands.size() > 0 || cmd_length > 0) {
         buffer[cmd_length] = '\0';
         EUDAQ_DEBUG("Message received: " + std::string(buffer));
@@ -152,7 +139,7 @@ void FrankenserverProducer::RunLoop(){
         EUDAQ_DEBUG(std::string(buffer));
         commands.erase(commands.begin());
       } else{
-              sprintf(cmd, "no_cmd");
+        sprintf(cmd, "no_cmd");
       }
 
       if(strcmp(cmd, "stop_run") == 0) {
@@ -177,7 +164,6 @@ void FrankenserverProducer::RunLoop(){
 
       // Don't finish until /q received or the run is ended from EUDAQ side
     } while(strcmp(buffer, "/q") && !m_exit_of_run);
-
 }
 
 std::vector<std::string> FrankenserverProducer::split(std::string str, char delimiter) {
