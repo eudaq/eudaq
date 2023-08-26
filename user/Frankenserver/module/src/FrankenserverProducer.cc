@@ -26,6 +26,7 @@ class FrankenserverProducer : public eudaq::Producer {
 private:
 
   int my_socket;
+  bool m_exit_of_run{false};
 
   size_t bufsize = 1024;
   char* buffer = static_cast<char*>(malloc(bufsize));
@@ -82,15 +83,23 @@ void FrankenserverProducer::DoConfigure(){
 
 void FrankenserverProducer::DoStartRun(){
   EUDAQ_USER("Start, START, he says! Frankenstein's Producer is staaaarting! (howling sound)");
+  // Reset event counter:
   m_evt_c=0x0;
+  // Reset end of run flag
+  m_exit_of_run = false;
 }
 
 void FrankenserverProducer::DoStopRun(){
   EUDAQ_USER("Stopping Frankenstein's Producer my server & master says");
+  // Set run flag
+  m_exit_of_run = true;
 }
 
 void FrankenserverProducer::DoReset(){
   EUDAQ_USER("Frankenstein's Producer is sad, resetting me is my server & master Victor");
+
+  // Set run flag
+  m_exit_of_run = true;
 
   // When finished, close the sockets
   close(my_socket);
@@ -171,8 +180,8 @@ void FrankenserverProducer::RunLoop(){
         EUDAQ_USER("Victor, my server & master, what do you mean by command  \"" + std::string(buffer) + "\"");
       }
 
-      // Don't finish until /q received
-    } while(strcmp(buffer, "/q"));
+      // Don't finish until /q received or the run is ended from EUDAQ side
+    } while(strcmp(buffer, "/q") && !m_exit_of_run);
 
 }
 
