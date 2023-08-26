@@ -165,6 +165,9 @@ void FrankenserverProducer::RunLoop(){
 
         // Ending run:
         break;
+      } else if(strcmp(cmd, "howl") == 0) {
+        cmd_recognised = true;
+        EUDAQ_USER("(howling sound)");
       }
 
       // If we don't recognize the command
