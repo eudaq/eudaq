@@ -25,6 +25,7 @@ private:
   int my_socket;
   bool m_exit_of_run{false};
   size_t bufsize = 1024;
+  size_t final_events{};
   char* buffer = static_cast<char*>(malloc(bufsize));
 
   std::vector<std::string> split(std::string str, char delimiter);
@@ -48,6 +49,7 @@ void FrankenserverProducer::DoInitialise(){
   uint16_t portnumber = 8890;
 
   std::string ipaddress = ini->Get("ip_address", "127.0.0.1");
+  final_events = ini->Get("final_events", 100);
 
   struct sockaddr_in address;
   address.sin_family = AF_INET;
@@ -147,7 +149,7 @@ void FrankenserverProducer::RunLoop(){
         EUDAQ_INFO("Received run stop command!");
 
         // Updating event number & forcing an update
-        m_evt_c=0x1;
+        m_evt_c = final_events;
         OnStatus();
 
         // Ending run:
