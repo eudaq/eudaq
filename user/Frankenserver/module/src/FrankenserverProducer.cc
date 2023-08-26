@@ -47,7 +47,7 @@ FrankenserverProducer::FrankenserverProducer(const std::string & name, const std
 
 
 void FrankenserverProducer::DoInitialise(){
-  std::cout << "Initializing Frankenstein's Producer! Rising from the dead!" << std::endl;
+  EUDAQ_USER("Initializing Frankenstein's Producer! Rising from the dead!");
   auto ini = GetInitConfiguration();
 
   // Configure Socket and address
@@ -67,37 +67,37 @@ void FrankenserverProducer::DoInitialise(){
   // Connect to Runcontrol
   int retval = ::connect(my_socket, reinterpret_cast<struct sockaddr*>(&address), sizeof(address));
   if(retval == 0) {
-    std::cout << "Connection to Victor, my server & master, at " << ss.str() << " established" << std::endl;
+    EUDAQ_USER("Connection to Victor, my server & master, at " + ss.str() + " established");
   } else {
-    std::cout << "Connection to Victor, my server & master, at " << ss.str() << " failed, errno " << errno << std::endl;
+    EUDAQ_ERROR("Connection to Victor, my server & master, at " + ss.str() + " failed, errno " + std::to_string(errno));
   }
 
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
 void FrankenserverProducer::DoConfigure(){
-  std::cout << "Configure? What is there to configure in Frankenstein's Producer?!" << std::endl;
+  EUDAQ_USER("Configure? What is there to configure in Frankenstein's Producer?!");
   m_evt_c =0x0;
  }
 
 void FrankenserverProducer::DoStartRun(){
-  std::cout << "Start, START, he says! Frankenstein's Producer is staaaarting! (howling sound)" << std::endl;
+  EUDAQ_USER("Start, START, he says! Frankenstein's Producer is staaaarting! (howling sound)");
   m_evt_c=0x0;
 }
 
 void FrankenserverProducer::DoStopRun(){
-  std::cout << "Stopping Frankenstein's Producer my server & master says" << std::endl;
+  EUDAQ_USER("Stopping Frankenstein's Producer my server & master says");
 }
 
 void FrankenserverProducer::DoReset(){
-  std::cout << "Frankenstein's Producer is sad, resetting me is my server & master Victor" << std::endl;
+  EUDAQ_USER("Frankenstein's Producer is sad, resetting me is my server & master Victor");
 
   // When finished, close the sockets
   close(my_socket);
 }
 
 void FrankenserverProducer::DoTerminate(){
-  std::cout << "My master & server Victor is sending Frankenstein's Producer back to the dead (whimpering to be heard)" << std::endl;
+  EUDAQ_USER("My master & server Victor is sending Frankenstein's Producer back to the dead (whimpering to be heard)");
 }
 
 void FrankenserverProducer::RunLoop(){
@@ -106,7 +106,6 @@ void FrankenserverProducer::RunLoop(){
     bool cmd_recognised = false;
     ssize_t cmd_length = 0;
     char cmd[32];
-
 
     std::vector<std::string> commands;
     // Loop listening for commands from the run control
@@ -140,7 +139,7 @@ void FrankenserverProducer::RunLoop(){
 
       if(commands.size() > 0 || cmd_length > 0) {
         buffer[cmd_length] = '\0';
-        std::cout << "Message received: " << buffer << std::endl;
+        EUDAQ_DEBUG("Message received: " + std::string(buffer));
         std::vector<std::string> spl;
         spl = split(std::string(buffer), '\n');
         for(unsigned int k = 0; k < spl.size(); k++) {
@@ -156,6 +155,7 @@ void FrankenserverProducer::RunLoop(){
 
       if(strcmp(cmd, "stop_run") == 0) {
         cmd_recognised = true;
+        EUDAQ_INFO("Received run stop command!");
 
         std::cout << "Received run stop command!" << std::endl;
         m_evt_c=0x1;
@@ -163,7 +163,7 @@ void FrankenserverProducer::RunLoop(){
 
       // If we don't recognise the command
       if(!cmd_recognised && (cmd_length > 0)) {
-        std::cout << "Victor, my server & master, what do you mean by command  \"" << buffer << "\"" << std::endl;
+        EUDAQ_USER("Victor, my server & master, what do you mean by command  \"" + std::string(buffer) + "\"");
       }
 
       // Don't finish until /q received
