@@ -52,9 +52,9 @@ namespace eudaq {
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
-    void OnStatus() override;
   
   protected:
+    void OnStatus() override;
     uint32_t m_evt_c;
   private:
     uint32_t m_pdc_n;
