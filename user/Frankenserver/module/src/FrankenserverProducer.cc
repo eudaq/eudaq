@@ -5,7 +5,7 @@
 #include <cstring>
 #include <sstream>
 #include <unistd.h>
-
+#include <random>
 #include <curl/curl.h>
 
 #include "eudaq/Producer.hh"
@@ -32,8 +32,34 @@ private:
   // curl information
   CURL *curl;
   std::string curl_url;
-
+  bool curl_verbose{false};
   char* buffer = static_cast<char*>(malloc(bufsize));
+  void post_curl(std::string message, bool quote);
+  std::random_device dev;
+  std::mt19937 rng;
+  std::vector<std::string> frankenquotes{
+    {"I was benevolent and good; misery made me a fiend. Make me happy, and I shall again be virtuous."},
+    {"The fallen angel becomes a malignant devil. Yet even that enemy of God and man had friends and associates in his desolation; I am alone."},
+    {"There is something at work in my soul, which I do not understand."},
+    {"Beware; for I am fearless, and therefore powerful."},
+    {"When falsehood can look so like the truth, who can assure themselves of certain happiness?"},
+    {"Life, although it may only be an accumulation of anguish, is dear to me, and I will defend it."},
+    {"I could not understand why men who knew all about good and evil could hate and kill each other."},
+    {"I am malicious because I am miserable."},
+    {"I am alone and miserable. Only someone as ugly as I am could love me."},
+    {"We are fashioned creatures, but half made up."},
+    {"What can stop the determined heart and resolved will of man?"},
+    {"Of what a strange nature is knowledge! It clings to a mind when it has once seized on it like a lichen on a rock."},
+    {"The different accidents of life are not so changeable as the feelings of human nature."},
+    {"I ought to be thy Adam, but I am rather the fallen angel..."},
+    {"It is true, we shall be monsters, cut off from all the world; but on that account we shall be more attached to one another."},
+    {"But soon, I shall die, and what I now feel be no longer felt. Soon these burning miseries will be extinct."},
+    {"You may deem me romantic, dear sister, but I bitterly feel the want of a friend."},
+    {"I believed myself totally unfitted for the company of strangers."},
+    {"The companions of our childhood always possess a certain power over our minds which hardly any later friend can obtain."},
+    {"The natural phenomena that take place every day before our eyes did not escape my examinations."},
+    {"To examine the causes of life, we must first have recourse to death."},
+  };
 
   std::vector<std::string> split(std::string str, char delimiter);
   void setupStage(std::string axisname, double refPos, double rangeNegative, double rangePositive, double Speed = 1);
@@ -50,6 +76,8 @@ FrankenserverProducer::FrankenserverProducer(const std::string & name, const std
       // Initialize curl
       curl_global_init(CURL_GLOBAL_ALL);
       curl = curl_easy_init();
+
+      rng.seed(dev());
 }
 
 void FrankenserverProducer::DoInitialise(){
@@ -64,13 +92,12 @@ void FrankenserverProducer::DoInitialise(){
 
   // Let's see if we need to set up curl:
   curl_url = ini->Get("curl_target", "");
+  curl_verbose = ini->Get("curl_verbose", 0);
   if(!curl_url.empty()) {
     curl_easy_setopt(curl, CURLOPT_URL, curl_url.c_str());
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "frankenbot/0.1");
     struct curl_slist* headers = NULL;
-    curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   }
 
@@ -99,7 +126,8 @@ void FrankenserverProducer::DoConfigure(){
  }
 
 void FrankenserverProducer::DoStartRun(){
-  EUDAQ_USER("Start, START, he says! Frankenstein's Producer is staaaarting! (howling sound)");
+  post_curl("Start, START, he says! Frankenstein's Producer is staaaarting! (howling sound)", false);
+
   // Reset event counter:
   m_evt_c=0x0;
   // Reset end of run flag
@@ -131,81 +159,98 @@ void FrankenserverProducer::DoTerminate(){
 
 void FrankenserverProducer::RunLoop(){
 
-    //--------------- Run control ---------------//
-    bool cmd_recognised = false;
-    ssize_t cmd_length = 0;
-    char cmd[32];
+  //--------------- Run control ---------------//
+  bool cmd_recognised = false;
+  ssize_t cmd_length = 0;
+  char cmd[32];
 
-    std::vector<std::string> commands;
-    // Loop listening for commands from the run control
-    do {
+  std::vector<std::string> commands;
+  // Loop listening for commands from the run control
+  do {
 
-      // Wait for new command
-      struct timeval timeout;
-      timeout.tv_sec = 0;
-      timeout.tv_usec = 100;
+    // Wait for new command
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100;
 
-      fd_set set;
+    fd_set set;
       FD_ZERO(&set);           /* clear the set */
       FD_SET(my_socket, &set); /* add our file descriptor to the set */
 
-      // Timeout if socket does not have anything to read, otherwise read command
-      int rv = select(my_socket + 1, &set, nullptr, nullptr, &timeout);
-      cmd_length = (rv == 0 ? 0 : recv(my_socket, buffer, bufsize, 0));
+    // Timeout if socket does not have anything to read, otherwise read command
+    int rv = select(my_socket + 1, &set, nullptr, nullptr, &timeout);
+    cmd_length = (rv == 0 ? 0 : recv(my_socket, buffer, bufsize, 0));
 
-      cmd_recognised = false;
-      if(commands.size() > 0 || cmd_length > 0) {
-        buffer[cmd_length] = '\0';
-        EUDAQ_DEBUG("Message received: " + std::string(buffer));
-        std::vector<std::string> spl = split(std::string(buffer), '\n');
-        for(unsigned int k = 0; k < spl.size(); k++) {
-          commands.push_back(spl[k]);
-          EUDAQ_DEBUG("commands[" + std::to_string(k) + "]: " + commands[k]);
-        }
-        sscanf(commands[0].c_str(), "%s", cmd);
-        sprintf(buffer, "%s", commands[0].c_str());
-        EUDAQ_DEBUG(std::string(buffer));
-        commands.erase(commands.begin());
-      } else{
-        sprintf(cmd, "no_cmd");
+    cmd_recognised = false;
+    if(commands.size() > 0 || cmd_length > 0) {
+      buffer[cmd_length] = '\0';
+      EUDAQ_DEBUG("Message received: " + std::string(buffer));
+      std::vector<std::string> spl = split(std::string(buffer), '\n');
+      for(unsigned int k = 0; k < spl.size(); k++) {
+        commands.push_back(spl[k]);
+        EUDAQ_DEBUG("commands[" + std::to_string(k) + "]: " + commands[k]);
       }
+      sscanf(commands[0].c_str(), "%s", cmd);
+      sprintf(buffer, "%s", commands[0].c_str());
+      EUDAQ_DEBUG(std::string(buffer));
+      commands.erase(commands.begin());
+    } else{
+      sprintf(cmd, "no_cmd");
+    }
 
-      if(strcmp(cmd, "stop_run") == 0) {
-        cmd_recognised = true;
-        EUDAQ_INFO("Received run stop command!");
+    if(strcmp(cmd, "stop_run") == 0) {
+      cmd_recognised = true;
 
-        // Updating event number & forcing an update
-        m_evt_c = final_events;
-        OnStatus();
+      // Updating event number & forcing an update
+      m_evt_c = final_events;
+      OnStatus();
 
-        if(!curl_url.empty()) {
-          const char *data = "{\"text\": \"Victor requested to end the run - and I shall obey.\"}";
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(data));
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
-          auto res = curl_easy_perform(curl);
+      post_curl("Victor requested to end the run - and I shall obey.", true);
 
-          if (res != CURLE_OK) {
-            curl_easy_cleanup(curl);
-            curl_global_cleanup();
-            EUDAQ_WARN("Victor asked me to communicate with him via this \"Internet\" - but I just can't!");
-            curl_url.clear();
-          }
-        }
+      // Ending run:
+      // break;
+    } else if(strcmp(cmd, "howl") == 0) {
+      cmd_recognised = true;
+      EUDAQ_USER("(howling sound)");
+    }
 
-        // Ending run:
-        break;
-      } else if(strcmp(cmd, "howl") == 0) {
-        cmd_recognised = true;
-        EUDAQ_USER("(howling sound)");
-      }
+    // If we don't recognize the command
+    if(!cmd_recognised && (cmd_length > 0)) {
+      EUDAQ_USER("Victor, my server & master, what do you mean by command  \"" + std::string(buffer) + "\"");
+    }
 
-      // If we don't recognize the command
-      if(!cmd_recognised && (cmd_length > 0)) {
-        EUDAQ_USER("Victor, my server & master, what do you mean by command  \"" + std::string(buffer) + "\"");
-      }
+    // Don't finish until /q received or the run is ended from EUDAQ side
+  } while(strcmp(buffer, "/q") && !m_exit_of_run);
+}
 
-      // Don't finish until /q received or the run is ended from EUDAQ side
-    } while(strcmp(buffer, "/q") && !m_exit_of_run);
+void FrankenserverProducer::post_curl(std::string message, bool quote) {
+
+  EUDAQ_USER(message.c_str());
+
+  if(quote) {
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, frankenquotes.size() - 1);
+    message += "\n";
+    message += frankenquotes.at(dist(rng));
+  }
+
+  if(!curl_url.empty()) {
+    message = "{\"text\": \"" + message + "\"}";
+    auto* dup = curl_easy_duphandle(curl);
+    curl_easy_setopt(dup, CURLOPT_POSTFIELDS, message.c_str());
+    if(curl_verbose) {
+      curl_easy_setopt(dup, CURLOPT_VERBOSE, 1L);
+    }
+    auto res = curl_easy_perform(dup);
+    curl_easy_cleanup(dup);
+
+    if (res != CURLE_OK) {
+      curl_global_cleanup();
+      EUDAQ_WARN("Victor asked me to communicate with him via this \"Internet\" - but I just can't!");
+      curl_url.clear();
+    }
+  } else {
+    std::cout << "No curl config" << std::endl;
+  }
 }
 
 std::vector<std::string> FrankenserverProducer::split(std::string str, char delimiter) {
