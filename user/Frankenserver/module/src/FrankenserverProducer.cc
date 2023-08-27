@@ -6,6 +6,8 @@
 #include <sstream>
 #include <unistd.h>
 
+#include <curl/curl.h>
+
 #include "eudaq/Producer.hh"
 
 class FrankenserverProducer : public eudaq::Producer {
@@ -26,6 +28,11 @@ private:
   bool m_exit_of_run{false};
   size_t bufsize = 1024;
   size_t final_events{};
+
+  // curl information
+  CURL *curl;
+  std::string curl_url;
+
   char* buffer = static_cast<char*>(malloc(bufsize));
 
   std::vector<std::string> split(std::string str, char delimiter);
@@ -39,6 +46,10 @@ namespace{
 
 FrankenserverProducer::FrankenserverProducer(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol){
+
+      // Initialize curl
+      curl_global_init(CURL_GLOBAL_ALL);
+      curl = curl_easy_init();
 }
 
 void FrankenserverProducer::DoInitialise(){
@@ -50,6 +61,15 @@ void FrankenserverProducer::DoInitialise(){
 
   std::string ipaddress = ini->Get("ip_address", "127.0.0.1");
   final_events = ini->Get("final_events", 100);
+
+  // Let's see if we need to set up curl:
+  curl_url = ini->Get("curl_target", "");
+  if(!curl_url.empty()) {
+    curl_easy_setopt(curl, CURLOPT_URL, curl_url.c_str());
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "frankenbot/0.1");
+  }
 
   struct sockaddr_in address;
   address.sin_family = AF_INET;
@@ -101,6 +121,9 @@ void FrankenserverProducer::DoReset(){
 
 void FrankenserverProducer::DoTerminate(){
   EUDAQ_USER("My master & server Victor is sending Frankenstein's Producer back to the dead (whimpering to be heard)");
+
+  curl_easy_cleanup(curl);
+  curl_global_cleanup();
 }
 
 void FrankenserverProducer::RunLoop(){
@@ -151,6 +174,20 @@ void FrankenserverProducer::RunLoop(){
         // Updating event number & forcing an update
         m_evt_c = final_events;
         OnStatus();
+
+        if(!curl_url.empty()) {
+          const char *data = "{\"text\": \"Victor requested to end the run - and I shall obey.\"}";
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(data));
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+          auto res = curl_easy_perform(curl);
+
+          if (res != 0) {
+            curl_easy_cleanup(curl);
+            curl_global_cleanup();
+            EUDAQ_WARN("Victor asked me to communicate with him via this \"Internet\" - but I just can't!");
+            curl_url.clear();
+          }
+        }
 
         // Ending run:
         break;
