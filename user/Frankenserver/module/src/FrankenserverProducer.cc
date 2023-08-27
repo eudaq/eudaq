@@ -59,6 +59,14 @@ private:
     {"The companions of our childhood always possess a certain power over our minds which hardly any later friend can obtain."},
     {"The natural phenomena that take place every day before our eyes did not escape my examinations."},
     {"To examine the causes of life, we must first have recourse to death."},
+    {"The world was to me a secret which I desired to devine."},
+    {"Thus strangely are our souls constructed, and by slight ligaments are we bound to prosperity and ruin."},
+    {"How mutable are our feelings, and how strange is that clinging love we have of life even in the excess of misery!"},
+    {"If I cannot inspire love, I will cause fear!"},
+    {"Nothing is so painful to the human mind as a great and sudden change."},
+    {"Man, I cried, how ignorant art thou in thy pride of wisdom!"},
+    {"What may not be expected in a country of eternal light?"},
+    {"I bitterly feel the want of a friend."},
   };
 
   std::vector<std::string> split(std::string str, char delimiter);
