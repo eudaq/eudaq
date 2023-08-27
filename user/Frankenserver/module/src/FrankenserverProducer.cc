@@ -69,6 +69,9 @@ void FrankenserverProducer::DoInitialise(){
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "frankenbot/0.1");
+    struct curl_slist* headers = NULL;
+    curl_slist_append(headers, "Content-Type: application/json");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   }
 
   struct sockaddr_in address;
@@ -181,7 +184,7 @@ void FrankenserverProducer::RunLoop(){
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
           auto res = curl_easy_perform(curl);
 
-          if (res != 0) {
+          if (res != CURLE_OK) {
             curl_easy_cleanup(curl);
             curl_global_cleanup();
             EUDAQ_WARN("Victor asked me to communicate with him via this \"Internet\" - but I just can't!");
