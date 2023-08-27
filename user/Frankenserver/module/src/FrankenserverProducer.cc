@@ -208,7 +208,7 @@ void FrankenserverProducer::RunLoop(){
       post_curl("Victor requested to end the run - and I shall obey.", true);
 
       // Ending run:
-      // break;
+      break;
     } else if(strcmp(cmd, "howl") == 0) {
       cmd_recognised = true;
       EUDAQ_USER("(howling sound)");
