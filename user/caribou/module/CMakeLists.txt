@@ -3,6 +3,13 @@ INCLUDE_DIRECTORIES(include)
 
 find_package(ROOT)
 
+option(USER_CARIBOU_BUILD_CLICTD "build caribou CLICTD converter" ON)
+
+if(NOT USER_CARIBOU_BUILD_CLICTD)
+  message(STATUS "not building caribou CLICTD converter")
+  list(REMOVE_ITEM MODULE_SRC src/CLICTDEventConverter.cc)
+endif()
+
 if(NOT ROOT_FOUND)
   list(REMOVE_ITEM MODULE_SRC src/AD9249EventConverter.cc)
 endif()
