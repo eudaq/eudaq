@@ -1,5 +1,5 @@
 get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
+set(EUDAQ_MODULE ${EUDAQ_PREFIX}module_${EUDAQ_USERNAME})
 set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
 
 option(USER_CARIBOU_BUILD "build caribou support" OFF)

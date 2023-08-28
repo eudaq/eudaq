@@ -66,7 +66,7 @@ qt5_wrap_ui(euProd_UISrcs ui/euProd.ui)
 list(APPEND MODULE_SRC ${euProd_UISrcs} ${euProd_MOCSrcs})
 
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-set(EUDAQ_MODULE module_${MODULE_NAME})
+set(EUDAQ_MODULE ${EUDAQ_PREFIX}module_${MODULE_NAME})
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})

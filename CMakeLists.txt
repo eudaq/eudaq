@@ -21,9 +21,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
 
-set(CMAKE_SHARED_LIBRARY_PREFIX "${CMAKE_SHARED_LIBRARY_PREFIX}eudaq_")
-set(CMAKE_SHARED_MODULE_PREFIX  "${CMAKE_SHARED_MODULE_PREFIX}eudaq_")
-set(EUDAQ_CORE_LIBRARY core)
+set(EUDAQ_PREFIX "eudaq_")
+set(EUDAQ_CORE_LIBRARY "${EUDAQ_PREFIX}core")
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
 
 include_directories(main/lib/core/include)
