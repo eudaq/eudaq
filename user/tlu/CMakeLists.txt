@@ -1,7 +1,7 @@
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_LIST_DIR}/cmake)
 get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 
-set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
+set(EUDAQ_MODULE ${EUDAQ_PREFIX}module_${EUDAQ_USERNAME})
 
 option(USER_TLU_BUILD "build tlu" OFF)
 option(USER_BUILD_TLU_ONLY_CONVERTER "build only the TLU converters (TLU Prodcuers will not be built)" OFF)

@@ -1,10 +1,10 @@
-#option(EUDAQ_MODULE_BUILD_STD "build module_std" ON)
+#option(EUDAQ_MODULE_BUILD_STD "build ${EUDAQ_PREFIX}module_std" ON)
 #if(NOT EUDAQ_MODULE_BUILD_STD)
 #  return()
 #endif()
 
 #get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-#set(EUDAQ_MODULE module_${MODULE_NAME})
+#set(EUDAQ_MODULE ${EUDAQ_PREFIX}module_${MODULE_NAME})
 
 include_directories(include)
 aux_source_directory(src MODULE_SRC)
