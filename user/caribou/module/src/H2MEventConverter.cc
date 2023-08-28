@@ -64,7 +64,7 @@ bool H2MEvent2StdEventConverter::Converting(
 
   EUDAQ_DEBUG("Length of rawdata (should be 262): " +to_string(rawdata.size()));
   //  first decode the header
-  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, t0] = decoder.decodeHeader<uint32_t>(rawdata);
+  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, length, t0] = decoder.decodeHeader<uint32_t>(rawdata);
 
   if(t0 == false || ts_sh_close < ts_sh_open) {
       EUDAQ_DEBUG("No T0 signal seen yet, skipping event");
