@@ -38,8 +38,8 @@ IF(ROOT_FOUND)
 
   # Also install the dictionary objects
   INSTALL(FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/libcore_rdict.pcm
-      ${CMAKE_CURRENT_BINARY_DIR}/libcore.rootmap
+      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}core_rdict.pcm
+      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}core.rootmap
       DESTINATION lib)
 ENDIF()
 
