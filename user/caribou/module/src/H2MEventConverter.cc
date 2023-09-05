@@ -115,7 +115,8 @@ bool H2MEvent2StdEventConverter::Converting(
   // Store frame begin and end in picoseconds
   d2->SetTimeBegin(frameStart);
   d2->SetTimeEnd(frameEnd);
-  d2->SetTriggerN(frameID);
+  // The frame ID is not necessarily related to a trigger but rather to an event ID:
+  d2->SetEventN(frameID);
 
   // Identify the detetor type
   d2->SetDetectorType("H2M");
