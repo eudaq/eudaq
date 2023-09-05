@@ -22,7 +22,8 @@ include(CMakeCompatibility)
 include(Platform)
 
 set(EUDAQ_PREFIX "eudaq_")
-set(EUDAQ_CORE_LIBRARY "${EUDAQ_PREFIX}core")
+set(EUDAQ_TARGET "core")
+set(EUDAQ_CORE_LIBRARY "${EUDAQ_PREFIX}${EUDAQ_TARGET}")
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
 
 include_directories(main/lib/core/include)
