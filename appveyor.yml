@@ -6,7 +6,7 @@ pull_requests:
 branches:
   only:
   - master
-  - v1.7-dev
+  - arummler-fix-ci
 
 os: Visual Studio 2017
 
@@ -123,7 +123,9 @@ install:
 - "%CMD_IN_ENV% python -m pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
-- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern/download/root_v6.22.08.win32.vc16.zip' -storageLocation 'C:\\root_v6.22.08.win32.vc16.zip'; 7z -y x C:\\root_v6.22.08.win32.vc16.zip -oC:\;
+- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern/download/root_v6.26.04.win32.vc16.zip' -storageLocation 'C:\\root_v6.26.04.win32.vc16.zip'; 7z -y x C:\\root_v6.26.04.win32.vc16.zip -oC:\;
+
+# - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - ps: appveyor\install_afs.ps1;
 
