@@ -108,24 +108,7 @@ if(NOT TARGET uninstall)
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()
 
-
-# Python-based regression tests (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
-# enable_testing()
-# include(CTest)
-# find_package(PythonInterp)
-# if(PYTHONINTERP_FOUND AND BUILD_python)
-#   execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
-#   if(NUMPYRC EQUAL 1)
-#     message(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
-#   else()
-#     message(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
-#     include(etc/tests/testing.cmake)
-#   endif()
-# endif()
-
 include(PrintSystemInformation)
-
-# eudaqConfig.cmake
 
 
 if(DEFINED EUDAQ_CORE_LIBRARY)
