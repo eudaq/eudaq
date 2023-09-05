@@ -127,8 +127,6 @@ include(PrintSystemInformation)
 
 # eudaqConfig.cmake
 
-export(PACKAGE eudaq)
-
 
 if(DEFINED EUDAQ_CORE_LIBRARY)
   list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_CORE_LIBRARY})
