@@ -1,11 +1,16 @@
-project(EUDAQ)
-set(${PROJECT_NAME}_VERSION_MAJOR 2 )
-set(${PROJECT_NAME}_VERSION_MINOR 5 )
-set(${PROJECT_NAME}_VERSION_PATCH 2 )
+CMAKE_MINIMUM_REQUIRED(VERSION 3.6.3 FATAL_ERROR)
+IF(COMMAND CMAKE_POLICY)
+    CMAKE_POLICY(SET CMP0003 NEW) # change linker path search behaviour
+    CMAKE_POLICY(SET CMP0048 NEW) # set project version
+    IF(${CMAKE_VERSION} VERSION_GREATER "3.13")
+        CMAKE_POLICY(SET CMP0077 NEW) # allow overwriting options with normal variables
+        CMAKE_POLICY(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
+    ENDIF()
+ENDIF(COMMAND CMAKE_POLICY)
 
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+project(EUDAQ VERSION 2.6.1)
+
 include(CMakeDependentOption)
-
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
 endif()
