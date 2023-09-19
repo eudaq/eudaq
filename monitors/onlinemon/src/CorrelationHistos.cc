@@ -107,6 +107,10 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     m_pitchX1=50;
     m_pitchY1=250;
   }
+  if((_sensor1.find("Rd53b") != std::string::npos ) || (_sensor1.find("RD53BQUAD") != std::string::npos )){
+    m_pitchX1=50;
+    m_pitchY1=50;
+  }
   if(!_sensor1.compare(0,3,"ABC")){
     m_pitchX1=74.5;
     m_pitchY1=74.5;
@@ -120,6 +124,11 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     m_pitchX2=50;
     m_pitchY2=250;
   }
+  if((_sensor2.find("Rd53b") != std::string::npos ) || (_sensor2.find("RD53BQUAD") != std::string::npos )){
+    m_pitchX2=50;
+    m_pitchY2=50;
+  }
+
   if(!_sensor2.compare(0,3,"ABC")){
     m_pitchX2=74.5;
     m_pitchY2=74.5;
