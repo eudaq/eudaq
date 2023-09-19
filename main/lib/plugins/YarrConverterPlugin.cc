@@ -145,6 +145,11 @@ namespace eudaq {
 		   std::cout << "Assigning plane ID " << m_plane_id_by_module_index[prodID][uid.internalModuleIndex] << " to module " << uid.internalModuleIndex << " which is called " << m_module_name_by_module_index[prodID][uid.internalModuleIndex] << " and has chip " << uid.name << std::endl;
 		} 
 		
+		// getting the triMultiplier which is the same for all modules on one card which means for one producer
+		jsoncons::json scanConfig = jsoncons::json::parse(bore.GetTag("SCANCONFIG"));
+		m_trigMultiplier[prodID] = scanConfig["scan"]["loops"][0]["config"]["trigMultiplier"].as<unsigned int>();
+		std::cout << "YarrConverterPlugin: trigMultiplier " << m_trigMultiplier[prodID] << " for producer " << prodID << std::endl;
+		
             }
 
             // Here, the data from the RawDataEvent is extracted into a StandardEvent.
@@ -233,8 +238,14 @@ namespace eudaq {
                                 standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,l1id);
 			    } else if((m_chip_info_by_uid[prodID][currentBlockIndex].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53b")){
                                 standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
+                                if((tag>=0)&&(tag<=m_trigMultiplier[prodID]-1)) {
+                                   standard_plane_by_module_index[m_chip_info_by_uid[prodID][currentBlockIndex].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
+                                } else {
+                                   std::cout << "Dropping hit in event " << ev_id << " due to tag=" << tag << " exceeding limit " << m_trigMultiplier[prodID]-1 << std::endl;
+                                }
+
                             } else {
-                            	std::cout << "undefined module type" << std::endl;
+                            	std::cout << "undefined module type " << m_chip_info_by_uid[prodID][currentBlockIndex].moduleType << " for producer " << prodID << std::endl;
                             	return false;
                             }
                             
@@ -370,6 +381,7 @@ namespace eudaq {
 
             // Information extracted in Initialize()
             mutable std::map<int,std::string> m_FrontEndType;
+            mutable std::map<int,unsigned int> m_trigMultiplier;
             mutable std::map<int,Version> m_EventVersion;
             mutable std::map<int,std::vector<chipInfo> > m_chip_info_by_uid;
             mutable std::map<int,std::map<unsigned int,std::string> > m_module_size_by_module_index;
