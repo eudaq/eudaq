@@ -192,6 +192,11 @@ IF(BUILD_runsplitter)
   add_subdirectory(etc/tools/runsplitter)
 ENDIF()
 
+option(BUILD_desynccorr "Compile desynccorr executable?" ON)
+IF(BUILD_desynccorr)
+  add_subdirectory(etc/tools/desynccorr)
+ENDIF()
+
 
 
 ###############################################
