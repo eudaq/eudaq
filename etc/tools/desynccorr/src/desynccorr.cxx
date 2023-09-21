@@ -99,14 +99,14 @@ void usage() {
 	    << "(nb: bool must be provided as 1 or 0)\n"
 	    << "-f (--filename) string\t\tInput RAW file path [REQUIRED]\n"
 	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension) [def: correlator]\n"
-	    << "-a (--anti) bool\t\tDo anticorrelations (xy,yx) instead of correlations (xx,yy) [def: false]\n"
+	    << "-a (--anti) bool\t\tDo anticorrelations (xy,yx) instead of correlations (xx,yy) [def: 0]\n"
 	    << "-r (--refplane) int\t\tPlaneID acting as reference [def: 1]\n"
 	    << "-d (--dutplane) int\t\tPlaneID acting as DUT [REQUIRED]\n"
-	    << "-x (--flipx) bool\t\tFlip x-axis (of DUT) [def: false]\n"
-	    << "-y (--flipy) bool\t\tFlip y-axis (of DUT) [def: false]\n"
+	    << "-x (--flipx) bool\t\tFlip x-axis (of DUT) [def: 0]\n"
+	    << "-y (--flipy) bool\t\tFlip y-axis (of DUT) [def: 0]\n"
 	    << "-n (--nevts) size_t\t\tNumber of events to process [def: 20000]\n"
 	    << "-t (--maxoffset) size_t\t\t+/-offset to look for correlations [def: 50]\n"
-	    << "-b (--evtsperbin) size_t\tEvents per time axis (x-axis) bins [def: 200]\n";
+	    << "-b (--evtsperbin) size_t\tEvents per time axis (x-axis) bin [def: 200]\n";
 }
 
 int main( int argc, char ** argv ){
