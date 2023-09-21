@@ -94,17 +94,29 @@ std::vector<cluster> clusterHits(std::vector<pixel_hit> const & hits, int spatCu
   }      
 }
 
-
+void usage() {
+  std::cout << "EUDAQ desynccorrelator options:\n\n"
+	    << "-f (--filename) string\t\tInput RAW file path\n"
+	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension)\n"
+	    << "-a (--anti) bool\t\tDo anticorrelations (xy,yx) instead of correlations (xx,yy) [def: false]\n"
+	    << "-r (--refplane) int\t\tPlaneID acting as reference [def: 1]\n"
+	    << "-d (--dutplane) int\t\tPlaneID acting as DUT [def: 24]\n"
+	    << "-x (--flipx) bool\t\tFlip x-axis (of DUT) [def: false]\n"
+	    << "-y (--flipy) bool\t\tFlip y-axis (of DUT) [def: false]\n"
+	    << "-n (--nevts) size_t\t\tNumber of events to process [def: 20000]\n"
+	    << "-t (--maxoffset) size_t\t\t+/-offset to look for correlations [def: 50]\n"
+	    << "-b (--evtsperbin) size_t\tEvents per time axis (x-axis) bins [def: 200]\n";
+}
 
 int main( int argc, char ** argv ){
   eudaq::OptionParser op("EUDAQ desynccorrelator", "1.0", "", 0, 10);
-  eudaq::Option<std::string> pFile(op, "f", "filename", "/data/scratch/tbisanz/run014358.raw", "string", "Input RAW file");
+  eudaq::Option<std::string> pFile(op, "f", "filename", "/data/scratch/tbisanz/run014358.raw", "string", "Input RAW file path");
   eudaq::Option<bool> pAnticorrelate(op, "a", "anti", false, "bool", "Anticorrelate planes");
   eudaq::Option<int> pRefPlane(op, "r", "refplane", 1, "int", "PlaneID acting as reference");
   eudaq::Option<int> pDUTPlane(op, "d", "dutplane", 24, "int", "PlaneID acting as DUT");
   eudaq::Option<bool> pFlipX(op, "x", "flipx", false, "bool", "Flip x-axis");
   eudaq::Option<bool> pFlipY(op, "y", "flipy", false, "bool", "Flip y-axis");
-  eudaq::Option<size_t> pNEvts(op, "n", "nrevts", 20000, "size_t", "Number of events to process");
+  eudaq::Option<size_t> pNEvts(op, "n", "nevts", 20000, "size_t", "Number of events to process");
   eudaq::Option<size_t> pMaxOffset(op, "t", "maxoffset", 50, "size_t", "Max offset to look at in +/- events");
   eudaq::Option<size_t> pEvtsPerBin(op, "b", "evtsperbin", 200, "size_t", "Events per time axis bin");
   eudaq::Option<std::string> pOFile(op, "o", "outfilename", "correlator", "string", "Output filename (w/o extension)");
@@ -135,7 +147,7 @@ int main( int argc, char ** argv ){
     evtsperbin = pEvtsPerBin.Value();
     ofile = pOFile.Value()+".root";
   }catch(...){
-	  std::cout << "Config parsing failed" << std::endl;
+    usage();
     return -1;
   }     
 
