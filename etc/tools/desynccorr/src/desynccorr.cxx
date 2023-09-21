@@ -95,12 +95,13 @@ std::vector<cluster> clusterHits(std::vector<pixel_hit> const & hits, int spatCu
 }
 
 void usage() {
-  std::cout << "EUDAQ desynccorrelator options:\n\n"
-	    << "-f (--filename) string\t\tInput RAW file path\n"
-	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension)\n"
+  std::cout << "EUDAQ desynccorrelator options:\n"
+	    << "(nb: bool must be provided as 1 or 0)\n"
+	    << "-f (--filename) string\t\tInput RAW file path [REQUIRED]\n"
+	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension) [def: correlator]\n"
 	    << "-a (--anti) bool\t\tDo anticorrelations (xy,yx) instead of correlations (xx,yy) [def: false]\n"
 	    << "-r (--refplane) int\t\tPlaneID acting as reference [def: 1]\n"
-	    << "-d (--dutplane) int\t\tPlaneID acting as DUT [def: 24]\n"
+	    << "-d (--dutplane) int\t\tPlaneID acting as DUT [REQUIRED]\n"
 	    << "-x (--flipx) bool\t\tFlip x-axis (of DUT) [def: false]\n"
 	    << "-y (--flipy) bool\t\tFlip y-axis (of DUT) [def: false]\n"
 	    << "-n (--nevts) size_t\t\tNumber of events to process [def: 20000]\n"
@@ -110,7 +111,7 @@ void usage() {
 
 int main( int argc, char ** argv ){
   eudaq::OptionParser op("EUDAQ desynccorrelator", "1.0", "", 0, 10);
-  eudaq::Option<std::string> pFile(op, "f", "filename", "/data/scratch/tbisanz/run014358.raw", "string", "Input RAW file path");
+  eudaq::Option<std::string> pFile(op, "f", "filename", "", "string", "Input RAW file path");
   eudaq::Option<bool> pAnticorrelate(op, "a", "anti", false, "bool", "Anticorrelate planes");
   eudaq::Option<int> pRefPlane(op, "r", "refplane", 1, "int", "PlaneID acting as reference");
   eudaq::Option<int> pDUTPlane(op, "d", "dutplane", 24, "int", "PlaneID acting as DUT");
@@ -124,7 +125,7 @@ int main( int argc, char ** argv ){
   bool anticorrelate = true;
   double flipx = 1.;
   double flipy = 1.;
-  std::string filename = "/data/scratch/tbisanz/run014358.raw";
+  std::string filename;
   int id_ref = 1;
   int id_sample = 24;
   size_t nev = 20000;
@@ -134,8 +135,10 @@ int main( int argc, char ** argv ){
   try{
     op.Parse(argv);
     
-//    if(!pDir.IsSet() || !pOldRun.IsSet() || !pNewRunStart.IsSet())
-//      usage();
+    if(!pFile.IsSet() || !pDUTPlane.IsSet() ) {
+      usage();
+      return -1;
+    }
     anticorrelate = pAnticorrelate.Value();
     filename = pFile.Value();
     id_ref = pRefPlane.Value();
