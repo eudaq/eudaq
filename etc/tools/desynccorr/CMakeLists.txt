@@ -2,9 +2,12 @@ SET(name "desynccorr")
 
 SET(sourcefiles src/desynccorr.cxx)
 
+find_package(ROOT REQUIRED COMPONENTS Core Hist)
+INCLUDE_DIRECTORIES(${ROOT_INCLUDE_DIRS})
+
 ADD_EXECUTABLE(${name} ${sourcefiles})
 
-target_link_libraries(${name} EUDAQ )
+target_link_libraries(${name} EUDAQ ROOT::Core ROOT::Hist)
 
 INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin COMPONENT MAIN_EXE
