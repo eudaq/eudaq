@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <deque>
+#include <algorithm>
 
 #include "TFile.h"
 #include "TH2I.h"
@@ -156,29 +157,17 @@ int main( int argc, char ** argv ){
 
 
   eudaq::FileReader reader = ("native", filename);
+  eudaq::FileReader noise_reader = ("native", filename);
   std::cout << "Run number: " << reader.RunNumber() << '\n';
+  
   eudaq::PluginManager::Initialize(reader.GetDetectorEvent());
-
 
   TFile f(ofile.c_str(), "RECREATE");
 
-
-  std::vector<TH2I> xhist_v;
-  std::vector<TH2I> yhist_v;
-
-  for(int i = -max_shift; i <= max_shift; i++) {
-    auto suffix = "_shift"+std::to_string(i);
-    if(anticorrelate) xhist_v.emplace_back(std::string("p1x-p2y_temp_corr_"+suffix).c_str(), std::string("p1x-p2y_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
-    else xhist_v.emplace_back(std::string("p1x-p2x_temp_corr_"+suffix).c_str(), std::string("p1x-p2x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
-    if(anticorrelate) yhist_v.emplace_back(std::string("p1y-p2x_temp_corr_"+suffix).c_str(), std::string("p1y-p2x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
-    else yhist_v.emplace_back(std::string("p1y-p2y_temp_corr_"+suffix).c_str(), std::string("p1y-p2y_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
-  }
  
   std::map<int, std::pair<int, int>> detPxSize;
   std::map<int, std::pair<double, double>> detPxPitch;
-
-  std::deque<std::vector<cluster>> plane1_stream;
-  std::deque<std::vector<cluster>> plane2_stream;
+  std::map<int, std::vector<long int>> noiseHitMap;
 
   double ref_pitch_x = 0;
   double ref_pitch_y = 0;
@@ -190,27 +179,24 @@ int main( int argc, char ** argv ){
   int sample_px_x = 0;
   int sample_px_y = 0;
 
-  for(size_t ix = 0; ix < nev; ix++) {  
-    
-
-    if(ix%100 == 0) std::cout << "Event " << ix << " (bin " << ix/evtsperbin << ")\n";
-    bool hasEvt = reader.NextEvent(0);
+  size_t noiseevts = 10000;
+  //first we have to do a noise run
+  for(size_t ix = 0; ix < noiseevts; ix++) {  
+    if(ix%100 == 0) std::cout << "Noise event " << ix << '\n';
+    bool hasEvt = noise_reader.NextEvent(0);
     if(!hasEvt) {
       std::cout << "EOF reached!\n";	    
       break;
     }
-    //std::cout << "Has event: " << hasEvt << '\n';
-    auto & evt = reader.GetDetectorEvent();
+
+    auto & evt = noise_reader.GetDetectorEvent();
     auto stdEvt = eudaq::PluginManager::ConvertToStandard(evt);
-    //std::cout << "Planes: " << stdEvt.NumPlanes() << '\n';
-
-    std::vector<pixel_hit> plane1_hits;
-    std::vector<pixel_hit> plane2_hits;
-
     for(size_t plix = 0; plix < stdEvt.NumPlanes(); plix++) {
       auto & plane = stdEvt.GetPlane(plix);
       auto id = plane.ID();
-
+      //for the first 100 events we expect "new" detectors to pop up, in this case we retrieve their information
+      //nd store it. This allows us to be stable against the cases where the first event(s) are corrupted and
+      //DUT DAQ systems did not push any data into the first few events
       if(ix < 100) {
 	if(detPxSize.find(id) == detPxSize.end()) {
           detPxSize[id] = std::make_pair(plane.XSize(), plane.YSize());
@@ -231,13 +217,83 @@ int main( int argc, char ** argv ){
 		  sample_pitch_x = detPxPitch[id].first;
 		  sample_pitch_y = detPxPitch[id].second;
 	  }
+          noiseHitMap[id] = std::vector<long int>(detPxSize[id].first*detPxSize[id].second, 0);
 	}
       }
 
       if(id == id_ref || id == id_sample) {
         for(size_t piix = 0; piix <  plane.HitPixels(); piix++) {
-          if(id == id_ref) plane1_hits.emplace_back(plane.GetX(piix), plane.GetY(piix));
-          else plane2_hits.emplace_back(plane.GetX(piix), plane.GetY(piix));
+	  int i = plane.GetY(piix)*detPxSize[id].first+plane.GetX(piix);
+	  if(i < noiseHitMap[id].size()) {
+            noiseHitMap[id].at(i)++;
+	  } else {
+		  std::cout << "Data corruption in event on plane: " << id 
+			    << "\n -- Pixel " << plane.GetX(piix) << '/' << plane.GetY(piix) << " with ix: " << i << " does not fit into: " << noiseHitMap[id].size() << '\n';
+		  std::cout << "PlaneSize: "<< plane.XSize() << '/' << plane.YSize() << '\n';
+	  }
+        }
+      }
+    }
+  }
+
+  std::vector<int> noise_pix_ref;
+  std::vector<int> noise_pix_dut;
+
+  for(auto const & [plane, hitmap]: noiseHitMap) {
+    if(!( plane == id_ref || plane == id_sample)) continue;
+    std::cout << "Noisy pixels on plane: " << plane << ":\n";
+    for(size_t px = 0; px < hitmap.size(); px++) {
+      if(hitmap[px]*1./noiseevts > 0.005) {
+	      std::cout << "Pixel: " << px%detPxSize[plane].first << '/' << px/detPxSize[plane].first << '\n';
+	      if(plane == id_ref) noise_pix_ref.emplace_back(px);
+	      else if(plane == id_sample) noise_pix_dut.emplace_back(px);
+      }
+    }
+  }
+
+  std::cout << "Done..\n";
+  std::vector<TH2I> xhist_v;
+  std::vector<TH2I> yhist_v;
+
+  for(int i = -max_shift; i <= max_shift; i++) {
+    auto suffix = "_shift"+std::to_string(i);
+    if(anticorrelate) xhist_v.emplace_back(std::string("p1x-p2y_temp_corr_"+suffix).c_str(), std::string("p1x-p2y_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
+    else xhist_v.emplace_back(std::string("p1x-p2x_temp_corr_"+suffix).c_str(), std::string("p1x-p2x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
+    if(anticorrelate) yhist_v.emplace_back(std::string("p1y-p2x_temp_corr_"+suffix).c_str(), std::string("p1y-p2x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
+    else yhist_v.emplace_back(std::string("p1y-p2y_temp_corr_"+suffix).c_str(), std::string("p1y-p2y_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
+  }
+
+  std::deque<std::vector<cluster>> plane1_stream;
+  std::deque<std::vector<cluster>> plane2_stream;
+
+  for(size_t ix = 0; ix < nev; ix++) {  
+    if(ix%100 == 0) std::cout << "Event " << ix << " (bin " << ix/evtsperbin << ")\n";
+    bool hasEvt = reader.NextEvent(0);
+    if(!hasEvt) {
+      std::cout << "EOF reached!\n";	    
+      break;
+    }
+    auto & evt = reader.GetDetectorEvent();
+    auto stdEvt = eudaq::PluginManager::ConvertToStandard(evt);
+
+    std::vector<pixel_hit> plane1_hits;
+    std::vector<pixel_hit> plane2_hits;
+
+    for(size_t plix = 0; plix < stdEvt.NumPlanes(); plix++) {
+      auto & plane = stdEvt.GetPlane(plix);
+      auto id = plane.ID();
+      if(id == id_ref || id == id_sample) {
+        for(size_t piix = 0; piix <  plane.HitPixels(); piix++) {
+	  auto x = plane.GetX(piix);
+	  auto y = plane.GetY(piix);
+          if(id == id_ref) {
+            auto i = y*ref_px_x + x;
+	    if(std::find(noise_pix_ref.begin(), noise_pix_ref.end(), i) == noise_pix_ref.end()) plane1_hits.emplace_back(x, y);
+	  }
+          else {
+            auto i = y*sample_px_x + x;
+	    if(std::find(noise_pix_dut.begin(), noise_pix_dut.end(), i) == noise_pix_dut.end()) plane2_hits.emplace_back(x, y);
+	  }
         }
       }
     }
@@ -245,6 +301,8 @@ int main( int argc, char ** argv ){
     plane1_stream.push_front(clusterHits(plane1_hits, 4));
     plane2_stream.push_front(clusterHits(plane2_hits, 4));
 
+    //if we didn't process yet enough events to loop back -max_shift and in front +max_shift,
+    //we can't process the data
     if(ix < 2*max_shift) continue;
 
     auto correlate = [&](size_t shift){
@@ -287,27 +345,45 @@ int main( int argc, char ** argv ){
 
   auto evo_histos = [&](std::string name, std::vector<TH2I>& hstack) {
     int bins = nev/evtsperbin;
-    auto evolution = TH2I(name.c_str(), name.c_str(), bins, 0, bins-1, 2*max_shift+1, -max_shift, max_shift );
-    evolution.GetXaxis()->SetTitle(std::string("event block ["+std::to_string(evtsperbin)+" evts/bin]").c_str());
-    evolution.GetYaxis()->SetTitle("trigger offset");
+    auto evolution = std::make_unique<TH2D>(name.c_str(), name.c_str(), bins, 0, bins-1, 2*max_shift+1, -max_shift, max_shift );
+    evolution->GetXaxis()->SetTitle(std::string("event block ["+std::to_string(evtsperbin)+" evts/bin]").c_str());
+    evolution->GetYaxis()->SetTitle("event offset");
     for(int jx = 0; jx < hstack.size(); jx++) {
      auto& h = hstack[jx];
      for(int ix = 0; ix < bins; ix++) {
        auto proj = h.ProjectionY("", ix+1, ix+1);
+       //double integral = proj->Integral();
+       //if(integral < 1.) integral = 1;
+       //proj->Scale(1./integral);
        auto max_bin = proj->GetMaximumBin();
-       evolution.Fill(ix, jx-max_shift, proj->GetBinContent(max_bin));
+       evolution->Fill(ix, jx-max_shift, proj->GetBinContent(max_bin));
        delete proj;
      }
     }
-    evolution.Write(); 
+    evolution->Write();
+    return evolution;
   };
 
+  std::unique_ptr<TH2D> h1 = nullptr;
+  std::unique_ptr<TH2D> h2 = nullptr;
+
   if(anticorrelate) { 
-   evo_histos("evo_xy", xhist_v);
-   evo_histos("evo_yx", yhist_v);
+   h1 = evo_histos("evo_xy", xhist_v);
+   h2 = evo_histos("evo_yx", yhist_v);
   } else {
-   evo_histos("evo_xx", xhist_v);
-   evo_histos("evo_yy", yhist_v);
+   h1 = evo_histos("evo_xx", xhist_v);
+   h2 = evo_histos("evo_yy", yhist_v);
   }
+   auto h3 = std::unique_ptr<TH1I>(static_cast<TH1I*>(h1->Clone()));
+   h3->Add(h2.get());
+   h3->SetNameTitle("evo_both","evo_both");
+   h3->Write();
+   h3->SetNameTitle("evo_both_cut","evo_both_cut");
+   auto maxbin = h3->GetMaximumBin();
+   auto maxval = h3->GetBinContent(maxbin);
+   auto maxval_minus = h3->GetBinContent(maxbin-1);
+   auto maxval_plus = h3->GetBinContent(maxbin+1);
+   h3->SetAxisRange(0.7*maxval, maxval+maxval_minus+maxval_plus, "Z");
+   h3->Write();
   return 0;
 }
