@@ -40,7 +40,7 @@ aux_source_directory(src EUDAQ_COMPONENT_SRC)
 root_generate_dictionary(rootmonitorDict eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh
   LINKDEF include/LinkDef.h
     MODULE
-    rootmonitor        
+    ${EUDAQ_PREFIX}rootmonitor
   )
 list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/rootmonitorDict.cxx)
 add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})

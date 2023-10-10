@@ -2,8 +2,8 @@
 #include "eudaq/ROOTMonitorWindow.hh"
 
 #ifndef __CINT__
-# include "TApplication.h"
-# include "RQ_OBJECT.h"
+#include <RQ_OBJECT.h>
+#include <TApplication.h>
 #endif
 
 class TH1D;
@@ -11,12 +11,13 @@ class TGraph;
 
 namespace eudaq {
   class ROOTMonitor : public Monitor {
-    static constexpr const char* NAME = "eudaq::ROOTMonitor";
+    static constexpr const char *NAME = "eudaq::ROOTMonitor";
     RQ_OBJECT(NAME)
   public:
-    ROOTMonitor(const std::string & name, const std::string & title, const std::string & runcontrol);
+    ROOTMonitor(const std::string &name, const std::string &title,
+                const std::string &runcontrol);
 
-    void LoadRAWFileAsync(const char* path);
+    void LoadRAWFileAsync(const char *path);
 
     void DoInitialise() override;
     void DoConfigure() override;
@@ -34,20 +35,20 @@ namespace eudaq {
     virtual void AtReset() {}
 
   private:
-    void LoadRAWFile(const std::string& path);
+    void LoadRAWFile(const std::string &path);
 
     bool m_interrupt = false;
     std::unique_ptr<TApplication> m_app;
     std::future<void> m_daemon;
-    std::vector<std::future<void> > m_daemon_load;
+    std::vector<std::future<void>> m_daemon_load;
     unsigned long long m_num_evt_mon = 0ull;
 
     // global monitoring plots
-    TH1D* m_glob_evt_reco_time, *m_glob_evt_num_subevt;
-    TGraph* m_glob_evt_vs_ts, *m_glob_rate_vs_ts;
+    TH1D *m_glob_evt_reco_time, *m_glob_evt_num_subevt;
+    TGraph *m_glob_evt_vs_ts, *m_glob_rate_vs_ts;
     unsigned long long m_glob_last_evt_ts = 0ull;
 
   protected:
     std::unique_ptr<ROOTMonitorWindow> m_monitor;
   };
-}
+} // namespace eudaq
