@@ -24,6 +24,8 @@ namespace eudaq {
                        "LoadRAWFileAsync(const char*)");
     m_monitor->Connect("Quit()", NAME, this, "DoTerminate()");
 
+std::cout << "hahaahahaahaa"<<std::endl;
+
     // launch the run loop
     m_app->SetReturnFromRun(true);
     if (!m_daemon.valid())

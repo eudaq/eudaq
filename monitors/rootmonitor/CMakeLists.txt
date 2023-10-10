@@ -37,7 +37,7 @@ include_directories(${CMAKE_BINARY_DIR})
 
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
-root_generate_dictionary(rootmonitorDict eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh
+root_generate_dictionary(rootmonitorDict eudaq/ROOTMonitor.hh eudaq/ROOTMonitorBaseWindow.hh eudaq/ROOTMonitorWindow.hh
   LINKDEF include/LinkDef.h
     MODULE
     ${EUDAQ_PREFIX}rootmonitor
