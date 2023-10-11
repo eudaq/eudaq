@@ -25,9 +25,10 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0ROOTMonitor");
 
 private:
-  TH1D *m_my_hist;
-  TGraph2D *m_my_graph;
-  TProfile *m_my_prof;
+  static constexpr size_t kNumChannels = 4;
+  TH1D *m_my_hist[kNumChannels];
+  TGraph2D *m_my_graph[kNumChannels];
+  TProfile *m_my_prof[kNumChannels];
 };
 
 namespace {
@@ -37,21 +38,33 @@ namespace {
 }
 
 void Ex0ROOTMonitor::AtConfiguration() {
-  m_my_hist = m_monitor->Book<TH1D>(
-      "Channel 0/my_hist", "Example histogram", "h_example",
-      "A histogram;x-axis title;y-axis title", 100, 0., 1.);
-  m_my_graph = m_monitor->Book<TGraph2D>("Channel 0/my_graph", "Example graph");
-  m_my_graph->SetTitle("A graph;x-axis title;y-axis title;z-axis title");
-  m_monitor->SetDrawOptions(m_my_graph, "colz");
-  m_my_prof = m_monitor->Book<TProfile>(
-      "Channel 0/my_profile", "Example profile", "p_example",
-      "A profile histogram;x-axis title;y-axis title", 100, 0., 1.);
+  for (size_t ch_id = 0; ch_id < kNumChannels; ++ch_id) {
+    m_my_hist[ch_id] = m_monitor->Book<TH1D>(
+        Form("Channel %zu/my_hist", ch_id), "Example histogram",
+        Form("h_example_ch%zu", ch_id), "A histogram;x-axis title;y-axis title",
+        100, 0., 1. * (ch_id + 1));
+    m_my_graph[ch_id] = m_monitor->Book<TGraph2D>(
+        Form("Channel %zu/my_graph", ch_id), "Example graph");
+    m_my_graph[ch_id]->SetTitle(Form(
+        "A graph (channel %zu);x-axis title;y-axis title;z-axis title", ch_id));
+    m_monitor->SetDrawOptions(m_my_graph[ch_id], "colz");
+    m_my_prof[ch_id] = m_monitor->Book<TProfile>(
+        Form("Channel %zu/my_profile", ch_id), "Example profile",
+        Form("p_example_ch%zu", ch_id),
+        Form("A profile histogram (channel %zu);x-axis title;y-axis title",
+             ch_id),
+        100, 0., 1. * (ch_id + 1));
+  }
 }
 
 void Ex0ROOTMonitor::AtEventReception(eudaq::EventSP ev) {
   auto event = std::make_shared<Ex0EventDataFormat>(*ev);
-  m_my_hist->Fill(event->GetQuantityX());
-  m_my_graph->SetPoint(m_my_graph->GetN(), event->GetQuantityX(),
-                       event->GetQuantityY(), event->GetQuantityZ());
-  m_my_prof->Fill(event->GetQuantityX(), event->GetQuantityY());
+  for (size_t ch_id = 0; ch_id < kNumChannels; ++ch_id) {
+    m_my_hist[ch_id]->Fill(event->GetQuantityX() * (ch_id + 1));
+    m_my_graph[ch_id]->SetPoint(
+        m_my_graph[ch_id]->GetN(), event->GetQuantityX() * (ch_id + 1),
+        event->GetQuantityY() * ch_id, event->GetQuantityZ() * (ch_id + 1));
+    m_my_prof[ch_id]->Fill(event->GetQuantityX() * (ch_id + 1),
+                           event->GetQuantityY() * (ch_id + 1));
+  }
 }

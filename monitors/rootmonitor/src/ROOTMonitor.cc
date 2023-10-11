@@ -12,7 +12,7 @@
 
 namespace eudaq {
   ROOTMonitor::ROOTMonitor(const std::string &name, const std::string &title,
-                           const std::string &runcontrol)
+                           const std::string &runcontrol, bool web)
       : Monitor(name, runcontrol),
         m_app(new TApplication(name.c_str(), nullptr, nullptr)),
         m_monitor(new ROOTMonitorWindow(m_app.get(), title)) {
