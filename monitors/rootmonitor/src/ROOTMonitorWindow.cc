@@ -3,6 +3,7 @@
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TGFileDialog.h>
+#include <TObjArray.h>
 #include <TObjString.h>
 
 #include <iostream>
@@ -11,7 +12,15 @@ namespace eudaq {
   ROOTMonitorWindow::ROOTMonitorWindow(TApplication *par,
                                        const std::string &name)
       : TGMainFrame(gClient->GetRoot(), 800, 600, kVerticalFrame),
-        ROOTMonitorBaseWindow(par, name) {
+        ROOTMonitorBaseWindow(par, name),
+        m_icon_save(gClient->GetPicture("bld_save.xpm")),
+        m_icon_del(gClient->GetPicture("bld_delete.xpm")),
+        m_icon_open(gClient->GetPicture("bld_open.xpm")),
+        m_icon_th1(gClient->GetPicture("h1_t.xpm")),
+        m_icon_th2(gClient->GetPicture("h2_t.xpm")),
+        m_icon_tprofile(gClient->GetPicture("profile_t.xpm")),
+        m_icon_track(gClient->GetPicture("eve_track.xpm")),
+        m_icon_summ(gClient->GetPicture("draw_t.xpm")) {
     SetName(name.c_str());
     SetWindowName(name.c_str());
 
@@ -112,6 +121,17 @@ namespace eudaq {
     m_context_menu = new TContextMenu("", "");
   }
 
+  ROOTMonitorWindow::~ROOTMonitorWindow() {
+    // unregister the icons
+    gClient->FreePicture(m_icon_save);
+    gClient->FreePicture(m_icon_del);
+    gClient->FreePicture(m_icon_th1);
+    gClient->FreePicture(m_icon_th2);
+    gClient->FreePicture(m_icon_tprofile);
+    gClient->FreePicture(m_icon_track);
+    gClient->FreePicture(m_icon_summ);
+  }
+
   //--- counters/status bookeeping
 
   void ROOTMonitorWindow::ResetCounters() {
@@ -127,7 +147,7 @@ namespace eudaq {
   }
 
   void ROOTMonitorWindow::SetRunNumber(int run) {
-    m_run_number = run;
+    ROOTMonitorBaseWindow::SetRunNumber(run);
     if (m_status_bar)
       m_status_bar->SetText(Form("Run: %u", m_run_number),
                             (int)StatusBarPos::run_number);
@@ -207,7 +227,6 @@ namespace eudaq {
   //--- graphical part
 
   void ROOTMonitorWindow::Update() {
-    ROOTMonitorBaseWindow::Update();
     // check if we have something to draw
     if (m_drawable.empty())
       return;
@@ -262,10 +281,85 @@ namespace eudaq {
       }
   }
 
+  void ROOTMonitorWindow::DrawElement(TGListTreeItem *it, int val) {
+    m_drawable.clear();
+    for (auto &obj : m_objects)
+      if (m_tree_list_items.count(obj.first) &&
+          m_tree_list_items.at(obj.first) == it)
+        m_drawable.emplace_back(&obj.second);
+    if (m_drawable.empty()) // did not find in objects, must be a directory
+      for (auto &obj : m_objects)
+        if (m_tree_list_items.count(obj.first) &&
+            m_tree_list_items.at(obj.first)->GetParent() == it)
+          m_drawable.emplace_back(&obj.second);
+    if (m_drawable
+            .empty()) // did not find in directories either, must be a summary
+      if (m_summ_objects.count(it) > 0)
+        for (auto &obj : m_summ_objects[it])
+          m_drawable.emplace_back(obj);
+    m_canv_needs_refresh = true;
+  }
+
   //--- monitoring elements helpers
 
+  void ROOTMonitorWindow::AddObjectPath(const TObject *obj,
+                                        const std::string &path,
+                                        const std::string &name) {
+    if (!m_tree_list)
+      return;
+    m_tree_list_items[path] =
+        m_tree_list->AddItem(BookStructure(path), name.data());
+    auto it_icon = m_obj_icon.find(obj->ClassName());
+    if (it_icon != m_obj_icon.end())
+      m_tree_list_items[path]->SetPictures(it_icon->second, it_icon->second);
+  }
+
   void ROOTMonitorWindow::DrawMenu(TGListTreeItem *it, int but, int x, int y) {
-    if (but == 3)
+    if (m_context_menu && but == 3)
       m_context_menu->Popup(x, y, this);
+  }
+
+  //--- monitors hierarchy
+
+  TGListTreeItem *ROOTMonitorWindow::BookStructure(const std::string &path,
+                                                   TGListTreeItem *par) {
+    auto tok = TString(path).Tokenize("/");
+    if (tok->IsEmpty())
+      return par;
+    TGListTreeItem *prev = nullptr;
+    std::string full_path;
+    for (int i = 0; i < tok->GetEntriesFast() - 1; ++i) {
+      const auto iter = tok->At(i);
+      TString dir_name = dynamic_cast<TObjString *>(iter)->String();
+      full_path += dir_name + "/";
+      if (m_tree_list && m_tree_list_dirs.count(full_path) == 0)
+        m_tree_list_dirs[full_path] = m_tree_list->AddItem(prev, dir_name);
+      prev = m_tree_list_dirs[full_path];
+    }
+    return prev;
+  }
+
+  void ROOTMonitorWindow::AddSummary(const std::string &path,
+                                     const TObject *obj) {
+    for (auto &o : m_objects) {
+      if (o.second.object != obj)
+        continue;
+      if (m_tree_list_dirs.count(path) == 0) {
+        auto obj_name = path;
+        // keep only the last part
+        obj_name.erase(0, obj_name.rfind('/') + 1);
+        if (m_tree_list)
+          m_tree_list_dirs[path] =
+              m_tree_list->AddItem(BookStructure(path), obj_name.c_str());
+        m_tree_list_dirs[path]->SetPictures(m_icon_summ, m_icon_summ);
+      }
+      auto &objs = m_summ_objects[m_tree_list_dirs[path]];
+      if (std::find(objs.begin(), objs.end(), &o.second) == objs.end())
+        objs.emplace_back(&o.second);
+      MapCanvas();
+      return;
+    }
+    throw std::runtime_error("Failed to retrieve an object for summary \"" +
+                             path + "\"");
   }
 } // namespace eudaq

@@ -5,7 +5,7 @@
 
 #ifndef __CINT__
 #include <RQ_OBJECT.h>
-#include <TGListTree.h>
+#include <TFolder.h>
 #endif
 #include <functional>
 
@@ -35,6 +35,8 @@ namespace eudaq {
     virtual void SetLastEventNum(int num = -1);
     /// Specify the number of events already processed
     virtual void SetMonitoredEventsNum(int num = -1);
+    /// Add a summary page including several monitors
+    virtual void AddSummary(const std::string &path, const TObject *obj) = 0;
 
     /// Launch a "Open file" dialog to load a RAW/ROOT file and reproduce its
     /// monitoring
@@ -48,8 +50,6 @@ namespace eudaq {
     /// Save all monitored objects into a ROOT file
     virtual void SaveFile(const char *filename);
 
-    /// Add a summary page including several monitors
-    void AddSummary(const std::string &path, const TObject *obj);
     /// Clean all monitored objects before a new run
     void ClearMonitors();
 
@@ -58,17 +58,12 @@ namespace eudaq {
     T *Book(const std::string &path, const std::string &name, Args &&...args) {
       if (m_objects.count(path) != 0)
         return Get<T>(path);
-      auto obj = new T(std::forward<Args>(args)...);
-      auto item = m_tree_list->AddItem(BookStructure(path), name.c_str());
-      auto it_icon = m_obj_icon.find(obj->ClassName());
-      if (it_icon != m_obj_icon.end())
-        item->SetPictures(it_icon->second, it_icon->second);
-      MonitoredObject mon;
-      mon.item = item;
-      mon.object = obj;
-      m_objects[path] = mon;
+      auto &mon = m_objects[path];
+      mon.object = new T(std::forward<Args>(args)...);
+      AddObjectPath(mon.object, path, name);
+      GetFolder(path)->Add(mon.object);
       MapCanvas();
-      return obj;
+      return dynamic_cast<T *>(mon.object);
     }
     /// Retrieve a monitored object by its path and type
     template <typename T> T *Get(const std::string &name) {
@@ -76,6 +71,7 @@ namespace eudaq {
     }
     /// Retrieve a monitored object by its path
     TObject *Get(const std::string &name);
+    TFolder *GetFolder(const std::string &path, TFolder *base = nullptr);
     /// Specify if an object is required to be cleaned at each refresh
     void SetPersistant(const TObject *obj, bool pers = true) {
       GetMonitor(obj).persist = pers;
@@ -94,45 +90,14 @@ namespace eudaq {
       GetMonitor(obj).time_series = time;
     }
 
-    /// Action triggered when a monitor is to be drawn
-    void DrawElement(TGListTreeItem *, int);
+    // slots
+    void UpdateAll();           ///< Refresh the displayed monitor(s)
+    void SwitchUpdate(bool);    ///< Turn on/off the auto-refresh
+    void SwitchClearRuns(bool); ///< Toggle cleaning between runs
+    void Quit();                ///< Clean up everything
+    void FillFromRAWFile(const char *path); ///< Reprocess RAW file
 
-    /// Refresh the displayed monitor(s)
-    void Update();
-    /// Turn on/off the auto-refresh
-    void SwitchUpdate(bool);
-    /// Enable/disable monitors cleaning between runs
-    void SwitchClearRuns(bool);
-    /// Clean up everything before terminating the application
-    void Quit();
-    /// Reprocess monitors from a RAW file
-    void FillFromRAWFile(const char *path);
-
-  protected:
-    TGListTreeItem *BookStructure(const std::string &path,
-                                  TGListTreeItem *par = nullptr);
-    virtual void MapCanvas() {}
-    void CleanObject(TObject *);
-    void FillFileObject(const std::string &path, TObject *obj,
-                        const std::string &path_par = "");
-    void Draw();
-    void PostDraw();
-
-    // ROOT GUI objects handled
-    TGHorizontalFrame *m_top_win;
-    TGVerticalFrame *m_left_bar;
-    TGCanvas *m_left_canv;
-    TGListTree *m_tree_list;
-
-    const TGPicture *m_icon_summ;
-    const TGPicture *m_icon_save, *m_icon_del, *m_icon_open;
-    const TGPicture *m_icon_th1, *m_icon_th2, *m_icon_tprofile, *m_icon_track;
-
-    /// Timer for auto-refresh loop
-    std::unique_ptr<TTimer> m_timer;
-    static constexpr double kInvalidValue = 42.424242;
     struct MonitoredObject {
-      TGListTreeItem *item{nullptr};
       TObject *object{nullptr};
       bool persist{true};
       double min_y{kInvalidValue}, max_y{kInvalidValue};
@@ -140,34 +105,36 @@ namespace eudaq {
       Option_t *draw_opt{};
     };
 
+  protected:
+    static constexpr double kInvalidValue = 42.424242;
+
+    virtual void Update() {} ///< Update all the widgets
+    virtual void MapCanvas() {}
+
+    virtual void AddObjectPath(const TObject *obj, const std::string &path,
+                               const std::string &name) {}
+    void CleanObject(TObject *);
+    void FillFileObject(const std::string &path, TObject *obj,
+                        const std::string &path_par = "");
+    void Draw();
+    void PostDraw();
+
+    std::unique_ptr<TFolder> m_folder{nullptr};
+    std::unique_ptr<TTimer> m_timer{nullptr}; ///< Timer for auto-refresh loop
+
     MonitoredObject &GetMonitor(const TObject *obj);
 
-    /// List of all objects handled and monitored
-    std::map<std::string, MonitoredObject> m_objects;
-    std::map<std::string, TGListTreeItem *> m_dirs;
-    std::map<TGListTreeItem *, std::vector<MonitoredObject *>> m_summ_objects;
-    std::map<std::string, const TGPicture *> m_obj_icon = {
-        {"TH1", m_icon_th1},           {"TH1F", m_icon_th1},
-        {"TH1D", m_icon_th1},          {"TH1I", m_icon_th1},
-        {"TH2", m_icon_th2},           {"TH2F", m_icon_th2},
-        {"TH2D", m_icon_th2},          {"TH2I", m_icon_th2},
-        {"TGraph", m_icon_tprofile},   {"TGraph2D", m_icon_th2},
-        {"TProfile", m_icon_tprofile}, {"TMultiGraph", m_icon_track}};
-    /// List of all objects to be drawn on main canvas
-    std::vector<MonitoredObject *> m_drawable;
-    bool m_canv_needs_refresh{true};
-    bool m_clear_between_runs{true};
+    std::map<std::string, TFolder *> m_dirs;
+    std::map<std::string, MonitoredObject> m_objects; ///< Objects monitored
+    std::vector<MonitoredObject *> m_drawable; ///< Objects drawn on canvas
 
-    /// Parent owning application
-    TApplication *m_parent{nullptr};
-    /// Current "FSM" status
-    Status::State m_status{Status::STATE_UNINIT};
+    TApplication *m_parent{nullptr};              ///< Parent owning application
+    Status::State m_status{Status::STATE_UNINIT}; ///< Current "FSM" status
     int m_run_number{-1};
     unsigned long long m_last_event{0ull};
     unsigned long long m_last_event_mon{0ull};
-
-  private:
-    //ClassDef(ROOTMonitorBaseWindow, 0);
+    bool m_canv_needs_refresh{true};
+    bool m_clear_between_runs{true};
   };
 } // namespace eudaq
 

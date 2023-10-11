@@ -14,19 +14,22 @@ namespace eudaq {
     static constexpr const char *NAME = "eudaq::ROOTMonitor";
     RQ_OBJECT(NAME)
   public:
-    ROOTMonitor(const std::string &name, const std::string &title,
-                const std::string &runcontrol);
+    explicit ROOTMonitor(const std::string &name, const std::string &title,
+                const std::string &runcontrol, bool web = false);
 
+    // signals
     void LoadRAWFileAsync(const char *path);
 
-    void DoInitialise() override;
-    void DoConfigure() override;
-    void DoStartRun() override;
-    void DoStopRun() override;
-    void DoTerminate() override;
-    void DoReset() override;
-    void DoReceive(eudaq::EventSP ev) override;
+    // EUDAQ-overriden methods
+    void DoInitialise() override final;
+    void DoConfigure() override final;
+    void DoStartRun() override final;
+    void DoStopRun() override final;
+    void DoTerminate() override final;
+    void DoReset() override final;
+    void DoReceive(eudaq::EventSP ev) override final;
 
+    // user-overridable methods
     virtual void AtInitialisation() {}
     virtual void AtConfiguration() {}
     virtual void AtRunStart() {}
@@ -49,6 +52,6 @@ namespace eudaq {
     unsigned long long m_glob_last_evt_ts = 0ull;
 
   protected:
-    std::unique_ptr<ROOTMonitorWindow> m_monitor;
+    std::unique_ptr<ROOTMonitorBaseWindow> m_monitor;
   };
 } // namespace eudaq

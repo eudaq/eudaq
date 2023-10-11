@@ -5,6 +5,7 @@
 #pragma link off all functions;
 
 #pragma link C++ namespace eudaq;
+#pragma link C++ class eudaq::ROOTMonitorBaseWindow+;
 #pragma link C++ class eudaq::ROOTMonitorWindow+;
 
 #endif

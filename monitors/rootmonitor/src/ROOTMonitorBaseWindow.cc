@@ -2,51 +2,32 @@
 
 #include <TApplication.h>
 #include <TFile.h>
-#include <TKey.h>
-#include <TObjString.h>
-#include <TTimer.h>
-
 #include <TGraph.h>
 #include <TGraph2D.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TKey.h>
 #include <TMultiGraph.h>
+#include <TObjString.h>
+#include <TTimer.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 namespace eudaq {
   ROOTMonitorBaseWindow::ROOTMonitorBaseWindow(TApplication *par,
                                                const std::string &name)
-      : m_parent(par), m_icon_save(gClient->GetPicture("bld_save.xpm")),
-        m_icon_del(gClient->GetPicture("bld_delete.xpm")),
-        m_icon_open(gClient->GetPicture("bld_open.xpm")),
-        m_icon_th1(gClient->GetPicture("h1_t.xpm")),
-        m_icon_th2(gClient->GetPicture("h2_t.xpm")),
-        m_icon_tprofile(gClient->GetPicture("profile_t.xpm")),
-        m_icon_track(gClient->GetPicture("eve_track.xpm")),
-        m_icon_summ(gClient->GetPicture("draw_t.xpm")),
+      : m_parent(par), m_folder(new TFolder("eudaq", "eudaq")),
         m_timer(new TTimer(1000, kTRUE)) {
-    // m_tree_list = new TGListTree(nullptr, kHorizontalFrame);
-    // m_tree_list->Connect("DoubleClicked(TGListTreeItem*, Int_t)", NAME, this,
-    //                      "DrawElement(TGListTreeItem*, Int_t)");
     ResetCounters();
 
-    m_timer->Connect("Timeout()", NAME, this, "Update()");
+    m_timer->Connect("Timeout()", NAME, this, "UpdateAll()");
 
     SwitchUpdate(true);
   }
 
   ROOTMonitorBaseWindow::~ROOTMonitorBaseWindow() {
     Quit();
-    // unregister the icons
-    gClient->FreePicture(m_icon_save);
-    gClient->FreePicture(m_icon_del);
-    gClient->FreePicture(m_icon_th1);
-    gClient->FreePicture(m_icon_th2);
-    gClient->FreePicture(m_icon_tprofile);
-    gClient->FreePicture(m_icon_track);
-    gClient->FreePicture(m_icon_summ);
     for (auto &obj : m_objects)
       delete obj.second.object;
   }
@@ -96,7 +77,7 @@ namespace eudaq {
       FillFileObject("", TFile::Open(filename, "read"), ""); // handled by GC
     else if (s_ext == "raw") {
       FillFromRAWFile(filename);
-      Update();
+      UpdateAll();
     }
   }
 
@@ -156,9 +137,10 @@ namespace eudaq {
 
   //--- graphical part
 
-  void ROOTMonitorBaseWindow::Update() {
+  void ROOTMonitorBaseWindow::UpdateAll() {
     SetLastEventNum(m_last_event);
     SetMonitoredEventsNum(m_last_event_mon);
+    Update();
   }
 
   void ROOTMonitorBaseWindow::Draw() {
@@ -204,29 +186,32 @@ namespace eudaq {
 
   //--- monitoring elements helpers
 
+  TFolder *ROOTMonitorBaseWindow::GetFolder(const std::string &path,
+                                            TFolder *base) {
+    auto tok = TString(path).Tokenize("/");
+    if (!base)
+      base = m_folder.get();
+    if (tok->IsEmpty())
+      return base;
+    TFolder *prev = base;
+    std::string full_path;
+    for (int i = 0; i < tok->GetEntriesFast() - 1; ++i) {
+      const auto iter = tok->At(i);
+      TString dir_name = dynamic_cast<TObjString *>(iter)->String();
+      full_path += dir_name + "/";
+      if (m_dirs.count(full_path) == 0)
+        m_dirs[full_path] = prev->AddFolder(dir_name.Data(), path.data());
+      prev = m_dirs[full_path];
+    }
+    return prev;
+  }
+
   TObject *ROOTMonitorBaseWindow::Get(const std::string &name) {
     auto it = m_objects.find(name);
     if (it == m_objects.end())
       throw std::runtime_error("Failed to retrieve object with path \"" +
                                std::string(name) + "\"!");
     return it->second.object;
-  }
-
-  void ROOTMonitorBaseWindow::DrawElement(TGListTreeItem *it, int val) {
-    m_drawable.clear();
-    for (auto &obj : m_objects)
-      if (obj.second.item == it)
-        m_drawable.emplace_back(&obj.second);
-    if (m_drawable.empty()) // did not find in objects, must be a directory
-      for (auto &obj : m_objects)
-        if (obj.second.item->GetParent() == it)
-          m_drawable.emplace_back(&obj.second);
-    if (m_drawable
-            .empty()) // did not find in directories either, must be a summary
-      if (m_summ_objects.count(it) > 0)
-        for (auto &obj : m_summ_objects[it])
-          m_drawable.emplace_back(obj);
-    m_canv_needs_refresh = true;
   }
 
   ROOTMonitorBaseWindow::MonitoredObject &
@@ -257,48 +242,5 @@ namespace eudaq {
       std::cerr << "[WARNING] monitoring object with class name "
                 << "\"" << obj->ClassName() << "\" cannot be cleared"
                 << std::endl;
-  }
-
-  //--- monitors hierarchy
-
-  TGListTreeItem *ROOTMonitorBaseWindow::BookStructure(const std::string &path,
-                                                       TGListTreeItem *par) {
-    auto tok = TString(path).Tokenize("/");
-    if (tok->IsEmpty())
-      return par;
-    TGListTreeItem *prev = nullptr;
-    std::string full_path;
-    for (int i = 0; i < tok->GetEntriesFast() - 1; ++i) {
-      const auto iter = tok->At(i);
-      TString dir_name = dynamic_cast<TObjString *>(iter)->String();
-      full_path += dir_name + "/";
-      /*if (m_dirs.count(full_path) == 0)
-        m_dirs[full_path] = m_tree_list->AddItem(prev, dir_name);*/
-      prev = m_dirs[full_path];
-    }
-    return prev;
-  }
-
-  void ROOTMonitorBaseWindow::AddSummary(const std::string &path,
-                                         const TObject *obj) {
-    for (auto &o : m_objects) {
-      if (o.second.object != obj)
-        continue;
-      if (m_dirs.count(path) == 0) {
-        auto obj_name = path;
-        // keep only the last part
-        obj_name.erase(0, obj_name.rfind('/') + 1);
-        /*m_dirs[path] =
-            m_tree_list->AddItem(BookStructure(path), obj_name.c_str());*/
-        m_dirs[path]->SetPictures(m_icon_summ, m_icon_summ);
-      }
-      auto &objs = m_summ_objects[m_dirs[path]];
-      if (std::find(objs.begin(), objs.end(), &o.second) == objs.end())
-        objs.emplace_back(&o.second);
-      MapCanvas();
-      return;
-    }
-    throw std::runtime_error("Failed to retrieve an object for summary \"" +
-                             path + "\"");
   }
 } // namespace eudaq
