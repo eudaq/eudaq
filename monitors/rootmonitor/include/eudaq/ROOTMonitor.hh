@@ -1,5 +1,6 @@
 #include "eudaq/Monitor.hh"
-#include "eudaq/ROOTMonitorWindow.hh"
+#include "eudaq/ROOTMonitorWeb.hh"    // includes in header to avoid
+#include "eudaq/ROOTMonitorWindow.hh" // user to include them later
 
 #ifndef __CINT__
 #include <RQ_OBJECT.h>

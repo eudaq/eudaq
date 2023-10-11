@@ -14,8 +14,11 @@ namespace eudaq {
   ROOTMonitor::ROOTMonitor(const std::string &name, const std::string &title,
                            const std::string &runcontrol, bool web)
       : Monitor(name, runcontrol),
-        m_app(new TApplication(name.c_str(), nullptr, nullptr)),
-        m_monitor(new ROOTMonitorWindow(m_app.get(), title)) {
+        m_app(new TApplication(name.c_str(), nullptr, nullptr)) {
+    if (web)
+      m_monitor.reset(new ROOTMonitorWeb(m_app.get(), title));
+    else
+      m_monitor.reset(new ROOTMonitorWindow(m_app.get(), title));
     if (!m_monitor)
       EUDAQ_THROW("Error allocating main window");
 

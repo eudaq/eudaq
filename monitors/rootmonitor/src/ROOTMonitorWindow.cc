@@ -292,26 +292,51 @@ namespace eudaq {
         if (m_tree_list_items.count(obj.first) &&
             m_tree_list_items.at(obj.first)->GetParent() == it)
           m_drawable.emplace_back(&obj.second);
-    if (m_drawable
-            .empty()) // did not find in directories either, must be a summary
-      if (m_summ_objects.count(it) > 0)
-        for (auto &obj : m_summ_objects[it])
-          m_drawable.emplace_back(obj);
+    /*if (m_drawable.empty()) // did not find either in subdirs, must be a
+      summary if (m_summ_objects.count(it) > 0) for (auto &obj :
+      m_summ_objects[it]) m_drawable.emplace_back(obj);*/ /// FIXME
     m_canv_needs_refresh = true;
   }
 
   //--- monitoring elements helpers
 
-  void ROOTMonitorWindow::AddObjectPath(const TObject *obj,
-                                        const std::string &path,
-                                        const std::string &name) {
-    if (!m_tree_list)
-      return;
-    m_tree_list_items[path] =
-        m_tree_list->AddItem(BookStructure(path), name.data());
-    auto it_icon = m_obj_icon.find(obj->ClassName());
-    if (it_icon != m_obj_icon.end())
-      m_tree_list_items[path]->SetPictures(it_icon->second, it_icon->second);
+  void ROOTMonitorWindow::UpdateMonitorsList() {
+    std::function<void(TGListTreeItem *, TObject *)> browse_folder =
+        [&](TGListTreeItem *base, TObject *obj) {
+          if (obj->IsFolder()) {
+            auto *dir = dynamic_cast<TFolder *>(obj);
+            if (m_summ_objects.count(dir) > 0) { // summary
+              const auto path = GetFolderPath(dir);
+              if (m_tree_list_dirs.count(path) == 0) {
+                m_tree_list_dirs[path] =
+                    m_tree_list->AddItem(base, obj->GetName());
+                m_tree_list_dirs[path]->SetPictures(m_icon_summ, m_icon_summ);
+                browse_folder(m_tree_list_dirs[path], dir);
+              }
+            } else { // simple folder
+              const auto path = GetFolderPath(dir);
+              if (m_tree_list_dirs.count(path) == 0)
+                m_tree_list_dirs[path] =
+                    m_tree_list->AddItem(base, obj->GetName());
+              TIter iter(dir->GetListOfFolders());
+              TObject *sub_obj{nullptr};
+              while (sub_obj = iter())
+                browse_folder(m_tree_list_dirs[path], sub_obj);
+            }
+          } else { // object
+            const auto path = GetPath(obj);
+            if (m_tree_list_items.count(path) == 0) {
+              m_tree_list_items[path] =
+                  m_tree_list->AddItem(base, obj->GetName());
+              auto it_icon = m_obj_icon.find(obj->ClassName());
+              if (it_icon != m_obj_icon.end())
+                m_tree_list_items[path]->SetPictures(it_icon->second,
+                                                     it_icon->second);
+            }
+          }
+        };
+
+    browse_folder(nullptr, m_folder.get());
   }
 
   void ROOTMonitorWindow::DrawMenu(TGListTreeItem *it, int but, int x, int y) {
@@ -321,24 +346,7 @@ namespace eudaq {
 
   //--- monitors hierarchy
 
-  TGListTreeItem *ROOTMonitorWindow::BookStructure(const std::string &path,
-                                                   TGListTreeItem *par) {
-    auto tok = TString(path).Tokenize("/");
-    if (tok->IsEmpty())
-      return par;
-    TGListTreeItem *prev = nullptr;
-    std::string full_path;
-    for (int i = 0; i < tok->GetEntriesFast() - 1; ++i) {
-      const auto iter = tok->At(i);
-      TString dir_name = dynamic_cast<TObjString *>(iter)->String();
-      full_path += dir_name + "/";
-      if (m_tree_list && m_tree_list_dirs.count(full_path) == 0)
-        m_tree_list_dirs[full_path] = m_tree_list->AddItem(prev, dir_name);
-      prev = m_tree_list_dirs[full_path];
-    }
-    return prev;
-  }
-
+  /*
   void ROOTMonitorWindow::AddSummary(const std::string &path,
                                      const TObject *obj) {
     for (auto &o : m_objects) {
@@ -346,7 +354,8 @@ namespace eudaq {
         continue;
       if (m_tree_list_dirs.count(path) == 0) {
         auto obj_name = path;
-        // keep only the last part
+        // keep only the last
+        // part
         obj_name.erase(0, obj_name.rfind('/') + 1);
         if (m_tree_list)
           m_tree_list_dirs[path] =
@@ -361,5 +370,5 @@ namespace eudaq {
     }
     throw std::runtime_error("Failed to retrieve an object for summary \"" +
                              path + "\"");
-  }
+  }*/
 } // namespace eudaq

@@ -34,7 +34,6 @@ namespace eudaq {
     void SetLastEventNum(int num = -1) override;
     void SetMonitoredEventsNum(int num = -1) override;
     void Update() override;
-    void AddSummary(const std::string &path, const TObject *obj) override;
 
     void LoadFile(const char *filename) override;
     void OpenFileDialog() override;
@@ -59,10 +58,7 @@ namespace eudaq {
     void MapCanvas() override;
     void Draw(TCanvas *canv);
     void PostDraw(TCanvas *canv);
-    void AddObjectPath(const TObject *obj, const std::string &path,
-                       const std::string &name);
-    TGListTreeItem *BookStructure(const std::string &path,
-                                  TGListTreeItem *par = nullptr);
+    void UpdateMonitorsList() override;
 
     // ROOT image objects handled
     const TGPicture *m_icon_summ;
@@ -77,7 +73,6 @@ namespace eudaq {
         {"TProfile", m_icon_tprofile}, {"TMultiGraph", m_icon_track}};
     std::map<std::string, TGListTreeItem *> m_tree_list_dirs;
     std::map<std::string, TGListTreeItem *> m_tree_list_items;
-    std::map<TGListTreeItem *, std::vector<MonitoredObject *>> m_summ_objects;
 
     // ROOT GUI objects handled
     TGHorizontalFrame *m_top_win{nullptr};

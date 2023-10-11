@@ -16,6 +16,7 @@ namespace eudaq {
   /// A placeholder for ROOT monitoring
   class ROOTMonitorBaseWindow /*: public TObject*/ {
     static constexpr const char *NAME = "eudaq::ROOTMonitorBaseWindow";
+    static constexpr const char *kDirName = "eudaq";
     RQ_OBJECT(NAME)
 
   public:
@@ -35,8 +36,6 @@ namespace eudaq {
     virtual void SetLastEventNum(int num = -1);
     /// Specify the number of events already processed
     virtual void SetMonitoredEventsNum(int num = -1);
-    /// Add a summary page including several monitors
-    virtual void AddSummary(const std::string &path, const TObject *obj) = 0;
 
     /// Launch a "Open file" dialog to load a RAW/ROOT file and reproduce its
     /// monitoring
@@ -60,9 +59,9 @@ namespace eudaq {
         return Get<T>(path);
       auto &mon = m_objects[path];
       mon.object = new T(std::forward<Args>(args)...);
-      AddObjectPath(mon.object, path, name);
       GetFolder(path)->Add(mon.object);
       MapCanvas();
+      UpdateMonitorsList();
       return dynamic_cast<T *>(mon.object);
     }
     /// Retrieve a monitored object by its path and type
@@ -89,6 +88,8 @@ namespace eudaq {
     void SetTimeSeries(const TObject *obj, const std::string &time) {
       GetMonitor(obj).time_series = time;
     }
+    /// Add a summary page including several monitors
+    void AddSummary(const std::string &path, const TObject *obj);
 
     // slots
     void UpdateAll();           ///< Refresh the displayed monitor(s)
@@ -109,23 +110,22 @@ namespace eudaq {
     static constexpr double kInvalidValue = 42.424242;
 
     virtual void Update() {} ///< Update all the widgets
+    virtual void UpdateMonitorsList() {}
     virtual void MapCanvas() {}
 
-    virtual void AddObjectPath(const TObject *obj, const std::string &path,
-                               const std::string &name) {}
     void CleanObject(TObject *);
     void FillFileObject(const std::string &path, TObject *obj,
                         const std::string &path_par = "");
     void Draw();
     void PostDraw();
 
-    std::unique_ptr<TFolder> m_folder{nullptr};
-    std::unique_ptr<TTimer> m_timer{nullptr}; ///< Timer for auto-refresh loop
-
+    std::string GetFolderPath(const TFolder *obj) const;
+    std::string GetPath(const TObject *obj) const;
     MonitoredObject &GetMonitor(const TObject *obj);
 
     std::map<std::string, TFolder *> m_dirs;
     std::map<std::string, MonitoredObject> m_objects; ///< Objects monitored
+    std::map<TFolder *, std::vector<MonitoredObject *>> m_summ_objects;
     std::vector<MonitoredObject *> m_drawable; ///< Objects drawn on canvas
 
     TApplication *m_parent{nullptr};              ///< Parent owning application
@@ -135,6 +135,11 @@ namespace eudaq {
     unsigned long long m_last_event_mon{0ull};
     bool m_canv_needs_refresh{true};
     bool m_clear_between_runs{true};
+
+    std::unique_ptr<TFolder> m_folder{nullptr};
+
+  private:
+    std::unique_ptr<TTimer> m_refresh_timer{nullptr}; ///< Plots refresh
   };
 } // namespace eudaq
 

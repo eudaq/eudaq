@@ -7,5 +7,6 @@
 #pragma link C++ namespace eudaq;
 #pragma link C++ class eudaq::ROOTMonitorBaseWindow+;
 #pragma link C++ class eudaq::ROOTMonitorWindow+;
+#pragma link C++ class eudaq::ROOTMonitorWeb+;
 
 #endif

@@ -14,14 +14,17 @@
 #include <fstream>
 #include <iostream>
 
+using namespace std::string_literals;
+
 namespace eudaq {
   ROOTMonitorBaseWindow::ROOTMonitorBaseWindow(TApplication *par,
                                                const std::string &name)
-      : m_parent(par), m_folder(new TFolder("eudaq", "eudaq")),
-        m_timer(new TTimer(1000, kTRUE)) {
+      : m_parent(par),
+        m_folder(new TFolder(kDirName, "eudaq ROOT monitor file hierarchy")),
+        m_refresh_timer(new TTimer(1000, kTRUE)) {
     ResetCounters();
 
-    m_timer->Connect("Timeout()", NAME, this, "UpdateAll()");
+    m_refresh_timer->Connect("Timeout()", NAME, this, "UpdateAll()");
 
     SwitchUpdate(true);
   }
@@ -125,9 +128,9 @@ namespace eudaq {
 
   void ROOTMonitorBaseWindow::SwitchUpdate(bool up) {
     if (!up)
-      m_timer->Stop();
+      m_refresh_timer->Stop();
     else if (up)
-      m_timer->Start(-1, kFALSE); // update automatically
+      m_refresh_timer->Start(-1, kFALSE); // update automatically
     m_canv_needs_refresh = true;
   }
 
@@ -194,11 +197,11 @@ namespace eudaq {
     if (tok->IsEmpty())
       return base;
     TFolder *prev = base;
-    std::string full_path;
+    std::string full_path, sep;
     for (int i = 0; i < tok->GetEntriesFast() - 1; ++i) {
       const auto iter = tok->At(i);
       TString dir_name = dynamic_cast<TObjString *>(iter)->String();
-      full_path += dir_name + "/";
+      full_path += sep + dir_name, sep = "/";
       if (m_dirs.count(full_path) == 0)
         m_dirs[full_path] = prev->AddFolder(dir_name.Data(), path.data());
       prev = m_dirs[full_path];
@@ -209,9 +212,26 @@ namespace eudaq {
   TObject *ROOTMonitorBaseWindow::Get(const std::string &name) {
     auto it = m_objects.find(name);
     if (it == m_objects.end())
-      throw std::runtime_error("Failed to retrieve object with path \"" +
-                               std::string(name) + "\"!");
+      EUDAQ_THROW("Failed to retrieve the object with path '" + name + "'.");
     return it->second.object;
+  }
+
+  std::string ROOTMonitorBaseWindow::GetFolderPath(const TFolder *dir) const {
+    if (strcmp(dir->GetName(), kDirName) == 0)
+      return "";
+    for (const auto &o : m_dirs)
+      if (o.second == dir)
+        return o.first;
+    EUDAQ_THROW("Failed to retrieve the path of a directory with name '"s +
+                dir->GetName() + "'.");
+  }
+
+  std::string ROOTMonitorBaseWindow::GetPath(const TObject *obj) const {
+    for (const auto &o : m_objects)
+      if (o.second.object == obj)
+        return o.first;
+    EUDAQ_THROW("Failed to retrieve the path of an object with name '"s +
+                obj->GetName() + "'.");
   }
 
   ROOTMonitorBaseWindow::MonitoredObject &
@@ -219,7 +239,21 @@ namespace eudaq {
     for (auto &o : m_objects)
       if (o.second.object == obj)
         return o.second;
-    throw std::runtime_error("Failed to retrieve an object!");
+    EUDAQ_THROW(
+        "Failed to retrieve the monitoring properties of an object with name '"s +
+        obj->GetName() + "'.");
+  }
+
+  void ROOTMonitorBaseWindow::AddSummary(const std::string &path,
+                                         const TObject *obj) {
+    if (m_dirs.count(path) == 0)
+      m_dirs[path] = GetFolder(path);
+    auto &objs = m_summ_objects[m_dirs.at(path)];
+    auto &obj_mon = GetMonitor(obj);
+    if (std::find(objs.begin(), objs.end(), &obj_mon) == objs.end())
+      objs.emplace_back(&obj_mon);
+    MapCanvas();
+    UpdateMonitorsList();
   }
 
   void ROOTMonitorBaseWindow::ClearMonitors() {

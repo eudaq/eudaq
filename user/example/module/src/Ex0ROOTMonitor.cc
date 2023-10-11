@@ -17,7 +17,9 @@ struct Ex0EventDataFormat {
 class Ex0ROOTMonitor final : public eudaq::ROOTMonitor {
 public:
   Ex0ROOTMonitor(const std::string &name, const std::string &runcontrol)
-      : eudaq::ROOTMonitor(name, "Ex0 ROOT monitor", runcontrol, true) {}
+      : eudaq::ROOTMonitor(name, "Ex0 ROOT monitor", runcontrol, false) {
+    AtConfiguration();
+  }
 
   void AtConfiguration() override;
   void AtEventReception(eudaq::EventSP ev) override;
@@ -51,10 +53,11 @@ void Ex0ROOTMonitor::AtConfiguration() {
     m_my_prof[ch_id] = m_monitor->Book<TProfile>(
         Form("Channel %zu/my_profile", ch_id), "Example profile",
         Form("p_example_ch%zu", ch_id),
-        Form("A profile histogram (channel %zu);x-axis title;y-axis title",
-             ch_id),
-        100, 0., 1. * (ch_id + 1));
+        "A profile histogram;x-axis title;y-axis title", 100, 0.,
+        1. * (ch_id + 1));
   }
+  for (size_t ch_id = 0; ch_id < kNumChannels; ++ch_id)
+    m_monitor->AddSummary("Summary/my_hists", m_my_hist[ch_id]);
 }
 
 void Ex0ROOTMonitor::AtEventReception(eudaq::EventSP ev) {
