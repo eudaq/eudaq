@@ -73,6 +73,7 @@ namespace eudaq {
         {"TProfile", m_icon_tprofile}, {"TMultiGraph", m_icon_track}};
     std::map<std::string, TGListTreeItem *> m_tree_list_dirs;
     std::map<std::string, TGListTreeItem *> m_tree_list_items;
+    std::map<std::string, TGListTreeItem *> m_tree_list_summaries;
 
     // ROOT GUI objects handled
     TGHorizontalFrame *m_top_win{nullptr};

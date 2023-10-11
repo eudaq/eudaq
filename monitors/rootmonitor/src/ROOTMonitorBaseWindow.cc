@@ -1,3 +1,4 @@
+#include "eudaq/Logger.hh"
 #include "eudaq/ROOTMonitorBaseWindow.hh"
 
 #include <TApplication.h>
@@ -8,7 +9,6 @@
 #include <TH2.h>
 #include <TKey.h>
 #include <TMultiGraph.h>
-#include <TObjString.h>
 #include <TTimer.h>
 
 #include <fstream>
@@ -23,9 +23,7 @@ namespace eudaq {
         m_folder(new TFolder(kDirName, "eudaq ROOT monitor file hierarchy")),
         m_refresh_timer(new TTimer(1000, kTRUE)) {
     ResetCounters();
-
     m_refresh_timer->Connect("Timeout()", NAME, this, "UpdateAll()");
-
     SwitchUpdate(true);
   }
 
@@ -190,20 +188,19 @@ namespace eudaq {
   //--- monitoring elements helpers
 
   TFolder *ROOTMonitorBaseWindow::GetFolder(const std::string &path,
-                                            TFolder *base) {
-    auto tok = TString(path).Tokenize("/");
+                                            TFolder *base, bool full) {
+    const auto tok = split(path, "/"); // EUDAQ utility
     if (!base)
       base = m_folder.get();
-    if (tok->IsEmpty())
+    if (tok.empty())
       return base;
     TFolder *prev = base;
     std::string full_path, sep;
-    for (int i = 0; i < tok->GetEntriesFast() - 1; ++i) {
-      const auto iter = tok->At(i);
-      TString dir_name = dynamic_cast<TObjString *>(iter)->String();
+    for (int i = 0; i < tok.size() - 1 + full; ++i) {
+      const auto &dir_name = tok.at(i);
       full_path += sep + dir_name, sep = "/";
       if (m_dirs.count(full_path) == 0)
-        m_dirs[full_path] = prev->AddFolder(dir_name.Data(), path.data());
+        m_dirs[full_path] = prev->AddFolder(dir_name.data(), path.data());
       prev = m_dirs[full_path];
     }
     return prev;
@@ -218,7 +215,7 @@ namespace eudaq {
 
   std::string ROOTMonitorBaseWindow::GetFolderPath(const TFolder *dir) const {
     if (strcmp(dir->GetName(), kDirName) == 0)
-      return "";
+      return ""s;
     for (const auto &o : m_dirs)
       if (o.second == dir)
         return o.first;
@@ -247,7 +244,7 @@ namespace eudaq {
   void ROOTMonitorBaseWindow::AddSummary(const std::string &path,
                                          const TObject *obj) {
     if (m_dirs.count(path) == 0)
-      m_dirs[path] = GetFolder(path);
+      m_dirs[path] = GetFolder(path, nullptr, true);
     auto &objs = m_summ_objects[m_dirs.at(path)];
     auto &obj_mon = GetMonitor(obj);
     if (std::find(objs.begin(), objs.end(), &obj_mon) == objs.end())
@@ -273,8 +270,7 @@ namespace eudaq {
     else if (obj->InheritsFrom("TH1"))
       dynamic_cast<TH1 *>(obj)->Reset();
     else
-      std::cerr << "[WARNING] monitoring object with class name "
-                << "\"" << obj->ClassName() << "\" cannot be cleared"
-                << std::endl;
+      EUDAQ_WARN("Monitoring object with class name '"s + obj->ClassName() +
+                 "' cannot be cleared.");
   }
 } // namespace eudaq

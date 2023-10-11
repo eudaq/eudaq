@@ -1,9 +1,9 @@
+#include "eudaq/Logger.hh"
 #include "eudaq/ROOTMonitorWindow.hh"
 
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TGFileDialog.h>
-#include <TObjArray.h>
 #include <TObjString.h>
 
 #include <iostream>
@@ -230,10 +230,9 @@ namespace eudaq {
     // check if we have something to draw
     if (m_drawable.empty())
       return;
-    TCanvas *canv = m_main_canvas->GetCanvas();
+    auto *canv = m_main_canvas->GetCanvas();
     if (!canv) { // failed to retrieve the plotting region
-      std::cerr << "[WARNING] Failed to retrieve the main plotting canvas!"
-                << std::endl;
+      EUDAQ_WARN("Failed to retrieve the main plotting canvas.");
       return;
     }
     Draw(canv);
@@ -281,7 +280,7 @@ namespace eudaq {
       }
   }
 
-  void ROOTMonitorWindow::DrawElement(TGListTreeItem *it, int val) {
+  void ROOTMonitorWindow::DrawElement(TGListTreeItem *it, int /*val*/) {
     m_drawable.clear();
     for (auto &obj : m_objects)
       if (m_tree_list_items.count(obj.first) &&
@@ -292,9 +291,14 @@ namespace eudaq {
         if (m_tree_list_items.count(obj.first) &&
             m_tree_list_items.at(obj.first)->GetParent() == it)
           m_drawable.emplace_back(&obj.second);
-    /*if (m_drawable.empty()) // did not find either in subdirs, must be a
-      summary if (m_summ_objects.count(it) > 0) for (auto &obj :
-      m_summ_objects[it]) m_drawable.emplace_back(obj);*/ /// FIXME
+    if (m_drawable.empty()) // did not find either in subdirs, must be a summary
+      for (auto &summ : m_tree_list_summaries) {
+        if (summ.second != it || m_dirs.count(summ.first) == 0 ||
+            m_summ_objects.count(m_dirs.at(summ.first)) == 0)
+          continue;
+        for (auto &obj : m_summ_objects.at(m_dirs.at(summ.first)))
+          m_drawable.emplace_back(obj); /// FIXME
+      }
     m_canv_needs_refresh = true;
   }
 
@@ -307,11 +311,11 @@ namespace eudaq {
             auto *dir = dynamic_cast<TFolder *>(obj);
             if (m_summ_objects.count(dir) > 0) { // summary
               const auto path = GetFolderPath(dir);
-              if (m_tree_list_dirs.count(path) == 0) {
-                m_tree_list_dirs[path] =
+              if (m_tree_list_summaries.count(path) == 0) {
+                m_tree_list_summaries[path] =
                     m_tree_list->AddItem(base, obj->GetName());
-                m_tree_list_dirs[path]->SetPictures(m_icon_summ, m_icon_summ);
-                browse_folder(m_tree_list_dirs[path], dir);
+                m_tree_list_summaries[path]->SetPictures(m_icon_summ,
+                                                         m_icon_summ);
               }
             } else { // simple folder
               const auto path = GetFolderPath(dir);
@@ -343,32 +347,4 @@ namespace eudaq {
     if (m_context_menu && but == 3)
       m_context_menu->Popup(x, y, this);
   }
-
-  //--- monitors hierarchy
-
-  /*
-  void ROOTMonitorWindow::AddSummary(const std::string &path,
-                                     const TObject *obj) {
-    for (auto &o : m_objects) {
-      if (o.second.object != obj)
-        continue;
-      if (m_tree_list_dirs.count(path) == 0) {
-        auto obj_name = path;
-        // keep only the last
-        // part
-        obj_name.erase(0, obj_name.rfind('/') + 1);
-        if (m_tree_list)
-          m_tree_list_dirs[path] =
-              m_tree_list->AddItem(BookStructure(path), obj_name.c_str());
-        m_tree_list_dirs[path]->SetPictures(m_icon_summ, m_icon_summ);
-      }
-      auto &objs = m_summ_objects[m_tree_list_dirs[path]];
-      if (std::find(objs.begin(), objs.end(), &o.second) == objs.end())
-        objs.emplace_back(&o.second);
-      MapCanvas();
-      return;
-    }
-    throw std::runtime_error("Failed to retrieve an object for summary \"" +
-                             path + "\"");
-  }*/
 } // namespace eudaq

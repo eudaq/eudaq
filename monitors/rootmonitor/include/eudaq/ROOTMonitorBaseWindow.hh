@@ -70,7 +70,8 @@ namespace eudaq {
     }
     /// Retrieve a monitored object by its path
     TObject *Get(const std::string &name);
-    TFolder *GetFolder(const std::string &path, TFolder *base = nullptr);
+    TFolder *GetFolder(const std::string &path, TFolder *base = nullptr,
+                       bool full = false);
     /// Specify if an object is required to be cleaned at each refresh
     void SetPersistant(const TObject *obj, bool pers = true) {
       GetMonitor(obj).persist = pers;

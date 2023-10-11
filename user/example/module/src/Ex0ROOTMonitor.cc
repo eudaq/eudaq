@@ -17,9 +17,7 @@ struct Ex0EventDataFormat {
 class Ex0ROOTMonitor final : public eudaq::ROOTMonitor {
 public:
   Ex0ROOTMonitor(const std::string &name, const std::string &runcontrol)
-      : eudaq::ROOTMonitor(name, "Ex0 ROOT monitor", runcontrol, false) {
-    AtConfiguration();
-  }
+      : eudaq::ROOTMonitor(name, "Ex0 ROOT monitor", runcontrol, false) {}
 
   void AtConfiguration() override;
   void AtEventReception(eudaq::EventSP ev) override;
