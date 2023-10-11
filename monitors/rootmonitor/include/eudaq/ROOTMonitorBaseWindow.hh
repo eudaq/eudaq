@@ -60,7 +60,6 @@ namespace eudaq {
       auto &mon = m_objects[path];
       mon.object = new T(std::forward<Args>(args)...);
       GetFolder(path)->Add(mon.object);
-      MapCanvas();
       UpdateMonitorsList();
       return dynamic_cast<T *>(mon.object);
     }
@@ -112,7 +111,6 @@ namespace eudaq {
 
     virtual void Update() {} ///< Update all the widgets
     virtual void UpdateMonitorsList() {}
-    virtual void MapCanvas() {}
 
     void CleanObject(TObject *);
     void FillFileObject(const std::string &path, TObject *obj,

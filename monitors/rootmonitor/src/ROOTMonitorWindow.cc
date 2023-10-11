@@ -239,13 +239,6 @@ namespace eudaq {
     PostDraw(canv);
   }
 
-  void ROOTMonitorWindow::MapCanvas() {
-    if (!m_left_canv)
-      return;
-    m_left_canv->MapSubwindows();
-    m_left_canv->MapWindow();
-  }
-
   void ROOTMonitorWindow::Draw(TCanvas *canv) {
     canv->cd();
     if (m_canv_needs_refresh) { // book the pads and monitors placeholders
@@ -341,6 +334,10 @@ namespace eudaq {
         };
 
     browse_folder(nullptr, m_folder.get());
+    if (m_left_canv) { // refresh the panel
+      m_left_canv->MapSubwindows();
+      m_left_canv->MapWindow();
+    }
   }
 
   void ROOTMonitorWindow::DrawMenu(TGListTreeItem *it, int but, int x, int y) {

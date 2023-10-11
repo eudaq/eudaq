@@ -249,7 +249,6 @@ namespace eudaq {
     auto &obj_mon = GetMonitor(obj);
     if (std::find(objs.begin(), objs.end(), &obj_mon) == objs.end())
       objs.emplace_back(&obj_mon);
-    MapCanvas();
     UpdateMonitorsList();
   }
 

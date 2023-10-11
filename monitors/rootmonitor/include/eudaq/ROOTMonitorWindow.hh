@@ -47,6 +47,8 @@ namespace eudaq {
     void FillFromRAWFile(const char *path); ///< Process monitors from RAW file
 
   private:
+    void UpdateMonitorsList() override;
+
     /// List of status bar attributes
     enum class StatusBarPos {
       status = 0,
@@ -55,10 +57,8 @@ namespace eudaq {
       an_events,
       num_parts
     };
-    void MapCanvas() override;
     void Draw(TCanvas *canv);
     void PostDraw(TCanvas *canv);
-    void UpdateMonitorsList() override;
 
     // ROOT image objects handled
     const TGPicture *m_icon_summ;
