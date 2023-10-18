@@ -50,7 +50,8 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   }
 
   uint8_t fts_0, fts_1, fts_2, fts_3, fts_4, fts_5;
-  // Allowing compact data requires us to also take cxare of reading here:
+  // Allowing compact data requires us to also take care of reading data
+  // Compact data contains a data block, whcih is used as check
   if (d1->NumBlocks()==1){
       auto data = d1->GetBlock(0);
       fts_0 = data[0];
