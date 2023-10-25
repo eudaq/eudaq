@@ -129,7 +129,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
    // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
   d2->SetTimeBegin(ts);
   d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
-  d2->SetTimestamp(ts, d1->GetTimestampEnd(), d1->IsFlagTimestamp());
+  d2->SetTimestamp(ts, d1->GetTimestampEnd() * 1000, d1->IsFlagTimestamp());
 
   // Identify the detetor type
   d2->SetDetectorType("TLU");
