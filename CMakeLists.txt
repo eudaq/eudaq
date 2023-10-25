@@ -194,6 +194,7 @@ ENDIF()
 
 option(BUILD_desynccorr "Compile desynccorr executable?" OFF)
 IF(BUILD_desynccorr)
+  INCLUDE_DIRECTORIES(etc/tools/desynccorr/include)
   add_subdirectory(etc/tools/desynccorr)
 ENDIF()
 
