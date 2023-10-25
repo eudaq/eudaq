@@ -7,6 +7,7 @@
 #include <iostream>
 #include <deque>
 #include <algorithm>
+#include <numeric>
 
 #include "jsoncons/json.hpp"
 
@@ -15,6 +16,7 @@
 
 #include "TFile.h"
 #include "TH2I.h"
+#include "TGraph.h"
 
 
 void usage() {
@@ -45,6 +47,7 @@ struct plane_options {
   std::vector<TH2I> yhist_v;
   std::deque<std::vector<cluster>> stream;
   std::vector<pixel_hit> hits;
+  std::vector<std::vector<int>> evt_size_history;
 };
 
 int main( int argc, char ** argv ){
@@ -71,6 +74,7 @@ int main( int argc, char ** argv ){
   int max_shift = 25;
   size_t evtsperbin = 200;
   std::string ofile;
+  int fine_evt_per_bin = 10;
 
   auto is_ref_or_dut = [&](int id)->bool {
     if(id == id_ref) return true;
@@ -214,32 +218,41 @@ int main( int argc, char ** argv ){
       else ops.xhist_v.emplace_back(std::string(p1name+"x-"+p2name+"x_temp_corr_"+suffix).c_str(), std::string(p1name+"x-"+p2name+"x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
       if(ops.anti) ops.yhist_v.emplace_back(std::string(p1name+"y-"+p2name+"x_temp_corr_"+suffix).c_str(), std::string(p1name+"y-"+p2name+"x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
       else ops.yhist_v.emplace_back(std::string(p1name+"y-"+p2name+"y_temp_corr_"+suffix).c_str(), std::string(p1name+"y-"+p2name+"y_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
+      ops.evt_size_history.resize(nev/fine_evt_per_bin+1);
     }
   }
 
-  for(size_t ix = 0; ix < nev; ix++) {  
+  int previous_event_number = -1;
+
+  //Main event loop
+  for(size_t ix = 0; ix < nev; ix++) {
     bool hasEvt = reader.NextEvent(0);
     if(!hasEvt) {
       std::cout << "EOF reached!\n";	    
       break;
     }
     auto & evt = reader.GetDetectorEvent();
+
+    //All the event number consistency checking and log message printing
     auto evt_nr = evt.GetEventNumber();
-
+    if(previous_event_number >= 0 && previous_event_number != evt_nr-1) {
+      std::cout << "Jump in event number detected! Jumped from " << previous_event_number << " to " << evt_nr << '\n' << "This will cause problems in the resynchronisation!\n";
+    }
+    previous_event_number = evt_nr;
     if(ix%100 == 0) std::cout << "Event " << ix << " with event number " << evt_nr << " (bin " << evt_nr/evtsperbin << ")\n";
-
     if(evt_nr > nev) {
       std::cout << "Reached event with event number: " << evt_nr << ". Stopping.\n";
       break;
     }
-    auto stdEvt = eudaq::PluginManager::ConvertToStandard(evt);
 
+    auto stdEvt = eudaq::PluginManager::ConvertToStandard(evt);
     for(size_t plix = 0; plix < stdEvt.NumPlanes(); plix++) {
       auto & plane = stdEvt.GetPlane(plix);
       auto id = plane.ID();
       if(is_ref_or_dut(id)) {
         auto & plane_data = plane_ops[id];
-        for(size_t piix = 0; piix <  plane.HitPixels(); piix++) {
+        plane_data.evt_size_history[evt_nr/fine_evt_per_bin].emplace_back(plane.HitPixels());
+        for(size_t piix = 0; piix < plane.HitPixels(); piix++) {
 	        auto x = plane.GetX(piix);
 	        auto y = plane.GetY(piix);
           auto i = y*plane_data.px_x + x;
@@ -288,6 +301,27 @@ int main( int argc, char ** argv ){
 
   auto savehistostack = [&](std::vector<TH2I> hstack){
     for(auto& h: hstack) h.Write();
+  };
+
+  auto max_hit_plots = [&](std::vector<std::vector<int>> const & v, int pid){
+    auto x = std::vector<double>(v.size(), 0);
+    auto y_max = std::vector<double>(v.size(), 0);
+    auto y_avg = std::vector<double>(v.size(), 0);
+    for(std::size_t i = 0; i < v.size(); i++) {
+      x.at(i) = i*fine_evt_per_bin;
+      auto max_it = std::max_element(v[i].begin(), v[i].end());
+      if(max_it != v[i].end()) {
+        y_max[i] = *max_it;
+      }
+      auto sum = std::accumulate(v[i].begin(), v[i].end(), 0);
+      y_avg[i] = sum*1./fine_evt_per_bin;
+    }
+    auto g1 = TGraph(x.size(), x.data(), y_max.data());
+    g1.SetTitle(std::string("unnorm. max. occupancy in "+std::to_string(fine_evt_per_bin)+" evt blocks on plane "+std::to_string(pid)+";event number;max. hits/evt per "+std::to_string(fine_evt_per_bin)+" evts").c_str());
+    auto g2 = TGraph(x.size(), x.data(), y_avg.data());
+    g2.SetTitle(std::string("unnorm. avg. occupancy in "+std::to_string(fine_evt_per_bin)+" evt blocks on plane "+std::to_string(pid)+";event number;avg. hits/evt per "+std::to_string(fine_evt_per_bin)+" evts").c_str());
+    g1.Write(std::string("p"+std::to_string(pid)+"_max_occ").c_str());
+    g2.Write(std::string("p"+std::to_string(pid)+"_avg_occ").c_str());
   };
 
   for(auto& [id, ops]: plane_ops) {
@@ -344,6 +378,9 @@ int main( int argc, char ** argv ){
    h3->Add(h2.get());
    h3->SetNameTitle(std::string(prefix+"evo_both").c_str(),"evo_both");
    h3->Write();
+      
+    max_hit_plots(ops.evt_size_history, id);
+
    int bins = nev/evtsperbin;
    std::cout << "Sync on plane " << id << '\n';
    for(int ix = 0; ix < bins; ix++) {

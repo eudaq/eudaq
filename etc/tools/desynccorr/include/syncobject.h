@@ -27,7 +27,11 @@ struct plane_sync {
   plane_sync(int nevts_per_bin): _nevts_per_bin(nevts_per_bin) {}
 
   int get_resync_value(int plane, int evt) {
-    return _desync_data[plane].at(evt/_nevts_per_bin);
+    if(_desync_data.find(plane) == _desync_data.end()) {
+        return 0;
+    } else {
+        return _desync_data[plane].at(evt/_nevts_per_bin);
+    }
   }
 
   int is_good_evt(int evt) {
