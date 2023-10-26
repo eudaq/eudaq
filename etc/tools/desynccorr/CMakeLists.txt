@@ -1,14 +1,15 @@
-SET(name "desynccorr")
-
-SET(sourcefiles src/desynccorr.cxx)
-
 find_package(ROOT REQUIRED COMPONENTS Core Hist)
 INCLUDE_DIRECTORIES(${ROOT_INCLUDE_DIRS})
 
-ADD_EXECUTABLE(${name} ${sourcefiles})
+INCLUDE_DIRECTORIES(include)
 
-target_link_libraries(${name} EUDAQ ROOT::Core ROOT::Hist)
+ADD_EXECUTABLE("desynccorr" src/desynccorr.cxx)
+ADD_EXECUTABLE("yarr_resync" src/yarr_resync.cxx)
 
+target_link_libraries("yarr_resync" EUDAQ)
+target_link_libraries("desynccorr" EUDAQ ROOT::Core ROOT::Hist)
+
+SET(name "desynccorr" "yarr_resync")
 INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin COMPONENT MAIN_EXE
   LIBRARY DESTINATION lib COMPONENT MAIN_EXE

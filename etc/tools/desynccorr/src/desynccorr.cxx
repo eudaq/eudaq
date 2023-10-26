@@ -1,6 +1,4 @@
 #include "eudaq/FileReader.hh"
-#include "eudaq/FileWriter.hh"
-
 #include "eudaq/PluginManager.hh"
 #include "eudaq/OptionParser.hh"
 
@@ -9,15 +7,12 @@
 #include <algorithm>
 #include <numeric>
 
-#include "jsoncons/json.hpp"
-
 #include "syncobject.h"
 #include "clustering.h"
 
 #include "TFile.h"
 #include "TH2I.h"
 #include "TGraph.h"
-
 
 void usage() {
   std::cout << "EUDAQ desynccorrelator options:\n"
@@ -50,7 +45,7 @@ struct plane_options {
   std::vector<std::vector<int>> evt_size_history;
 };
 
-int main( int argc, char ** argv ){
+int main(int argc, char ** argv){
   eudaq::OptionParser op("EUDAQ desynccorrelator", "1.0", "", 0, 10);
   eudaq::Option<std::string> pFile(op, "f", "filename", "", "string", "Input RAW file path");
   eudaq::Option<std::string> pAnticorrelate(op, "a", "anti", "0", "bool", "Anticorrelate planes");
@@ -127,12 +122,16 @@ int main( int argc, char ** argv ){
   } catch(...) {
     usage();
     return -1;
-  }     
+  }
+
+  auto TLU_timestamps = std::vector<std::vector<uint64_t>>{};
+  TLU_timestamps.resize(nev/fine_evt_per_bin+1);
 
   eudaq::FileReader reader = ("native", filename);
   eudaq::FileReader noise_reader = ("native", filename);
 
-  std::cout << "Run number: " << reader.RunNumber() << '\n';
+  auto run_number = reader.RunNumber();
+  std::cout << "Run number: " << run_number << '\n';
   
   eudaq::PluginManager::Initialize(reader.GetDetectorEvent());
 
@@ -245,13 +244,23 @@ int main( int argc, char ** argv ){
       break;
     }
 
+    auto fine_bin = evt_nr/fine_evt_per_bin;
+    auto fine_bin_remainder = evt_nr%fine_evt_per_bin;
+
+    //Timestamp handling
+    auto timestamp = evt.GetTimestamp();
+    TLU_timestamps[fine_bin].emplace_back(timestamp);
+    if((fine_evt_per_bin-fine_bin_remainder == 1) && (fine_bin+1 < TLU_timestamps.size())) {
+      TLU_timestamps[fine_bin+1].emplace_back(timestamp);
+    }
+
     auto stdEvt = eudaq::PluginManager::ConvertToStandard(evt);
     for(size_t plix = 0; plix < stdEvt.NumPlanes(); plix++) {
       auto & plane = stdEvt.GetPlane(plix);
       auto id = plane.ID();
       if(is_ref_or_dut(id)) {
         auto & plane_data = plane_ops[id];
-        plane_data.evt_size_history[evt_nr/fine_evt_per_bin].emplace_back(plane.HitPixels());
+        plane_data.evt_size_history[fine_bin].emplace_back(plane.HitPixels());
         for(size_t piix = 0; piix < plane.HitPixels(); piix++) {
 	        auto x = plane.GetX(piix);
 	        auto y = plane.GetY(piix);
@@ -274,14 +283,12 @@ int main( int argc, char ** argv ){
       for(auto &p1h: ref.stream[max_shift]) {
         for(auto &p2h: dut.stream[max_shift-shift]) {
           double xdist, ydist;
-
           if(dut.anti) xdist = (p1h.x-ref.px_x/2)*ref.pitch_x-(p2h.y-dut.px_y/2)*dut.pitch_y*dut.flipy;
 	        else xdist =         (p1h.x-ref.px_x/2)*ref.pitch_x-(p2h.x-dut.px_x/2)*dut.pitch_x*dut.flipx;
           if(dut.anti) ydist = (p1h.y-ref.px_y/2)*ref.pitch_y-(p2h.x-dut.px_x/2)*dut.pitch_x*dut.flipx;
 	        else ydist =         (p1h.y-ref.px_y/2)*ref.pitch_y-(p2h.y-dut.px_y/2)*dut.pitch_y*dut.flipy;
-          
-	        dut.xhist_v[shift+max_shift].Fill(evt_nr/evtsperbin, xdist);
-          dut.yhist_v[shift+max_shift].Fill(evt_nr/evtsperbin, ydist);
+	        dut.xhist_v[shift+max_shift].Fill((evt_nr-max_shift)/evtsperbin, xdist);
+          dut.yhist_v[shift+max_shift].Fill((evt_nr-max_shift)/evtsperbin, ydist);
         }
       }
     };
@@ -302,6 +309,58 @@ int main( int argc, char ** argv ){
   auto savehistostack = [&](std::vector<TH2I> hstack){
     for(auto& h: hstack) h.Write();
   };
+
+  auto max_trigrate_plots = [&](std::vector<std::vector<uint64_t>> const & v){
+    auto x = std::vector<double>(v.size(), 0);
+    auto y_max = std::vector<double>(v.size(), 0);
+    auto y_min = std::vector<double>(v.size(), 0);
+    auto y_avg = std::vector<double>(v.size(), 0);
+    for(std::size_t i = 0; i < v.size(); i++) {
+      x.at(i) = i*fine_evt_per_bin;
+      std::vector<double> result;
+      result.resize(v[i].size()-1);
+      for(std::size_t j = 1; j < v[i].size(); j++) {
+        result[j-1] = 1./(3.125E-9*(v[i][j]-v[i][j-1]));
+      }
+      auto max_it = std::max_element(result.begin(), result.end());
+      if(max_it != result.end()) {
+        y_max[i] = *max_it;
+      }
+      auto min_it = std::min_element(result.begin(), result.end());
+      if(min_it != result.end()) {
+        y_min[i] = *min_it;
+      }
+      auto sum = std::accumulate(result.begin(), result.end(), 0);
+      y_avg[i] = 1.*sum/fine_evt_per_bin;
+    }
+
+    auto g1 = TGraph(x.size(), x.data(), y_max.data());
+    g1.SetTitle(std::string("max. trigger rate in "+std::to_string(fine_evt_per_bin)+" evt blocks;event number;max. trigger rate per "+std::to_string(fine_evt_per_bin)+" evts [Hz]").c_str());
+    auto g2 = TGraph(x.size(), x.data(), y_min.data());
+    g2.SetTitle(std::string("min. trigger rate in "+std::to_string(fine_evt_per_bin)+" evt blocks;event number;min. trigger rate per "+std::to_string(fine_evt_per_bin)+" evts [Hz]").c_str());
+    auto g3 = TGraph(x.size(), x.data(), y_avg.data());
+    g3.SetTitle(std::string("avg. trigger rate in "+std::to_string(fine_evt_per_bin)+" evt blocks;event number;avg. trigger rate per "+std::to_string(fine_evt_per_bin)+" evts [Hz]").c_str());
+
+    auto const max_trig_plots = 10000;
+    
+    auto h1 = TH1D("trig_max_1D", "trig_max_1D", max_trig_plots/100, 0, max_trig_plots);
+    auto h2 = TH1D("trig_min_1D", "trig_min_1D", max_trig_plots/100, 0, max_trig_plots);
+    auto h3 = TH1D("trig_avg_1D", "trig_avg_1D", max_trig_plots/100, 0, max_trig_plots);
+
+    h1.FillN(y_max.size(), y_max.data(), nullptr);
+    h2.FillN(y_min.size(), y_min.data(), nullptr);
+    h3.FillN(y_avg.size(), y_avg.data(), nullptr);
+
+    g1.Write(std::string("max_trig").c_str());
+    g2.Write(std::string("min_trig").c_str());
+    g3.Write(std::string("avg_trig").c_str());
+
+    h1.Write();
+    h2.Write();
+    h3.Write();
+  };
+
+  max_trigrate_plots(TLU_timestamps);
 
   auto max_hit_plots = [&](std::vector<std::vector<int>> const & v, int pid){
     auto x = std::vector<double>(v.size(), 0);
@@ -355,7 +414,7 @@ int main( int argc, char ** argv ){
     return evolution;
   };
 
-  plane_sync s(evtsperbin);
+  plane_sync s(run_number, evtsperbin, max_shift);
   std::map<int, std::vector<int>> sync;
 
   for(auto & [id, ops]: plane_ops) {
@@ -393,141 +452,6 @@ int main( int argc, char ** argv ){
    std::cout << '\n';
   }
 
-  s.write_json("");
-
-
-
-
-  eudaq::FileReader resync_reader = ("native", filename);
-  auto writer = std::unique_ptr<eudaq::FileWriter>(eudaq::FileWriterFactory::Create(""));
-  writer->SetFilePattern(filename+"_new");
-  writer->StartRun(1);
-
-  std::deque<eudaq::StandardEvent> stream;
-  std::map<int, std::deque<eudaq::RawDataEvent::data_t>> data_cache;
-  eudaq::DetectorEvent borevent = resync_reader.GetDetectorEvent();
-
-  //data structure to hold for each PRODID (first index)
-  //all the modules (second id) and the value is a list of blocks for this
-  std::map<int, std::vector<int>> data_block_to_module;
-
-  for(std::size_t x = 0; x < borevent.NumEvents(); x++) {
-    auto rev = dynamic_cast<eudaq::RawDataEvent*>(borevent.GetEvent(x));
-    if(rev && rev->GetSubType() == "Yarr") {
-      auto prodID = std::stoi(rev->GetTag("PRODID"));
-      auto moduleChipInfoJson = jsoncons::json::parse(rev->GetTag("MODULECHIPINFO"));
-      for(const auto& uid : moduleChipInfoJson["uid"].array_range()) {
-        data_block_to_module[prodID].push_back(110 + prodID*20 + uid["internalModuleIndex"].as<unsigned int>());
-      }
-    }
-  }
-
-  writer->WriteEvent(borevent);
-
-  auto full_event_buffer = overflowbuffer<eudaq::DetectorEvent>(max_shift, eudaq::DetectorEvent(0,0,0));
-
-  for(size_t ix = 0; ix < nev; ix++) {  
-    if(ix%100 == 0) std::cout << "Event " << ix << " (bin " << ix/evtsperbin << ")\n";
-    bool hasEvt = resync_reader.NextEvent(0);
-    if(!hasEvt) {
-      std::cout << "EOF reached!\n";	    
-      break;
-    }
-    auto dev = resync_reader.GetDetectorEvent();
-    full_event_buffer.push(dev);
-/*
-    std::cout << "Detector event has " << dev.NumEvents() << " events with subtypes:\n";
-
-    std::vector<std::shared_ptr<eudaq::Event>> non_yarr_evt;
-
-    for(size_t x = 0; x < dev.NumEvents(); x++){
-      auto evt = std::shared_ptr<eudaq::Event>(const_cast<eudaq::Event*>(dev.GetEvent(x)));
-      auto rev = dynamic_cast<eudaq::RawDataEvent*>(evt.get());
-      if(rev) {
-        std::cout << "Evt " << x << " subtype: " << rev->GetSubType() << '\n';
-        auto & decoder_plugin = eudaq::PluginManager::GetInstance().GetPlugin(*evt);
-        auto sev = eudaq::StandardEvent();
-        try {
-          decoder_plugin.GetStandardSubEvent(sev, *evt);
-        } catch (...) { 
-          std::cout << "Exception ..\n";
-        }
-        std::cout << "-- we have: " << sev.NumPlanes() << " planes!\n";
-        for(size_t y = 0; y < sev.NumPlanes(); y++) {
-          std::cout << "---- plane: " << sev.GetPlane(y).ID() << '\n';
-          if(rev->GetSubType() == "Yarr") {
-              auto id = rev->GetID(y);
-              auto sid = sev.GetPlane(y).ID() - 110;
-              std::cout << "Diff is: " << sid - id << '\n';
-              std::cout << "Data block for plane: " << 110 + rev->GetID(y) << "\n";
-              eudaq::RawDataEvent::data_t block = rev->GetBlock(y);
-              std::cout << "Data block size: " << block.size() << "\n";
-          } else {
-            non_yarr_evt.emplace_back(evt);
-          }
-        }
-      } else {
-        auto tev = dynamic_cast<eudaq::TLUEvent*>(evt.get());
-        if(tev) {
-          std::cout << "Evt " << x << " is a TLU event\n";
-          non_yarr_evt.emplace_back(evt);
-        } else {
-          std::cout << "Corruption!\n";
-        }
-      }
-      non_yarr_evts.push(non_yarr_evt);
-    }
-
-    //stream.emplace_back(eudaq::PluginManager::ConvertToStandard(dev));
-    */
-    if(ix < 2*max_shift) continue;
-    if(!s.is_good_evt(ix)) continue;
-
-    int current_evt = ix-max_shift;
-    int run_number = 1;
-
-    eudaq::DetectorEvent outEvt(run_number, current_evt, 0);
-    auto orig_evt = full_event_buffer.get(0);
-    for(size_t x = 0; x < orig_evt.NumEvents(); x++){
-      auto evt = orig_evt.GetEventPtr(x);
-      auto rev = dynamic_cast<eudaq::RawDataEvent*>(evt.get());
-      if(rev) {
-        if(rev->GetSubType() != "Yarr") {
-          outEvt.AddEvent(evt);
-        }
-      } else {
-        auto tev = dynamic_cast<eudaq::TLUEvent*>(evt.get());
-        if(tev) {
-          outEvt.AddEvent(evt);
-        }
-      }
-      //Here we add the YARR events
-      for(auto & [id, vec]: data_block_to_module) {
-          auto new_yarr_evt = new eudaq::RawDataEvent("Yarr", run_number, current_evt);
-          auto new_yarr_evt_ptr = std::shared_ptr<eudaq::Event>(new_yarr_evt);
-          new_yarr_evt_ptr->SetTag("PRODID", id);
-          int sensor_id = -1;
-          eudaq::DetectorEvent* shifted_evt = nullptr;
-          for(std::size_t iy = 0; iy < vec.size(); iy++){
-            if(vec[iy] != sensor_id) {
-              //std::cout << "Updating sensor to: " << vec[ix] << '\n';
-              sensor_id = vec[iy];
-              //auto shift_needed = planeShift(sensor_id, current_evt); //TODO
-              auto shift_needed = s.get_resync_value(sensor_id, ix);
-              //sync[sensor_id].at(ix/evtsperbin);
-              shifted_evt = &full_event_buffer.get(shift_needed);
-            }
-            auto & yarr_subevt = shifted_evt->GetRawSubEvent("Yarr", id);
-            auto block_data = yarr_subevt.GetBlock(iy);
-            auto block_id = yarr_subevt.GetID(iy);
-            new_yarr_evt->AddBlock(block_id, block_data);
-          }
-          outEvt.AddEvent(new_yarr_evt_ptr);
-      }
-    }
-
-    writer->WriteEvent(outEvt);
-    //std::cout << "Wrote event\n";
-  }
+  s.write_json("out.json");
   return 0;
 }
