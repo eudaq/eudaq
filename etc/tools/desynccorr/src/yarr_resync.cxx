@@ -13,22 +13,22 @@
 
 #include "syncobject.h"
 
-#include "TFile.h"
-#include "TH2I.h"
-#include "TGraph.h"
-
-
 void usage() {
   std::cout << "EUDAQ resync options:\n"
 	    << "-f (--filename) string\t\tInput RAW file path [REQUIRED]\n"
-	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension) [def: correlator]\n";
+	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension) [def: correlator]\n"
+	    << "-a (--all) string\tOutput ROOT file name (w/o extension) [def: correlator]\n";
 }
 
 int main( int argc, char ** argv ){
   eudaq::OptionParser op("EUDAQ desynccorrelator", "1.0", "", 0, 10);
   eudaq::Option<std::string> pFile(op, "f", "filename", "", "string", "Input RAW file path");
-  eudaq::Option<std::string> pOFile(op, "o", "outfilename", "correlator", "string", "Output filename (w/o extension)");
+  eudaq::Option<std::string> pOFile(op, "s", "syncfilepath", "", "string", "Output filename (w/o extension)");
+  eudaq::Option<bool> pAll(op, "a", "all", "", "bool", "Output filename (w/o extension)");
+
   std::string filename;
+  std::string syncfilepath = "./";
+  bool all = false;
 
   try{
     op.Parse(argv);
@@ -38,17 +38,24 @@ int main( int argc, char ** argv ){
       return -1;
     }
     filename = pFile.Value();
+    if(pAll.IsSet()) {
+      all = pAll.Value();
+    }
   } catch(...) {
     usage();
     return -1;
   }
 
-  plane_sync s("out.json");
+  eudaq::FileReader resync_reader = ("native", filename);
+  auto run_number = resync_reader.RunNumber();
+
+  std::string syncfile = syncfilepath+"run"+std::to_string(run_number)+"_sync.json";
+  std::cout << "Attempting to open syncfile: " << syncfile << '\n';
+
+  plane_sync s(syncfile);
   size_t nev = s.good_events();
   int max_shift = s.max_shift();
 
-  eudaq::FileReader resync_reader = ("native", filename);
-  auto run_number = resync_reader.RunNumber();
   if(s.run_number() != run_number) {
     std::cout << "Run number from resync file: " << s.run_number() << " does not match run number from data file: " << run_number << ". Terminating.\n";
     throw std::runtime_error("Run number mismatch!");
@@ -89,19 +96,20 @@ int main( int argc, char ** argv ){
     full_event_buffer.push(dev);
 
     if(ix < 2*max_shift) continue;
-    if(!s.is_good_evt(ix)) continue;
+    if(!all && !s.is_good_evt(ix)) continue;
 
     int current_evt = ix-max_shift;
     int run_number = 0;
     eudaq::DetectorEvent outEvt(run_number, current_evt, 0);
+    
     auto orig_evt = full_event_buffer.get(0);
+    outEvt.setTimeStamp(orig_evt.GetTimestamp());
+
     for(size_t x = 0; x < orig_evt.NumEvents(); x++){
       auto evt = orig_evt.GetEventPtr(x);
       auto rev = dynamic_cast<eudaq::RawDataEvent*>(evt.get());
-      if(rev) {
-        if(rev->GetSubType() != "Yarr") {
+      if(rev && rev->GetSubType() != "Yarr") {
           outEvt.AddEvent(evt);
-        }
       } else {
         auto tev = dynamic_cast<eudaq::TLUEvent*>(evt.get());
         if(tev) {
@@ -120,8 +128,8 @@ int main( int argc, char ** argv ){
           for(std::size_t iy = 0; iy < vec.size(); iy++){
             if(vec[iy] != sensor_id) {
               sensor_id = vec[iy];
-              auto shift_needed = s.get_resync_value(sensor_id, ix);
-              std::cout << "Shift needed on plane " << sensor_id << " is " << shift_needed << '\n';
+              auto shift_needed = s.get_resync_value(sensor_id, current_evt);
+              //std::cout << "Shift needed on plane " << sensor_id << " is " << shift_needed << '\n';
               shifted_evt = &full_event_buffer.get(shift_needed);
             }
             auto & yarr_subevt = shifted_evt->GetRawSubEvent("Yarr", id);

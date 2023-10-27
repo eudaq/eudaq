@@ -250,6 +250,9 @@ int main(int argc, char ** argv){
     //Timestamp handling
     auto timestamp = evt.GetTimestamp();
     TLU_timestamps[fine_bin].emplace_back(timestamp);
+    //Since we average over a few bins, e.g. [evt1, evt2, evt3], [evt4, evt5, evt6], [evt7, evt8, evt9]
+    //We need to add the timestamp of e.g. evt3 to both subvectors since the [d]eltas we need in the blocks
+    //are [d12, d23], [d34, d45, d56], [d67, d78, d89] - the deltas are computed later
     if((fine_evt_per_bin-fine_bin_remainder == 1) && (fine_bin+1 < TLU_timestamps.size())) {
       TLU_timestamps[fine_bin+1].emplace_back(timestamp);
     }
@@ -270,6 +273,7 @@ int main(int argc, char ** argv){
       }
     }
 
+    //This adds the event to the stream
     for(auto& [id, ops]: plane_ops) {
       ops.stream.push_front(clusterHits(ops.hits, 4));
       ops.hits.clear();
@@ -279,7 +283,7 @@ int main(int argc, char ** argv){
     //we can't process the data
     if(ix < 2*max_shift) continue;
 
-    auto correlate = [&](plane_options& ref, plane_options& dut, size_t shift){
+    auto correlate = [&](plane_options & ref, plane_options & dut, size_t shift){
       for(auto &p1h: ref.stream[max_shift]) {
         for(auto &p2h: dut.stream[max_shift-shift]) {
           double xdist, ydist;
@@ -292,21 +296,21 @@ int main(int argc, char ** argv){
         }
       }
     };
-
     for(auto dut_id: id_samples) {
       for(int i = -max_shift; i <= max_shift; i++) {
         correlate(plane_ops[id_ref], plane_ops[dut_id], i);
       }
     }
 
+    //Removing an event from the stream to stay in sync - probably this could be done earlier
     for(auto& [id, ops]: plane_ops) {
       ops.stream.pop_back();
     }
-  }
+  } //main event loop
 
   f.cd();
 
-  auto savehistostack = [&](std::vector<TH2I> hstack){
+  auto savehistostack = [](std::vector<TH2I> hstack){
     for(auto& h: hstack) h.Write();
   };
 
@@ -318,15 +322,18 @@ int main(int argc, char ** argv){
     for(std::size_t i = 0; i < v.size(); i++) {
       x.at(i) = i*fine_evt_per_bin;
       std::vector<double> result;
-      result.resize(v[i].size()-1);
+      if(!v[i].empty()) result.resize(v[i].size()-1);
       for(std::size_t j = 1; j < v[i].size(); j++) {
+        //The TLU clock has a period of 8 x 3.125 ns, the timestamp is in 1/8th of that
         result[j-1] = 1./(3.125E-9*(v[i][j]-v[i][j-1]));
       }
-      auto max_it = std::max_element(result.begin(), result.end());
+
+      //in theory, it would be better to remove entries from blocks where we don't have any data
+      //and not leave them at default 0, but that would add some noise to the code ...
+      const auto [min_it, max_it] = std::minmax_element(result.begin(), result.end());
       if(max_it != result.end()) {
         y_max[i] = *max_it;
       }
-      auto min_it = std::min_element(result.begin(), result.end());
       if(min_it != result.end()) {
         y_min[i] = *min_it;
       }
@@ -341,11 +348,12 @@ int main(int argc, char ** argv){
     auto g3 = TGraph(x.size(), x.data(), y_avg.data());
     g3.SetTitle(std::string("avg. trigger rate in "+std::to_string(fine_evt_per_bin)+" evt blocks;event number;avg. trigger rate per "+std::to_string(fine_evt_per_bin)+" evts [Hz]").c_str());
 
-    auto const max_trig_plots = 10000;
-    
-    auto h1 = TH1D("trig_max_1D", "trig_max_1D", max_trig_plots/100, 0, max_trig_plots);
-    auto h2 = TH1D("trig_min_1D", "trig_min_1D", max_trig_plots/100, 0, max_trig_plots);
-    auto h3 = TH1D("trig_avg_1D", "trig_avg_1D", max_trig_plots/100, 0, max_trig_plots);
+    //Top range of the trigger rate, set to 10kHz
+    auto const max_trig_rate_plots = 10000;
+    //We use a (roughly, integer division truncation) 100 Hz/bin binning for the 1D histograms
+    auto h1 = TH1D("trig_max_1D", std::string("max. trigger rate per "+std::to_string(fine_evt_per_bin)+" event block; trigger rate [Hz]; events [a.u.]").c_str(), max_trig_rate_plots/100, 0, max_trig_rate_plots);
+    auto h2 = TH1D("trig_min_1D", std::string("min. trigger rate per "+std::to_string(fine_evt_per_bin)+" event block; trigger rate [Hz]; events [a.u.]").c_str(), max_trig_rate_plots/100, 0, max_trig_rate_plots);
+    auto h3 = TH1D("trig_avg_1D", std::string("avg. trigger rate per "+std::to_string(fine_evt_per_bin)+" event block; trigger rate [Hz]; events [a.u.]").c_str(), max_trig_rate_plots/100, 0, max_trig_rate_plots);
 
     h1.FillN(y_max.size(), y_max.data(), nullptr);
     h2.FillN(y_min.size(), y_min.data(), nullptr);
@@ -415,13 +423,11 @@ int main(int argc, char ** argv){
   };
 
   plane_sync s(run_number, evtsperbin, max_shift);
-  std::map<int, std::vector<int>> sync;
 
   for(auto & [id, ops]: plane_ops) {
     if(id == id_ref) continue;
 
-    auto& sync_stream = sync[id];
-
+    auto sync_stream = std::vector<int>{};
     std::unique_ptr<TH2D> h1 = nullptr;
     std::unique_ptr<TH2D> h2 = nullptr;
 
@@ -452,6 +458,6 @@ int main(int argc, char ** argv){
    std::cout << '\n';
   }
 
-  s.write_json("out.json");
+  s.write_json("run"+std::to_string(run_number)+"_sync.json");
   return 0;
 }
