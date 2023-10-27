@@ -17,16 +17,18 @@
 void usage() {
   std::cout << "EUDAQ desynccorrelator options:\n"
 	    << "(nb: bool must be provided as 1 or 0)\n"
+      << "(nb: lists are csv, order is determined by DUT list)\n"
 	    << "-f (--filename) string\t\tInput RAW file path [REQUIRED]\n"
-	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension) [def: correlator]\n"
-	    << "-a (--anti) bool\t\tDo anticorrelations (xy,yx) instead of correlations (xx,yy) [def: 0]\n"
+	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension) [def: histo_run<runnumber>]\n"
+	    << "-a (--anti) list<bool>\t\tDo anticorrelations (xy,yx) instead of correlations (xx,yy) [def: 0]\n"
 	    << "-r (--refplane) int\t\tPlaneID acting as reference [def: 1]\n"
-	    << "-d (--dutplane) int\t\tPlaneID acting as DUT [REQUIRED]\n"
-	    << "-x (--flipx) bool\t\tFlip x-axis (of DUT) [def: 0]\n"
-	    << "-y (--flipy) bool\t\tFlip y-axis (of DUT) [def: 0]\n"
+	    << "-d (--dutplane) list<int>\tPlaneIDs  acting as DUT [REQUIRED]\n"
+	    << "-x (--flipx) list<bool>\t\tFlip x-axis (of DUT) [def: 0]\n"
+	    << "-y (--flipy) list<bool>\t\tFlip y-axis (of DUT) [def: 0]\n"
 	    << "-n (--nevts) size_t\t\tNumber of events to process [def: 20000]\n"
 	    << "-t (--maxoffset) size_t\t\t+/-offset to look for correlations [def: 50]\n"
-	    << "-b (--evtsperbin) size_t\tEvents per time axis (x-axis) bin [def: 200]\n";
+	    << "-b (--evtsperbin) size_t\tEvents per time axis (x-axis) bin [def: 200]\n"
+      << "-w (--writesyncfile) bool\tWrite the output sync file [def: 1]\n";
 }
 
 struct plane_options {
@@ -56,7 +58,8 @@ int main(int argc, char ** argv){
   eudaq::Option<size_t> pNEvts(op, "n", "nevts", 20000, "size_t", "Number of events to process");
   eudaq::Option<size_t> pMaxOffset(op, "t", "maxoffset", 50, "size_t", "Max offset to look at in +/- events");
   eudaq::Option<size_t> pEvtsPerBin(op, "b", "evtsperbin", 200, "size_t", "Events per time axis bin");
-  eudaq::Option<std::string> pOFile(op, "o", "outfilename", "correlator", "string", "Output filename (w/o extension)");
+  eudaq::Option<std::string> pOFile(op, "o", "outfilename", "", "string", "Output filename (w/o extension)");
+  eudaq::Option<bool> pSyncFileWriting(op, "w", "writesyncfile", true, "bool", "Write the output sync file");
 
   TH1::AddDirectory(kFALSE);
 
@@ -70,6 +73,7 @@ int main(int argc, char ** argv){
   size_t evtsperbin = 200;
   std::string ofile;
   int fine_evt_per_bin = 10;
+  bool write_sync_file = true;
 
   auto is_ref_or_dut = [&](int id)->bool {
     if(id == id_ref) return true;
@@ -101,7 +105,7 @@ int main(int argc, char ** argv){
     ss_anticorr << pAnticorrelate.Value();
     ss_flipx << pFlipX.Value();
     ss_flipy << pFlipY.Value();
-
+    
     while(std::getline(ss_duts, seg_duts, ',')){
       auto id = std::stoi(seg_duts);
       id_samples.emplace_back(id);
@@ -115,10 +119,13 @@ int main(int argc, char ** argv){
 
     plane_ops[id_ref] = plane_options{};
 
+    write_sync_file = pSyncFileWriting.Value();
     nev = pNEvts.Value();
     max_shift = pMaxOffset.Value();
     evtsperbin = pEvtsPerBin.Value();
-    ofile = pOFile.Value()+".root";
+    if(pOFile.IsSet()) {
+      ofile = pOFile.Value()+".root";
+    }
   } catch(...) {
     usage();
     return -1;
@@ -132,7 +139,11 @@ int main(int argc, char ** argv){
 
   auto run_number = reader.RunNumber();
   std::cout << "Run number: " << run_number << '\n';
-  
+
+  //if the output root file name was not passed via the command line, set the default here
+  if(ofile.empty()){
+    ofile = "histo_run"+std::to_string(run_number)+".root";
+  }
   eudaq::PluginManager::Initialize(reader.GetDetectorEvent());
 
   TFile f(ofile.c_str(), "RECREATE");
@@ -458,6 +469,10 @@ int main(int argc, char ** argv){
    std::cout << '\n';
   }
 
-  s.write_json("run"+std::to_string(run_number)+"_sync.json");
+  if(write_sync_file) {
+    s.write_json("run"+std::to_string(run_number)+"_sync.json");
+  } else {
+    std::cout << "Skipped writing sync file!\n";
+  }
   return 0;
 }

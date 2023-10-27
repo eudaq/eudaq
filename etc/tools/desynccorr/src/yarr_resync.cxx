@@ -15,16 +15,17 @@
 
 void usage() {
   std::cout << "EUDAQ resync options:\n"
+  	  << "(nb: bool must be provided as 1 or 0)\n"
 	    << "-f (--filename) string\t\tInput RAW file path [REQUIRED]\n"
-	    << "-o (--outfilename) string\tOutput ROOT file name (w/o extension) [def: correlator]\n"
-	    << "-a (--all) string\tOutput ROOT file name (w/o extension) [def: correlator]\n";
+	    << "-s (--syncfilepath) string\tPath to search for sync file [def: ./]\n"
+	    << "-a (--all) bool\t\t\tResync all events, even if they are not considered to be good [def: 0]\n";
 }
 
 int main( int argc, char ** argv ){
   eudaq::OptionParser op("EUDAQ desynccorrelator", "1.0", "", 0, 10);
   eudaq::Option<std::string> pFile(op, "f", "filename", "", "string", "Input RAW file path");
-  eudaq::Option<std::string> pOFile(op, "s", "syncfilepath", "", "string", "Output filename (w/o extension)");
-  eudaq::Option<bool> pAll(op, "a", "all", "", "bool", "Output filename (w/o extension)");
+  eudaq::Option<std::string> pSyncPath(op, "s", "syncfilepath", "./", "string", "Output filename (w/o extension)");
+  eudaq::Option<bool> pAll(op, "a", "all", false, "bool", "Resync all events");
 
   std::string filename;
   std::string syncfilepath = "./";
@@ -38,9 +39,8 @@ int main( int argc, char ** argv ){
       return -1;
     }
     filename = pFile.Value();
-    if(pAll.IsSet()) {
-      all = pAll.Value();
-    }
+    all = pAll.Value();
+    syncfilepath = pSyncPath.Value();
   } catch(...) {
     usage();
     return -1;
@@ -101,7 +101,7 @@ int main( int argc, char ** argv ){
     int current_evt = ix-max_shift;
     int run_number = 0;
     eudaq::DetectorEvent outEvt(run_number, current_evt, 0);
-    
+
     auto orig_evt = full_event_buffer.get(0);
     outEvt.setTimeStamp(orig_evt.GetTimestamp());
 
