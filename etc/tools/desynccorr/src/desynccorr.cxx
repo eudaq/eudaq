@@ -40,6 +40,7 @@ struct plane_options {
   double pitch_y = 0.;
   int px_x = 0;
   int px_y = 0;
+  int px_max = 0;
   std::vector<TH2I> xhist_v;
   std::vector<TH2I> yhist_v;
   std::deque<std::vector<cluster>> stream;
@@ -148,14 +149,14 @@ int main(int argc, char ** argv){
 
   TFile f(ofile.c_str(), "RECREATE");
  
-  std::map<int, std::pair<int, int>> detPxSize;
+  std::map<int, std::pair<int,int>> detPxSize;
   std::map<int, std::pair<double, double>> detPxPitch;
   std::map<int, std::vector<long int>> noiseHitMap;
 
   size_t noiseevts = 10000;
   //first we have to do a noise run
   for(size_t ix = 0; ix < noiseevts; ix++) {  
-    if(ix%100 == 0) std::cout << "Noise event " << ix << '\n';
+    if(ix%500 == 0) std::cout << "Noise event " << ix << '\n';
     bool hasEvt = noise_reader.NextEvent(0);
     if(!hasEvt) {
       std::cout << "EOF reached!\n";	    
@@ -182,16 +183,19 @@ int main(int argc, char ** argv){
           if(is_ref_or_dut(id)) {
 		        plane_ops[id].px_x = detPxSize[id].first; 
 		        plane_ops[id].px_y = detPxSize[id].second;
+		        //Some converter plugins mess up the X/Y sizes ... in order to have enough space for the noise maps
+		        //we just take the larger axis and assume a squared pixel matrix of that size
+		        plane_ops[id].px_max = std::max(plane_ops[id].px_x, plane_ops[id].px_y);
 		        plane_ops[id].pitch_x = detPxPitch[id].first;
 		        plane_ops[id].pitch_y= detPxPitch[id].second;
+		        noiseHitMap[id] = std::vector<long int>(plane_ops[id].px_max*plane_ops[id].px_max, 0);
           }
-          noiseHitMap[id] = std::vector<long int>(detPxSize[id].first*detPxSize[id].second, 0);
 	      }
       }
 
       if(is_ref_or_dut(id)) {
         for(size_t piix = 0; piix <  plane.HitPixels(); piix++) {
-	        int i = plane.GetY(piix)*detPxSize[id].first+plane.GetX(piix);
+	        int i = plane.GetY(piix)*plane_ops[id].px_max+plane.GetX(piix);
 	        if(i < noiseHitMap[id].size()) {
             noiseHitMap[id].at(i)++;
 	        } else {
@@ -206,24 +210,21 @@ int main(int argc, char ** argv){
 
   for(auto const & [plane, hitmap]: noiseHitMap) {
     if(!is_ref_or_dut(plane)) continue;
-    std::cout << "Noisy pixels on plane: " << plane << ":\n";
     for(size_t px = 0; px < hitmap.size(); px++) {
       if(hitmap[px]*1./noiseevts > 0.005) {
-	      std::cout << "Pixel: " << px%detPxSize[plane].first << '/' << px/detPxSize[plane].first << '\n';
         plane_ops[plane].noise_vec.emplace_back(px);
       }
     }
+    std::cout << "Masked " << plane_ops[plane].noise_vec.size() << " pixels on plane " << plane << '\n';
   }
 
-  std::cout << "Done..\n";
+  std::cout << "Done with noise masking!\n";
 
   for(auto& [id, ops]: plane_ops) {
     for(int i = -max_shift; i <= max_shift; i++) {
       auto suffix = "_shift"+std::to_string(i);
-
       auto p1name = "p"+std::to_string(id_ref);
       auto p2name = "p"+std::to_string(id);
-
       if(ops.anti) ops.xhist_v.emplace_back(std::string(p1name+"x-"+p2name+"y_temp_corr_"+suffix).c_str(), std::string(p1name+"x-"+p2name+"y_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
       else ops.xhist_v.emplace_back(std::string(p1name+"x-"+p2name+"x_temp_corr_"+suffix).c_str(), std::string(p1name+"x-"+p2name+"x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
       if(ops.anti) ops.yhist_v.emplace_back(std::string(p1name+"y-"+p2name+"x_temp_corr_"+suffix).c_str(), std::string(p1name+"y-"+p2name+"x_temp_corr_"+suffix).c_str(), nev/evtsperbin, 0, nev/evtsperbin-1, 300, -20000, 20000);
@@ -249,7 +250,7 @@ int main(int argc, char ** argv){
       std::cout << "Jump in event number detected! Jumped from " << previous_event_number << " to " << evt_nr << '\n' << "This will cause problems in the resynchronisation!\n";
     }
     previous_event_number = evt_nr;
-    if(ix%100 == 0) std::cout << "Event " << ix << " with event number " << evt_nr << " (bin " << evt_nr/evtsperbin << ")\n";
+    if(ix%500 == 0) std::cout << "Event " << ix << " with event number " << evt_nr << " (bin " << evt_nr/evtsperbin << ")\n";
     if(evt_nr > nev) {
       std::cout << "Reached event with event number: " << evt_nr << ". Stopping.\n";
       break;
@@ -278,7 +279,7 @@ int main(int argc, char ** argv){
         for(size_t piix = 0; piix < plane.HitPixels(); piix++) {
 	        auto x = plane.GetX(piix);
 	        auto y = plane.GetY(piix);
-          auto i = y*plane_data.px_x + x;
+          auto i = y*plane_data.px_max + x;
 	        if(std::find(plane_data.noise_vec.begin(), plane_data.noise_vec.end(), i) == plane_data.noise_vec.end()) plane_data.hits.emplace_back(x, y);
         }
       }
@@ -450,23 +451,23 @@ int main(int argc, char ** argv){
      h1 = evo_histos(prefix+"evo_xx", ops.xhist_v);
      h2 = evo_histos(prefix+"evo_yy", ops.yhist_v);
     }
-   auto h3 = std::unique_ptr<TH2D>(static_cast<TH2D*>(h1->Clone()));
-   h3->Add(h2.get());
-   h3->SetNameTitle(std::string(prefix+"evo_both").c_str(),"evo_both");
-   h3->Write();
+    auto h3 = std::unique_ptr<TH2D>(static_cast<TH2D*>(h1->Clone()));
+    h3->Add(h2.get());
+    h3->SetNameTitle(std::string(prefix+"evo_both").c_str(),"evo_both");
+    h3->Write();
       
     max_hit_plots(ops.evt_size_history, id);
 
-   int bins = nev/evtsperbin;
-   std::cout << "Sync on plane " << id << '\n';
-   for(int ix = 0; ix < bins; ix++) {
-     auto proj = h3->ProjectionY("", ix+1, ix+1);
-     auto max_bin = proj->GetMaximumBin();
-     sync_stream.emplace_back(std::round(proj->GetBinCenter(max_bin)));
-     std::cout << std::round(proj->GetBinCenter(max_bin)) << " ";
-   }
-   s.add_plane(id, sync_stream);
-   std::cout << '\n';
+    int bins = nev/evtsperbin;
+    std::cout << "Sync on plane " << id << '\n';
+    for(int ix = 0; ix < bins; ix++) {
+      auto proj = h3->ProjectionY("", ix+1, ix+1);
+      auto max_bin = proj->GetMaximumBin();
+      sync_stream.emplace_back(std::round(proj->GetBinCenter(max_bin)));
+      std::cout << std::round(proj->GetBinCenter(max_bin)) << " ";
+    }
+    s.add_plane(id, sync_stream);
+    std::cout << '\n';
   }
 
   if(write_sync_file) {
