@@ -26,7 +26,7 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("AidaTluProducer");
 private:
   bool m_exit_of_run;
-  bool compact_data_; // select if you will write the data in a more compact binary format
+  bool compact_data_ = false; // select if you will write the data in a more compact binary format
   std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
 
   std::unique_ptr<tlu::AidaTluController> m_tlu;
@@ -274,7 +274,7 @@ void AidaTluProducer::DoConfigure() {
     if(m_verbose > 0) EUDAQ_INFO(" -ADJUST STRETCH AND DELAY");
     m_tlu->SetPulseStretchPack(stretcVec, m_verbose);
     m_tlu->SetPulseDelayPack(delayVec, m_verbose);
-
+    compact_data_ = (bool)(conf->Get("compact_data",false));
     // Set triggerMask
     // The conf function does not seem happy with a 32-bit default. Need to check.
     if(m_verbose > 0) EUDAQ_INFO(" -DEFINE TRIGGER MASK");
