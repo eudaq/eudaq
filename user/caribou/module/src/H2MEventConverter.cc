@@ -75,8 +75,15 @@ bool H2MEvent2StdEventConverter::Converting(
   rawdata.erase(rawdata.begin(),rawdata.begin()+6);
 
   // Decode the event raw data - no zero suppression
-  auto frame = decoder.decodeFrame<uint32_t>(rawdata, acq_mode);
-
+  caribou::pearydata frame;
+  try{
+    frame = decoder.decodeFrame<uint32_t>(rawdata, acq_mode);
+  }
+  catch(caribou::DataCorrupt&){
+    EUDAQ_ERROR("H2M decoder failed!");
+    EUDAQ_ERROR("Length of rawdata (should be 262): " +to_string(rawdata.size()));
+    return false;
+  }
 
   // Create a StandardPlane representing one sensor plane
   eudaq::StandardPlane plane(plane_id, "Caribou", "H2M");
