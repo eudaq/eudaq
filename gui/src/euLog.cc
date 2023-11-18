@@ -28,6 +28,7 @@ LogCollectorGUI::LogCollectorGUI(const std::string &name,
     eudaq::LogCollector(name, runcontrol), m_delegate(&m_model) {
   setupUi(this);
   std::string filename;
+  setWindowIcon(QIcon(":/euLog.ico"));
   viewLog->setModel(&m_model);
   viewLog->setItemDelegate(&m_delegate);
   for (int i = 0; i < LogMessage::NumColumns(); ++i) {
