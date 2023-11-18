@@ -77,6 +77,7 @@ RunControlGUI::RunControlGUI()
   }
 
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
+  setWindowIcon(QIcon(":/euRun.ico"));
   connect(&m_timer_display, SIGNAL(timeout()), this, SLOT(DisplayTimer()));
   connect(&m_scanningTimer,SIGNAL(timeout()), this, SLOT(nextStep()));
   m_timer_display.start(1000); // internal update time of GUI
