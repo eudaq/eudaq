@@ -61,6 +61,12 @@ if(Qt6_FOUND)
 
   target_include_directories(euLog PRIVATE include )
   target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} Qt6::Widgets)
+
+  install(TARGETS euRun euLog
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)  
+    
 elseif()
   message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=ON) with Qt5")
 
@@ -99,10 +105,10 @@ elseif()
 
   target_include_directories(euLog PRIVATE include )
   target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} Qt5::Widgets)
+
+  install(TARGETS euRun euLog
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)  
+    
 endif()
-
-
-install(TARGETS euRun euLog
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
