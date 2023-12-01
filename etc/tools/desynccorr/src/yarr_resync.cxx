@@ -8,6 +8,7 @@
 #include <deque>
 #include <algorithm>
 #include <numeric>
+#include <filesystem>
 
 #include "jsoncons/json.hpp"
 
@@ -18,17 +19,20 @@ void usage() {
   	  << "(nb: bool must be provided as 1 or 0)\n"
 	    << "-f (--filename) string\t\tInput RAW file path [REQUIRED]\n"
 	    << "-s (--syncfilepath) string\tPath to search for sync file [def: ./]\n"
+	    << "-o (--outfilepath) string\tPath for the resynced output file [def: ./]\n"
 	    << "-a (--all) bool\t\t\tResync all events, even if they are not considered to be good [def: 0]\n";
 }
 
 int main( int argc, char ** argv ){
   eudaq::OptionParser op("EUDAQ desynccorrelator", "1.0", "", 0, 10);
   eudaq::Option<std::string> pFile(op, "f", "filename", "", "string", "Input RAW file path");
-  eudaq::Option<std::string> pSyncPath(op, "s", "syncfilepath", "./", "string", "Output filename (w/o extension)");
+  eudaq::Option<std::string> pSyncPath(op, "s", "syncfilepath", "./", "string", "Search path for the sync file");
+  eudaq::Option<std::string> pOutPath(op, "o", "outfilepath", "./", "string", "Directory for the output resynced file");
   eudaq::Option<bool> pAll(op, "a", "all", false, "bool", "Resync all events");
 
   std::string filename;
   std::string syncfilepath = "./";
+  std::string outfilepath = "./";
   bool all = false;
 
   try{
@@ -41,11 +45,17 @@ int main( int argc, char ** argv ){
     filename = pFile.Value();
     all = pAll.Value();
     syncfilepath = pSyncPath.Value();
+    outfilepath = pOutPath.Value();
   } catch(...) {
     usage();
     return -1;
   }
 
+  std::filesystem::path filepath(filename);
+  filepath.replace_extension("");
+  std::string new_filename (filepath.filename());
+  new_filename += "_resynced.raw";
+  
   eudaq::FileReader resync_reader = ("native", filename);
   auto run_number = resync_reader.RunNumber();
 
@@ -62,7 +72,7 @@ int main( int argc, char ** argv ){
   }
 
   auto writer = std::unique_ptr<eudaq::FileWriter>(eudaq::FileWriterFactory::Create(""));
-  writer->SetFilePattern(filename+"_new");
+  writer->SetFilePattern(outfilepath+new_filename);
   writer->StartRun(1);
 
   std::map<int, std::deque<eudaq::RawDataEvent::data_t>> data_cache;
