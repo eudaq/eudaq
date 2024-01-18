@@ -50,20 +50,15 @@ size_t XRootDFileDeserializer::FillBuffer(size_t min) {
         min = end - m_stop;
       }
     }
-    uint16_t read = 0; // number of bytes actually read
-    m_file->Read(m_offset, sizeof(char)*(end - m_stop), reinterpret_cast<char *>(m_stop), read); //TODO: implement offset
+    uint32_t read = 0; // number of bytes actually read
+    m_file->Read(m_offset, static_cast<uint32_t>(sizeof(char)*(end - m_stop)), reinterpret_cast<void *>(m_stop), read);
     m_stop += read;
     m_offset += read;
     int n_tries = 0;
     const int max_tries = 1000;    
     while (read < min) {
-      if (feof(m_file) && m_faileof) {
-        throw FileReadException("End of file '"+m_filename+"' encountered");
-      }
-      int errcode = ferror(m_file);
-      if (errcode!=0) {
-        EUDAQ_THROWX(FileReadException,
-                     "Error reading from file '"+m_filename+"': " + to_string(errcode));
+      if (read==0) {
+        throw FileReadException("Error reading from file '"+m_filename+"' encountered: No bytes read");
       }
       if (m_interrupting) {
         m_interrupting = false;
@@ -74,13 +69,14 @@ size_t XRootDFileDeserializer::FillBuffer(size_t min) {
                      "Error reading from file '"+m_filename+"': too many failed attempts (reading 0 bytes)");
       }
       mSleep(10);
-      clearerr(m_file);
-      size_t bytes =
-	fread(reinterpret_cast<char *>(m_stop), sizeof(char), end - m_stop, m_file);
+      // clearerr(m_file);
+      uint32_t bytes = 0; // number of bytes actually read
+      m_file->Read(m_offset, static_cast<uint32_t>(sizeof(char)*(end - m_stop)), reinterpret_cast<void *>(m_stop), bytes);
       if(bytes == 0) ++n_tries;
       else n_tries = 0;
       read += bytes;
       m_stop += bytes;
+      m_offset += bytes;
     }
     return read;
   }
