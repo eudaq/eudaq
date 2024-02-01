@@ -1,6 +1,7 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
+#include <set>
 
 #include <array>
 #include <vector>
@@ -74,6 +75,25 @@ namespace eudaq {
     static size_t t0_seen_;
     static bool t0_is_high_;
     static uint64_t last_shutter_open_;
+  };
+
+  class DSO9254AEvent2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
+  private:
+    static bool m_configured;
+    static int64_t m_runStartTime;
+    static double m_pedStartTime;
+    static double m_pedEndTime;
+    static double m_ampStartTime;
+    static double m_ampEndTime;
+    static double m_chargeScale;
+    static double m_chargeCut;
+    static bool m_generateRoot;
+    // covert scope ascii time stamps
+    static uint64_t timeConverter(std::string date, std::string time);
+    // parse event number, time stamp pairs from file to EventTime set
   };
 
   class dSiPMEvent2StdEventConverter: public eudaq::StdEventConverter{
