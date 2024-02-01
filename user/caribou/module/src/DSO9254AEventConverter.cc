@@ -374,6 +374,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // Create a StandardPlane representing one sensor plane
       eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
 
+       // index number, which is the number of pixels hit per event
+      int index = 0;
+
       // fill plane
       plane.SetSizeZS(2, 2, 0);
       for( int c = 0; c<peds.size(); c++ ){
@@ -381,6 +384,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
           plane.PushPixel( chanToPix[c].at(0),
                            chanToPix[c].at(1),
                            amps.at(c).at(s)*m_chargeScale, timestamp );
+
+          // Set waveforms to each hit pixel.
+          plane.SetWaveform(index, wavess.at(c).at(s), time.at(c), dx.at(c), 0);
+
+          // Increase index number 
+          index++;
         }
       }
 
