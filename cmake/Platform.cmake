@@ -1,10 +1,6 @@
 set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Check for standard to use
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-std=c++17 SUPPORT_STD_CXX17)
-check_cxx_compiler_flag(-std=c++14 SUPPORT_STD_CXX14)
 
 # Check ROOT
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
@@ -16,7 +12,7 @@ if(${ROOT_FOUND})
   endif()
   # Downgrade to C++14 if ROOT is not build with C++17 support
   IF(ROOT_CXX_FLAGS MATCHES ".*std[:=]c\\+\\+1[7z].*")
-    IF(NOT SUPPORT_STD_CXX17)
+    IF(NOT "cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
       MESSAGE(FATAL_ERROR "ROOT was built with C++17 support but current compiler doesn't support it")
     ENDIF()
   ELSEIF(ROOT_CXX_FLAGS MATCHES ".*std[:=]c\\+\\+1[14y].*")
