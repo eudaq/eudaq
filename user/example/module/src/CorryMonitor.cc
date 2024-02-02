@@ -431,6 +431,33 @@ void CorryMonitor::DoStartRun(){
     // }
 
     while(!found_all_files_to_monitor){
+      found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
+        return v.found_matching_file;
+      });
+
+      // Get the files for datacollectors with xrootd first
+      for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++){
+
+        if (it->xrootd_address == "")         continue; // Skip DataCollectors not connected via xrootd
+        if (it->found_matching_file == true)  continue; // Skip because file for this DataCollector has been found
+
+        // std::string locate_command = "xrdfs "+it->xrootd_address+" locate -r "+it->monitor_file_path;
+        // std::system(locate_command.c_str());
+
+        std::string command = "xrdfs "+it->xrootd_address+" ls "+it->monitor_file_path+it->pattern_to_match + " 2>&1";
+        std::string result = getCommandOutput(command.c_str());
+
+        if (result != "" && result.find("Server responded with an error")==std::string::npos){
+          EUDAQ_DEBUG("Found a match with pattern " + it->pattern_to_match);
+          std::filesystem::path fullPath(result);
+          it->event_name = fullPath.filename().string();
+          it->found_matching_file = true;
+        }
+
+      }
+
+      // If no watch directories are set up, skip reading the directory change and try again with the xrootd server
+      if (num_wd==0) continue;
 
       // Get the files for datacollectors with xrootd first
       for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++){
@@ -519,8 +546,7 @@ void CorryMonitor::DoStartRun(){
       EUDAQ_INFO("Found file "+it.xrootd_address+it.monitor_file_path+it.event_name+" for monitoring");
       // add passing the file name to corry to the command
       for (auto m: it.detector_planes){
-        
-        std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.xrootd_address+it.monitor_file_path+it.event_name;
+        std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.xrootd_address+it.monitor_file_path+it.event_name+" -o EventLoaderEUDAQ2:"+m+".wait_on_eof=1";
         if (it.xrootd_address!="") my_command+= " -o EventLoaderEUDAQ2:"+m+".xrootd_file=true";
 
         char * cstr = new char[my_command.length()+1];
