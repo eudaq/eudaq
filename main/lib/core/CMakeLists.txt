@@ -32,9 +32,7 @@ IF(ROOT_FOUND)
     PROPERTIES
     GENERATED TRUE
 
-    COMPILE_FLAGS 
-      $<$<CXX_COMPILER_ID:"MSVC">:>
-      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:"-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}">
+    COMPILE_FLAGS  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:"-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}">
     )
 
   TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
