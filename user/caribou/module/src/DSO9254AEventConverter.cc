@@ -45,6 +45,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_ampEndTime   = conf->Get("ampEndTime"  , 0);
     m_chargeScale  = conf->Get("chargeScale" , 0);
     m_chargeCut    = conf->Get("chargeCut"   , 0);
+    m_polarity    = conf->Get("polarity"   , 1);
     m_generateRoot = conf->Get("generateRoot", 0);
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
@@ -351,9 +352,19 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         }
         // calculate maximum amplitude in range
         for( int p = i_ampStart; p<i_ampEnd; p++ ){
-          if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
+          // amplitude polarity (positive by default)
+          if(m_polarity){
+             if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
             amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
           }
+          }
+
+          else{
+            if( amps.at(c).at(s) < -wavess.at(c).at(s).at(p) + peds.at(c).at(s) ){
+            amps.at(c).at(s) = -wavess.at(c).at(s).at(p) + peds.at(c).at(s);
+          }
+          }
+         
         }
 
       } // channels

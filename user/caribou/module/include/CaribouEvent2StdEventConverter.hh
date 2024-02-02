@@ -90,6 +90,7 @@ namespace eudaq {
     static double m_ampEndTime;
     static double m_chargeScale;
     static double m_chargeCut;
+    static bool m_polarity;
     static bool m_generateRoot;
     // covert scope ascii time stamps
     static uint64_t timeConverter(std::string date, std::string time);
