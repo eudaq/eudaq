@@ -19,6 +19,7 @@ struct DataCollectorAttributes {
   std::string eventloader_type;
   std::vector<std::string> detector_planes;
   std::string fwpatt;
+  std::string xrootd_address;
 
   std::pair<std::string, std::string> full_file;
   std::string monitor_file_path;
@@ -57,6 +58,7 @@ private:
   pid_t m_corry_pid;
   std::string m_datacollectors_to_monitor;
   std::string m_eventloader_types;
+  std::string m_xrootd_addresses;
   std::string m_corry_path;
   std::string m_corry_config;
   std::string m_corry_options;
@@ -196,6 +198,7 @@ void CorryMonitor::DoConfigure(){
   //conf->Print(std::cout);
   m_datacollectors_to_monitor = conf->Get("DATACOLLECTORS_TO_MONITOR", "my_dc");
   m_eventloader_types         = conf->Get("CORRESPONDING_EVENTLOADER_TYPES", "");
+  m_xrootd_addresses          = conf->Get("XROOTD_ADDRESSES", "");
   m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
   m_corry_options             = conf->Get("CORRY_OPTIONS", "");
 
@@ -244,12 +247,13 @@ void CorryMonitor::DoConfigure(){
 
   std::stringstream ss_dcol(m_datacollectors_to_monitor);
   std::stringstream ss_type(m_eventloader_types);
+  std::stringstream ss_xrda(m_xrootd_addresses);
   // Parse the string to get datacollectors and eventloader types
   // and fill the information into the DataCollectorAttributes
   while (ss_dcol.good() && ss_type.good())
   {
 
-    std::string substr_dcol, substr_type;
+    std::string substr_dcol, substr_type, substr_xrda = "";
     getline(ss_dcol, substr_dcol, ',');
     getline(ss_type, substr_type, ',');
 
@@ -288,6 +292,13 @@ void CorryMonitor::DoConfigure(){
       }
     }
 
+    if (ss_xrda.good()) {
+      getline(ss_xrda, substr_xrda, ',');
+      value.xrootd_address = "xroot://"+eudaq::trim(substr_xrda)+"/";
+    } else {
+      value.xrootd_address = "";
+    }
+
     m_datacollector_vector.push_back(value);
 
     if ( (ss_dcol.good()&&!ss_type.good()) || (!ss_dcol.good()&&ss_type.good()) ) {
@@ -298,16 +309,35 @@ void CorryMonitor::DoConfigure(){
 
 }
 
+// Execute bash command and get output (from https://stackoverflow.com/questions/478898/how-do-i-execute-a-command-and-get-the-output-of-the-command-within-c-using-po)
+std::string getCommandOutput(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+
+    // Remove newline character at the end, if present
+    result.erase(result.find_last_not_of("\n") + 1);
+
+    return result;
+}
+
 void CorryMonitor::DoStartRun(){
 
   // File descriptor and watch descriptor for inotify
   int fd, wd[m_datacollector_vector.size()];
+  uint16_t num_wd = 0;
 
   for (auto & it : m_datacollector_vector)
   {
     // can only call getFileString after run has started because of GetRunNumber()
     it.full_file = getFileString(it.fwpatt);
-    it.monitor_file_path = std::string((it.full_file.first=="") ? "./" : it.full_file.first+"/");
+    it.monitor_file_path = std::string(std::filesystem::absolute((it.full_file.first=="") ? "./" : it.full_file.first+"/"));
     it.pattern_to_match = it.full_file.second;
   }
 
@@ -327,7 +357,7 @@ void CorryMonitor::DoStartRun(){
     exit(1);
 
   case 0: // child: start corryvreckan
-    
+
     // Setting up inotify
     fd = inotify_init();
     if ( fd < 0 ) {
@@ -335,10 +365,40 @@ void CorryMonitor::DoStartRun(){
     }
 
     for (int i=0; i<m_datacollector_vector.size(); i++){
-      wd[i] = inotify_add_watch(fd, m_datacollector_vector[i].monitor_file_path.c_str(), IN_CREATE);
+      if (m_datacollector_vector[i].xrootd_address==""){
+        wd[i] = inotify_add_watch(fd, m_datacollector_vector[i].monitor_file_path.c_str(), IN_CREATE);
+        num_wd++;
+      }
     }
 
     while(!found_all_files_to_monitor){
+      found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
+        return v.found_matching_file;
+      });
+
+      // Get the files for datacollectors with xrootd first
+      for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++){
+
+        if (it->xrootd_address == "")         continue; // Skip DataCollectors not connected via xrootd
+        if (it->found_matching_file == true)  continue; // Skip because file for this DataCollector has been found
+
+        // std::string locate_command = "xrdfs "+it->xrootd_address+" locate -r "+it->monitor_file_path;
+        // std::system(locate_command.c_str());
+
+        std::string command = "xrdfs "+it->xrootd_address+" ls "+it->monitor_file_path+it->pattern_to_match + " 2>&1";
+        std::string result = getCommandOutput(command.c_str());
+
+        if (result != "" && result.find("Server responded with an error")==std::string::npos){
+          EUDAQ_DEBUG("Found a match with pattern " + it->pattern_to_match);
+          std::filesystem::path fullPath(result);
+          it->event_name = fullPath.filename().string();
+          it->found_matching_file = true;
+        }
+
+      }
+
+      // If no watch directories are set up, skip reading the directory change and try again with the xrootd server
+      if (num_wd==0) continue;
 
       // reading the event (change in directory)
       int length, i = 0;
@@ -368,6 +428,7 @@ void CorryMonitor::DoStartRun(){
               for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++, index++){
 
                 if (event_wd != wd[index])            continue; // Skip this DataCollector because the directory does not match directory of creation
+                if (it->xrootd_address != "")         continue; // Skip xrootd DataCollectors
                 if (it->found_matching_file == true)  continue; // Skip because file for this DataCollector has been found
 
                 EUDAQ_DEBUG("Testing pattern " + it->pattern_to_match);
@@ -379,9 +440,6 @@ void CorryMonitor::DoStartRun(){
                 break;
               }
 
-              found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
-                    return v.found_matching_file;
-              });
             }
           }
         }
@@ -394,10 +452,13 @@ void CorryMonitor::DoStartRun(){
 
 
     for (auto & it : m_datacollector_vector){
-      EUDAQ_INFO("Found file "+it.monitor_file_path+it.event_name+" for monitorung");
+      EUDAQ_INFO("Found file "+it.xrootd_address+it.monitor_file_path+it.event_name+" for monitoring");
       // add passing the file name to corry to the command
       for (auto m: it.detector_planes){
-        std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.monitor_file_path+it.event_name;
+        
+        std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.xrootd_address+it.monitor_file_path+it.event_name;
+        if (it.xrootd_address!="") my_command+= " -o EventLoaderEUDAQ2:"+m+".xrootd_file=true";
+
         char * cstr = new char[my_command.length()+1];
         std::strcpy(cstr, my_command.c_str());
 
