@@ -124,20 +124,22 @@ install:
 before_build:    
 - ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern/download/root_v6.30.04.win32.vc17.debug.zip' -storageLocation 'C:\\root_v6.30.04.win32.vc17.debug.zip'; 7z -y x C:\\root_v6.30.04.win32.vc17.debug.zip -oC:\;
 
-- ps: appveyor\install_afs.ps1;
+# - ps: appveyor\install_afs.ps1;
 
-- ps: Restart-Computer -Force
+# - ps: Restart-Computer -Force
 
-- ps: Start-Sleep -s 10;
+# - ps: Start-Sleep -s 10;
 
 build_script:
-- ps: If( Test-Path("\\afs\desy.de\group\telescopes\")) { Write-Host("Afs seems to work properly")} ElseIf ( Test-Path("\\cern.ch\")) {Write-Host("Afs seems to work properly, but desy afs down?"); } Else { Write-Host("Something wrong with the afs installation"); }
+# - ps: If( Test-Path("\\afs\desy.de\group\telescopes\")) { Write-Host("Afs seems to work properly")} ElseIf ( Test-Path("\\cern.ch\")) {Write-Host("Afs seems to work properly, but desy afs down?"); } Else { Write-Host("Something wrong with the afs installation"); }
 
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
-- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
+#- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
 
-- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware")) {Write-Host ("Reusing cached tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of copying from AFS")} Else {Write-Host "Copying tlufirmware from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\tlufirmware" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware") -recurse}
+#- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware")) {Write-Host ("Reusing cached tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of copying from AFS")} Else {Write-Host "Copying tlufirmware from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\tlufirmware" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware") -recurse}
+
+- ps: If ((Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) -and (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware"))) {Write-Host ("Reusing cached ZestSC1 and tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + "and" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of downloading from github")} Else {Write-Host "Downloading tlu dependencies from github"; appveyor\download.ps1 -downloadLocation 'https://github.com/eudaq/tlu-dependencies/archive/refs/heads/master.zip' -storageLocation 'C:\\tlu-dependencies-master.zip'; 7z -y x C:\\tlu-dependencies-master.zip -oC:\\ ;  Move-Item -Path 'C:\\\tlu-dependencies-master\ZestSC1' -Destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern");  Move-Item -Path 'C:\\\tlu-dependencies-master\tlufirmware' -Destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern")}
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")) {Write-Host ("Reusing cached libusb-win32 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Downloading libusb-win32 from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; $zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip $zipargument;  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32-bin-1.2.6.0") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")}
 
