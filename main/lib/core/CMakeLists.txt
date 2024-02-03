@@ -2,6 +2,9 @@
 
 add_definitions("-DEUDAQ_CORE_EXPORTS")
 
+find_package(Filesystem)
+configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
+
 set(EUDAQ_INCLUDE_DIRS
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/include/eudaq
@@ -12,6 +15,7 @@ include_directories(include)
 include_directories(include/eudaq)
 
 aux_source_directory(src CORE_SRC)
+list(APPEND CORE_SRC ${CMAKE_CURRENT_BINARY_DIR}/ModuleManager.cc)
 add_library(${EUDAQ_CORE_LIBRARY} SHARED ${CORE_SRC})
 
 # generate the dictionary source code if ROOT is available
@@ -48,9 +52,11 @@ set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES DEFINE_SYMBOL "core_EXPOR
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR})
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES EXPORT_NAME ${EUDAQ_TARGET})
 
-if(CMAKE_COMPILER_IS_GNUCXX AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.3))
-  list(APPEND ADDITIONAL_LIBRARIES stdc++fs)
+find_package(Filesystem)
+if(CMAKE_CXX_STANDARD>=17 AND CXX_FILESYSTEM_HAVE_FS)
+  list(APPEND ADDITIONAL_LIBRARIES std::filesystem)
 endif()
+configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
 
 list(APPEND ADDITIONAL_LIBRARIES ${CMAKE_DL_LIBS})
 target_link_libraries(${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
