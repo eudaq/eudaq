@@ -7,16 +7,19 @@ find_package(Qt6 QUIET COMPONENTS Widgets)
 
 find_package(Qt5 5.15 QUIET COMPONENTS Widgets)
 
+set(Qt5_or_Qt6_FOUND FALSE)
 set(Qt5_or_Qt6_FOUND (Qt6_FOUND OR Qt5_FOUND))
 
-cmake_dependent_option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT6 or QT5)" ON
-  "Qt5_or_Qt6_FOUND" OFF)
+option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT6 or QT5)" ON)
 
-if(NOT EUDAQ_BUILD_GUI)
-  message(STATUS "GUIs of executables (euRun, euLog) are NOT to be built (EUDAQ_BUILD_GUI=OFF)")
+if(EUDAQ_BUILD_GUI)
+  message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=OFF)")
   if(NOT Qt5_or_Qt6_FOUND)
-     message(STATUS "reason: neither Qt5 nor Qt6 found")
+     message(STATUS "but finally it is not possible as neither Qt5 nor Qt6 were found")
   endif()
+  return()
+else()
+  message(STATUS "GUIs of executables (euRun, euLog) are NOT to be built (EUDAQ_BUILD_GUI=OFF)")
   return()
 endif()
 
