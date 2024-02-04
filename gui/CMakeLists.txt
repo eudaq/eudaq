@@ -1,23 +1,33 @@
 # 3.16 mininum for Qt6 according to  professional cmake: a practical guide
 cmake_minimum_required(VERSION 3.16.0)
 
-#include(CMakeDependentOption)
+include(CMakeDependentOption)
 
-find_package(Qt6 QUIET COMPONENTS Widgets)
+option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT6 or QT5)" ON)
+cmake_dependent_option(EUDAQ_FORCE_QT5 "Force usage QT5 even if Qt6 is available" OFF "EUDAQ_BUILD_GUI" OFF)
 
-find_package(Qt5 5.15 QUIET COMPONENTS Widgets)
+if(NOT EUDAQ_FORCE_QT5)
+  message(STATUS "checking for Qt6")
+  find_package(Qt6 COMPONENTS Widgets)
+endif()
+
+if((NOT Qt6_FOUND) OR (NOT DEFINED Qt6_FOUND))
+  message(STATUS "checking for Qt5")
+  find_package(Qt5 5.15 COMPONENTS Widgets)
+endif()
 
 set(Qt5_or_Qt6_FOUND FALSE)
 set(Qt5_or_Qt6_FOUND (Qt6_FOUND OR Qt5_FOUND))
 
-option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT6 or QT5)" ON)
 
 if(EUDAQ_BUILD_GUI)
-  message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=OFF)")
-  if(NOT Qt5_or_Qt6_FOUND)
-     message(STATUS "but finally it is not possible as neither Qt5 nor Qt6 were found")
+  if((NOT Qt5_or_Qt6_FOUND) AND (NOT EUDAQ_FORCE_QT5))
+     message(STATUS "GUIs of executables (euRun, euLog) were meant to be built (EUDAQ_BUILD_GUI=ON) but finally it is not possible as neither Qt5 nor Qt6 were found")
+     return()     
+  elseif(NOT Qt5_or_Qt6_FOUND)
+     message(STATUS "GUIs of executables (euRun, euLog) were meant to be built (EUDAQ_BUILD_GUI=ON) but finally it is not possible as Qt5 was forced but not found")
+     return()     
   endif()
-  return()
 else()
   message(STATUS "GUIs of executables (euRun, euLog) are NOT to be built (EUDAQ_BUILD_GUI=OFF)")
   return()
@@ -67,8 +77,11 @@ if(Qt6_FOUND)
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib)  
-    
-elseif()
+
+   return()    
+endif()
+
+if(Qt5_FOUND)
   message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=ON) with Qt5")
 
   set(CMAKE_AUTOUIC YES)
@@ -111,5 +124,6 @@ elseif()
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib)  
-    
+   
+   return() 
 endif()
