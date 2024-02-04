@@ -3,11 +3,9 @@ cmake_minimum_required(VERSION 3.16.0)
 
 #include(CMakeDependentOption)
 
-find_package(Qt6 COMPONENTS Widgets)
+find_package(Qt6 QUIET COMPONENTS Widgets)
 
-if (NOT Qt6_FOUND)
-  find_package(Qt5 5.15 COMPONENTS Widgets)
-endif()
+find_package(Qt5 5.15 QUIET COMPONENTS Widgets)
 
 set(Qt5_or_Qt6_FOUND (Qt6_FOUND OR Qt5_FOUND))
 
