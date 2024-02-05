@@ -12,7 +12,7 @@
 #include <QTimer>
 #include <QInputDialog>
 #include <QSettings>
-#include <QRegularExpression>
+#include <QRegExp>
 #include <QString>
 #include <QGridLayout>
 

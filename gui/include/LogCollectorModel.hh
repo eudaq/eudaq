@@ -3,7 +3,7 @@
 
 #include "eudaq/LogMessage.hh"
 #include <QAbstractListModel>
-#include <QRegularExpression>
+#include <QRegExp>
 #include <vector>
 #include <stdexcept>
 #include <iostream>
@@ -32,7 +32,7 @@ public:
   bool Match(const LogMessage &msg);
 private:
   bool m_set;
-  QRegularExpression m_regexp;
+  QRegExp m_regexp;
 };
 
 class LogSorter {
