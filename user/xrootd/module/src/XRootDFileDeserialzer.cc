@@ -1,4 +1,4 @@
-#include "eudaq/XRootDFileDeserializer.hh"
+#include "XRootDFileDeserializer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Utils.hh"

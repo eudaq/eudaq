@@ -1,4 +1,4 @@
-#include "eudaq/XRootDFileDeserializer.hh"
+#include "XRootDFileDeserializer.hh"
 #include "eudaq/FileReader.hh"
 
 class XRootDNativeFileReader : public eudaq::FileReader {
