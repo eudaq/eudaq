@@ -37,7 +37,7 @@ jobs:
         fi
         if [ "${{ matrix.qt_version }}" -eq "6" ]; 
         then 
-          sudo apt-get install qt6-base-dev
+          sudo apt-get install qt6-base-dev libglx-dev libgl1-mesa-dev
         fi
       shell: bash
         
