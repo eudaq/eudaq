@@ -1,6 +1,6 @@
 #include "CaribouEvent2StdEventConverter.hh"
 #include "utils/log.hpp"
-#include "CLICTDFrameDecoder.hpp"
+#include "dSiPMFrameDecoder.hpp"
 #include "TFile.h"
 #include "TH1D.h"
 #include "time.h"
@@ -14,6 +14,7 @@ namespace{
 
 
 bool    DSO9254AEvent2StdEventConverter::m_configured(0);
+bool    DSO9254AEvent2StdEventConverter::m_hitbus(0);
 
 int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
 double DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
@@ -36,7 +37,14 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // load parameters from config file
   std::ofstream outfileTimestamps;
+
   if( !m_configured ){
+    m_hitbus = conf->Get("hitbus", 0);
+
+    if (m_hitbus) {
+      EUDAQ_WARN("Reading hitbus like data assuming <Ariannas order that I do "
+                 "not know now :)>");
+    }
 
     // read from config file
     m_pedStartTime = conf->Get("pedStartTime", 0); // integration windows in [ns]
@@ -56,7 +64,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
     EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
 
-    // check configuration
+    // check configuration - only if we do not have hitbus data
+    if(!m_hitbus){
     bool noData = false;
     bool noHist = false;
     if( m_pedStartTime == 0 &&
@@ -74,7 +83,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       EUDAQ_ERROR( "Writing no output data and no root file... Abort");
       return false;
     }
-
+    }
     m_configured = true;
 
   } // configure
@@ -132,9 +141,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   uint64_t chann_words;
   uint64_t block_position = 0;
   uint64_t sgmnt_count = 1;
-
+  uint nChannels = 4;
   // loop 4 channels
-  for( int nch = 0; nch < 4; nch++ ){
+  for( int nch = 0; nch < nChannels; nch++ ){
 
     EUDAQ_DEBUG( "Reading channel " + to_string(nch));
 
@@ -142,8 +151,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     block_words = rawdata[block_position + 0];
     pream_words = rawdata[block_position + 1];
     chann_words = rawdata[block_position + 2 + pream_words];
+    EUDAQ_DEBUG( "  " + to_string(datablock.size()) + " 8 bit block size");
     EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
-    EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
+    EUDAQ_DEBUG( "  " + to_string(block_words) + " words per data block");
     EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
     EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
     EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
@@ -184,17 +194,23 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       sgmnt_count = stoi( vals[24] );
     }
 
-    // Check our own seventh-graders math: total data size minus four times the data of a channel minus four block header words = 0
-    if(rawdata.size() - 4 * block_words - 4) {
-      EUDAQ_WARN("Go back to school 7th grade - math doesn't check out! :/ " + to_string(rawdata.size() - 4 * block_words) + " is not 0!");
+    // Check our own seventh-graders math: total data size minus four times the data of a channel minus four block header words = 0,
+    // Only if all block headers are the same size, which they do not seem to be for the 6 GHz scope - skip it for now
+    if (!m_hitbus && (rawdata.size() - 4 * block_words - 4)) {
+      for (int ii = 0; ii < 5; ++ii) {
+      EUDAQ_DEBUG(to_string(ii)+": " +to_string(uint64_t(rawdata[block_position+ii])));
+      }
+      if(nch==3)
+      EUDAQ_THROW("Go back to school 7th grade - math doesn't check out! :/ " + to_string(rawdata.size() - 4 * block_words-4) + " is not 0!");
     }
+
 
     int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
     if(chann_words % sgmnt_count != 0) {
-      EUDAQ_WARN("Segment count and channel words don't match: " + to_string(chann_words) + "/" + to_string(sgmnt_count));
+      EUDAQ_THROW("Segment count and channel words don't match: " + to_string(chann_words) + "/" + to_string(sgmnt_count));
     }
     if( np.at(nch) % (chann_words/sgmnt_count) ){ // check
-      EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
+      EUDAQ_THROW("incomplete waveform in block " + to_string(ev->GetEventN())
                  + ", channel " + to_string(nch) );
     }
     EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
@@ -205,11 +221,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
 
     // set run start time to 0 ms, using  timestamps from preamble which are 10 ms precision
-    if( m_runStartTime < 0 ){
-      m_runStartTime = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
-    }
-    timestamp = ( DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] )
-                  - m_runStartTime ) * 1e9; // ms to ps
+    timestamp = 0;
 
     // need once per channel
     std::vector<double> ped;
@@ -239,7 +251,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
       // read channel data
       std::vector<int16_t> words;
-      words.resize(points_per_words); // rawdata contains 8 byte words, scope sends 2 byte words
+      words.resize(points_per_words); // rawdata contains 8 bit words, scope sends 2 8bit words
       int16_t wfi = 0;
       // Read from segment start until the next segment begins:
       for(int i=block_position + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
@@ -307,10 +319,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // declare map between scope channel number and 2D pixel index
   // TODO make this configurable
   std::map<int,std::vector<int>> chanToPix;
-  chanToPix[0] = {1,0};
-  chanToPix[1] = {0,0};
-  chanToPix[2] = {1,1};
-  chanToPix[3] = {0,1};
+  chanToPix[0] = {0,0};
+  chanToPix[1] = {1,0};
+  chanToPix[2] = {2,0};
+  chanToPix[3] = {3,0};
 
   // process waveform data
   if(time.size() > 0 ){      // only if there are waveform data
@@ -375,9 +387,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
 
       // fill plane
-      plane.SetSizeZS(2, 2, 0);
+      plane.SetSizeZS(4, 1, 0);
       for( int c = 0; c<peds.size(); c++ ){
-        if( amps.at(c).at(s)*m_chargeScale > m_chargeCut ){
+        if (m_hitbus) {
+          plane.PushPixel(chanToPix[c].at(0), chanToPix[c].at(1), 1, timestamp);
+        }
+        else if( amps.at(c).at(s)*m_chargeScale > m_chargeCut ){
           plane.PushPixel( chanToPix[c].at(0),
                            chanToPix[c].at(1),
                            amps.at(c).at(s)*m_chargeScale, timestamp );
