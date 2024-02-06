@@ -15,13 +15,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
 endif()
 
-if(COMMAND CMAKE_POLICY)
-  if(${CMAKE_VERSION} VERSION_GREATER "3.13")
-    cmake_policy(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
-    cmake_policy(SET CMP0077 NEW) # allow overwriting options with normal variables    
-  endif()
-endif(COMMAND CMAKE_POLICY)
-
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
