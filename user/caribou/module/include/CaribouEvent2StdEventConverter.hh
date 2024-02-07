@@ -84,6 +84,7 @@ namespace eudaq {
   private:
     static bool m_configured;
     static bool m_hitbus;
+    static uint64_t m_trigger;
     static int64_t m_runStartTime;
     static double m_pedStartTime;
     static double m_pedEndTime;

@@ -7,15 +7,16 @@
 
 using namespace eudaq;
 
-namespace{
-  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
-    Register<DSO9254AEvent2StdEventConverter>(DSO9254AEvent2StdEventConverter::m_id_factory);
+namespace {
+  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
+      DSO9254AEvent2StdEventConverter>(
+      DSO9254AEvent2StdEventConverter::m_id_factory);
 }
 
 
-bool    DSO9254AEvent2StdEventConverter::m_configured(0);
-bool    DSO9254AEvent2StdEventConverter::m_hitbus(0);
-
+bool DSO9254AEvent2StdEventConverter::m_configured(0);
+bool DSO9254AEvent2StdEventConverter::m_hitbus(0);
+uint64_t DSO9254AEvent2StdEventConverter::m_trigger(0);
 int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
 double DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
 double DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
@@ -38,7 +39,19 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // load parameters from config file
   std::ofstream outfileTimestamps;
 
-  if( !m_configured ){
+  if (!m_configured) {
+    // clean the histogram once to not always append
+    m_generateRoot = conf->Get("generateRoot", 0);
+    TFile *histoFile = nullptr;
+    if (m_generateRoot) {
+      histoFile =
+          new TFile(Form("waveforms_run%i.root", ev->GetRunN()), "RECREATE");
+      if (!histoFile) {
+        EUDAQ_ERROR(to_string(histoFile->GetName()) + " can not be opened");
+        return false;
+      }
+      histoFile->Close();
+    }
     m_hitbus = conf->Get("hitbus", 0);
 
     if (m_hitbus) {
@@ -53,7 +66,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_ampEndTime   = conf->Get("ampEndTime"  , 0);
     m_chargeScale  = conf->Get("chargeScale" , 0);
     m_chargeCut    = conf->Get("chargeCut"   , 0);
-    m_generateRoot = conf->Get("generateRoot", 0);
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
     EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
@@ -84,6 +96,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       return false;
     }
     }
+
     m_configured = true;
 
   } // configure
@@ -231,7 +244,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     for( int s=0; s<sgmnt_count; s++){ // loop semgents
 
-      // container for one waveform
+      // container for one waveform, only amplitudes stored here
       std::vector<double> wave;
 
       // prepare histogram with corresponding binning if root file is created
@@ -386,11 +399,50 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // Create a StandardPlane representing one sensor plane
       eudaq::StandardPlane plane(0, "Caribou", "DSO9254A");
 
+      // We need to get the trigger ID, which is encoded in the triggerID
+      // channel 2 where the trigger and trigger ID are superimposed.
+      // Need to calibrate the trigger ID - trigger delay. First rising edge on
+      // channel is trigger, bit length is 25ns
+      // Only the lower 16 bits are transmitted -> store the previous ID and add
+      // bit 17++
+      uint64_t trigger = 0;
+      auto time_wf = wavess.at(2).at(s);
+      bool start = false;
+      uint8_t bit = 0;
+      int steps_25ns = 25 / dx.at(2); // bit length of trigger ID
+      int offset_30ns = 30 / dx.at(2); // the offset in datapoints between
+                                       // trigger and trigger ID start
+      auto it = time_wf.begin();
+      // find the rising edge
+      while (*it < 0.25) {
+        it++;
+      }
+      // jump to center of first bit of trigger ID
+      it += offset_30ns;
+      // sample 16 numbers:
+      for (int bit = 0; bit < 18; bit++) {
+        if (*it > 0.25) {
+          trigger += (0x1 << bit);
+        }
+        it += steps_25ns;
+      }
+      // add the upper bits of the trigger
+      trigger += m_trigger & 0xFFFFFFFFFFFF0000;
+      // check for bitflip of trigger ID MSB+1
+      if (trigger < m_trigger) {
+        std::cout << d1->GetEventN() << ": " << s << "\t"
+                  << std::bitset<24>(trigger) << "\t" << m_trigger << std::endl;
+        trigger += 0xFFFF;
+      }
+      // update trigger number
+      m_trigger = trigger;
       // fill plane
       plane.SetSizeZS(4, 1, 0);
-      for( int c = 0; c<peds.size(); c++ ){
-        if (m_hitbus) {
+      for (int c = 0; c < peds.size(); c++) {
+        // igitt
+        if (m_hitbus/* && (c == 1 || c == 3)*/) { // need to make this in a more clever way...
           plane.PushPixel(chanToPix[c].at(0), chanToPix[c].at(1), 1, timestamp);
+          plane.SetWaveform(c, wavess.at(c).at(s), x0.at(c), dx.at(c));
         }
         else if( amps.at(c).at(s)*m_chargeScale > m_chargeCut ){
           plane.PushPixel( chanToPix[c].at(0),
@@ -399,19 +451,16 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         }
       }
 
-      // derive trigger number from block number
-      int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s + 1;
-
-      EUDAQ_INFO("Block number " + to_string(ev->GetEventN()) + " " +
+     EUDAQ_INFO("Block number " + to_string(ev->GetEventN()) + " " +
                   " block size " + to_string(peds.at(0).size()) +
                   " segments, segment number " + to_string(s) +
-                  " trigger number " + to_string(triggerN));
+                  " trigger number " + to_string(m_trigger));
 
       sub_event->AddPlane(plane);
       sub_event->SetDetectorType("DSO9254A");
       sub_event->SetTimeBegin(0); // forcing corry to fall back on trigger IDs
       sub_event->SetTimeEnd(0);
-      sub_event->SetTriggerN(triggerN);
+      sub_event->SetTriggerN(m_trigger);
 
       // add sub event to StandardEventSP for output to corry
       d2->AddSubEvent( sub_event );

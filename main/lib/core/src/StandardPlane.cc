@@ -123,7 +123,7 @@ namespace eudaq{
     }
 
     if(index >= m_waveform.at(frame).size()) {
-      EUDAQ_THROW("Bad pixel index " + to_string(frame) + " in SetWaveform");
+      EUDAQ_THROW("Bad pixel index " + to_string(index) + " in SetWaveform");
     }
 
     m_waveform.at(frame).at(index) = std::move(waveform);
