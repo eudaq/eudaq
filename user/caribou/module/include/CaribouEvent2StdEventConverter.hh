@@ -2,7 +2,7 @@
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 #include <set>
-
+#include <TFile.h>
 #include <array>
 #include <vector>
 
@@ -35,6 +35,18 @@ namespace eudaq {
     }
     return stream.str();
   }
+
+  // litlle sturct to store all components of a waveform and make it more structured in the converter
+  struct waveform{
+    std::vector<double> data;
+    uint points;
+    uint segment;
+    double dx;
+    double  x0;
+    double  dy;
+    double  y0;
+
+  };
 
   class AD9249Event2StdEventConverter: public eudaq::StdEventConverter{
   public:
@@ -82,20 +94,25 @@ namespace eudaq {
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
   private:
-    static bool m_configured;
-    static bool m_hitbus;
-    static uint64_t m_trigger;
-    static int64_t m_runStartTime;
-    static double m_pedStartTime;
-    static double m_pedEndTime;
-    static double m_ampStartTime;
-    static double m_ampEndTime;
-    static double m_chargeScale;
-    static double m_chargeCut;
-    static bool m_generateRoot;
-    // covert scope ascii time stamps
+    static int m_channels; // number of active channles
+    static bool m_configured; // did we already configure everything?
+    static bool m_hitbus; // TelePix special case
+    static uint64_t m_trigger; // the trigger number
+    static int64_t m_runStartTime; // time the run has been started at
+    static bool m_generateRoot; // plot the waveforms to a separate file.
+    static std::map<int, std::pair<int, int>> m_chanToPix;
+
+    // Usefull for euCliReaders
+    static TFile *m_rootFile;
+    // convert scope ascii time stamps
     static uint64_t timeConverter(std::string date, std::string time);
-    // parse event number, time stamp pairs from file to EventTime set
+
+    // convert a data block to waveforms
+    static std::vector<std::vector<waveform>>
+    read_data(std::vector<uint8_t> &datablock, int evt);
+    // get the trigger number from the waveforms if we are taking HB data
+    static uint64_t triggerID(waveform &wf);
+
   };
 
   class dSiPMEvent2StdEventConverter: public eudaq::StdEventConverter{
