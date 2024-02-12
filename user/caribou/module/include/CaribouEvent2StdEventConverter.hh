@@ -111,7 +111,7 @@ namespace eudaq {
     static std::vector<std::vector<waveform>>
     read_data(std::vector<uint8_t> &datablock, int evt);
     // get the trigger number from the waveforms if we are taking HB data
-    static uint64_t triggerID(waveform &wf);
+    static uint64_t triggerID(waveform &wfTrig, waveform &wfID);
 
   };
 

@@ -101,7 +101,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
       // if we take the trigger ID as input on one channel, fetch it. Ortherwise
       // eventnumber*segments+currentsegments
-      m_trigger  = m_hitbus ? triggerID(waves.at(2).at(s)) : ev->GetEventN() * 100 + s;
+      m_trigger  = m_hitbus ? triggerID(waves.at(0).at(s), waves.at(1).at(s)) : ev->GetEventN() * 100 + s;
 
       // fill plane - how to properly size this...
       plane.SetSizeZS(4, 1, 0);
@@ -353,9 +353,9 @@ DSO9254AEvent2StdEventConverter::read_data(std::vector<std::uint8_t> &datablock,
   return waves;
 }
 
-uint64_t DSO9254AEvent2StdEventConverter::triggerID(waveform &wf) {
+uint64_t DSO9254AEvent2StdEventConverter::triggerID(waveform &wfTrig, waveform &wfID) {
   // We need to get the trigger ID, which is encoded in the triggerID
-  // channel 2 where the trigger and trigger ID are superimposed.
+  // channel 1 where the trigger is and channel 2 where the trigger ID.
   // Need to calibrate the trigger ID - trigger delay. First rising edge on
   // channel is trigger, bit length is 25ns
   // Only the lower 16 bits are transmitted -> store the previous ID and add
@@ -363,22 +363,24 @@ uint64_t DSO9254AEvent2StdEventConverter::triggerID(waveform &wf) {
   uint64_t trigger = 0;
   bool start = false;
   uint8_t bit = 0;
-  int steps_25ns = 25 / wf.dx; // bit length of trigger ID
-  int offset_30ns = 30 / wf.dx; // the offset in datapoints between
+  int steps_25ns = 25 / wfID.dx; // bit length of trigger ID
+  int offset_30ns = 40 / wfID.dx; // the offset in datapoints between
                                 // trigger and trigger ID start
-  auto it = wf.data.begin();
+  auto it2 = wfTrig.data.begin();
+  auto it = wfID.data.begin();
   // find the rising edge
-  while (*it < 0.25) {
+  while (*it2 < 0.25) {
     it++;
+    it2++;
   }
   // jump to center of first bit of trigger ID
   it += offset_30ns;
   // sample 16 numbers:
-  for (int bit = 0; bit < 18; bit++) {
-    if (*it > 0.25) {
+  for (int bit = 0; bit < 16; bit++) {
+    if (*it2 > 0.25) {
       trigger += (0x1 << bit);
     }
-    it += steps_25ns;
+    it2 += steps_25ns;
   }
   // add the upper bits of the trigger
   trigger += m_trigger & 0xFFFFFFFFFFFF0000;
