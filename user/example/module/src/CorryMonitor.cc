@@ -371,10 +371,13 @@ void CorryMonitor::DoStartRun(){
       }
     }
 
+    // // DEBUGGING
+    // for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++){
+
+    //   EUDAQ_DEBUG("\n--------------------------------------------------\n Name:        "+it->name+"\n EventLoader: "+it->eventloader_type+"\n fwpattern:   "+it->fwpatt+"\n xrootd addr: "+it->xrootd_address);
+    // }
+
     while(!found_all_files_to_monitor){
-      found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
-        return v.found_matching_file;
-      });
 
       // Get the files for datacollectors with xrootd first
       for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++){
@@ -389,13 +392,18 @@ void CorryMonitor::DoStartRun(){
         std::string result = getCommandOutput(command.c_str());
 
         if (result != "" && result.find("Server responded with an error")==std::string::npos){
-          EUDAQ_DEBUG("Found a match with pattern " + it->pattern_to_match);
+          EUDAQ_DEBUG("xrootd: Found a match with pattern " + it->pattern_to_match);
           std::filesystem::path fullPath(result);
           it->event_name = fullPath.filename().string();
           it->found_matching_file = true;
         }
 
       }
+
+      // Always make sure to check after any changes if all files have been found
+      found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
+        return v.found_matching_file;
+      });
 
       // If no watch directories are set up, skip reading the directory change and try again with the xrootd server
       if (num_wd==0) continue;
@@ -427,9 +435,9 @@ void CorryMonitor::DoStartRun(){
               int index = 0;
               for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++, index++){
 
-                if (event_wd != wd[index])            continue; // Skip this DataCollector because the directory does not match directory of creation
-                if (it->xrootd_address != "")         continue; // Skip xrootd DataCollectors
                 if (it->found_matching_file == true)  continue; // Skip because file for this DataCollector has been found
+                if (it->xrootd_address != "")         continue; // Skip xrootd DataCollectors
+                if (event_wd != wd[index])            continue; // Skip this DataCollector because the directory does not match directory of creation
 
                 EUDAQ_DEBUG("Testing pattern " + it->pattern_to_match);
                 if (!string_match(it->pattern_to_match.c_str(), event_name.c_str(), 0, 0)) continue; // Continue with next DataCollector because it's not a match
@@ -448,6 +456,9 @@ void CorryMonitor::DoStartRun(){
 
       }
 
+      found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
+        return v.found_matching_file;
+      });
     }
 
 
