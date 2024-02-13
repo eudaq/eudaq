@@ -97,6 +97,7 @@ namespace eudaq {
     static int m_channels; // number of active channles
     static bool m_configured; // did we already configure everything?
     static bool m_hitbus; // TelePix special case
+    static bool m_oldFormat; // never let this go to master - @awintle
     static uint64_t m_trigger; // the trigger number
     static int64_t m_runStartTime; // time the run has been started at
     static bool m_generateRoot; // plot the waveforms to a separate file.

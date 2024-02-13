@@ -16,6 +16,8 @@ namespace {
 int DSO9254AEvent2StdEventConverter::m_channels(0);
 bool DSO9254AEvent2StdEventConverter::m_configured(0);
 bool DSO9254AEvent2StdEventConverter::m_hitbus(0);
+bool DSO9254AEvent2StdEventConverter::m_oldFormat(0);
+
 uint64_t DSO9254AEvent2StdEventConverter::m_trigger(0);
 int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(0);
@@ -101,7 +103,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
       // if we take the trigger ID as input on one channel, fetch it. Ortherwise
       // eventnumber*segments+currentsegments
-      m_trigger  = m_hitbus ? triggerID(waves.at(0).at(s), waves.at(1).at(s)) : ev->GetEventN() * 100 + s;
+      m_trigger  = m_hitbus ? (m_oldFormat ? (triggerID(waves.at(0).at(s), waves.at(1).at(s))):(triggerID(waves.at(0).at(s), waves.at(0).at(s))) ): ev->GetEventN() * 100 + s;
 
       // fill plane - how to properly size this...
       plane.SetSizeZS(4, 1, 0);
