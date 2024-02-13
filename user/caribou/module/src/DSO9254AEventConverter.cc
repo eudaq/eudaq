@@ -41,6 +41,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
    // open the root file once
     m_generateRoot = conf->Get("generateRoot", 0);
     m_channels = conf->Get("nChannels", 4);
+    m_oldFormat = conf->Get("oldFormat",0);
     if (m_generateRoot) {
       m_rootFile =
           new TFile(Form("waveforms_run%i.root", ev->GetRunN()), "RECREATE");
