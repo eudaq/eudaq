@@ -124,6 +124,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         for (int i = 0; i < wf.points; i++) {
           hist->SetBinContent(hist->FindBin(i * wf.dx + wf.x0), wf.data.at(i));
         }
+	m_rootFile->cd();
         hist->Write();
       }
       }
@@ -380,10 +381,10 @@ uint64_t DSO9254AEvent2StdEventConverter::triggerID(waveform &wfTrig, waveform &
   it += offset_30ns;
   // sample 16 numbers:
   for (int bit = 0; bit < 16; bit++) {
-    if (*it2 > 0.25) {
+    if (*it > 0.25) {
       trigger += (0x1 << bit);
     }
-    it2 += steps_25ns;
+    it += steps_25ns;
   }
   // add the upper bits of the trigger
   trigger += m_trigger & 0xFFFFFFFFFFFF0000;
