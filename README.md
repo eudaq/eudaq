@@ -1,7 +1,7 @@
 EUDAQ version 2
 =====
 
-[![Build Status](https://travis-ci.com/eudaq/eudaq.svg?branch=master)](https://travis-ci.com/eudaq/eudaq)
+![Github actions](https://github.com/eudaq/eudaq/actions/workflows/cmake.yml/badge.svg)
 [![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/master?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/master)
 
 EUDAQ is a Generic Multi-platform Data Acquisition Framework.

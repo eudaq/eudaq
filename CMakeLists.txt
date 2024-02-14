@@ -2,6 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.6.3 FATAL_ERROR)
 IF(COMMAND CMAKE_POLICY)
     CMAKE_POLICY(SET CMP0003 NEW) # change linker path search behaviour
     CMAKE_POLICY(SET CMP0048 NEW) # set project version
+    CMAKE_POLICY(SET CMP0065 OLD) # Use old linking behavior
     IF(${CMAKE_VERSION} VERSION_GREATER "3.13")
         CMAKE_POLICY(SET CMP0077 NEW) # allow overwriting options with normal variables
         CMAKE_POLICY(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
@@ -14,13 +15,6 @@ include(CMakeDependentOption)
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
 endif()
-
-if(COMMAND CMAKE_POLICY)
-  if(${CMAKE_VERSION} VERSION_GREATER "3.13")
-    cmake_policy(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
-    cmake_policy(SET CMP0077 NEW) # allow overwriting options with normal variables    
-  endif()
-endif(COMMAND CMAKE_POLICY)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
