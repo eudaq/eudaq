@@ -19,6 +19,7 @@ bool DSO9254AEvent2StdEventConverter::m_hitbus(0);
 bool DSO9254AEvent2StdEventConverter::m_oldFormat(0);
 
 uint64_t DSO9254AEvent2StdEventConverter::m_trigger(0);
+uint64_t DSO9254AEvent2StdEventConverter::m_segmentCount(1);
 int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(0);
 TFile *DSO9254AEvent2StdEventConverter::m_rootFile(nullptr);
@@ -104,7 +105,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
       // if we take the trigger ID as input on one channel, fetch it. Ortherwise
       // eventnumber*segments+currentsegments
-      m_trigger  = m_hitbus ? (m_oldFormat ? (triggerID(waves.at(0).at(s), waves.at(1).at(s))):(triggerID(waves.at(0).at(s), waves.at(0).at(s))) ): ev->GetEventN() * 100 + s;
+      m_trigger  = m_hitbus ? (m_oldFormat ? (triggerID(waves.at(0).at(s), waves.at(1).at(s))):(triggerID(waves.at(0).at(s), waves.at(0).at(s))) )
+                           : ev->GetEventN() * m_segmentCount + s;
 
       // fill plane - how to properly size this...
       plane.SetSizeZS(4, 1, 0);
@@ -124,7 +126,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         for (int i = 0; i < wf.points; i++) {
           hist->SetBinContent(hist->FindBin(i * wf.dx + wf.x0), wf.data.at(i));
         }
-	m_rootFile->cd();
+        m_rootFile->cd();
         hist->Write();
       }
       }
@@ -228,7 +230,6 @@ DSO9254AEvent2StdEventConverter::read_data(std::vector<std::uint8_t> &datablock,
   uint64_t pream_words;
   uint64_t chann_words;
   uint64_t block_position = 0;
-  uint64_t sgmnt_count = 1;
 
   for (int nch = 0; nch < (m_channels); ++nch) {
 
@@ -283,15 +284,15 @@ DSO9254AEvent2StdEventConverter::read_data(std::vector<std::uint8_t> &datablock,
     if (vals.size() == 25) { // this is segmented mode, possibly more than one
                              // waveform in block
       EUDAQ_DEBUG("Segments: " + to_string(vals[24]));
-      sgmnt_count = stoi(vals[24]);
+      m_segmentCount = stoi(vals[24]);
     }
 
-    int points_per_words = wave.points / (chann_words / sgmnt_count);
-    if (chann_words % sgmnt_count != 0) {
+    int points_per_words = wave.points / (chann_words / m_segmentCount);
+    if (chann_words % m_segmentCount != 0) {
       EUDAQ_THROW("Segment count and channel words don't match: " +
-                  to_string(chann_words) + "/" + to_string(sgmnt_count));
+                  to_string(chann_words) + "/" + to_string(m_segmentCount));
     }
-    if (wave.points % (chann_words / sgmnt_count)) { // check
+    if (wave.points % (chann_words / m_segmentCount)) { // check
       EUDAQ_THROW("incomplete waveform in block " + to_string(evt) +
                   ", channel " + to_string(nch));
     }
@@ -300,13 +301,13 @@ DSO9254AEvent2StdEventConverter::read_data(std::vector<std::uint8_t> &datablock,
     // Check our own eighth-graders math: the number of words in the channel
     // times 4 points per word minus the number of points times number of
     // segments is 0
-    if (4 * chann_words - wave.points * sgmnt_count) {
+    if (4 * chann_words - wave.points * m_segmentCount) {
       EUDAQ_WARN("Go back to school 8th grade - math doesn't check out! :/ " +
-                 to_string(chann_words - wave.points * sgmnt_count) +
+                 to_string(chann_words - wave.points * m_segmentCount) +
                  " is not 0!");
     }
 
-    for (int s = 0; s < sgmnt_count; s++) { // loop semgents
+    for (int s = 0; s < m_segmentCount; s++) { // loop semgents
       auto current_wave = wave;
       // read channel data
       std::vector<int16_t> words;
@@ -315,9 +316,9 @@ DSO9254AEvent2StdEventConverter::read_data(std::vector<std::uint8_t> &datablock,
       int16_t wfi = 0;
       // Read from segment start until the next segment begins:
       for (int i = block_position + 3 + pream_words +
-                   (s + 0) * chann_words / sgmnt_count;
+                   (s + 0) * chann_words / m_segmentCount;
            i < block_position + 3 + pream_words +
-                   (s + 1) * chann_words / sgmnt_count;
+                   (s + 1) * chann_words / m_segmentCount;
            i++) {
 
         // copy channel data from entire segment data block

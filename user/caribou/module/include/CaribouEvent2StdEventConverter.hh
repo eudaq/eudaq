@@ -99,6 +99,7 @@ namespace eudaq {
     static bool m_hitbus; // TelePix special case
     static bool m_oldFormat; // never let this go to master - @awintle
     static uint64_t m_trigger; // the trigger number
+    static uint64_t m_segmentCount; // number of segments recorded
     static int64_t m_runStartTime; // time the run has been started at
     static bool m_generateRoot; // plot the waveforms to a separate file.
     static std::map<int, std::pair<int, int>> m_chanToPix;
