@@ -25,6 +25,7 @@ double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
 
 bool DSO9254AEvent2StdEventConverter::m_polarity(1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(0);
+bool DSO9254AEvent2StdEventConverter::m_osci_timestamp(1);
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -212,6 +213,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     }
     timestamp = ( DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] )
                   - m_runStartTime ) * 1e9; // ms to ps
+
+    //To not use oscilloscope timestamps
+    if(!m_osci_timestamp)
+    {timestamp=0;}
 
     // need once per channel
     std::vector<double> ped;

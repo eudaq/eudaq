@@ -92,6 +92,7 @@ namespace eudaq {
     static double m_chargeCut;
     static bool m_polarity;
     static bool m_generateRoot;
+    static bool m_osci_timestamp;
     // covert scope ascii time stamps
     static uint64_t timeConverter(std::string date, std::string time);
     // parse event number, time stamp pairs from file to EventTime set
