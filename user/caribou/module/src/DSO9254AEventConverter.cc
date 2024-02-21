@@ -49,6 +49,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_chargeCut    = conf->Get("chargeCut"   , 0);
     m_polarity    = conf->Get("polarity"   , 1);
     m_generateRoot = conf->Get("generateRoot", 0);
+    m_osci_timestamp = conf->Get("osci_timestamp", 1);
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
     EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
@@ -58,6 +59,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
     EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
     EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
+    EUDAQ_DEBUG( "  osci_timestamp = " + to_string( m_osci_timestamp ) );
 
     // check configuration
     bool noData = false;
