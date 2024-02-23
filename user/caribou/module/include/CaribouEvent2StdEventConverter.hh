@@ -84,7 +84,8 @@ namespace eudaq {
     struct PlaneConfiguration {
       bool configured {false};
       bool zeroSupp {true};
-      bool discardDuringReset {true};
+      bool discardDuringReset {false};
+      bool discardDuringResetWarned {false};
       bool checkValid {false};
       std::array<std::array<double, 32>, 4> fine_tdc_bin_widths {};
       std::array<std::array<double, 32>, 32> pixel_delays {};
