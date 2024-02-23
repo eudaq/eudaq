@@ -7,6 +7,7 @@
 #include <sys/inotify.h>
 #include <regex>
 #include <filesystem>
+#include <unistd.h>
 
 struct CorryArgumentList {
   char **argv;
@@ -87,7 +88,7 @@ void CorryMonitor::DoInitialise(){
     std::string msg = "Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)";
     EUDAQ_ERROR(msg);
     //TODO: Fix that SetStatus currently does nothing
-    eudaq::CommandReceiver::SetStatus(eudaq::Status::STATE_ERROR, msg);
+    // eudaq::CommandReceiver::SetStatus(eudaq::Status::STATE_ERROR, msg);
   }
 }
 
