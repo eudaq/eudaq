@@ -564,6 +564,9 @@ void CorryMonitor::DoStartRun(){
 
 // Killing child process (corry) (adapted from https://stackoverflow.com/questions/13273836/how-to-kill-child-of-fork)
 void CorryMonitor::DoStopRun(){
+  // Check if corryvreckan was started in the first place
+  if (!m_safe_to_run) return;
+
   kill(m_corry_pid, SIGINT);
 
   bool died = false;
