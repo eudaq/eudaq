@@ -8,6 +8,7 @@
 #include <regex>
 #include <filesystem>
 #include <unistd.h>
+#include <fstream>
 
 struct CorryArgumentList {
   char **argv;
@@ -50,7 +51,19 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("CorryMonitor");
   
 private:
+  bool m_safe_to_run = true;
+  // Define bit flags for each item
+  enum ERRORFlags {
+      CORRY_BIN = 1 << 0,  
+      CORRY_CON = 1 << 1,  
+      CORRY_GEO = 1 << 2,  
+      DATA_COL  = 1 << 3,  
+      EVENT_LOA = 1 << 4   
+  };
+  int m_error_flags = 0;
+
   std::pair<std::string, std::string> getFileString(std::string pattern);
+  void reportMissingItems(int bitField);
 
   bool m_en_print;
   bool m_en_std_converter;
@@ -89,6 +102,8 @@ void CorryMonitor::DoInitialise(){
     EUDAQ_ERROR(msg);
     //TODO: Fix that SetStatus currently does nothing
     // eudaq::CommandReceiver::SetStatus(eudaq::Status::STATE_ERROR, msg);
+    m_safe_to_run = false;
+    m_error_flags |= CORRY_BIN;
   }
 }
 
@@ -193,6 +208,12 @@ std::pair<std::string, std::string> CorryMonitor::getFileString(std::string patt
 
 
 void CorryMonitor::DoConfigure(){
+
+  if (!m_safe_to_run) {
+    EUDAQ_ERROR("Can't configure CorryMonitor as Initialization already failed! \nPlease check the log for errors and fix them before resetting and trying again");
+    return;
+  }
+
   auto conf = GetConfiguration();
   //conf->Print(std::cout);
   m_datacollectors_to_monitor = conf->Get("DATACOLLECTORS_TO_MONITOR", "my_dc");
@@ -202,8 +223,12 @@ void CorryMonitor::DoConfigure(){
 
   // Check if config for corryvreckan is found
   struct stat buffer;   
-  if(stat(m_corry_config.c_str(), &buffer) != 0)
+  if(stat(m_corry_config.c_str(), &buffer) != 0) {
     EUDAQ_ERROR("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
+    m_safe_to_run = false;
+    m_error_flags |= CORRY_CON;
+    return;
+  }
 
 
   // command to be exectued in DoStartRun(), stored tokenized in m_args.argv
@@ -238,6 +263,13 @@ void CorryMonitor::DoConfigure(){
   //corry_conf->Print();
 
   // open geometry file (exploit same file structure for geometry file as for config file)
+  std::string geo_file_name = corry_conf->Get("detectors_file", "");
+  if(stat(geo_file_name.c_str(), &buffer) != 0) {
+    EUDAQ_ERROR("Geometry file for corry cannot be found under "+geo_file_name+" ! Please check the path of your geometry file");
+    m_safe_to_run = false;
+    m_error_flags |= CORRY_GEO;
+    return;
+  }
   std::ifstream geo_file {corry_conf->Get("detectors_file", "")};
   std::shared_ptr<eudaq::Configuration> corry_geo = std::make_shared<eudaq::Configuration>(geo_file, "");
   //corry_geo->Print();
@@ -263,9 +295,12 @@ void CorryMonitor::DoConfigure(){
 
     // Check if DataCollector with name from m_datacollectors_to_monitor is found
     conf->SetSection("");
-    if (!(conf->Has(section)))
-      EUDAQ_THROW("DataCollector to be monitored (\"" + section + "\") not found!");
-    else 
+    if (!(conf->Has(section))) {
+      EUDAQ_ERROR("DataCollector to be monitored (\"" + section + "\") not found!");
+      m_safe_to_run = false;
+      m_error_flags |= DATA_COL;
+      return;
+    } else 
       EUDAQ_DEBUG("DataCollector to be monitored is " + section);
 
     
@@ -293,13 +328,30 @@ void CorryMonitor::DoConfigure(){
 
     if ( (ss_dcol.good()&&!ss_type.good()) || (!ss_dcol.good()&&ss_type.good()) ) {
       EUDAQ_ERROR("Error when parsing DATACOLLECTORS_TO_MONITOR and CORRESPONDING_EVENTLOADER_TYPES! Check if they have the same length!");
+      m_safe_to_run = false;
+      m_error_flags |= EVENT_LOA;
+      return;
     }
 
   }
 
 }
 
+// Function to report missing files based on the bit field
+void CorryMonitor::reportMissingItems(int bitField) {
+    if (bitField & CORRY_BIN) EUDAQ_ERROR("Corryvreckan binary not found.\n");
+    if (bitField & CORRY_CON) EUDAQ_ERROR("Corryvreckan configuration file not found.\n");
+    if (bitField & CORRY_GEO) EUDAQ_ERROR("Corryvreckan geometry file not found.\n");
+    if (bitField & DATA_COL)  EUDAQ_ERROR("Could not find all DataCollectors to monitor.\n");
+    if (bitField & EVENT_LOA) EUDAQ_ERROR("Mismatch between DataCollectors and EventLoaders.\n");
+}
+
 void CorryMonitor::DoStartRun(){
+  if (!m_safe_to_run) {
+    EUDAQ_ERROR("Can't start CorryMonitor as not all checks were successful! \nPlease see the log for errors and fix them before resetting and trying again. \nBelow might be a hint to what went wrong:");
+    reportMissingItems(m_error_flags);
+    return;
+  }
 
   // File descriptor and watch descriptor for inotify
   int fd, wd[m_datacollector_vector.size()];
@@ -454,6 +506,28 @@ void CorryMonitor::DoStopRun(){
 }
 
 void CorryMonitor::DoReset(){
+  m_safe_to_run = true;
+  m_error_flags = 0;
+
+  m_datacollectors_to_monitor.clear();
+  m_eventloader_types.clear();
+  m_corry_path.clear();
+  m_corry_config.clear();
+  m_corry_options.clear();
+
+  m_datacollector_vector.clear();
+
+  // Deallocate memory used by m_argv
+  for (size_t i = 0; i < m_args.used; i++) {
+      delete[] m_args.argv[i];
+  }
+  delete[] m_args.argv;
+
+  // Reset sz and used
+  m_args.argv = 0;
+  m_args.sz = 0;
+  m_args.used = 0;
+
 }
 
 void CorryMonitor::DoTerminate(){
