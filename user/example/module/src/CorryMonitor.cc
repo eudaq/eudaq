@@ -450,7 +450,7 @@ void CorryMonitor::DoStartRun(){
       EUDAQ_INFO("Found file "+it.monitor_file_path+it.event_name+" for monitorung");
       // add passing the file name to corry to the command
       for (auto m: it.detector_planes){
-        std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.monitor_file_path+it.event_name;
+        std::string my_command = "-o EventLoaderEUDAQ2:"+m+".file_name="+it.monitor_file_path+it.event_name+" -o EventLoaderEUDAQ2:"+m+".wait_on_eof=1";
         char * cstr = new char[my_command.length()+1];
         std::strcpy(cstr, my_command.c_str());
 
