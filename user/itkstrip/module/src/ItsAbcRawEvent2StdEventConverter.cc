@@ -54,7 +54,7 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 	if (deviceId < 300 ) {
 		superplane.SetSizeZS(282, 1, 0);//r0
 	} else {
-		superplane.SetSizeZS(1408, 4, 0);//r0
+		superplane.SetSizeZS(1802+384*2, 4, 0);//r0
 	}
 	for(auto &block_n: block_n_list){
 		std::vector<uint8_t> block = raw->GetBlock(block_n);
@@ -131,12 +131,51 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 					for(size_t i = 0; i < channels.size(); ++i) {
 						if(channels[i]){
 							plane.PushPixel(i, 0 , 1);//r0
-							if (strN<2){
-								superplane.PushPixel(i, 1-strN, 1);
-							} else {
-								superplane.PushPixel(1279-i, strN, 1);
-								    //plane.PushPixel(1, i , 1);//ss
-							}
+							//for direct composition
+							//superplane.PushPixel(i, strN, 1);
+							
+							//R3:
+							/*switch(strN){
+							case 0: superplane.PushPixel(384+895 - i, 1, 1);
+							  break;
+							case 1: superplane.PushPixel(384+895 - i, 0, 1);
+							  break;
+							case 2: superplane.PushPixel(384+1801 - i, 1, 1);
+							  break;
+							case 3: superplane.PushPixel(384+1801 - i, 0, 1);
+							  break;
+							case 4: superplane.PushPixel(384+i, 2, 1);
+							  break;
+							case 5: superplane.PushPixel(384+i, 3, 1);
+							  break;
+							case 6: superplane.PushPixel(384+906+i, 2, 1);
+							  break;
+							case 7: superplane.PushPixel(384+906+i, 3, 1);
+							  break;
+							  }*/
+
+							//SS
+							switch(strN){
+                                                        case 0: superplane.PushPixel(10*128 - i, 1, 1);
+                                                          break;
+                                                        case 1: superplane.PushPixel(10*128 - i, 0, 1);
+                                                          break;
+                                                        case 2: superplane.PushPixel(i, 2, 1);
+                                                          break;
+                                                        case 3: superplane.PushPixel(i, 3, 1);
+                                                          break;
+                                                        }
+
+
+							// //R0: //TODO
+							// superplane.PushPixel(i, strN, 1);
+
+							// if (strN<2){
+							// 	superplane.PushPixel(i, 1-strN, 1);
+							// } else {
+							// 	superplane.PushPixel(1279-i, strN, 1);
+							// 	    //plane.PushPixel(1, i , 1);//ss
+							//}
 						}
 					}
 				}
