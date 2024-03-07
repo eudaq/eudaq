@@ -102,7 +102,7 @@ void ItsRootProducer::DoStopRun(){
   std::unique_lock<std::mutex> lck(m_doing);
   setState(STATE::GOTOSTOP);
   int j = 0;
-  while (getState()==STATE::GOTOSTOP && j<5){
+  while (getState()==STATE::GOTOSTOP && j<15){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     j++;
   }
@@ -153,6 +153,7 @@ void ROOTProducer::createNewEvent(unsigned nev){
 void ROOTProducer::addData2Event(unsigned dataid, UChar_t * data, size_t size){
   std::unique_lock<std::mutex> lk(m_mtx_ev);
   if(ev)
+    // AppendBlock for putting HPR data?
     ev->AddBlock(dataid, data, size);
 }
 

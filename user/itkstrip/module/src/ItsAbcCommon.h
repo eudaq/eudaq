@@ -12,6 +12,17 @@ namespace ItsAbc {
                    {1,{1,1}},
                    {2,{0,4}},
                    {3,{1,4}}};
+      } else if(block_dsp == "(0:0:1,1:1:1,2:0:r)") {
+        m_block_map={{0,{0,1}},
+                   {1,{1,1}},
+                   {2,{0,4}}};
+      } else if(block_dsp == "(0:0:1,1:1:1,2:2:1,3:3:1,4:0:r,6:2:r)") {
+        m_block_map={{0,{0,1}},
+                   {1,{1,1}},
+                   {2,{2,1}},
+                   {3,{3,1}},
+                   {4,{0,4}},
+                   {6,{2,4}}};
       } else if(block_dsp == "(0:0:1,1:1:1,2:2:1,3:3:1,4:0:r,5:1:r,6:2:r,7:3:r)") {
         m_block_map={{0,{0,1}},
                    {1,{1,1}},
@@ -22,6 +33,19 @@ namespace ItsAbc {
                    {6,{2,4}},
                    {7,{3,4}}};
         m_offset = 10;
+      } else if (block_dsp =="(0:0:1,1:1:1,2:2:1,3:3:1,4:4:1,5:5:1,6:6:1,7:7:1,8:0:r,10:2:r,12:4:r,14:6:r)") {
+        m_block_map={	 {0, {0,1}},
+			 {1, {1,1}},
+			 {2, {2,1}},
+			 {3, {3,1}},
+			 {4, {4,1}},
+			 {5, {5,1}},
+			 {6, {6,1}},
+			 {7, {7,1}},
+			 {8, {0,4}},
+			 {10,{2,4}},
+			 {12,{4,4}},
+			 {14,{6,4}}};
       } else {
         std::cout << "block map needs updating: " << block_dsp << "\n";
         abort();
@@ -33,8 +57,6 @@ namespace ItsAbc {
     std::map<uint32_t, std::pair<uint32_t, uint32_t>> m_block_map;
     uint32_t m_offset;
   };
-
-
 
 /// Extract some info from RAW data block
 class RawInfo {
