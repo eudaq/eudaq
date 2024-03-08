@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fstream>
 
+
 struct CorryArgumentList {
   char **argv;
   size_t sz, used;
@@ -95,12 +96,12 @@ CorryMonitor::CorryMonitor(const std::string & name, const std::string & runcont
 void CorryMonitor::DoInitialise(){
   auto ini = GetInitConfiguration();
   ini->Print(std::cout);
-  m_corry_path = ini->Get("CORRY_PATH", "/path/to/corry");
+  m_corry_path = ini->Get("CORRY_PATH", "/path/to/corry/executable");
   
   // Check if corryvreckan is found
   struct stat buffer;   
   if(stat(m_corry_path.c_str(), &buffer) != 0){
-    std::string msg = "Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry (Avoid using ~)";
+    std::string msg = "Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry/executable (Avoid using ~)";
     EUDAQ_ERROR(msg);
     //TODO: Fix that SetStatus currently does nothing
     // eudaq::CommandReceiver::SetStatus(eudaq::Status::STATE_ERROR, msg);
@@ -221,7 +222,7 @@ void CorryMonitor::DoConfigure(){
   m_datacollectors_to_monitor = conf->Get("DATACOLLECTORS_TO_MONITOR", "my_dc");
   m_eventloader_types         = conf->Get("CORRESPONDING_EVENTLOADER_TYPES", "");
   m_xrootd_addresses          = conf->Get("XROOTD_ADDRESSES", "");
-  m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "placeholder.conf");
+  m_corry_config              = conf->Get("CORRY_CONFIG_PATH", "");
   m_corry_options             = conf->Get("CORRY_OPTIONS", "");
 
   // Check if config for corryvreckan is found
@@ -323,14 +324,18 @@ void CorryMonitor::DoConfigure(){
     // needed to pass file to be monitored to corry at runtime
     for (auto m: corry_geo->Sectionlist()){
       corry_geo->SetSection(m);
-      if (eudaq::lcase(corry_geo->Get("type","")) == value.eventloader_type){
+      if (eudaq::lcase(corry_geo->GetCurrentSectionName()) == value.eventloader_type){
         value.detector_planes.push_back(m);
+      }
+      else{
+       //   EUDAQ_INFO(value.eventloader_type+ " vs corry " + eudaq::lcase(corry_geo->Get("type","")) +" in section "+ corry_geo->GetCurrentSectionName());
       }
     }
 
     if (ss_xrda.good()) {
       getline(ss_xrda, substr_xrda, ',');
       value.xrootd_address = "xroot://"+eudaq::trim(substr_xrda)+"/";
+      value.xrootd_address = "";
     } else {
       value.xrootd_address = "";
     }
