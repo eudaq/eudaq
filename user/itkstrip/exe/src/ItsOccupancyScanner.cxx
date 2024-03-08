@@ -5,6 +5,9 @@
 #include "eudaq/Event.hh"
 //#include "TEST.hh"
 
+#include "TH1D.h"
+#include "TFile.h"
+
 #include <iostream>
 #include <fstream> 
 
@@ -19,6 +22,7 @@ int main(int /*argc*/, const char **argv) {
 
   eudaq::OptionParser op("EUDAQ Command Line Re-synchroniser for ITkStrip", "0.1", "ITKStrip Resynchroniser");
   eudaq::Option<std::string> file_input(op, "i", "input", "", "string", "input file (eg. run000001.raw)");
+  eudaq::Option<std::string> file_output(op, "o", "output", "output.root", "string", "output file, default: output.root");
   eudaq::OptionFlag debugPrint(op, "d", "debug", "print lots of information");
   eudaq::Option<uint32_t> planeId(op, "p", "planeid", 29, "uint32_t", "Plane ID to be checked");
   eudaq::Option<uint32_t> lowerX(op, "s", "lowerx", 0, "uint32_t", "X coordinate at which to start occupancy measure, default 0");
@@ -43,6 +47,7 @@ int main(int /*argc*/, const char **argv) {
   if(type_in=="raw")
     type_in = "native";
 
+  std::string outfile_path = file_output.Value();
   bool debugOutput = debugPrint.Value();
   unsigned int xcut_low = lowerX.Value();
   unsigned int xcut_high = upperX.Value();
@@ -100,13 +105,20 @@ int main(int /*argc*/, const char **argv) {
     eventCount++;
   }
 
+  auto h_no = new TH1D("NO", "NO", xcut_high-xcut_low, xcut_low, xcut_high);
   for (unsigned int i=xcut_low; i<xcut_high; i++) {
   	std::cout << i << "\t" << std::setprecision(9) << double(histogram[i])/double(eventCount) << std::endl;
+	h_no->Fill(i, double(histogram[i])/double(eventCount));
   }
-
   double occupancy = double(nhits)/double(pixelCount)/double(eventCount);
 
-  //std::cout << "Total Occupancy: " << std::setprecision(9) << occupancy << " from nHits: " << nhits << " in nEvts: " << eventCount << " over nPixels: " << pixelCount << std::endl;
+  std::cout << "Total Occupancy: " << std::setprecision(9) << occupancy << " from nHits: " << nhits << " in nEvts: " << eventCount << " over nPixels: " << pixelCount << std::endl;
+  h_no->SetTitle(Form("Average NO: %.9f", occupancy));
+  h_no->SetXTitle("Strip");
+  h_no->SetYTitle("Average NO");
+  TFile f(outfile_path.c_str(),"RECREATE");
+  h_no->Write();
+  f.Close();
   return 0;
 }
 
