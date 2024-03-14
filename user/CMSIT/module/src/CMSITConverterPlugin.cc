@@ -97,7 +97,7 @@ int TheConverter::ChargeConverter(const int row, const int col, const int ToT, c
     {
         double value = -1;
 
-        if((isnan(calibPar.hIntercept->GetBinContent(col + 1, row + 1)) == false) && (isnan(calibPar.hSlope->GetBinContent(col + 1, row + 1)) == false))
+        if((std::isnan(calibPar.hIntercept->GetBinContent(col + 1, row + 1)) == false) && (std::isnan(calibPar.hSlope->GetBinContent(col + 1, row + 1)) == false))
             value = (ToT - calibPar.hIntercept->GetBinContent(col + 1, row + 1)) / calibPar.hSlope->GetBinContent(col + 1, row + 1) * calibPar.slopeVCal2Charge + calibPar.interceptVCal2Charge;
 
         return (value > chargeCut ? value : -1);
