@@ -164,6 +164,16 @@ void CaribouProducer::DoConfigure() {
     EUDAQ_USER("Setting " + key + " = " + std::to_string(value));
   }
 
+  // Set specified supply / bias DAC
+
+  if (config->Has("voltage_key") || config->Has("voltage_value")) {
+  auto key = config->Get("voltage_key", "");
+  auto value = config->Get("voltage_value", 0.0);
+  device_->setVoltage(key, value);
+  EUDAQ_USER("Setting " + key + " = " + std::to_string(value));
+}
+
+
   // Select which ADC signal to regularly fetch:
   adc_signal_ = config->Get("adc_signal", "");
   adc_freq_ = config->Get("adc_frequency", 1000);
