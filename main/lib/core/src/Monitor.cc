@@ -48,7 +48,7 @@ namespace eudaq {
   
   void Monitor::OnInitialise(){
     EUDAQ_INFO(GetFullName() + " is to be initialised...");
-    auto conf = GetConfiguration();
+    auto conf = GetInitConfiguration();
     try{
       m_data_addr = Listen(m_data_addr);
       SetStatusTag("_SERVER", m_data_addr);
