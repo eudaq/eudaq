@@ -1,6 +1,7 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/Exception.hh"
 
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -53,16 +54,6 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("CorryMonitor");
   
 private:
-  bool m_safe_to_run = true;
-  // Define bit flags for each item
-  enum ERRORFlags {
-      CORRY_BIN = 1 << 0,  
-      CORRY_CON = 1 << 1,  
-      CORRY_GEO = 1 << 2,  
-      DATA_COL  = 1 << 3,  
-      EVENT_LOA = 1 << 4   
-  };
-  int m_error_flags = 0;
 
   std::pair<std::string, std::string> getFileString(std::string pattern);
   void reportMissingItems(int bitField);
@@ -101,12 +92,9 @@ void CorryMonitor::DoInitialise(){
   // Check if corryvreckan is found
   struct stat buffer;   
   if(stat(m_corry_path.c_str(), &buffer) != 0){
-    std::string msg = "Corryvreckan cannot be found under "+m_corry_path+" ! Please check your /path/to/corry/executable (Avoid using ~)";
+    std::string msg = "Corryvreckan executable cannot be found under "+m_corry_path+" ! Please check your /path/to/corry/executable (Avoid using ~)";
     EUDAQ_ERROR(msg);
-    //TODO: Fix that SetStatus currently does nothing
-    // eudaq::CommandReceiver::SetStatus(eudaq::Status::STATE_ERROR, msg);
-    m_safe_to_run = false;
-    m_error_flags |= CORRY_BIN;
+    EUDAQ_THROWX(eudaq::FileNotFoundException, msg);
   }
 }
 
@@ -212,11 +200,6 @@ std::pair<std::string, std::string> CorryMonitor::getFileString(std::string patt
 
 void CorryMonitor::DoConfigure(){
 
-  if (!m_safe_to_run) {
-    EUDAQ_ERROR("Can't configure CorryMonitor as Initialization already failed! \nPlease check the log for errors and fix them before resetting and trying again");
-    return;
-  }
-
   auto conf = GetConfiguration();
   //conf->Print(std::cout);
   m_datacollectors_to_monitor = conf->Get("DATACOLLECTORS_TO_MONITOR", "my_dc");
@@ -228,10 +211,9 @@ void CorryMonitor::DoConfigure(){
   // Check if config for corryvreckan is found
   struct stat buffer;   
   if(stat(m_corry_config.c_str(), &buffer) != 0) {
-    EUDAQ_ERROR("Config for corry cannot be found under "+m_corry_config+" ! Please check your /path/to/config.conf (Avoid using ~)");
-    m_safe_to_run = false;
-    m_error_flags |= CORRY_CON;
-    return;
+    std::string msg = "Config for corryvreckan cannot be found under "+m_corry_config+" ! Please check your /path/to/corryconfig.conf (Avoid using ~)";
+    EUDAQ_ERROR(msg);
+    EUDAQ_THROWX(eudaq::FileNotFoundException, msg);
   }
 
 
@@ -269,10 +251,9 @@ void CorryMonitor::DoConfigure(){
   // open geometry file (exploit same file structure for geometry file as for config file)
   std::string geo_file_name = corry_conf->Get("detectors_file", "");
   if(stat(geo_file_name.c_str(), &buffer) != 0) {
-    EUDAQ_ERROR("Geometry file for corry cannot be found under "+geo_file_name+" ! Please check the path of your geometry file");
-    m_safe_to_run = false;
-    m_error_flags |= CORRY_GEO;
-    return;
+    std::string msg = "Geometry file for corry cannot be found under "+geo_file_name+" ! Please check the path of your geometry file";
+    EUDAQ_ERROR(msg);
+    EUDAQ_THROWX(eudaq::FileNotFoundException, msg);
   }
   std::ifstream geo_file {corry_conf->Get("detectors_file", "")};
   std::shared_ptr<eudaq::Configuration> corry_geo = std::make_shared<eudaq::Configuration>(geo_file, "");
@@ -301,10 +282,9 @@ void CorryMonitor::DoConfigure(){
     // Check if DataCollector with name from m_datacollectors_to_monitor is found
     conf->SetSection("");
     if (!(conf->Has(section))) {
-      EUDAQ_ERROR("DataCollector to be monitored (\"" + section + "\") not found!");
-      m_safe_to_run = false;
-      m_error_flags |= DATA_COL;
-      return;
+      std::string msg = "DataCollector to be monitored (\"" + section + "\") not found!";
+      EUDAQ_ERROR(msg);
+      EUDAQ_THROW(msg);
     } else 
       EUDAQ_DEBUG("DataCollector to be monitored is " + section);
 
@@ -324,7 +304,7 @@ void CorryMonitor::DoConfigure(){
     // needed to pass file to be monitored to corry at runtime
     for (auto m: corry_geo->Sectionlist()){
       corry_geo->SetSection(m);
-      if (eudaq::lcase(corry_geo->GetCurrentSectionName()) == value.eventloader_type){
+      if (eudaq::lcase(corry_geo->GetCurrentSectionName()) == value.eventloader_type || eudaq::lcase(corry_geo->Get("type","")) == value.eventloader_type) {
         value.detector_planes.push_back(m);
       }
       else{
@@ -332,21 +312,21 @@ void CorryMonitor::DoConfigure(){
       }
     }
 
-    if (ss_xrda.good()) {
+    if (eudaq::trim(m_xrootd_addresses)!="" && ss_xrda.good()) {
       getline(ss_xrda, substr_xrda, ',');
       value.xrootd_address = "xroot://"+eudaq::trim(substr_xrda)+"/";
-      value.xrootd_address = "";
+      EUDAQ_DEBUG("Found xrootd address: " + value.xrootd_address);
     } else {
       value.xrootd_address = "";
+      EUDAQ_DEBUG("No xrootd address found");
     }
 
     m_datacollector_vector.push_back(value);
 
     if ( (ss_dcol.good()&&!ss_type.good()) || (!ss_dcol.good()&&ss_type.good()) ) {
-      EUDAQ_ERROR("Error when parsing DATACOLLECTORS_TO_MONITOR and CORRESPONDING_EVENTLOADER_TYPES! Check if they have the same length!");
-      m_safe_to_run = false;
-      m_error_flags |= EVENT_LOA;
-      return;
+      std::string msg = "Error when parsing DATACOLLECTORS_TO_MONITOR and CORRESPONDING_EVENTLOADER_TYPES! Check if they have the same length!";
+      EUDAQ_ERROR(msg);
+      EUDAQ_THROW(msg);      
     }
 
   }
@@ -371,21 +351,8 @@ std::string getCommandOutput(const char* cmd) {
   return result;
 }
 
-// Function to report missing files based on the bit field
-void CorryMonitor::reportMissingItems(int bitField) {
-  if (bitField & CORRY_BIN) EUDAQ_ERROR("Corryvreckan binary not found.\n");
-  if (bitField & CORRY_CON) EUDAQ_ERROR("Corryvreckan configuration file not found.\n");
-  if (bitField & CORRY_GEO) EUDAQ_ERROR("Corryvreckan geometry file not found.\n");
-  if (bitField & DATA_COL)  EUDAQ_ERROR("Could not find all DataCollectors to monitor.\n");
-  if (bitField & EVENT_LOA) EUDAQ_ERROR("Mismatch between DataCollectors and EventLoaders.\n");
-}
 
 void CorryMonitor::DoStartRun(){
-  if (!m_safe_to_run) {
-    EUDAQ_ERROR("Can't start CorryMonitor as not all checks were successful! \nPlease see the log for errors and fix them before resetting and trying again. \nBelow might be a hint to what went wrong:");
-    reportMissingItems(m_error_flags);
-    return;
-  }
 
   // File descriptor and watch descriptor for inotify
   int fd, wd[m_datacollector_vector.size()];
@@ -454,30 +421,6 @@ void CorryMonitor::DoStartRun(){
 
         if (result != "" && result.find("Server responded with an error")==std::string::npos){
           EUDAQ_DEBUG("Found a match with pattern " + it->pattern_to_match);
-          std::filesystem::path fullPath(result);
-          it->event_name = fullPath.filename().string();
-          it->found_matching_file = true;
-        }
-
-      }
-
-      // If no watch directories are set up, skip reading the directory change and try again with the xrootd server
-      if (num_wd==0) continue;
-
-      // Get the files for datacollectors with xrootd first
-      for (auto it=m_datacollector_vector.begin(); it!=m_datacollector_vector.end(); it++){
-
-        if (it->xrootd_address == "")         continue; // Skip DataCollectors not connected via xrootd
-        if (it->found_matching_file == true)  continue; // Skip because file for this DataCollector has been found
-
-        // std::string locate_command = "xrdfs "+it->xrootd_address+" locate -r "+it->monitor_file_path;
-        // std::system(locate_command.c_str());
-
-        std::string command = "xrdfs "+it->xrootd_address+" ls "+it->monitor_file_path+it->pattern_to_match + " 2>&1";
-        std::string result = getCommandOutput(command.c_str());
-
-        if (result != "" && result.find("Server responded with an error")==std::string::npos){
-          EUDAQ_DEBUG("xrootd: Found a match with pattern " + it->pattern_to_match);
           std::filesystem::path fullPath(result);
           it->event_name = fullPath.filename().string();
           it->found_matching_file = true;
@@ -595,8 +538,6 @@ void CorryMonitor::DoStartRun(){
 
 // Killing child process (corry) (adapted from https://stackoverflow.com/questions/13273836/how-to-kill-child-of-fork)
 void CorryMonitor::DoStopRun(){
-  // Check if corryvreckan was started in the first place
-  if (!m_safe_to_run) return;
 
   kill(m_corry_pid, SIGINT);
 
@@ -612,9 +553,6 @@ void CorryMonitor::DoStopRun(){
 }
 
 void CorryMonitor::DoReset(){
-  m_safe_to_run = true;
-  m_error_flags = 0;
-
   m_datacollectors_to_monitor.clear();
   m_eventloader_types.clear();
   m_corry_path.clear();
