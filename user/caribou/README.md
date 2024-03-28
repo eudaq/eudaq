@@ -85,7 +85,7 @@ The following parameters can be passed in the configuration in order to influenc
 
 * `plane_id`: Value that will be set `eudaq::StandardPlane::ID`. This setting can be used to support multiple devices in the same run. Default is `0`.
 * `zero_suppression`: If `1`, frames with no hits will *not* be skipped by the converter. Defaults to `0`.
-* `discard_during_reset`: If `0`, frames that appear during the frame reset will not be ignored. Default is `1`.
+* `discard_during_reset`: If `1`, frames that appear during the frame reset will be ignored. Default is `0`.
 * `check_valid`: If `1`, frames where the valid bit is not set will be skipped. Defaults to `0`.
 * `fine_tdc_bin_widths_qX`: Sets the bin width in picoseconds for every bin of the fine TDC, where `X` is the number of the quadrant. Has to be given as string formatted like `"95.2,120.3,80.7,...,95.6,"` with exactly 32 entries. Note that the trailing comma at the end is required. Default value is the design value for all bins in every quadrants.
 * `pixel_delays`: Sets the delay for every pixel in picoseconds. Has to be given as string formatted like `"10.7,9.33,,...,313.5,"` with exactly 32*32 entries. Note that the trailing comma at the end is required. The first 32 entries are for the first column, the next 32 entries are for the second column (`n = col * 32 + row`). Default value is zero for every pixel.
