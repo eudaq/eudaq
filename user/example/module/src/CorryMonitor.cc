@@ -367,6 +367,7 @@ void CorryMonitor::DoStartRun(){
   }
 
   bool found_all_files_to_monitor = false;
+  unsigned int ntries = 0;
 
   // Char** for debugging: Used to extract m_args.argv 
   char** command_ptr;
@@ -403,6 +404,13 @@ void CorryMonitor::DoStartRun(){
     // }
 
     while(!found_all_files_to_monitor){
+      ntries++;
+      if (ntries > 1000) {
+        std::cout << "ntries: " << ntries << std::endl;
+        EUDAQ_WARN("Could not find all files to monitor after 1000 tries. Not starting monitor");
+        return;
+      }
+
       found_all_files_to_monitor = std::all_of(m_datacollector_vector.begin(), m_datacollector_vector.end(), [](const auto& v) {
         return v.found_matching_file;
       });
@@ -424,6 +432,9 @@ void CorryMonitor::DoStartRun(){
           std::filesystem::path fullPath(result);
           it->event_name = fullPath.filename().string();
           it->found_matching_file = true;
+        } else {
+          EUDAQ_DEBUG("XRootD server (" + it->xrootd_address + ") response: \n" + result + "\n \t ... Trying again!");
+          eudaq::mSleep(100);
         }
 
       }
