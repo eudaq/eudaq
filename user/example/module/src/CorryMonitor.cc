@@ -553,7 +553,7 @@ void CorryMonitor::DoStopRun(){
   kill(m_corry_pid, SIGINT);
 
   bool died = false;
-  for (int loop=0; !died && loop < 15; ++loop)
+  for (int loop=0; !died && loop < 30; ++loop)
   {
     int status;
     eudaq::mSleep(1000);
