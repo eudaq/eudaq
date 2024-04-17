@@ -59,7 +59,7 @@ class PowerProducer(pyeudaq.Producer):
         self.SetStatusTag('StatusEventN','%d'%self.isev);
         self.SetStatusTag('DataEventN'  ,'%d'%self.idev);
         if self.last_status:
-            sel,volt_set,curr_set,volt_meas,curr_meas,fused=self.last_status
+            sel,_,_,volt_meas,curr_meas,fused,_,_=self.last_status
             self.SetStatusMsg(
                 ' | '.join([f"{'ON' if sel[ch] else 'OFF'}{' FUSE' if fused[ch] else ''} {volt_meas[ch]:.2f}V {curr_meas[ch]*1.e3:.1f}mA" for ch in range(self.ps.n_ch)])
             )
@@ -80,7 +80,7 @@ class PowerProducer(pyeudaq.Producer):
         ev.SetTag('Time',time.isoformat())
         with self.lock:
             self.last_status = self.ps.status()
-            sel,volt_set,curr_set,volt_meas,curr_meas,fused=self.last_status
+            sel,volt_set,curr_set,volt_meas,curr_meas,fused,_,_=self.last_status
         for ch in range(1,self.ps.n_ch+1):
             ev.SetTag('enabled_%d'     %ch,'%d'     %(sel      [ch-1]     ))
             ev.SetTag('fused_%d'       %ch,'%d'     %(fused    [ch-1]     ))
