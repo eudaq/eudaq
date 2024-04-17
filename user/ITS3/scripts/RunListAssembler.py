@@ -59,14 +59,14 @@ if __name__=="__main__":
         args.output_file = os.path.join(args.dir,"run_list.csv")
 
     fout = open(args.output_file,'w')
-    fout.write("run,start time,end time,ini file,conf file,total events,n triggers,n events,alpide ntrgacc\n")
+    fout.write("run,sub dir,start time,end time,ini file,conf file,total events,n triggers,alpide ntrgacc\n")
 
     for run in tqdm.tqdm(glob.glob(os.path.join(args.dir,'*.raw'))):
         totev,st,et,conf,ini,trgN,evN,ntrgacc = read_raw_file(run)
         trgN = list(set(trgN.values()))[0]+1 if len(set(trgN.values()))==1 else str(trgN).replace(',','')
         evN = list(set(evN.values()))[0]+1 if len(set(evN.values()))==1 else str(evN).replace(',','')
         ntrgacc = list(set(ntrgacc.values()))[0] if len(set(ntrgacc.values()))==1 else str(ntrgacc).replace(',','')
-        fout.write(f"{os.path.basename(run)},{st},{et},{ini},{conf},{totev},{trgN},{evN},{ntrgacc}\n")
+        fout.write(f"{os.path.basename(run)},{run.split('/')[-2]},{st},{et},{ini},{conf},{totev},{trgN},{ntrgacc}\n")
         #print(os.path.basename(run),totev,st,et,conf,trgN)
         #print(trgN,ntrgacc)
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import pyeudaq
 import threading
 import urwid
@@ -8,7 +9,7 @@ import re
 from time import sleep
 import argparse
 import traceback
-from utils import exception_handler
+from utils import exception_handler, get_quote_or_tip
 
 urwid_timed_progress.FancyProgressBar.get_text=lambda self: '%d/%d %s (%.1f%%)'%(self.current,self.done,self.units[0][0],self.current/self.done*100)
 
@@ -51,7 +52,7 @@ class ITS3TUI():
     }
 
     def __init__(self,rc):
-        self.rc=rc
+        self.rc:ITS3RunControl = rc
         self.statefont=urwid.font.HalfBlock7x7Font()
         self.tui=self.buildtui()
         self.aloop=asyncio.get_event_loop()
@@ -67,6 +68,10 @@ class ITS3TUI():
         elif key in ('S'):
             with self.rc.lock:
                 self.rc.running = False
+        elif key in ('R'):
+            with self.rc.lock:
+                self.rc.running = False
+                self.rc.repeat = True
 
     def run(self):
         self.loop=urwid.MainLoop(
@@ -91,6 +96,7 @@ class ITS3TUI():
             a.set_text(b)
         self.loop.draw_screen()
     def update_producer(self,producer,state,ndev,nsev,info):
+        if 'warning' in info.lower(): info = ('state-conf', info)
         cols=[producer,self.CONNECTION_STATES[state],'%8d'%ndev,'%8d'%nsev,info]
         asyncio.run_coroutine_threadsafe(self.update_producer_(producer,cols),self.aloop).result()
 
@@ -138,6 +144,12 @@ class ITS3TUI():
     def update_progress_tot(self):
         asyncio.run_coroutine_threadsafe(self.update_progress_tot_(),self.aloop).result()
 
+    async def reset_progress_tot_(self):
+        self.progress_tot.reset()
+        self.loop.draw_screen()
+    def reset_progress_tot(self):
+        asyncio.run_coroutine_threadsafe(self.reset_progress_tot_(),self.aloop).result()
+
     async def update_footer_(self,text):
         self.footer.set_text(text)
         self.loop.draw_screen()
@@ -147,12 +159,20 @@ class ITS3TUI():
     async def update_configs_list_(self,text):
         self.configs_list.set_text(text)
         self.loop.draw_screen()
-    def update_configs_list(self,configs_list):
-        text = [('table-header', configs_list[0]), ', ', ', '.join(configs_list[1:])]
+    def update_configs_list(self,configs_list, iteration):
+        text = [f'Pass {iteration}: ', ('table-header', configs_list[0]), ', ', ', '.join(configs_list[1:])]
         asyncio.run_coroutine_threadsafe(self.update_configs_list_(text),self.aloop).result()
 
+    async def update_tip_(self,text):
+        self.tip.set_text(text)
+        self.loop.draw_screen()
+    def update_tip(self):
+        tip = get_quote_or_tip()
+        text = [tip]
+        asyncio.run_coroutine_threadsafe(self.update_tip_(text),self.aloop).result()
+
     def buildtui(self):
-        self.footer=urwid.Text(('footer','Hotkeys: [S]top run, [T]erminate, [Q]uit'))
+        self.footer=urwid.Text(('footer','Hotkeys: [S]top run, [R]estart run, [T]erminate, [Q]uit'))
         footer=urwid.Padding(self.footer)
         footer=urwid.AttrWrap(footer,'footer')
         header=urwid.Columns([
@@ -171,12 +191,14 @@ class ITS3TUI():
         self.producers={}
         self.collectors={}
         self.configs_list=urwid.Text('')
+        self.tip=urwid.Text('')
         main=urwid.ListBox([
           urwid.LineBox(urwid.Padding(self.state,'center',None),title='Status'),
           urwid.LineBox(progress,title='Progress'),
           urwid.LineBox(self.build_table(self.rc.dataproducers+self.rc.moreproducers,self.producers),title='Producers'),
           urwid.LineBox(self.build_table(self.rc.collectors+self.rc.loggers,self.collectors),title='Collector(s)'),
-          urwid.LineBox(self.configs_list, title='Pending configs')
+          urwid.LineBox(self.configs_list, title='Pending configs'),
+          urwid.LineBox(self.tip, title='Tips')
         ])
         return urwid.Frame(main,header=header,footer=footer)
     
@@ -230,10 +252,15 @@ class ITS3RunControl(pyeudaq.RunControl):
             if n==0:
                 print(f"\nERROR! No {text} to run! Check the ini file!\n")
                 exit()
+            for conf in self.configs:
+                if not os.path.exists(conf):
+                    print(f"{conf} does not exist, check its path and name!")
+                    exit()
         self.tui=ITS3TUI(self)
         self.lock=threading.Lock()
         self.running=False
         self.halt=False
+        self.repeat=False
     
     @exception_handler
     def DoConnect(self,c):
@@ -320,10 +347,12 @@ class ITS3RunControl(pyeudaq.RunControl):
         self.Initialise()
         self.wait_replicas(pyeudaq.Status.STATE_UNCONF)
         self.tui.set_state('UNCONF')
-        for i,c in enumerate(self.configs):
-            self.tui.update_configs_list(self.configs[i:])
+        active_config = 0
+        iteration = 1
+        while True:
+            self.tui.update_configs_list(self.configs[active_config:], iteration)
             self.tui.reset_progress_run()
-            self.ReadConfigureFile(c)
+            self.ReadConfigureFile(self.configs[active_config])
             self.Configure()
             self.wait_replicas(3)
             self.tui.set_state('CONF')
@@ -332,6 +361,7 @@ class ITS3RunControl(pyeudaq.RunControl):
             self.tui.set_state('RUNNING')
             ntarget=int(self.GetConfiguration().Get('NEVENTS'))
             self.tui.target_progress_run(ntarget)
+            self.tui.update_tip()
             nlast=0
             with self.lock: self.running = True
             while self.running:
@@ -351,6 +381,15 @@ class ITS3RunControl(pyeudaq.RunControl):
             self.wait_replicas(pyeudaq.Status.STATE_STOPPED)
             self.tui.set_state('STOPPED')
             if self.halt: break
+            if self.repeat:
+                with self.lock:
+                    self.repeat = False
+            else:
+                active_config += 1
+                if active_config >= len(self.configs):
+                    active_config = 0
+                    iteration += 1
+                    self.tui.reset_progress_tot()
         self.tui.set_state('TERMINATED')
         self.Terminate()
         with self.lock: self.halt = True
@@ -368,7 +407,7 @@ class ITS3RunControl(pyeudaq.RunControl):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description='ITS3 Run Control',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--address',default='44000')
-    parser.add_argument('--ini',default='ITS3.ini')
+    parser.add_argument('--ini',help="Path to .ini file.", required=True)
     args=parser.parse_args()
 
     rc=ITS3RunControl(args.address,args.ini)

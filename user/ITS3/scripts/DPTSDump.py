@@ -21,13 +21,14 @@ def DPTSDump(filename,dpts_name,threshold,event_offset,n_events,output_dir):
     for _ in range(event_offset):  # _ can be used as a variable in looping
         fr.GetNextEvent()
     # if n=0 dump all the events over thr, otherwise dump only the events over thr found in the first n frames
-    counter = event_offset if event_offset else -1
+    counter = n_events if n_events else -1
     logging.info("Processing events in {} ...".format(filename))
     while counter != 0:
         try:
             ev=fr.GetNextEvent()
             sevs=ev.GetSubEvents()
             if sevs is None: break
+            dpts_event=False
             for sev in sevs:
                 if sev.GetDescription()==dpts_name:
                     e=sev.GetBlock(0)
@@ -35,7 +36,9 @@ def DPTSDump(filename,dpts_name,threshold,event_offset,n_events,output_dir):
                     if threshold is None or np.max(d)>threshold:
                         d.shape=(2,len(d)//2)
                         np.save(data_folder + '/dump%04d.npy'%ev.GetEventN(),d)
-            counter -= 1
+                        dpts_event=True
+            if dpts_event: # at least one waveform saved
+                counter -= 1
         except AttributeError as ae:
             logging.info("All the events in {} are dumped".format(filename))
             break
