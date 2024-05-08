@@ -155,6 +155,8 @@ namespace eudaq {
       if (file.fail()) {
         EUDAQ_THROW("Error reading from file " + fname);
       }
+    } else {
+      EUDAQ_THROW("Unable to open file " + fname + " for reading");
     }
     return result;
   }
