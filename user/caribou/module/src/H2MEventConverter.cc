@@ -32,6 +32,7 @@ bool H2MEvent2StdEventConverter::Converting(
 
   // Read acquisition mode from configuration, defaulting to ToT.
   uint8_t acq_mode = conf->Get("acq_mode", 0x1);
+  uint64_t delay_to_frame_end = conf->Get("delay_to_frame_end", -999);
 
   // get an instance of the frame decoder
   static caribou::H2MFrameDecoder decoder;
@@ -108,8 +109,10 @@ bool H2MEvent2StdEventConverter::Converting(
       continue;
     }
 
-    // Fetch timestamp from pixel if on ToA mode, otherwise set to frame center:
-    uint64_t timestamp = (pixHit->GetMode() == caribou::ACQ_MODE_TOA ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps)) : ((frameStart + frameEnd) / 2));
+    // Fetch timestamp from pixel if on ToA mode,
+    // otherwise set to frame center (CERN mode) or configure a position with respect to the frame end (in ps, DESY mode)
+    uint64_t not_toa_time = delay_to_frame_end > 0 ? frameEnd - delay_to_frame_end : ((frameStart + frameEnd) / 2);
+    uint64_t timestamp = pixHit->GetMode() == caribou::ACQ_MODE_TOA ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps)) : not_toa_time;
     uint64_t tot = pixHit->GetToT();
 
     // assemble pixel and add to plane
@@ -136,4 +139,3 @@ bool H2MEvent2StdEventConverter::Converting(
   // Indicate that data was successfully converted
   return true;
 }
-
