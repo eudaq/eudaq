@@ -15,7 +15,8 @@ namespace {
       H2MEvent2StdEventConverter>(H2MEvent2StdEventConverter::m_id_factory);
 }
 
-
+size_t H2MEvent2StdEventConverter::last_frame_id_ = 0;
+bool H2MEvent2StdEventConverter::frame_id_jumped_ = false;
 bool H2MEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
     eudaq::ConfigurationSPC conf) const {
@@ -69,6 +70,19 @@ bool H2MEvent2StdEventConverter::Converting(
   if(t0 == false || ts_sh_close < ts_sh_open) {
       EUDAQ_DEBUG("No T0 signal seen yet, skipping event");
       return false;
+  }
+
+  // Optionally check for frame ID jump:
+  if(conf->Get("wait_for_frame_jump", 0)) {
+    if(frameID < last_frame_id_) {
+      frame_id_jumped_ = true;
+    }
+
+    if(!frame_id_jumped_) {
+      EUDAQ_DEBUG("No frame ID jump seen yet, skipping event");
+      last_frame_id_ = frameID;
+      return false;
+    }
   }
 
   // remove the 6 elements from the header
