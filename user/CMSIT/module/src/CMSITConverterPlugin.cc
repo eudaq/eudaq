@@ -20,22 +20,50 @@ void TheConverter::ConverterForQuad(int& row, int& col, const int& chipIdMod4)
     // ###########################################
     // # @TMP@: mapping quad chips is hard-coded #
     // ###########################################
-    if(chipIdMod4 == 3)
+
+    // ########
+    // # TBPX #
+    // ########
+    // if(chipIdMod4 == 3)
+    // {
+    //     row = nRows + row;
+    //     col = nCols + col;
+    // }
+    // else if(chipIdMod4 == 2)
+    // {
+    //     row = nRows + row;
+    //     col = col;
+    // }
+    // else if(chipIdMod4 == 1)
+    // {
+    //     row = nRows - 1 - row;
+    //     col = nCols - 1 - col;
+    // }
+    // else if(chipIdMod4 == 0)
+    // {
+    //     row = nRows - 1 - row;
+    //     col = nCols + nCols - 1 - col;
+    // }
+
+    // ########
+    // # TEPX #
+    // ########
+    if(chipIdMod4 == 0)
     {
         row = nRows + row;
         col = nCols + col;
     }
-    else if(chipIdMod4 == 2)
+    else if(chipIdMod4 == 1)
     {
         row = nRows + row;
         col = col;
     }
-    else if(chipIdMod4 == 1)
+    else if(chipIdMod4 == 2)
     {
         row = nRows - 1 - row;
         col = nCols - 1 - col;
     }
-    else if(chipIdMod4 == 0)
+    else if(chipIdMod4 == 3)
     {
         row = nRows - 1 - row;
         col = nCols + nCols - 1 - col;
