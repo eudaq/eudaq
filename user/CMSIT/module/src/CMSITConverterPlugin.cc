@@ -79,9 +79,9 @@ void TheConverter::ConverterFor50x50(int& row, int& col, int& charge, const int&
 {
     charge = ChargeConverter(row, col, charge, calibPar, chargeCut);
 
-    if(theSensor == SensorType::QuadChip)
+    if(theSensor == TheConverter::SensorType::QuadChip)
         TheConverter::ConverterForQuad(row, col, chipIdMod4);
-    else if(theSensor == SensorType::DualChip)
+    else if(theSensor == TheConverter::SensorType::DualChip)
         TheConverter::ConverterForDual(row, col, chipIdMod4);
 }
 
@@ -303,36 +303,37 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 {
     TheConverter theConverter;
     std::string  cfg = (cfgFromFile != "" ? cfgFromFile : cfgFromData);
-    nRows            = (cfg.find("RD53A") != std::string::npos ? NROWS_RD53A : NROWS_RD53B);
-    nCols            = (cfg.find("RD53A") != std::string::npos ? NCOLS_RD53A : NCOLS_RD53B);
-    ChipType         = (cfg.find("RD53A") != std::string::npos ? CHIPTYPE_RD53A : CHIPTYPE_RD53B);
+    std::transform(cfg.begin(), cfg.end(), cfg.begin(), ::toupper);
+    nRows    = (cfg.find("RD53A") != std::string::npos ? NROWS_RD53A : NROWS_RD53B);
+    nCols    = (cfg.find("RD53A") != std::string::npos ? NCOLS_RD53A : NCOLS_RD53B);
+    ChipType = (cfg.find("RD53A") != std::string::npos ? CHIPTYPE_RD53A : CHIPTYPE_RD53B);
 
     theConverter.whichConverter = &TheConverter::ConverterFor50x50;
     theConverter.theSensor      = TheConverter::SensorType::SingleChip;
     theConverter.nCols          = nCols;
     theConverter.nRows          = nRows;
 
-    if((cfg.find("25x100") != std::string::npos) || (cfg.find("100x25") != std::string::npos))
+    if((cfg.find("25X100") != std::string::npos) || (cfg.find("100X25") != std::string::npos))
     {
         nCols /= 2;
         nRows *= 2;
     }
 
-    if(cfg.find("dual") != std::string::npos)
+    if(cfg.find("DUAL") != std::string::npos)
     {
         theConverter.theSensor = TheConverter::SensorType::DualChip;
         nCols *= 2;
     }
-    else if(cfg.find("quad") != std::string::npos)
+    else if(cfg.find("QUAD") != std::string::npos)
     {
         theConverter.theSensor = TheConverter::SensorType::QuadChip;
         nCols *= 2;
         nRows *= 2;
     }
 
-    if((cfg.find("25x100origR0C0") != std::string::npos) || (cfg.find("100x25origR0C0") != std::string::npos))
+    if((cfg.find("25X100ORIGR0C0") != std::string::npos) || (cfg.find("100X25ORIGR0C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR0C0;
-    else if((cfg.find("25x100origR1C0") != std::string::npos) || (cfg.find("100x25origR1C0") != std::string::npos))
+    else if((cfg.find("25X100ORIGR1C0") != std::string::npos) || (cfg.find("100X25ORIGR1C0") != std::string::npos))
         theConverter.whichConverter = &TheConverter::ConverterFor25x100origR1C0;
 
     // #############################################
