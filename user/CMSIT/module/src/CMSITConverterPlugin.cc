@@ -372,7 +372,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     planeId = deviceId;
     if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
         planeId = round(deviceId / CMSITplaneIdOffset) * CMSITplaneIdOffset + QUADID;
-    else if(theConverter.theSensor == TheConverter::SensorType::QuadChip)
+    else if(theConverter.theSensor == TheConverter::SensorType::DualChip)
         planeId = round(deviceId / CMSITplaneIdOffset) * CMSITplaneIdOffset + DUALID;
 
     return theConverter;
@@ -512,7 +512,7 @@ int CMSITConverterPlugin::ReadConfigurationAndComputeDeviceId(const uint32_t    
     // # Don't use these ranges (Needs to be unique to each ROC):                                             #
     // # (-) 0-10:  used by NIConverter/MIMOSA                                                                #
     // # (-) 25-30: used by USBPixGen3Converter/FEI-4                                                         #
-    // # (-) 30+:   used by BDAQ53Converter/RD53 with same model (30 [BDAQ offset] + 10 * boardId + chipId)   #
+    // # (-) 100+:  used by RD53 (100 + 100 * hybridId + chipId)                                              #
     // ########################################################################################################
     return CMSITplaneIdOffset + 100 * hybridId + chipId;
 }
