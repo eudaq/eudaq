@@ -331,7 +331,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
 {
     TheConverter theConverter;
     std::string  cfg = (cfgFromFile != "" ? cfgFromFile : cfgFromData);
-    std::transform(cfg.begin(), cfg.end(), cfg.begin(), ::toupper);
+    std::transform(cfg.begin(), cfg.end(), cfg.begin(), toupper);
     nRows    = (cfg.find("RD53A") != std::string::npos ? NROWS_RD53A : NROWS_RD53B);
     nCols    = (cfg.find("RD53A") != std::string::npos ? NCOLS_RD53A : NCOLS_RD53B);
     ChipType = (cfg.find("RD53A") != std::string::npos ? CHIPTYPE_RD53A : CHIPTYPE_RD53B);
