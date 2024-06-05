@@ -90,6 +90,8 @@ namespace eudaq {
     static double m_ampEndTime;
     static double m_chargeScale;
     static double m_chargeCut;
+    static int m_channels;
+    static int m_digital;
     static bool m_polarity;
     static bool m_generateRoot;
     static bool m_osci_timestamp;

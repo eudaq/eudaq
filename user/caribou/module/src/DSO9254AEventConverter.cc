@@ -22,7 +22,8 @@ double DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
 double DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
 double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
 double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
-
+int DSO9254AEvent2StdEventConverter::m_channels(0);
+int DSO9254AEvent2StdEventConverter::m_digital(0);
 bool DSO9254AEvent2StdEventConverter::m_polarity(1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(0);
 bool DSO9254AEvent2StdEventConverter::m_osci_timestamp(1);
@@ -50,6 +51,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_polarity    = conf->Get("polarity"   , 1);
     m_generateRoot = conf->Get("generateRoot", 0);
     m_osci_timestamp = conf->Get("osci_timestamp", 1);
+     m_channels = conf->Get("channels", 4);
+      m_digital = conf->Get("digital", 0);
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
     EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
@@ -60,6 +63,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
     EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
     EUDAQ_DEBUG( "  osci_timestamp = " + to_string( m_osci_timestamp ) );
+    EUDAQ_DEBUG( "  channels = " + to_string( m_channels ) );
 
     // check configuration
     bool noData = false;
@@ -111,7 +115,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // generate rootfile to write waveforms as TH1D
   TFile * histoFile = nullptr;
   if( m_generateRoot ){
-    histoFile = new TFile( Form( "waveforms_run%i.root", ev->GetRunN() ), "UPDATE" );
+    histoFile = new TFile( Form( "waveforms_run%i.root", ev->GetRunN() ), "UPDATE");
     if(!histoFile) {
       EUDAQ_ERROR(to_string(histoFile->GetName()) + " can not be opened");
       return false;
@@ -138,8 +142,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   uint64_t block_position = 0;
   uint64_t sgmnt_count = 1;
 
-  // loop 4 channels
-  for( int nch = 0; nch < 4; nch++ ){
+  // loop 4 channels -> loop m_channels
+  for( int nch = 0; nch < m_channels; nch++ ){
 
     EUDAQ_DEBUG( "Reading channel " + to_string(nch));
 
@@ -265,6 +269,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
             time.push_back( wfi * dx.at(nch) + x0.at(nch) );
           }
           wave.push_back( (word * dy.at(nch) + y0.at(nch)) );
+          //std::cout<< std::hex << word <<std::endl;;
 
 
           // fill histogram
@@ -302,9 +307,202 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // update position for next iteration
     block_position += block_words+1;
 
+   
 
   } // for channel
 
+if(m_digital){ 
+  
+   EUDAQ_DEBUG( "Reading digital channels ");
+
+    // Obtaining Data Stucture
+    block_words = rawdata[block_position + 0];
+    pream_words = rawdata[block_position + 1];
+    chann_words = rawdata[block_position + 2 + pream_words];
+    EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
+    EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
+    EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
+    EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
+    EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
+
+    // Check our own sixth-graders math: The block header minus peamble minus channel data minus the counters is zero
+    if(block_words - pream_words - 2 - chann_words) {
+      EUDAQ_WARN("Go back to school, 6th grade - math doesn't check out! :/");
+    }
+
+    // read preamble:
+    std::string preamble = "";
+    for(int i=block_position + 2;
+        i<block_position + 2 + pream_words;
+        i++ ){
+      preamble += (char)rawdata[i];
+    }
+    EUDAQ_DEBUG("Preamble");
+    EUDAQ_DEBUG("  " + preamble);
+    // parse preamble to vector of strings
+    std::string val;
+    std::vector<std::string> vals;
+    std::istringstream stream(preamble);
+    while(std::getline(stream,val,',')){
+      vals.push_back(val);
+      EUDAQ_DEBUG( " " + to_string(vals.size()-1) + ": " + to_string(vals.back()));
+    }
+
+    // Pick needed preamble elements
+    // np.push_back( stoi( vals[2]) );
+    // dx.push_back( stod( vals[4]) * 1e9 );
+    // x0.push_back( stod( vals[5]) * 1e9 );
+    // dy.push_back( stod( vals[7]) );
+    // y0.push_back( stod( vals[8]) );
+
+    EUDAQ_DEBUG("Acq mode (2=SEGM): " + to_string(vals[18]));
+    if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
+      EUDAQ_DEBUG( "Segments: " + to_string(vals[24]));
+      sgmnt_count = stoi( vals[24] );
+    }
+
+    // // Check our own seventh-graders math: total data size minus four times the data of a channel minus four block header words = 0
+    // if(rawdata.size() - 4 * block_words - 4) {
+    //   EUDAQ_WARN("Go back to school 7th grade - math doesn't check out! :/ " + to_string(rawdata.size() - 4 * block_words) + " is not 0!");
+    // }
+
+    // int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
+    // if(chann_words % sgmnt_count != 0) {
+    //   EUDAQ_WARN("Segment count and channel words don't match: " + to_string(chann_words) + "/" + to_string(sgmnt_count));
+    // }
+    // if( np.at(nch) % (chann_words/sgmnt_count) ){ // check
+    //   EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
+    //              + ", channel " + to_string(nch) );
+    // }
+    // EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
+
+    // // Check our own eighth-graders math: the number of words in the channel times 4 points per word minus the number of points times number of segments is 0
+    // if(4 * chann_words - np.at(nch) * sgmnt_count) {
+    //   EUDAQ_WARN("Go back to school 8th grade - math doesn't check out! :/ " + to_string(chann_words - np.at(nch) * sgmnt_count) + " is not 0!");
+    // }
+
+    // set run start time to 0 ms, using  timestamps from preamble which are 10 ms precision
+    // if( m_runStartTime < 0 ){
+    //   m_runStartTime = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
+    // }
+    // timestamp = ( DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] )
+    //               - m_runStartTime ) * 1e9; // ms to ps
+
+    // //To not use oscilloscope timestamps
+    // if(!m_osci_timestamp)
+    // {timestamp=0;}
+
+    // need once per channel
+    // std::vector<double> ped;
+    // std::vector<double> amp;
+    std::vector<std::vector<int>> waves_trgid;
+     std::vector<std::vector<int>> waves_trg;
+      std::vector<std::vector<int>> waves_clk;
+
+
+    for( int s=0; s<sgmnt_count; s++){ // loop semgents
+
+      // container for one waveform
+      std::vector<double> w_trg, w_trgid, w_clk;
+
+      // prepare histogram with corresponding binning if root file is created
+      TH1D* hist_trgid = nullptr;
+      TH1D* hist_trg = nullptr; 
+      TH1D* hist_clk = nullptr;
+
+      if( m_generateRoot ){
+        TH1D* hist_1 = new TH1D(
+                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 1, s ),
+                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 1, s ),
+                                   stoi(vals[2]),
+                                   stod(vals[5])*1e9,(stod(vals[5])+stoi(vals[2])*stod(vals[4]))*1e9);
+        TH1D* hist_5 = new TH1D(
+                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 5, s ),
+                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 5, s ),
+                                   stoi(vals[2]),
+                                   stod(vals[5])*1e9,(stod(vals[5])+stoi(vals[2])*stod(vals[4]))*1e9);
+        TH1D* hist_14 = new TH1D(
+                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 14, s ),
+                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 14, s ),
+                                   stoi(vals[2]),
+                                   stod(vals[5])*1e9,(stod(vals[5])+stoi(vals[2])*stod(vals[4]))*1e9);
+        
+        hist_trgid = hist_1;
+        hist_trg = hist_5;
+        hist_clk = hist_14;
+        
+        hist_trgid->GetXaxis()->SetTitle("time [ns]");
+        hist_trgid->GetYaxis()->SetTitle("signal [V]");
+
+        hist_trg->GetXaxis()->SetTitle("time [ns]");
+        hist_trg->GetYaxis()->SetTitle("signal [V]");
+
+        hist_clk->GetXaxis()->SetTitle("time [ns]");
+        hist_clk->GetYaxis()->SetTitle("signal [V]");
+      }
+
+      // read channel data
+      std::vector<int16_t> words;
+      words.resize(stoi(vals[2])); // rawdata contains 8 byte words, scope sends 2 byte words
+      int16_t wfi = 0;
+      // Read from segment start until the next segment begins:
+      for(int i=block_position + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
+          i<block_position + 3 + pream_words + (s+1)*chann_words/sgmnt_count;
+          i++){
+
+        // copy channel data from entire segment data block
+        memcpy(&words.front(), &rawdata[i], stoi(vals[2])*sizeof(int16_t));
+
+        for( auto word : words ){
+
+          // fill vectors with time bins and waveform
+          
+          w_trgid.push_back((word>>1)&0x1 );
+          w_trg.push_back((word>>5)&0x1 );
+          w_clk.push_back((word>>14)&0x1 );
+          //std::cout<< std::hex << word <<std::endl;;
+
+
+          // fill histogram
+          if( m_generateRoot ){
+            hist_trgid->SetBinContent(w_trgid.size(),(word>>1)&0x1 );
+            hist_trg->SetBinContent(w_trg.size(),(word>>5)&0x1 );
+            hist_clk->SetBinContent(w_clk.size(),(word>>14)&0x1 );
+          }
+
+          wfi++;
+
+        } // words
+
+      } // waveform
+
+      // store waveform vector and create vector entries for pedestal and amplitude
+      // waves.push_back( wave );
+      // ped.push_back( 0. );
+      // amp.push_back( 0. );
+
+      // write and delete
+      if( m_generateRoot ){
+        hist_trgid->Write();
+        hist_trg->Write();
+        hist_clk->Write();
+      }
+      delete hist_trgid;
+      delete hist_trg;
+      delete hist_clk;
+
+    } // segments
+
+
+    // not only for each semgent but for each channel
+    // wavess.push_back( waves );
+    // peds.push_back( ped );
+    // amps.push_back( amp );
+
+
+    // update position for next iteration
+    block_position += block_words+1;
+}
 
   // close rootfile
   if( m_generateRoot ){
@@ -453,7 +651,7 @@ uint64_t DSO9254AEvent2StdEventConverter::timeConverter( std::string date, std::
     {"FEB",  2},
     {"MAR",  3},
     {"APR",  4},
-    {"MAI",  5},
+    {"MAY",  5},
     {"JUN",  6},
     {"JUL",  7},
     {"AUG",  8},
