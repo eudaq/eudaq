@@ -8,6 +8,6 @@ if(NOT USER_YARR_BUILD)
   return()
 endif()
 
-message(STATUS "user/example is to be built (USER_YARR_BUILD=ON)")
+message(STATUS "user/yarr is to be built (USER_YARR_BUILD=ON)")
 
 add_subdirectory(module)
