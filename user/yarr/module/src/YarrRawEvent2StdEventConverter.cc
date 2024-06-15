@@ -100,6 +100,8 @@ void YarrRawEvent2StdEventConverter::decodeBORE(std::shared_ptr<const eudaq::Raw
                    m_FrontEndType[prodID] = "Rd53a";
                 } else if(DUTTYPE=="RD53B") {
                    m_FrontEndType[prodID] = "Rd53b";
+                } else if(DUTTYPE=="ITKPIXV2") {
+                   m_FrontEndType[prodID] = "Itkpixv2";
                 };
 		std::cout << "YarrConverterPlugin: front end type " << m_FrontEndType.at(prodID) << " declared in BORE for producer " << prodID << std::endl;
 		
@@ -166,14 +168,18 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
                        width  = 400;
                        height = 192;
                        local_plane_type = m_FrontEndType.at(prodID);
-                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_single")) {
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b" || m_FrontEndType.at(prodID)=="Itkpixv2")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_single")) {
                        width  = 400;
                        height = 384;                       
                        local_plane_type = m_FrontEndType.at(prodID);                       
-                     } else if ((m_FrontEndType.at(prodID)=="Rd53b")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_quad")) {
+                     } else if ((m_FrontEndType.at(prodID)=="Rd53b" || m_FrontEndType.at(prodID)=="Itkpixv2")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_quad")) {
                        width  = 800;
                        height = 768;
-                       local_plane_type = "RD53BQUAD";  
+                       local_plane_type = "RD53BQUAD";
+		     } else if ((m_FrontEndType.at(prodID)=="Itkpixv2")&&(m_module_size_by_module_index[prodID][currentPlaneIndex]=="ITk_quad")) {
+                       width  = 800;
+                       height = 768;
+                       local_plane_type = "ITKPIXV2QUAD";
                      };
                      unsigned int local_id = m_plane_id_by_module_index[prodID][currentPlaneIndex];
 
@@ -200,7 +206,7 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
                             Fei4Hit hit = *((Fei4Hit*)(&block[it])); it+= sizeof(Fei4Hit);
 			    //plane.PushPixel(hit.col,hit.row,hit.tot);
 			    //std::cout << "col: " << hit.col  << " row: " << hit.row << " tot: " << hit.tot << " l1id: " << l1id << " tag: " << tag << std::endl;
-			    if((m_chip_info_by_uid[prodID][block_n].moduleType=="ITk_quad")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+			    if((m_chip_info_by_uid[prodID][block_n].moduleType=="ITk_quad")&&(m_FrontEndType.at(prodID)=="Rd53b" || m_FrontEndType.at(prodID)=="Itkpixv2")){
 			       uint16_t transformed_col;
 			       uint16_t transformed_row;
 			       switch(m_chip_info_by_uid[prodID][block_n].chipLocationOnModule){
@@ -226,7 +232,7 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixel(transformed_col-1,transformed_row-1,hit.tot,false,tag);			       
 			    } else if((m_chip_info_by_uid[prodID][block_n].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53a")){
                                 standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,l1id);
-			    } else if((m_chip_info_by_uid[prodID][block_n].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53b")){
+			    } else if((m_chip_info_by_uid[prodID][block_n].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53b" || m_FrontEndType.at(prodID)=="Itkpixv2")){
                                 standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixel(hit.col,hit.row,hit.tot,false,tag);
                             } else {
                             	std::cout << "undefined module type" << std::endl;
