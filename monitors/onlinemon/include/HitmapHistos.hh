@@ -119,7 +119,9 @@ private:
   bool is_DEPFET;
   bool is_RD53A;
   bool is_RD53B;
+  bool is_ITKPIXV2;
   bool is_RD53BQUAD;
+  bool is_ITKPIXV2QUAD;
 };
 
 #ifdef __CINT__

@@ -38,7 +38,9 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id,
   is_OPAMP = false;
   is_RD53A = false;
   is_RD53B = false;
+  is_ITKPIXV2 = false;
   is_RD53BQUAD = false;
+  is_ITKPIXV2QUAD = false;
   is_UNKNOWN = true; // per default we don't know this plane
   isRotated = false;
   setPixelType(name); // set the pixel type
@@ -66,7 +68,9 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id)
   is_OPAMP = false;
   is_RD53A = false;
   is_RD53B = false;
+  is_ITKPIXV2 = false;
   is_RD53BQUAD = false;
+  is_ITKPIXV2QUAD = false;
   is_UNKNOWN = true; // per default we don't know this plane
   isRotated = false;
   setPixelType(name); // set the pixel type
@@ -259,8 +263,16 @@ void SimpleStandardPlane::setPixelType(std::string name) {
     is_RD53B = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
+  } else if(name.find("Itkpixv2") != std::string::npos) {
+    is_ITKPIXV2 = true;
+    is_UNKNOWN = false;
+    AnalogPixelType = true;
   } else if(name.find("RD53BQUAD") != std::string::npos) {
     is_RD53BQUAD = true;
+    is_UNKNOWN = false;
+    AnalogPixelType = true;
+  } else if(name.find("ITKPIXV2QUAD") != std::string::npos) {
+    is_ITKPIXV2QUAD = true;
     is_UNKNOWN = false;
     AnalogPixelType = true;
   } else {
