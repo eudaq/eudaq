@@ -229,11 +229,11 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEv
 			       default:
 			           break;
 			       };
-                               standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixel(transformed_col-1,transformed_row-1,hit.tot,false,tag);			       
+                               standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixelHelper(transformed_col-1,transformed_row-1,hit.tot,0,false,tag);			       
 			    } else if((m_chip_info_by_uid[prodID][block_n].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53a")){
-                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixel(hit.col-1,hit.row-1,hit.tot,false,l1id);
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixelHelper(hit.col-1,hit.row-1,hit.tot,0,false,l1id);
 			    } else if((m_chip_info_by_uid[prodID][block_n].moduleType=="ITk_single")&&(m_FrontEndType.at(prodID)=="Rd53b" || m_FrontEndType.at(prodID)=="Itkpixv2")){
-                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixel(hit.col-1,hit.row-1,hit.tot,false,tag);
+                                standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixelHelper(hit.col-1,hit.row-1,hit.tot,0,false,tag);
                             } else {
                             	std::cout << "undefined module type" << std::endl;
                             	return false;
