@@ -24,10 +24,11 @@ void LogItemDelegate::paint(QPainter *painter,
 
 LogCollectorGUI::LogCollectorGUI(const std::string &name,
 				 const std::string &runcontrol)
-  : QMainWindow(0, 0),
+  : QMainWindow(0, Qt::Widget),
     eudaq::LogCollector(name, runcontrol), m_delegate(&m_model) {
   setupUi(this);
   std::string filename;
+  setWindowIcon(QIcon(":/euLog.ico"));
   viewLog->setModel(&m_model);
   viewLog->setItemDelegate(&m_delegate);
   for (int i = 0; i < LogMessage::NumColumns(); ++i) {
