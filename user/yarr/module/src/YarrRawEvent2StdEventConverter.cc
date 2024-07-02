@@ -268,25 +268,30 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1,
 			uint32_t nHits = *((uint16_t*) (&block[it]));
 			it += sizeof(uint16_t);
 			if (tag == (uint32_t) 0xFFFF || l1id == (uint16_t) 0xFFFF) {
-				std::cout
-						<< "ERROR EVENT - NOT PROCESSED FURTHER AND MARKED AS FILLER"
+				std::cout  << "ERROR EVENT ENCOUNTERED AND EVENT "
+						<< ev_id << " WILL NOT PROCESSED FURTHER AND MARKED AS FILLEREVENT:ERRORHEADER and IsValidEvent:No"
 						<< std::endl;
-				d2->SetTag("FILLEREVENT", "ERROR HEADER");
+				d2->SetTag("FILLEREVENT", "ERRORHEADER");
 				continue;
 			}
 			if (tag < 0 || tag > 255) {
-				std::cout << "Strange tag encountered: " << tag << " and event "
-						<< ev_id << " will not be processed further."
+				std::cout << "STRANGE TAG ENCOUNTERED: " << tag << " AND EVENT "
+						<< ev_id << " WILL NOT BE PROCESSED FURTHER AND MARKED AS FILLEREVENT:INVALIDTAG and IsValidEvent:No."
 						<< std::endl;
-				d2->SetTag("FILLEREVENT", "INVALID TAG");
+				d2->SetTag("FILLEREVENT", "INVALIDTAG");
 				continue;
 			}
 			if (l1id < 0 || l1id > 32) {
-				std::cout << "Strange l1id encountered: " << l1id
-						<< " and event " << ev_id
-						<< " will not be processed further." << std::endl;
-				d2->SetTag("FILLEREVENT", "INVALID L1ID");
+				std::cout << "STRANGE L1ID ENCOUNTERED: " << l1id << " AND EVENT "
+						<< ev_id << " WILL NOT BE PROCESSED FURTHER AND MARKED AS FILLEREVENT:INVALIDL1ID and IsValidEvent:No."
+						<< std::endl;
+				d2->SetTag("FILLEREVENT", "INVALIDL1ID");
 				continue;
+			}
+			if(d2->HasTag("FILLEREVENT")) {
+				d2->SetTag("EVENTQUALITY", "BAD");
+			} else {
+				d2->SetTag("EVENTQUALITY", "GOOD");
 			}
 			int skipped_hits = 0;
 
