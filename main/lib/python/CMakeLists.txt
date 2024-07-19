@@ -9,7 +9,7 @@ include_directories(${EUDAQ_INCLUDE_DIRS})
 include_directories(${Python_INCLUDE_DIRS})
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
-set(PYBIND_NAME_VER pybind11-2.5.0)
+set(PYBIND_NAME_VER pybind11-2.13.1)
 set(PYBIND_ZIP_FILE ${PYBIND_NAME_VER}.zip)
 
 set(PYBIND_HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PYBIND_NAME_VER}/include/pybind11/pybind11.h)
