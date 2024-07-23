@@ -49,10 +49,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_chargeScale  = conf->Get("chargeScale" , 0);
     m_chargeCut    = conf->Get("chargeCut"   , 0);
     m_polarity    = conf->Get("polarity"   , 1);
-    m_generateRoot = conf->Get("generateRoot", 0);
+    m_generateRoot = conf->Get("generateRoot", 1);
     m_osci_timestamp = conf->Get("osci_timestamp", 1);
      m_channels = conf->Get("channels", 4);
-      m_digital = conf->Get("digital", 0);
+      m_digital = conf->Get("digital", 1);
 
     EUDAQ_DEBUG( "Loaded parameters from configuration file." );
     EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
