@@ -38,8 +38,18 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // load parameters from config file
   std::ofstream outfileTimestamps;
-  if( !m_configured ){
-
+  if (!m_configured) {
+    // generate rootfile to write waveforms as TH1D
+    TFile *histoFile = nullptr;
+    if (m_generateRoot) {
+      histoFile =
+          new TFile(Form("waveforms_run%i.root", ev->GetRunN()), "RECREATE");
+      if (!histoFile) {
+        EUDAQ_ERROR(to_string(histoFile->GetName()) + " can not be opened");
+        return false;
+      }
+      histoFile->Close();
+    }
     // read from config file
     m_pedStartTime = conf->Get("pedStartTime", 0); // integration windows in [ns]
     m_pedEndTime   = conf->Get("pedEndTime"  , 0);
