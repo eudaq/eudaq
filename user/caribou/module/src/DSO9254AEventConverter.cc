@@ -1,6 +1,5 @@
 #include "CaribouEvent2StdEventConverter.hh"
 #include "utils/log.hpp"
-#include "CLICTDFrameDecoder.hpp"
 #include "TFile.h"
 #include "TH1D.h"
 #include "time.h"
@@ -311,9 +310,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   } // for channel
 
-if(m_digital){ 
-  
-   EUDAQ_DEBUG( "Reading digital channels ");
+if(m_digital){
+
+    EUDAQ_DEBUG( "Reading digital channels, starting with word  " +to_string(block_position)+" of "+to_string(rawdata.size()) );
 
     // Obtaining Data Stucture
     block_words = rawdata[block_position + 0];
@@ -348,87 +347,49 @@ if(m_digital){
       EUDAQ_DEBUG( " " + to_string(vals.size()-1) + ": " + to_string(vals.back()));
     }
 
-    // Pick needed preamble elements
-    // np.push_back( stoi( vals[2]) );
-    // dx.push_back( stod( vals[4]) * 1e9 );
-    // x0.push_back( stod( vals[5]) * 1e9 );
-    // dy.push_back( stod( vals[7]) );
-    // y0.push_back( stod( vals[8]) );
 
-    EUDAQ_DEBUG("Acq mode (2=SEGM): " + to_string(vals[18]));
+    EUDAQ_DEBUG("Digital Acq mode (2=SEGM): " + to_string(vals[18]));
     if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
       EUDAQ_DEBUG( "Segments: " + to_string(vals[24]));
       sgmnt_count = stoi( vals[24] );
     }
 
-    // // Check our own seventh-graders math: total data size minus four times the data of a channel minus four block header words = 0
-    // if(rawdata.size() - 4 * block_words - 4) {
-    //   EUDAQ_WARN("Go back to school 7th grade - math doesn't check out! :/ " + to_string(rawdata.size() - 4 * block_words) + " is not 0!");
-    // }
-
-    // int points_per_words = np.at(nch)/(chann_words/sgmnt_count);
-    // if(chann_words % sgmnt_count != 0) {
-    //   EUDAQ_WARN("Segment count and channel words don't match: " + to_string(chann_words) + "/" + to_string(sgmnt_count));
-    // }
-    // if( np.at(nch) % (chann_words/sgmnt_count) ){ // check
-    //   EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
-    //              + ", channel " + to_string(nch) );
-    // }
-    // EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
-
-    // // Check our own eighth-graders math: the number of words in the channel times 4 points per word minus the number of points times number of segments is 0
-    // if(4 * chann_words - np.at(nch) * sgmnt_count) {
-    //   EUDAQ_WARN("Go back to school 8th grade - math doesn't check out! :/ " + to_string(chann_words - np.at(nch) * sgmnt_count) + " is not 0!");
-    // }
-
-    // set run start time to 0 ms, using  timestamps from preamble which are 10 ms precision
-    // if( m_runStartTime < 0 ){
-    //   m_runStartTime = DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] );
-    // }
-    // timestamp = ( DSO9254AEvent2StdEventConverter::timeConverter( vals[15], vals[16] )
-    //               - m_runStartTime ) * 1e9; // ms to ps
-
-    // //To not use oscilloscope timestamps
-    // if(!m_osci_timestamp)
-    // {timestamp=0;}
 
     // need once per channel
-    // std::vector<double> ped;
-    // std::vector<double> amp;
-    std::vector<std::vector<int>> waves_trgid;
-     std::vector<std::vector<int>> waves_trg;
-      std::vector<std::vector<int>> waves_clk;
+    std::vector<uint64_t> triggers;
 
-
+      double binsIn25ns = 25e-9 / stod(vals[4]);
     for( int s=0; s<sgmnt_count; s++){ // loop semgents
 
       // container for one waveform
-      std::vector<double> w_trg, w_trgid, w_clk;
+      std::vector<uint8_t> w_trg, w_trgid, w_clk;
 
       // prepare histogram with corresponding binning if root file is created
       TH1D* hist_trgid = nullptr;
       TH1D* hist_trg = nullptr; 
       TH1D* hist_clk = nullptr;
 
+      // create histograms
       if( m_generateRoot ){
-        TH1D* hist_1 = new TH1D(
-                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 1, s ),
-                                   Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 1, s ),
-                                   stoi(vals[2]),
-                                   stod(vals[5])*1e9,(stod(vals[5])+stoi(vals[2])*stod(vals[4]))*1e9);
+        TH1D *hist_1 = new TH1D(Form("waveform_run%i_ev%i_dig%i_s%i",
+                                     ev->GetRunN(), ev->GetEventN(), 1, s),
+                                Form("waveform_run%i_ev%i_dig%i_s%i",
+                                     ev->GetRunN(), ev->GetEventN(), 1, s),
+                                stoi(vals[2]), 0, stoi(vals[2]));
+//            0,(stoi(vals[2])*stod(vals[4]))*1e9);
         TH1D* hist_5 = new TH1D(
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 5, s ),
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 5, s ),
-                                   stoi(vals[2]),
-                                   stod(vals[5])*1e9,(stod(vals[5])+stoi(vals[2])*stod(vals[4]))*1e9);
+                                stoi(vals[2]), 0, stoi(vals[2]));
+//            0,(stoi(vals[2])*stod(vals[4]))*1e9);
         TH1D* hist_14 = new TH1D(
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 14, s ),
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 14, s ),
-                                   stoi(vals[2]),
-                                   stod(vals[5])*1e9,(stod(vals[5])+stoi(vals[2])*stod(vals[4]))*1e9);
-        
-        hist_trgid = hist_1;
+            stoi(vals[2]), 0, stoi(vals[2]));
+  //          0,(stoi(vals[2])*stod(vals[4]))*1e9);
+
         hist_trg = hist_5;
+        hist_trgid = hist_1;
         hist_clk = hist_14;
         
         hist_trgid->GetXaxis()->SetTitle("time [ns]");
@@ -444,6 +405,7 @@ if(m_digital){
       // read channel data
       std::vector<int16_t> words;
       words.resize(stoi(vals[2])); // rawdata contains 8 byte words, scope sends 2 byte words
+      EUDAQ_INFO("Size of words: " + to_string(words.size()));
       int16_t wfi = 0;
       // Read from segment start until the next segment begins:
       for(int i=block_position + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
@@ -453,21 +415,20 @@ if(m_digital){
         // copy channel data from entire segment data block
         memcpy(&words.front(), &rawdata[i], stoi(vals[2])*sizeof(int16_t));
 
-        for( auto word : words ){
+        for( auto & word : words ){
 
-          // fill vectors with time bins and waveform
+  // fill vectors with time bins and waveform
           
-          w_trgid.push_back((word>>1)&0x1 );
-          w_trg.push_back((word>>5)&0x1 );
-          w_clk.push_back((word>>14)&0x1 );
-          //std::cout<< std::hex << word <<std::endl;;
+          w_trgid.push_back((word>>5)&0x1);
+          w_trg.push_back((word>>1)&0x1);
+          w_clk.push_back((word>>14)&0x1);
 
 
           // fill histogram
           if( m_generateRoot ){
-            hist_trgid->SetBinContent(w_trgid.size(),(word>>1)&0x1 );
-            hist_trg->SetBinContent(w_trg.size(),(word>>5)&0x1 );
-            hist_clk->SetBinContent(w_clk.size(),(word>>14)&0x1 );
+            hist_trgid->SetBinContent(w_trgid.size(),w_trgid.back() );
+            hist_trg->SetBinContent(w_trg.size(),w_trg.back() );
+            hist_clk->SetBinContent(w_clk.size(),w_clk.back());
           }
 
           wfi++;
@@ -476,32 +437,39 @@ if(m_digital){
 
       } // waveform
 
-      // store waveform vector and create vector entries for pedestal and amplitude
-      // waves.push_back( wave );
-      // ped.push_back( 0. );
-      // amp.push_back( 0. );
 
       // write and delete
       if( m_generateRoot ){
-        hist_trgid->Write();
         hist_trg->Write();
+        hist_trgid->Write();
         hist_clk->Write();
       }
       delete hist_trgid;
       delete hist_trg;
       delete hist_clk;
+      // Now we can search for the trigger number
+      uint64_t triggerID = 0x0;
+      uint pos = 0;
+      for (uint data = 0; data < w_trg.size(); data++) {
+        if (w_trg.at(data) == 1) {
+          // std::cout << data << std::endl;
+          pos = data + 1.5*binsIn25ns;
+          break;
+        }
+      }
+      // now fetch the data
+      for (int i = 0; i < 15; ++i) {
+        triggerID += uint64_t(w_trgid.at(pos)) << i;
+        /// std::cout << pos << "\t " <<triggerID << std::endl;
+        pos += binsIn25ns;
+      }
+      triggers.push_back(triggerID);
 
     } // segments
 
-
-    // not only for each semgent but for each channel
-    // wavess.push_back( waves );
-    // peds.push_back( ped );
-    // amps.push_back( amp );
-
-
-    // update position for next iteration
+   // update position for next iteration
     block_position += block_words+1;
+
 }
 
   // close rootfile
@@ -575,14 +543,14 @@ if(m_digital){
 
       } // channels
 
-      // check:
-      for( int c = 0; c<peds.size(); c++ ){
-        EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s));
-        EUDAQ_DEBUG("  points  " + to_string(wavess.at(c).at(s).size()));
-        EUDAQ_DEBUG("  pedestl " + to_string(peds.at(c).at(s)));
-        EUDAQ_DEBUG("  ampli   " + to_string(amps.at(c).at(s)));
-        EUDAQ_DEBUG("  timestp " + to_string(timestamp));
-      }
+//      // check:
+//      for( int c = 0; c<peds.size(); c++ ){
+//        EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s));
+//        EUDAQ_DEBUG("  points  " + to_string(wavess.at(c).at(s).size()));
+//        EUDAQ_DEBUG("  pedestl " + to_string(peds.at(c).at(s)));
+//        EUDAQ_DEBUG("  ampli   " + to_string(amps.at(c).at(s)));
+//        EUDAQ_DEBUG("  timestp " + to_string(timestamp));
+//      }
 
 
       // create sub-event for segments
