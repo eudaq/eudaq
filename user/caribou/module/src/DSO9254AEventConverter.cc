@@ -319,6 +319,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
    
 
   } // for channel
+  std::vector<uint64_t> triggers;
 
 if(m_digital){
 
@@ -366,8 +367,6 @@ if(m_digital){
 
 
     // need once per channel
-    std::vector<uint64_t> triggers;
-
       double binsIn25ns = 25e-9 / stod(vals[4]);
     for( int s=0; s<sgmnt_count; s++){ // loop semgents
 
@@ -588,8 +587,8 @@ if(m_digital){
         }
       }
 
-      // derive trigger number from block number
-      int triggerN = (ev->GetEventN()-1) * peds.at(0).size() + s + 1;
+      // derive trigger number from block number - if defined by digital channels use it, otherwise not :)
+      int triggerN = m_digital ? triggers.at(s) : (ev->GetEventN()-1) * peds.at(0).size() + s + 1;
 
       EUDAQ_INFO("Block number " + to_string(ev->GetEventN()) + " " +
                   " block size " + to_string(peds.at(0).size()) +
