@@ -2,7 +2,9 @@
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 #include <set>
-
+#include "utils/datatypes.hpp"
+#include "utils/log.hpp"
+#include "utils/utils.hpp"
 #include <array>
 #include <vector>
 
