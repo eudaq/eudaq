@@ -384,18 +384,18 @@ if(m_digital){
                                      ev->GetRunN(), ev->GetEventN(), 1, s),
                                 Form("waveform_run%i_ev%i_dig%i_s%i",
                                      ev->GetRunN(), ev->GetEventN(), 1, s),
-                                stoi(vals[2]), 0, stoi(vals[2]));
-//            0,(stoi(vals[2])*stod(vals[4]))*1e9);
+                                stoi(vals[2]),
+            0,(stoi(vals[2])*stod(vals[4]))*1e9);
         TH1D* hist_5 = new TH1D(
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 5, s ),
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 5, s ),
-                                stoi(vals[2]), 0, stoi(vals[2]));
-//            0,(stoi(vals[2])*stod(vals[4]))*1e9);
+                                stoi(vals[2]),
+            0,(stoi(vals[2])*stod(vals[4]))*1e9);
         TH1D* hist_14 = new TH1D(
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 14, s ),
                                    Form( "waveform_run%i_ev%i_dig%i_s%i", ev->GetRunN(), ev->GetEventN(), 14, s ),
-            stoi(vals[2]), 0, stoi(vals[2]));
-  //          0,(stoi(vals[2])*stod(vals[4]))*1e9);
+           stoi(vals[2]),
+            0,(stoi(vals[2])*stod(vals[4]))*1e9);
 
         hist_trg = hist_5;
         hist_trgid = hist_1;
