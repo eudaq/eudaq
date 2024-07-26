@@ -20,6 +20,8 @@ double DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
 double DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
 double DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
 double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
+uint64_t DSO9254AEvent2StdEventConverter::m_segmentCount(1);
+uint64_t DSO9254AEvent2StdEventConverter::m_trigger(0);
 double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
 int DSO9254AEvent2StdEventConverter::m_channels(0);
 int DSO9254AEvent2StdEventConverter::m_digital(1);
@@ -618,7 +620,134 @@ if(m_digital){
   // Indicate that data were successfully converted
   return true;
 }
+std::vector<std::vector<waveform>> DSO9254AEvent2StdEventConverter::read_data(caribou::pearyRawData &rawdata, int evt,
+    uint64_t &block_position) {
 
+
+  std::vector<std::vector<waveform>> waves;
+         // needed per event
+  uint64_t block_words;
+  uint64_t pream_words;
+  uint64_t chann_words;
+
+  for (int nch = 0; nch < (m_channels); ++nch) {
+
+
+    EUDAQ_DEBUG("Reading channel " + to_string(nch) + " of " +
+                to_string(m_channels));
+
+           // Obtaining Data Stucture
+    block_words = rawdata[block_position + 0];
+    pream_words = rawdata[block_position + 1];
+    chann_words = rawdata[block_position + 2 + pream_words];
+    EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " 8 bit block size");
+    EUDAQ_DEBUG("  " + to_string(block_position) +
+                " current position in block");
+    EUDAQ_DEBUG("  " + to_string(block_words) + " words per data block");
+    EUDAQ_DEBUG("  " + to_string(pream_words) + " words per preamble");
+    EUDAQ_DEBUG("  " + to_string(chann_words) + " words per channel data");
+    EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " size of rawdata");
+
+           // Data sanity check: Total block size should be:
+           // pream_words+channel_data_words+2
+    if (block_words - pream_words - 2 - chann_words) {
+      EUDAQ_WARN("Total data block size does not match the sum of "
+                 "preamble+channel data + 2 (header)");
+    }
+
+           // read preamble:
+    std::string preamble = "";
+    for (int i = block_position + 2; i < block_position + 2 + pream_words;
+         i++) {
+      preamble += (char)rawdata[i];
+    }
+    EUDAQ_DEBUG("Preamble " + preamble);
+    // parse preamble to vector of strings
+    std::string val;
+    std::vector<std::string> vals;
+    std::istringstream stream(preamble);
+    while (std::getline(stream, val, ',')) {
+      vals.push_back(val);
+    }
+
+           // Pick needed preamble elements - this is constant for all elements of
+           // channel and segment
+    waveform wave;
+    wave.points = stoi(vals[2]);
+    wave.dx = stod(vals[4]) * 1e9;
+    wave.x0 = stod(vals[5]) * 1e9;
+    wave.dy = stod(vals[7]);
+    wave.y0 = stod(vals[8]);
+
+    EUDAQ_INFO("Acq mode (2=SEGM): " + to_string(vals[18]));
+    if (vals.size() == 25) { // this is segmented mode, possibly more than one
+                             // waveform in block
+      EUDAQ_DEBUG("Segments: " + to_string(vals[24]));
+      m_segmentCount = stoi(vals[24]);
+    }
+
+    int points_per_words = wave.points / (chann_words / m_segmentCount);
+    if (chann_words % m_segmentCount != 0) {
+      EUDAQ_THROW("Segment count and channel words don't match: " +
+                  to_string(chann_words) + "/" + to_string(m_segmentCount));
+    }
+    if (wave.points % (chann_words / m_segmentCount)) { // check
+      EUDAQ_THROW("incomplete waveform in block " + to_string(evt) +
+                  ", channel " + to_string(nch));
+    }
+    EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
+
+           // Check our own eighth-graders math: the number of words in the channel
+           // times 4 points per word minus the number of points times number of
+           // segments is 0
+    if (4 * chann_words - wave.points * m_segmentCount) {
+      EUDAQ_WARN("Go back to school 8th grade - math doesn't check out! :/ " +
+                 to_string(chann_words - wave.points * m_segmentCount) +
+                 " is not 0!");
+    }
+
+    for (int s = 0; s < m_segmentCount; s++) { // loop semgents
+      auto current_wave = wave;
+      // read channel data
+      std::vector<int16_t> words;
+      words.resize(points_per_words); // rawdata contains 8 bit words, scope
+                                      // sends 2 8bit words
+      int16_t wfi = 0;
+      // Read from segment start until the next segment begins:
+      for (int i = block_position + 3 + pream_words +
+                   (s + 0) * chann_words / m_segmentCount;
+           i < block_position + 3 + pream_words +
+                   (s + 1) * chann_words / m_segmentCount;
+           i++) {
+
+               // copy channel data from entire segment data block
+        memcpy(&words.front(), &rawdata[i], points_per_words * sizeof(int16_t));
+
+        for (auto word : words) {
+          // fill vectors with time bins and waveform
+          // Lennart: what are the time bins  good for?
+          if (nch == 0 && s == 0) { // this we need only once
+          //    time.push_back( wfi * dx.at(nch) + x0.at(nch) );
+          }
+          current_wave.data.push_back((word * wave.dy + wave.y0));
+          wfi++;
+
+        } // words
+
+      } // waveform
+      waves.at(nch).push_back(current_wave);
+
+    } // segments
+
+
+           // update position for next iteration
+    block_position += block_words + 1;
+
+
+  } // for channel
+
+  return waves;
+}
 
 uint64_t DSO9254AEvent2StdEventConverter::timeConverter( std::string date, std::string time ){
 
