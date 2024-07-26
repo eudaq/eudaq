@@ -220,7 +220,6 @@ class DPTSProducer(pyeudaq.Producer):
         for data in data_array:
             ev=pyeudaq.Event('RawEvent',self.name)
             tev=0 # no global time stamp (TODO: can the osciloscope provide one?)
-            ev.SetEventN(self.idev)
             ev.SetTriggerN(self.idev)
             ev.SetTimestamp(begin=tev,end=tev)
             ev.SetDeviceN(self.plane)

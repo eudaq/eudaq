@@ -5,6 +5,7 @@ from collections import deque
 import argparse
 from datetime import datetime
 from utils import exception_handler
+from spillcounter import SpillCounter
 
 class ITS3DataCollector(pyeudaq.DataCollector):
     def __init__(self, name, runctrl):
@@ -13,6 +14,7 @@ class ITS3DataCollector(pyeudaq.DataCollector):
         self.nsev=0
         self.ndev=0
         self.async_check = datetime.now()
+        self.sc: SpillCounter = None
 
     @exception_handler
     def DoInitialise(self):
@@ -25,12 +27,14 @@ class ITS3DataCollector(pyeudaq.DataCollector):
     def DoConfigure(self):
         self.nsev=0
         self.ndev=0
+        self.sc = SpillCounter(sampling_period_s=600)
 
     @exception_handler
     def DoStartRun(self):
         self.nsev=0
         self.ndev=0
         self.producer_queues={}
+        self.sc.start()
         
     @exception_handler
     def DoStopRun(self):
@@ -52,7 +56,8 @@ class ITS3DataCollector(pyeudaq.DataCollector):
         if self.async_check:
             if qd==0:
                 self.async_check = False
-                self.SetStatusMsg('Running')
+                msg = self.sc.get_status() if self.sc and self.sc.cycle > 0 else "Running"
+                self.SetStatusMsg(msg)
             elif (datetime.now()-self.async_check).total_seconds()>=10:
                 self.SetStatusMsg('Warning! Out of sync! ' + ' '.join(sorted( \
                     f"{k.GetName()[:2]}{k.GetName()[-1]}:{len(v)}" \
@@ -100,6 +105,7 @@ class ITS3DataCollector(pyeudaq.DataCollector):
                 globalev.AddSubEvent(subev)
             self.WriteEvent(globalev)
             self.ndev+=1
+            self.sc.update()
 
         
 if __name__=='__main__':

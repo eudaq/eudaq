@@ -2,24 +2,25 @@
 
 ## Installation
 
-1. Install EUDAQ following the instructions in the main `README` file. To use EUDAQ for datataking, only `EUDAQ_BUILD_PYTHON` cmake flag is needed. To use online monitor enable `EUDAQ_BUILD_STDEVENT_MONITOR` and `USER_ITS3_BUILD` flags, e.g.:
+1. Install EUDAQ following the instructions in the main `README` file. To use EUDAQ for datataking, only `EUDAQ_BUILD_PYTHON` cmake flag is needed. To use online monitor enable `EUDAQ_BUILD_STDEVENT_MONITOR` and `USER_ITS3_BUILD` flags ([ROOT](https://root.cern/install/) is needed in that case):
 
         mkdir build && cd build
-        cmake .. -DEUDAQ_BUILD_PYTHON=ON -DUSER_ITS3_BUILD=ON -DEUDAQ_BUILD_STDEVENT_MONITOR=ON
+        cmake .. -DEUDAQ_BUILD_PYTHON=ON -DUSER_ITS3_BUILD=ON # if needed also -DEUDAQ_BUILD_STDEVENT_MONITOR=ON
         make -j `nproc` && make install
 
 2. Install Run Control dependencies:
 
-        pip3 install urwid urwid_timed_progress libtmux rich
+        pip3 install -r user/ITS3/requirements.txt
 
 3. Install `alpide-daq-software` (<https://gitlab.cern.ch/alice-its3-wp3/alpide-daq-software.git>) following the instructions in the respective `README` file.
 4. For trigger board clone <https://gitlab.cern.ch/alice-its3-wp3/trigger> and read respective `README`.
 5. For PTH200, RTD23, ZABER moving stages and HAMEG power supplies clone <https://gitlab.cern.ch/alice-its3-wp3/lab-equipment.git> and install (see respective `README`).
-6. For MLR1 DAQ board based planes clone <https://gitlab.cern.ch/alice-its3-wp3/apts-dpts-ce65-daq-software.git> and follow the `README` to install the software.
+6. For MLR1 DAQ board based planes clone <https://gitlab.cern.ch/alice-its3-wp3/apts-dpts-ce65-daq-software.git> and install (see respective `README`).
+7. For MOSS clone <https://gitlab.cern.ch/alice-its3-wp3/moss-testing/sw> and install (see respective `README`).
 
 ## Configuration
 
-In `misc` dir create or modify `ITS3.ini` and `*.conf` files according to your setup. You can find examples for different producers in `misc/conf_examples`.
+In `user/ITS3/misc` dir create or modify `ITS3.ini` and `*.conf` files according to your setup. You can find examples for different producers in `user/ITS3/misc/conf_examples`.
 
 ## Running
 
@@ -67,12 +68,12 @@ In every trigger/busy chain there should be one and only one trigger/busy logic 
 The most common trigger/busy logic controller is the trigger board. Alternative options are ALPIDE DAQ board set in `primary` mode or a Picoscope as a part of DPTS Producer.
 
 To use DPTS / Picoscope as trigger/busy logic controller:
+
 - DPTS Producer has to be set up to trigger on one of the two Picoscope channels connected to DPTS
 - AWG output of the Picoscope provides the TRIGGER signal (for other devices)
 - AUX input of the Picoscope is the BUSY input - to be connected to the output of the busy chain
 
 The Picoscope acquisition window length acts as trigger seperation time (equivalent to `dt_trg` in trigger board).
-
 
 ### Hints on using Zaber moving stages
 
