@@ -49,27 +49,47 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       delay_scint5 = conf->Get("delay_scint5", 0); // in 781.25ps bins
   }
 
-  // try/catch for std::stoi()
-  try {
-    triggersFired = triggerMask & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2); // interpret as binary and combine with triggerMask
-  } catch (...) {
-    EUDAQ_WARN("EUDAQ2 RawEvent flag TRIGGER cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
-    return false;
+  uint8_t fts_0, fts_1, fts_2, fts_3, fts_4, fts_5;
+  // Allowing compact data requires us to also take cxare of reading here:
+  if (d1->NumBlocks()==1){
+      auto data = d1->GetBlock(0);
+      fts_0 = data[0];
+      fts_1 = data[1];
+      fts_2 = data[2];
+      fts_3 = data[3];
+      fts_4 = data[4];
+      fts_5 = data[5];
+      triggersFired = data[6];
+  }else {
+      // try/catch for std::stoi()
+     try{
+        fts_0 =  std::stoi(d1->GetTag("FINE_TS0", "0"));
+        fts_1 =  std::stoi(d1->GetTag("FINE_TS1", "0"));
+        fts_2 =  std::stoi(d1->GetTag("FINE_TS2", "0"));
+        fts_3 =  std::stoi(d1->GetTag("FINE_TS3", "0"));
+        fts_4 =  std::stoi(d1->GetTag("FINE_TS4", "0"));
+        fts_5 =  std::stoi(d1->GetTag("FINE_TS5", "0"));
+     } catch (...) {
+      EUDAQ_WARN("EUDAQ2 RawEvent flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
+      return false;
+     }
+     try {
+      triggersFired = triggerMask & std::stoi(d1->GetTag("TRIGGER" , "0"), nullptr, 2);
+     } catch (...) {
+      EUDAQ_WARN("EUDAQ2 RawEvent flag TRIGGER cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
+      return false;
+     }
   }
 
-  // try/catch for std::stoi()
-  try {
+
     // Subtract delay from fine timestamp:
-    finets0 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS0", "0"))) - delay_scint0;
-    finets1 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS1", "0"))) - delay_scint1;
-    finets2 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS2", "0"))) - delay_scint2;
-    finets3 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS3", "0"))) - delay_scint3;
-    finets4 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS4", "0"))) - delay_scint4;
-    finets5 = static_cast<uint32_t>(std::stoi(d1->GetTag("FINE_TS5", "0"))) - delay_scint5;
-} catch (...) {
-    EUDAQ_WARN("EUDAQ2 RawEvent flag FINE_TS<0-5> cannot be interpreted as integer. Cannot calculate precise TLU TS. Return false.");
-    return false;
-}
+    finets0 = static_cast<uint32_t>(fts_0) - delay_scint0;
+    finets1 = static_cast<uint32_t>(fts_1) - delay_scint1;
+    finets2 = static_cast<uint32_t>(fts_2) - delay_scint2;
+    finets3 = static_cast<uint32_t>(fts_3) - delay_scint3;
+    finets4 = static_cast<uint32_t>(fts_4) - delay_scint4;
+    finets5 = static_cast<uint32_t>(fts_5) - delay_scint5;
+
 
   // add all valid trigger to vector:
   std::vector<uint32_t> finets_vec;
@@ -133,15 +153,15 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Identify the detetor type
   d2->SetDetectorType("TLU");
-  d2->SetTag("TRIGGER", d1->GetTag("TRIGGER" , "0"));
+  d2->SetTag("TRIGGER", std::to_string(triggersFired));
 
   // forward original tags:
-  d2->SetTag("FINE_TS0", d1->GetTag("FINE_TS0", "0")); // forward original tag
-  d2->SetTag("FINE_TS1", d1->GetTag("FINE_TS1", "0")); // forward original tag
-  d2->SetTag("FINE_TS2", d1->GetTag("FINE_TS2", "0")); // forward original tag
-  d2->SetTag("FINE_TS3", d1->GetTag("FINE_TS3", "0")); // forward original tag
-  d2->SetTag("FINE_TS4", d1->GetTag("FINE_TS4", "0")); // forward original tag
-  d2->SetTag("FINE_TS5", d1->GetTag("FINE_TS5", "0")); // forward original tag
+  d2->SetTag("FINE_TS0", std::to_string(fts_0)); // forward original tag
+  d2->SetTag("FINE_TS1", std::to_string(fts_1)); // forward original tag
+  d2->SetTag("FINE_TS2", std::to_string(fts_2)); // forward original tag
+  d2->SetTag("FINE_TS3", std::to_string(fts_3)); // forward original tag
+  d2->SetTag("FINE_TS4", std::to_string(fts_4)); // forward original tag
+  d2->SetTag("FINE_TS5",std::to_string(fts_5)); // forward original tag
 
   // calculate (delayed) fine timestamps in ns:
   double finets0_ns = (finets0 & 0xFF) * 25. / 32.; // 781ps binning
