@@ -44,7 +44,7 @@ jobs:
         
     - name: install CERN ROOT
       run: |
-        export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
+        export CERN_ROOT_DOWNLOAD_NAME=root_v6.30.02.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
         wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME
         rm -f $CERN_ROOT_DOWNLOAD_NAME
