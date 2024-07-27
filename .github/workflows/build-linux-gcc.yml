@@ -1,0 +1,70 @@
+name: linux_gcc
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        qt_version: [5, 6]
+        compiler: [g++]
+        
+    name: eudaq_full_build-ubuntu-latest-${{matrix.compiler}}-qt-${{matrix.qt_version}}
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: update repo
+      run: |
+        sudo apt-get update
+
+    - name: install qt
+      run: |
+        if [ "${{ matrix.qt_version }}" -eq "5" ];
+        then 
+          sudo apt-get install qtbase5-dev qt5-qmake
+        fi
+        if [ "${{ matrix.qt_version }}" -eq "6" ]; 
+        then 
+          sudo apt-get install qt6-base-dev
+        fi
+      shell: bash
+        
+    - name: install CERN ROOT
+      run: |
+        export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
+        wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
+        tar -xzf $CERN_ROOT_DOWNLOAD_NAME
+        rm -f $CERN_ROOT_DOWNLOAD_NAME
+        mkdir -p ~/eudaq_dependencies/ubuntu22-x86_64/
+        mv root ~/eudaq_dependencies/ubuntu22-x86_64/
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: |
+        source ~/eudaq_dependencies/ubuntu22-x86_64/root/bin/thisroot.sh
+        cmake -D CMAKE_CXX_COMPILER=${{ matrix.compiler }} -D EUDAQ_BUILD_STDEVENT_MONITOR=ON -D EUDAQ_BUILD_GUI=ON -D USER_BUILD_TLU_ONLY_CONVERTER=ON -D USER_EUDET_BUILD=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      # Execute tests defined by the CMake configuration.  
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest -C ${{env.BUILD_TYPE}}
+      

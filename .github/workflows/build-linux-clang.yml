@@ -1,4 +1,4 @@
-name: CMake
+name: linux_clang
 
 on:
   push:
@@ -19,8 +19,9 @@ jobs:
     strategy:
       matrix:
         qt_version: [5, 6]
+        compiler: [clang]
         
-    name: eudaq_full_build-ubuntu-latest-qt-${{matrix.qt_version}}
+    name: eudaq_full_build-ubuntu-latest-${{matrix.compiler}}-qt-${{matrix.qt_version}}
 
     steps:
     - uses: actions/checkout@v3
@@ -43,7 +44,7 @@ jobs:
         
     - name: install CERN ROOT
       run: |
-        export CERN_ROOT_DOWNLOAD_NAME=root_v6.30.04.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
+        export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.Linux-ubuntu22.04-x86_64-gcc11.4.tar.gz
         wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME
         rm -f $CERN_ROOT_DOWNLOAD_NAME
@@ -55,7 +56,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         source ~/eudaq_dependencies/ubuntu22-x86_64/root/bin/thisroot.sh
-        cmake -D EUDAQ_BUILD_STDEVENT_MONITOR=ON -D EUDAQ_BUILD_GUI=ON -D USER_BUILD_TLU_ONLY_CONVERTER=ON -D USER_EUDET_BUILD=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        cmake -D CMAKE_CXX_COMPILER=${{ matrix.compiler }} -D EUDAQ_BUILD_STDEVENT_MONITOR=ON -D EUDAQ_BUILD_GUI=ON -D USER_BUILD_TLU_ONLY_CONVERTER=ON -D USER_EUDET_BUILD=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       # Build your program with the given configuration
