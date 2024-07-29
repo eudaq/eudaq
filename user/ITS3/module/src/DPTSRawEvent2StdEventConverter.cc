@@ -22,6 +22,7 @@ private:
     int ch;
     float thr[2];
     bool create_tags;
+    bool include_bad_trains;
     float time_cut_low[2];
     float time_cut_high[2];
     std::ofstream debug_stream;
@@ -50,6 +51,7 @@ DPTSRawEvent2StdEventConverter::Config& DPTSRawEvent2StdEventConverter::LoadConf
     conf.time_cut_low[i] = -std::numeric_limits<float>::infinity();
     conf.time_cut_high[i] = std::numeric_limits<float>::infinity();
   }
+  conf.include_bad_trains=true;
   
   EUDAQ_INFO("Load configuration for DPTS");
   // pass configuration via EUDAQ2 online monitor
@@ -80,6 +82,7 @@ DPTSRawEvent2StdEventConverter::Config& DPTSRawEvent2StdEventConverter::LoadConf
       std::string name;
       name="train_time_cut_low_ch"; name+=std::to_string(i);
       conf.time_cut_low[i] = conf_->Get(name,-std::numeric_limits<float>::infinity());
+      //conf_->Print();
       EUDAQ_DEBUG(name+" set to "+std::to_string(conf.time_cut_low[i]));
       name="train_time_cut_high_ch"; name+=std::to_string(i);
       conf.time_cut_high[i] = conf_->Get(name,std::numeric_limits<float>::infinity());
@@ -89,6 +92,8 @@ DPTSRawEvent2StdEventConverter::Config& DPTSRawEvent2StdEventConverter::LoadConf
   conf.create_tags  =conf_?conf_->Get("create_tags",0):false;
   std::string ofname=conf_?conf_->Get("debug_file",""):"";
   if(ofname!="") conf.debug_stream.open(ofname+std::to_string(conf.ch));
+  conf.include_bad_trains=conf_?conf_->Get("include_bad_trains",1):true;
+  conf.include_bad_trains?EUDAQ_INFO("Including bad trains as pixel (15,15) (for e.g. efficiency analysis)"):EUDAQ_INFO("Excluding bad trains (for e.g. position resolution analysis)");
 
   std::string cf=conf_?conf_->Get("calibration_file",""):"";
   if (cf!="") {
@@ -216,8 +221,11 @@ bool DPTSRawEvent2StdEventConverter::Converting(eudaq::EventSPC in,eudaq::StdEve
         plane.PushPixel(p.x,p.y,1,(uint64_t)0); // column, row, charge, time
       }
     }
-    else if(bad_trains) {
+    else if(bad_trains && conf.include_bad_trains) {
       plane.PushPixel(15,15,1,(uint64_t)0); // column, row, charge, time
+    }
+    else if(!conf.include_bad_trains) {
+      return false;
     }
     out->AddPlane(plane);
   }

@@ -10,7 +10,7 @@ from rich import print
 
 def setup_tmux(
     ini_path,
-    nalpide=6,ndpts=1,napts=1,nopamp=1,npower=1,npth=1,rclog="rc.log",
+    nalpide=6,ndpts=1,napts=1,nopamp=1,npower=1,npth=1,nrtd23=1,nzaber=1,rclog="rc.log",
     dpts_utils_path=None,
     trigger_path=None):
 
@@ -25,6 +25,9 @@ def setup_tmux(
     opamp_exe= f"PYTHONPATH={eudaq_lib_path} {producer_path}/OPAMPProducer.py"
     power_exe= f"PYTHONPATH={eudaq_lib_path} {producer_path}/PowerProducer.py"
     pth_exe=   f"PYTHONPATH={eudaq_lib_path} {producer_path}/PTHProducer.py"
+    rtd23_exe=   f"PYTHONPATH={eudaq_lib_path} {producer_path}/RTD23Producer.py"
+    zaber_exe=   f"PYTHONPATH={eudaq_lib_path} {producer_path}/ZABERProducer.py"
+    logger_exe=f"{eudaq_path}/bin/euCliLogger"
 
     server = libtmux.Server()
     try:
@@ -58,28 +61,31 @@ def setup_tmux(
         server.cmd('select-pane','-t',f'ITS3:op.{i}','-T',f'Producer OPAMP {i-ndpts-napts}')
 
     window = session.new_window("sp")
-    for i in range(1,npower+npth):
+    for i in range(1,npower+npth+nrtd23+nzaber):
         window.split_window()
         window.select_layout("tiled")
     for i in range(0,npower):
         server.cmd('select-pane','-t',f'ITS3:sp.{i}','-T',f'Producer POWER {i}')
     for i in range(npower,npower+npth):
         server.cmd('select-pane','-t',f'ITS3:sp.{i}','-T',f'Producer PTH {i-npower}')
+    for i in range(npower+npth,npower+npth+nrtd23):
+        server.cmd('select-pane','-t',f'ITS3:sp.{i}','-T',f'Producer RTD23 {i-(npower+npth)}')
+    for i in range(npower+npth+nrtd23,npower+npth+nrtd23+nzaber):
+        server.cmd('select-pane','-t',f'ITS3:sp.{i}','-T',f'Producer ZABER {i-(npower+npth+nzaber)}')
 
     session.new_window("dc")
     server.cmd('select-pane','-t','ITS3:dc','-T','Data Collector')
 
     p=session.new_window("log").select_pane("ITS:log")
-    server.cmd('select-pane','-t','ITS3:log','-T','Run Control Log')
-    p.send_keys(f'touch {rclog}')
-    p.send_keys(f'tail -f {rclog}')
+    server.cmd('select-pane','-t','ITS3:log','-T','EUDAQ Log')
 
     p=session.new_window("perf").select_pane("ITS3:perf")
     server.cmd('select-pane','-t','ITS3:perf','-T','Performance')
     p.send_keys('htop')
 
-    session.select_window("rc").select_pane("ITS3:rc").send_keys(f'{rc_exe} --ini {ini_path} 2> {rclog}')
-    time.sleep(2)
+    session.select_window("rc").select_pane("ITS3:rc").send_keys(f'{rc_exe} --ini {ini_path} 2>> {rclog}')
+    time.sleep(1)
+    session.select_window("log").select_pane("ITS3:log").send_keys(f'{logger_exe} -n log -a 55000')
     session.select_window("dc").select_pane("ITS3:dc").send_keys(f'{dc_exe}')
     for i in range(nalpide):
         session.select_window("ap").select_pane(f"ITS3:ap.{i}").send_keys(f'{alpide_exe} --name ALPIDE_plane_{i}')
@@ -93,6 +99,10 @@ def setup_tmux(
         session.select_window("sp").select_pane(f'ITS3:sp.{i}').send_keys(f'{power_exe} --name POWER_{i}')
     for i in range(npower,npower+npth):
         session.select_window("sp").select_pane(f'ITS3:sp.{i}').send_keys(f'{pth_exe} --name PTH_{i-npower}')
+    for i in range(npower+npth,npower+npth+nrtd23):
+        session.select_window("sp").select_pane(f'ITS3:sp.{i}').send_keys(f'{rtd23_exe} --name RTD23_{i-(npower+npth)}')
+    for i in range(npower+npth+nrtd23,npower+npth+nrtd23+nzaber):
+        session.select_window("sp").select_pane(f'ITS3:sp.{i}').send_keys(f'{zaber_exe} --name ZABER_{i-(npower+npth+nrtd23)}')
 
     if server.cmd('switch-client','-t','ITS3:rc').stderr == ['no current client']:
         session.cmd('attach-session','-t','ITS3:rc')
@@ -104,7 +114,7 @@ def parse_ini(ini_path):
     producers = conf.get("RunControl","dataproducers",fallback="").split("#")[0] +","+\
         conf.get("RunControl","moreproducers",fallback="").split("#")[0]
     ret = {"n"+prod.lower(): producers.count(prod+"_") \
-        for prod in ["ALPIDE","DPTS","APTS","OPAMP","POWER","PTH"]}
+        for prod in ["ALPIDE","DPTS","APTS","OPAMP","POWER","PTH","RTD23","ZABER"]}
     ret["dpts_utils_path"] = conf.get("LibraryPaths","dpts_utils_path",fallback=None)
     ret["trigger_path"]    = conf.get("LibraryPaths","trigger_path",fallback=None)
     return ret
@@ -116,7 +126,7 @@ if __name__=="__main__":
     parser.add_argument('--rclog',default="rc.log",help="Run Control log file (default=rc.log).")
     parser.add_argument('--dpts-utils-path',help="Path to 'dpts-utils' repository, needed if not provided in INI.")
     parser.add_argument('--trigger-path',help="Path to 'software' directory in 'trigger' repository, needed if not provided in INI.")
-    for prod in ["ALPIDE","DPTS","APTS","OPAMP","POWER","PTH"]:
+    for prod in ["ALPIDE","DPTS","APTS","OPAMP","POWER","PTH","RTD23","ZABER"]:
         parser.add_argument('--n'+prod.lower(),type=int,help=f"Override the number of {prod} producers to start.")
     args = parser.parse_args()
 

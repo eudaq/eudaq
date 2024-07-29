@@ -48,3 +48,10 @@ install(TARGETS ${INSTALL_TARGETS}
   DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
+
+
+enable_testing()
+add_test(
+   NAME test_mimosa_tlu_io
+   COMMAND euCliReader -i "${CMAKE_SOURCE_DIR}/testing/data/mimosa_tlu.raw" -std -e 0 -E 5 -s
+)

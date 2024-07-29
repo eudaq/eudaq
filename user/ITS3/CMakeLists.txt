@@ -1,5 +1,5 @@
 get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
+set(EUDAQ_MODULE ${EUDAQ_PREFIX}module_${EUDAQ_USERNAME})
 
 option(USER_ITS3_BUILD "build user/ITS3" OFF)
 

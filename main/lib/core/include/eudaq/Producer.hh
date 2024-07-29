@@ -53,10 +53,11 @@ namespace eudaq {
     void OnReset() override final;
     void OnTerminate() override final;
     void OnStatus() override;
-    
+  
+  protected:
+    uint32_t m_evt_c;
   private:
     uint32_t m_pdc_n;
-    uint32_t m_evt_c;
     std::mutex m_mtx_sender;
     std::map<std::string, std::shared_ptr<DataSender>> m_senders;
   };

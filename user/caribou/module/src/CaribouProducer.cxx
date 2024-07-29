@@ -47,11 +47,20 @@ namespace{
 }
 
 CaribouProducer::CaribouProducer(const std::string name, const std::string &runcontrol)
-: eudaq::Producer(name, runcontrol), m_ev(0), m_exit_of_run(false), name_(name) {
+: eudaq::Producer(name, runcontrol), m_ev(0), m_exit_of_run(false) {
   // Add cout as the default logging stream
   Log::addStream(std::cout);
 
-  LOG(INFO) << "Instantiated CaribouProducer for device \"" << name << "\"";
+  // Separate the device name from the device identifier, the latter is only relevant for EUDAQ:
+  auto const pos = name.find_last_of('_');
+  if(pos == std::string::npos) {
+    name_ = name;
+    LOG(INFO) << "Instantiated CaribouProducer for device \"" << name << "\"";
+  } else {
+    name_ = name.substr(0, pos);
+    const auto identifier = name.substr(pos + 1);
+    LOG(INFO) << "Instantiated CaribouProducer for device \"" << name << "\" with identifier \"" << identifier << "\"";
+  }
 
   // Create new Peary device manager
   manager_ = new DeviceManager();

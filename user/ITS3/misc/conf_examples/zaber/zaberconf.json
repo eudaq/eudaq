@@ -1,0 +1,39 @@
+[
+    {
+        "name": "trg_x",
+        "axis_number": 3,
+        "initial": 20000,
+        "dir_alias_neg": "door",
+        "dir_alias_pos": "wall"
+    },
+    {
+        "name": "trg_y",
+        "axis_number": 4,
+        "initial": 20000,
+        "dir_alias_neg": "ceiling",
+        "dir_alias_pos": "floor"
+    },
+    {
+        "name": "pmt_x",
+        "axis_number": 5,
+        "initial": 20000,
+        "dir_alias_neg": "door",
+        "dir_alias_pos": "wall"
+    },
+    {
+        "name": "pmt_y",
+        "axis_number": 6,
+        "initial": 20000,
+        "dir_alias_neg": "ceiling",
+        "dir_alias_pos": "floor"
+    },
+    {
+        "name": "dut_rot",
+        "axis_number": 1,
+        "dir_alias_neg": "trgchain_towards_beam",
+        "dir_alias_pos": "trgchain_away_beam",
+        "initial": 0,
+        "limit_min": 0,
+        "limit_max": 75
+    }
+]
