@@ -52,7 +52,7 @@ private:
   unsigned m_tlu_waiting_time;
   unsigned m_roc_resetperiod;
   unsigned m_nplanes, m_channels;
-  std::string m_verbosity, m_roctype, m_tbmtype, m_pcbtype,
+  std::string m_verbosity, m_usbId, m_roctype, m_tbmtype, m_pcbtype,
       m_producerName, m_detector, m_event_type, m_alldacs;
   bool m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
