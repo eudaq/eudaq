@@ -5,6 +5,7 @@ import alpidedaqboard
 from datetime import datetime
 from time import sleep
 import subprocess
+from utils import exception_handler
 
 ALPIDE_DUMP_REGS={
   'COMMAND'        :0x0000,
@@ -61,6 +62,7 @@ class ALPIDEProducer(pyeudaq.Producer):
         self.idev=0
         self.isev=0
 
+    @exception_handler
     def DoInitialise(self):
         self.iev=0
         conf=self.GetInitConfiguration().as_dict()
@@ -71,6 +73,7 @@ class ALPIDEProducer(pyeudaq.Producer):
             raise ValueError('need to specify trigger mode to be either "primary" or "replica"')
         self.stoptrigger()
 
+    @exception_handler
     def DoConfigure(self):        
         self.idev=0
         self.isev=0
@@ -134,6 +137,7 @@ class ALPIDEProducer(pyeudaq.Producer):
         self.daq.trg.minspacing.write(int(conf['minspacing']) if 'minspacing' in conf else 0)
         self.daq.trg.fixedbusy .write(int(conf['fixedbusy' ]) if 'fixedbusy'  in conf else 0)
 
+    @exception_handler
     def DoStartRun(self):
         self.idev=0
         self.isev=0
@@ -142,26 +146,24 @@ class ALPIDEProducer(pyeudaq.Producer):
         self.armtrigger()
         self.is_running=True
         
+    @exception_handler
     def DoStopRun(self):
         self.stoptrigger()
         self.is_running=False
 
+    @exception_handler
     def DoReset(self):
         self.stoptrigger()
         self.is_running=False
         # TODO: cleanup!?
 
+    @exception_handler
     def DoStatus(self):
         self.SetStatusTag('StatusEventN','%d'%self.isev);
         self.SetStatusTag('DataEventN'  ,'%d'%self.idev);
 
+    @exception_handler
     def RunLoop(self):
-        try:
-            self.foo()
-        except Exception as e:
-            print(e)
-            raise
-    def foo(self):
         # status events: roughly every 10s (time checked at least every 1000 events or at receive timeout)
         tlast=datetime.now()
         ilast=0
@@ -265,8 +267,4 @@ if __name__=='__main__':
     myproducer=ALPIDEProducer(args.name,args.run_control)
     myproducer.Connect()
     while(myproducer.IsConnected()):
-        #TODO: reod...
         sleep(1)
-#        if myproducer.is_running and myproducer.triggermode=='primary':
-#            myproducer.daq.trgseq.start.issue()
-

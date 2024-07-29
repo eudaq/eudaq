@@ -1,9 +1,27 @@
 aux_source_directory(src MODULE_SRC)
 INCLUDE_DIRECTORIES(include)
 
+find_package(ROOT)
+
+option(USER_CARIBOU_BUILD_CLICTD "build caribou CLICTD converter" ON)
+
+if(NOT USER_CARIBOU_BUILD_CLICTD)
+  message(STATUS "not building caribou CLICTD converter")
+  list(REMOVE_ITEM MODULE_SRC src/CLICTDEventConverter.cc)
+endif()
+
+if(NOT ROOT_FOUND)
+  list(REMOVE_ITEM MODULE_SRC src/AD9249EventConverter.cc)
+endif()
+
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} PUBLIC ${EUDAQ_CORE_LIBRARY})
 target_link_libraries(${EUDAQ_MODULE} PRIVATE Caribou::peary Caribou::devices)
+
+IF(ROOT_FOUND)
+  TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} PUBLIC ${ROOT_LIBRARIES})
+ENDIF()
+
 TARGET_INCLUDE_DIRECTORIES(${EUDAQ_MODULE} SYSTEM PRIVATE ${Peary_INCLUDE_DIRS})
 
 

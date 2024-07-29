@@ -1,10 +1,19 @@
-project(EUDAQ)
-set(${PROJECT_NAME}_VERSION_MAJOR 2 )
-set(${PROJECT_NAME}_VERSION_MINOR 5 )
-set(${PROJECT_NAME}_VERSION_PATCH 2 )
+CMAKE_MINIMUM_REQUIRED(VERSION 3.6.3 FATAL_ERROR)
+IF(COMMAND CMAKE_POLICY)
+    CMAKE_POLICY(SET CMP0003 NEW) # change linker path search behaviour
+    CMAKE_POLICY(SET CMP0048 NEW) # set project version
+    IF(${CMAKE_VERSION} VERSION_GREATER "3.13")
+        CMAKE_POLICY(SET CMP0077 NEW) # allow overwriting options with normal variables
+        CMAKE_POLICY(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories
+    ENDIF()
+ENDIF(COMMAND CMAKE_POLICY)
 
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+project(EUDAQ VERSION 2.6.1)
+
 include(CMakeDependentOption)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    include(CTest)
+endif()
 
 if(COMMAND CMAKE_POLICY)
   if(${CMAKE_VERSION} VERSION_GREATER "3.13")
@@ -17,16 +26,10 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
 
-set(CMAKE_SHARED_LIBRARY_PREFIX libeudaq_)
-set(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
-set(EUDAQ_CORE_LIBRARY core)
+set(EUDAQ_PREFIX "eudaq_")
+set(EUDAQ_TARGET "core")
+set(EUDAQ_CORE_LIBRARY "${EUDAQ_PREFIX}${EUDAQ_TARGET}")
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
-
-################
-# C++ STANDARD #
-################
-set(CMAKE_CXX_STANDARD 14 CACHE PATH "C++ standard")
-message("-- C++ STANDARD set to: ${CMAKE_CXX_STANDARD}")
 
 include_directories(main/lib/core/include)
 include_directories(extern/include)
@@ -35,8 +38,8 @@ set(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERS
 set(EUDAQ_LIB_VERSION_BASE ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
 find_package(Git QUIET)
 if(GIT_FOUND AND (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git))
-  execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir=${PROJECT_SOURCE_DIR}/.git --work-tree=${PROJECT_SOURCE_DIR} describe --tags HEAD OUTPUT_VARIABLE EUDAQ_GIT_VERSION ERROR_VARIABLE EUDAQ_GIT_ERROR_DESCRIBE)
-  execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir=${PROJECT_SOURCE_DIR}/.git --work-tree=${PROJECT_SOURCE_DIR} status --porcelain ${PROJECT_SOURCE_DIR}/main OUTPUT_VARIABLE EUDAQ_GIT_MAIN_STATUS ERROR_VARIABLE EUDAQ_GIT_ERROR_STATUS)
+  execute_process(COMMAND ${GIT_EXECUTABLE} --work-tree=${PROJECT_SOURCE_DIR} describe --tags HEAD OUTPUT_VARIABLE EUDAQ_GIT_VERSION ERROR_VARIABLE EUDAQ_GIT_ERROR_DESCRIBE)
+  execute_process(COMMAND ${GIT_EXECUTABLE} --work-tree=${PROJECT_SOURCE_DIR} status --porcelain ${PROJECT_SOURCE_DIR}/main OUTPUT_VARIABLE EUDAQ_GIT_MAIN_STATUS ERROR_VARIABLE EUDAQ_GIT_ERROR_STATUS)
   if(EUDAQ_GIT_ERROR_DESCRIBE OR EUDAQ_GIT_ERROR_STATUS)
     message(WARNING "Could not determine EUDAQ version from git -- git execution resulted in error: ${EUDAQ_GIT_ERROR_DESCRIBE} : ${EUDAQ_GIT_ERROR_STATUS}")
   else()
@@ -90,6 +93,9 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+
+
+
 add_subdirectory(main)
 add_subdirectory(extra)
 add_subdirectory(doc)
@@ -107,25 +113,8 @@ if(NOT TARGET uninstall)
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()
 
-# Python-based regression tests (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
-# enable_testing()
-# include(CTest)
-# find_package(PythonInterp)
-# if(PYTHONINTERP_FOUND AND BUILD_python)
-#   execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
-#   if(NUMPYRC EQUAL 1)
-#     message(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
-#   else()
-#     message(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
-#     include(etc/tests/testing.cmake)
-#   endif()
-# endif()
-
 include(PrintSystemInformation)
 
-# eudaqConfig.cmake
-
-export(PACKAGE eudaq)
 
 if(DEFINED EUDAQ_CORE_LIBRARY)
   list(APPEND CONF_EUDAQ_LIBRARIES eudaq_${EUDAQ_CORE_LIBRARY})
@@ -154,9 +143,9 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eudaqConfig.cmak
                               PATH_VARS EUDAQ_INCLUDE_DIRS EUDAQ_LIBRARIES_DIRS
                               )
 
-write_basic_package_version_file(eudaqConfigVersion.cmake
-                                 VERSION ${PROJECT_VERSION}
-                                 COMPATIBILITY AnyNewerVersion)
+#write_basic_package_version_file(eudaqConfigVersion.cmake
+#                                 VERSION ${PROJECT_VERSION}
+#                                 COMPATIBILITY AnyNewerVersion)
 
 # Install the export set for use with the install-tree
 install(EXPORT eudaqTargets
