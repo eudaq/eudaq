@@ -97,7 +97,7 @@ void CaribouProducer::DoInitialise() {
   level_ = Log::getReportingLevel();
 
   // Open configuration file and create object:
-  caribou::Configuration config;
+  caribou::ConfigParser cfg;
   auto confname = ini->Get("config_file", "");
   std::ifstream file(confname);
   EUDAQ_INFO("Attempting to use initial device configuration \"" + confname + "\"");
@@ -105,14 +105,11 @@ void CaribouProducer::DoInitialise() {
     LOG(ERROR) << "No configuration file provided.";
     EUDAQ_ERROR("No Caribou configuration file provided.");
   } else {
-    config = caribou::Configuration(file);
+    cfg = caribou::ConfigParser(file);
   }
 
   // Select section from the configuration file relevant for this device:
-  auto sections = config.GetSections();
-  if(std::find(sections.begin(), sections.end(), name_) != sections.end()) {
-    config.SetSection(name_);
-  }
+  auto config = cfg.GetConfig(name_);
 
   std::lock_guard<std::mutex> lock{device_mutex_};
   size_t device_id = manager_->addDevice(name_, config);
@@ -122,10 +119,8 @@ void CaribouProducer::DoInitialise() {
   // Add secondary device if it is configured:
   if(ini->Has("secondary_device")) {
     std::string secondary = ini->Get("secondary_device", std::string());
-    if(std::find(sections.begin(), sections.end(), secondary) != sections.end()) {
-      config.SetSection(secondary);
-    }
-    size_t device_id2 = manager_->addDevice(secondary, config);
+  	auto sec_config = cfg.GetConfig(name_);
+    size_t device_id2 = manager_->addDevice(secondary, sec_config);
     EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id2) + ", fetching secondary device...");
     secondary_device_ = manager_->getDevice(device_id2);
   }
