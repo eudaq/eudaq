@@ -48,6 +48,11 @@ jobs:
           sudo apt-get install qt6-base-dev
         fi
       shell: bash
+      
+    - name: install CERN ROOT dependencies
+      id: root_install_dependencies
+      run: |
+        sudo apt-get install binutils cmake dpkg-dev g++ gcc libssl-dev git libx11-dev libxext-dev libxft-dev libxpm-dev python3 libtbb-dev
 
     - name: restore CERN ROOT from cache
       id: root_restore_from_cache
@@ -60,7 +65,6 @@ jobs:
       id: root_build
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
-        sudo apt-get install binutils cmake dpkg-dev g++ gcc libssl-dev git libx11-dev libxext-dev libxft-dev libxpm-dev python3 libtbb-dev
         export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.source.tar.gz
         wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
         mkdir root_source
