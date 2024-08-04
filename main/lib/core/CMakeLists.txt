@@ -5,6 +5,7 @@ add_definitions("-DEUDAQ_CORE_EXPORTS")
 find_package(Filesystem)
 message("file system variable: ")
 message(${CXX_FILESYSTEM_HAVE_FS})
+string(TOLOWER ${CXX_FILESYSTEM_HAVE_FS} CXX_FILESYSTEM_HAVE_FS)
 configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
 
 set(EUDAQ_INCLUDE_DIRS
