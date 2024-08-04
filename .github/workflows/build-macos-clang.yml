@@ -1,4 +1,4 @@
-name: windows_cl
+name: macos_clang
 # CERN ROOT requires minimum cxx_standard: 17 --> cxx_standard: 14 only tested for core library
 # CERN ROOT has to be compiled in a compatible version with regard to gcc/clang and cxx_standard
 # For Qt the compiler and cxx_standard do not matter that much
@@ -18,14 +18,15 @@ jobs:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [macos-14]
         qt_version: [5, 6]
         compiler: [msvc]
         cpp_standard: [17, 20]
         
-    name: eudaq_full_build-windows-latest-${{matrix.compiler}}-cxx_standard-${{matrix.cpp_standard}}-qt-${{matrix.qt_version}}
+    name: eudaq_full_build-${{matrix.os}}-${{matrix.compiler}}-cxx_standard-${{matrix.cpp_standard}}-qt-${{matrix.qt_version}}
 
     steps:
     - uses: actions/checkout@v4
