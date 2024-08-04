@@ -31,13 +31,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
              
-        
+    - name: install pre-compiled CERN ROOT
+      id: root_install
+      run: |
+        export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.macos-14.5-arm64-clang150.tar.gz
+        wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
+        tar -xzf $CERN_ROOT_DOWNLOAD_NAME
+        rm -f $CERN_ROOT_DOWNLOAD_NAME
+        mkdir -p ~/eudaq_dependencies/
+        mv root ~/eudaq_dependencies/
 
         
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
+        sudo mkdir -p /opt/local/lib
+        sudo ln -s /opt/homebrew/lib /opt/local/lib
+        source ~/eudaq_dependencies/root/bin/thisroot.sh
         cmake -D EUDAQ_BUILD_STDEVENT_MONITOR=ON -D EUDAQ_BUILD_GUI=ON -D USER_BUILD_TLU_ONLY_CONVERTER=ON -D USER_EUDET_BUILD=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
