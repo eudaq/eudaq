@@ -24,11 +24,16 @@ jobs:
         qt_version: [5, 6]
         compiler: [msvc]
         cpp_standard: [17, 20]
+        arch: [x64, x86]
         
     name: eudaq_full_build-windows-latest-${{matrix.compiler}}-cxx_standard-${{matrix.cpp_standard}}-qt-${{matrix.qt_version}}
 
     steps:
     - uses: actions/checkout@v4
+    
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
         
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
