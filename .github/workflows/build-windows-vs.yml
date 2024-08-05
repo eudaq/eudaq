@@ -26,7 +26,7 @@ jobs:
         cpp_standard: [17, 20]
         arch: [x64, x86]
         
-    name: eudaq_full_build-windows-latest-${{matrix.compiler}}-cxx_standard-${{matrix.cpp_standard}}-qt-${{matrix.qt_version}}
+    name: eudaq_full_build-windows-latest-${{matrix.compiler}}-${{matrix.arch}}-cxx_standard-${{matrix.cpp_standard}}-qt-${{matrix.qt_version}}
 
     steps:
     - uses: actions/checkout@v4
@@ -50,6 +50,5 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
-        dumpbin.exe /DEPENDENTS D:\a\eudaq\eudaq\build\main\exe\Release\euCliReader.exe
         ctest -V -C ${{env.BUILD_TYPE}}
       
