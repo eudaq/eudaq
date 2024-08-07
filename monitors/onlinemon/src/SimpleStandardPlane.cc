@@ -34,6 +34,9 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id,
   is_USBPIXI4 = false;
   is_FORTIS = false;
   is_EXPLORER = false;
+  is_RD53A = false;
+  is_RD53B = false;
+  is_REF = false;
   is_APTS = false;
   is_OPAMP = false;
   is_UNKNOWN = true; // per default we don't know this plane
@@ -59,6 +62,9 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id)
   is_USBPIXI4 = false;
   is_FORTIS = false;
   is_EXPLORER = false;
+  is_RD53A = false;
+  is_RD53B = false;
+  is_REF = false;
   is_APTS = false;
   is_OPAMP = false;
   is_UNKNOWN = true; // per default we don't know this plane
@@ -226,6 +232,17 @@ void SimpleStandardPlane::setPixelType(std::string name) {
     is_UNKNOWN = false;
     AnalogPixelType = true;
   } else if (name == "pALPIDEfs") {
+    is_UNKNOWN = false;
+  } else if(name.find("RD53A") != std::string::npos) {
+    is_RD53A = true;
+    is_UNKNOWN = false;
+    AnalogPixelType = true;
+  } else if(name.find("RD53B") != std::string::npos) {
+    is_RD53B = true;
+    is_UNKNOWN = false;
+    AnalogPixelType = true;
+  } else if(name.find("REF") != std::string::npos) {
+    is_REF = true;
     is_UNKNOWN = false;
   } else if (name == "ALPIDE") {
     is_UNKNOWN = false;
