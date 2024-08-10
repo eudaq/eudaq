@@ -105,11 +105,8 @@ jobs:
         git clone --depth=1 -b v2.8.13 --recurse-submodules https://github.com/ipbus/ipbus-software.git
         cd ipbus-software
         mkdir -p $GITHUB_WORKSPACE/extern/
-        sudo make install Set=uhal prefix=$GITHUB_WORKSPACE/extern/
-        ls $GITHUB_WORKSPACE
-        ls $GITHUB_WORKSPACE/extern/
-        ls $GITHUB_WORKSPACE/extern/
-        ls $GITHUB_WORKSPACE/extern/include/
+        make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
+        make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
