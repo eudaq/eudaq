@@ -95,9 +95,21 @@ jobs:
         
     - name: install TLU dependencies
       run: |
+        echo "installing libusb - tlu 1 requirement"
         sudo apt-get install --force-yes -y libusb-dev
         sudo apt-get install --force-yes -y libusb-1.0-0 libusb-1.0-0-dev
-        
+        echo "installing ipbus - tlu 2 requirement"
+        sudo apt-get install -y make erlang g++ libboost-all-dev libpugixml-dev python-all-dev rsyslog
+        echo "installing ipbus"
+        mkdir -p ~/eudaq_dependencies/ipbus/
+        git clone --depth=1 -b v2.8.13 --recurse-submodules https://github.com/ipbus/ipbus-software.git
+        cd ipbus-software
+        mkdir -p $GITHUB_WORKSPACE/extern/
+        sudo make install Set=uhal prefix=$GITHUB_WORKSPACE/extern/
+        ls $GITHUB_WORKSPACE
+        ls $GITHUB_WORKSPACE/extern/
+        ls $GITHUB_WORKSPACE/extern/
+        ls $GITHUB_WORKSPACE/extern/include/
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
