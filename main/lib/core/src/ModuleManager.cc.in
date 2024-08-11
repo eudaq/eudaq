@@ -23,6 +23,7 @@ namespace filesystem = @CXX_FILESYSTEM_NAMESPACE@;
 #endif
 
 #if EUDAQ_PLATFORM_IS(WIN32)
+#define NOMINMAX
 #include <windows.h>
 #include <intrin.h>
 #pragma intrinsic(_ReturnAddress)
