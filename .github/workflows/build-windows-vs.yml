@@ -30,16 +30,19 @@ jobs:
             arch: x64
             qt_arch: win64_msvc2019_64
             windows_image: windows-2019
+            root_url: https://root.cern/download/root_v6.32.02.win64.vc17.zip
           - qt_version: 5
             qt_version_full: 5.15.2
             arch: Win32
             qt_arch: win32_msvc2019
             windows_image: windows-2019
+            root_url: https://root.cern/download/root_v6.32.02.win32.vc17.zip
           - qt_version: 6
             qt_version_full: 6.*.*
             arch: x64
             qt_arch: win64_msvc2022_64
             windows_image: windows-2022
+            root_url: https://root.cern/download/root_v6.32.02.win64.vc17.zip
         exclude:
           - qt_version: 6
             arch: Win32
@@ -59,11 +62,23 @@ jobs:
       with:
          version: ${{matrix.qt_version_full}}
          arch: ${{ matrix.qt_arch }}
+         
+    - name: install CERN ROOT
+      id: install_build
+      run: |
+        mkdir $HOME\eudaq_dependencies\
+        Invoke-WebRequest -Uri ${{matrix.root_url}} -OutFile "$HOME\eudaq_dependencies\root.zip"
+        [System.IO.Compression.ZipFile]::ExtractToDirectory("$HOME\eudaq_dependencies\root.zip", "$HOME\eudaq_dependencies\")
+
         
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
+        [Environment]::SetEnvironmentVariable('ROOTSYS', "$HOME\eudaq_dependencies\root\", 'Machine')
+        Write-Host "path to thisroot : " $HOME\eudaq_dependencies\root\bin\thisroot.bat
+        Write-Host "ROOTSYS : " $ROOTSYS
+        Get-ChildItem -Path $ROOTSYS\cmake\
         cmake -A ${{ matrix.arch }} -D EUDAQ_BUILD_STDEVENT_MONITOR=ON -D EUDAQ_BUILD_GUI=ON -D USER_BUILD_TLU_ONLY_CONVERTER=ON -D USER_EUDET_BUILD=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
