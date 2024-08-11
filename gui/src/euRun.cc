@@ -766,11 +766,11 @@ void RunControlGUI::store_config()
 void RunControlGUI::updateProgressBar(){
     double scanProgress = 0;
     if(m_scan_active){
-        scanProgress = ((m_scan.currentStep()-1)%m_scan.nSteps())/double(std::max(1,m_scan.nSteps()))*100;
+        scanProgress = ((m_scan.currentStep()-1)%m_scan.nSteps())/double(std::max<>(1,m_scan.nSteps()))*100;
     if(m_scan.scanIsTimeBased())
-        scanProgress+= ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max(1,m_scanningTimer.interval())) *100./std::max(1,m_scan.nSteps()));
+        scanProgress+= ((m_scanningTimer.interval()-m_scanningTimer.remainingTime())/double(std::max<>(1,m_scanningTimer.interval())) *100./std::max<>(1,m_scan.nSteps()));
     else
-        scanProgress += getEventsCurrent()/double(m_scan.eventsPerStep())*100./std::max(1,m_scan.nSteps());
+        scanProgress += getEventsCurrent()/double(m_scan.eventsPerStep())*100./std::max<>(1,m_scan.nSteps());
     }
     progressBar_scan->setValue(scanProgress);
 
