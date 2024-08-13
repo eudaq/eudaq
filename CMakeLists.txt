@@ -136,6 +136,7 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/eudaqConfig.cmak
                               INSTALL_DESTINATION cmake
                               PATH_VARS EUDAQ_INCLUDE_DIRS EUDAQ_LIBRARIES_DIRS
                               )
+
 write_basic_package_version_file(eudaqConfigVersion.cmake
                                  VERSION ${PROJECT_VERSION}
                                  COMPATIBILITY AnyNewerVersion)
