@@ -119,7 +119,7 @@ void CaribouProducer::DoInitialise() {
   // Add secondary device if it is configured:
   if(ini->Has("secondary_device")) {
     std::string secondary = ini->Get("secondary_device", std::string());
-  	auto sec_config = cfg.GetConfig(name_);
+    auto sec_config = cfg.GetConfig(secondary);
     size_t device_id2 = manager_->addDevice(secondary, sec_config);
     EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id2) + ", fetching secondary device...");
     secondary_device_ = manager_->getDevice(device_id2);
