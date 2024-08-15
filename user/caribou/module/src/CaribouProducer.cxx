@@ -1,9 +1,9 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Configuration.hh"
 
-#include "device/DeviceManager.hpp"
-#include "utils/configuration.hpp"
-#include "utils/log.hpp"
+#include "peary/device/DeviceManager.hpp"
+#include "peary/utils/configuration.hpp"
+#include "peary/utils/log.hpp"
 
 #include <vector>
 #include <thread>
