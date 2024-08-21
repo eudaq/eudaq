@@ -41,7 +41,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // load parameters from config file
   std::ofstream outfileTimestamps;
   if (!m_configured) {
-    // generate rootfile to write waveforms as TH1D
+    // generate rootfile to write waveforms as TH1D  - RECREATE it here and append later
     TFile *histoFile = nullptr;
     if (m_generateRoot) {
       histoFile =
@@ -52,41 +52,40 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
       histoFile->Close();
     }
-    // check for tags
+    // check for tags that are specific for a oszi
     auto tags = d1->GetTags();
+    m_digital = 0;
+
+    for (uint i = 0; i < 15; ++i) {
+      // check if analo channel is existing
+      if (tags.count((":WAVeform:SOURce CHANnel" + std::to_string(i)))) {
+        m_channels++;
+      }
+      // if one digitral channel is on read all out
+      if (tags.count((":DIGital" + std::to_string(i) + ":DISPlay 1"))) {
+        m_digital = 1;
+      }
+    }
+
+
     // this is the fallback for older data recorded
-    if (tags.empty()) {
-      EUDAQ_DEBUG("No tags in first event - fallback to manual configuration");
+    if (m_channels == 0 && m_digital == 0) {
+      EUDAQ_DEBUG(
+          "No channel tags in first event - fallback to manual configuration");
       m_channels = conf->Get("channels", 4);
       m_digital = conf->Get("digital", 1);
-
-    } else {
-      m_digital = 0;
-
-      for (auto t : tags) {
-        EUDAQ_DEBUG(t.first + ", " + t.second);
-      }
-      for (uint i = 0; i < 15; ++i) {
-        // check if analo channel is existing
-        if (tags.count((":WAVeform:SOURce CHANnel" + std::to_string(i)))) {
-          m_channels++;
-        }
-        // if one digitral channel is on read all out
-        if (tags.count((":DIGital" + std::to_string(i) + ":DISPlay 1"))) {
-          m_digital = 1;
-        }
-      }
-      EUDAQ_INFO("Analog channels active: " + std::to_string(m_channels));
-      EUDAQ_INFO("Digital channels active: " + std::to_string(m_digital));
     }
-    // define if plots are being stored
+    EUDAQ_INFO("Analog channels active: " + std::to_string(m_channels));
+    EUDAQ_INFO("Digital channels active: " + std::to_string(m_digital));
+
+    // define if plots are being stored - always from config, defaults to zero (TODO CHANGEME)
     m_generateRoot = conf->Get("generateRoot", 1);
 
     // make sure to only do this once
     m_configured = true;
-
-  } // configure
-
+    return true; // the first part is always only the configuration, no real
+                 // data in there
+  }              // configure
 
   // Data container:
   caribou::pearyRawData rawdata;
@@ -133,6 +132,12 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // Finn: I am not sure if I actually solved this issue! Lets discuss.
   rawdata.resize( sizeof(datablock[0]) * datablock.size() / sizeof(uintptr_t) );
   std::memcpy(&rawdata[0], &datablock[0], sizeof(datablock[0]) * datablock.size() );
+
+  // first we read the analog data:
+
+
+  // second the trigger IDs are extracted from the digital data
+
 
   // needed per event
   uint64_t block_words;
@@ -306,7 +311,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // update position for next iteration
     block_position += block_words+1;
 
-   
+
 
   } // for channel
   std::vector<uint64_t> triggers;
@@ -365,7 +370,7 @@ if(m_digital){
 
       // prepare histogram with corresponding binning if root file is created
       TH1D* hist_trgid = nullptr;
-      TH1D* hist_trg = nullptr; 
+      TH1D* hist_trg = nullptr;
       TH1D* hist_clk = nullptr;
 
       // create histograms
@@ -390,7 +395,7 @@ if(m_digital){
         hist_trg = hist_5;
         hist_trgid = hist_1;
         hist_clk = hist_14;
-        
+
         hist_trgid->GetXaxis()->SetTitle("time [ns]");
         hist_trgid->GetYaxis()->SetTitle("signal [V]");
 
@@ -416,7 +421,7 @@ if(m_digital){
 
         for( auto & word : words ){
 
-  // fill vectors with time bins and waveform       
+  // fill vectors with time bins and waveform
           w_trgid.push_back((word>>5)&0x1);
           w_trg.push_back((word>>1)&0x1);
           w_clk.push_back((word>>14)&0x1);
@@ -529,7 +534,7 @@ if(m_digital){
             amps.at(c).at(s) = -wavess.at(c).at(s).at(p) + peds.at(c).at(s);
           }
           }
-         
+
         }
 
       } // channels
@@ -555,7 +560,7 @@ if(m_digital){
           // Set waveforms to each hit pixel.
           plane.SetWaveform(index, wavess.at(c).at(s), time.at(c), dx.at(c), 0);
 
-          // Increase index number 
+          // Increase index number
           index++;
         }
       }
@@ -591,6 +596,7 @@ if(m_digital){
   // Indicate that data were successfully converted
   return true;
 }
+// return the vectors of waveform objects (size given by number of segments) for each active channesl
 std::vector<std::vector<waveform>> DSO9254AEvent2StdEventConverter::read_data(caribou::pearyRawData &rawdata, int evt,
     uint64_t &block_position) {
 
