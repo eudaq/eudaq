@@ -52,6 +52,31 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       }
       histoFile->Close();
     }
+    // check for tags
+    auto tags = d1->GetTags();
+    // this is the fallback for older data recorded
+    if (tags.empty()) {
+      EUDAQ_DEBUG("No tags in first event - fallback to manual configuration");
+
+    } else {
+      m_digital = 0;
+
+      for (auto t : tags) {
+        EUDAQ_DEBUG(t.first + ", " + t.second);
+      }
+      for (uint i = 0; i < 15; ++i) {
+        // check if analo channel is existing
+        if (tags.count((":WAVeform:SOURce CHANnel" + std::to_string(i)))) {
+          m_channels++;
+        }
+        // if one digitral channel is on read all out
+        if (tags.count((":DIGital" + std::to_string(i) + ":DISPlay 1"))) {
+          m_digital = 1;
+        }
+      }
+      EUDAQ_INFO("Analog channels active: " + std::to_string(m_channels));
+      EUDAQ_INFO("Digital channels active: " + std::to_string(m_digital));
+    }
     // read from config file
     m_pedStartTime = conf->Get("pedStartTime", 0); // integration windows in [ns]
     m_pedEndTime   = conf->Get("pedEndTime"  , 0);
