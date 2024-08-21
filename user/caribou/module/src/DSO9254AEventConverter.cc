@@ -79,49 +79,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       EUDAQ_INFO("Analog channels active: " + std::to_string(m_channels));
       EUDAQ_INFO("Digital channels active: " + std::to_string(m_digital));
     }
-    // read from config file
-    m_pedStartTime = conf->Get("pedStartTime", 0); // integration windows in [ns]
-    m_pedEndTime   = conf->Get("pedEndTime"  , 0);
-    m_ampStartTime = conf->Get("ampStartTime", 0);
-    m_ampEndTime   = conf->Get("ampEndTime"  , 0);
-    m_chargeScale  = conf->Get("chargeScale" , 0);
-    m_chargeCut    = conf->Get("chargeCut"   , 0);
-    m_polarity    = conf->Get("polarity"   , 1);
+    // define if plots are being stored
     m_generateRoot = conf->Get("generateRoot", 1);
-    m_osci_timestamp = conf->Get("osci_timestamp", 1);
-     m_channels = conf->Get("channels", 4);
-      m_digital = conf->Get("digital", 1);
 
-    // // EUDAQ_DEBUG( "Loaded parameters from configuration file." );
-    // // EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
-    // // EUDAQ_DEBUG( "  pedEndTime   = " + to_string( m_pedEndTime ) + " ns" );
-    // // EUDAQ_DEBUG( "  ampStartTime = " + to_string( m_ampStartTime ) + " ns" );
-    // // EUDAQ_DEBUG( "  ampEndTime   = " + to_string( m_ampEndTime ) + " ns" );
-    // // EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
-    // // EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
-    // // EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
-    // // EUDAQ_DEBUG( "  osci_timestamp = " + to_string( m_osci_timestamp ) );
-    // // EUDAQ_DEBUG( "  channels = " + to_string( m_channels ) );
-
-    // check configuration
-    bool noData = false;
-    bool noHist = false;
-    if( m_pedStartTime == 0 &&
-        m_pedEndTime   == 0 &&
-        m_ampStartTime == 0 &&
-        m_ampEndTime   == 0 ){
-      EUDAQ_WARN( "pedStartTime, pedEndTime, ampStartTime and ampEndTime are unconfigured. Converter returns no data. Introduce configuration file with these values!" );
-      noData = true;
-    }
-    if( !m_generateRoot ){
-      EUDAQ_WARN( "No waveform file generated!" );
-      noHist = true;
-    }
-    if( noData && noHist ){
-      EUDAQ_ERROR( "Writing no output data and no root file... Abort");
-      return false;
-    }
-
+    // make sure to only do this once
     m_configured = true;
 
   } // configure
@@ -352,17 +313,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 if(m_digital){
 
-    // EUDAQ_DEBUG( "Reading digital channels, starting with word  " +to_string(block_position)+" of "+to_string(rawdata.size()) );
+     EUDAQ_DEBUG( "Reading digital channels, starting with word  " +to_string(block_position)+" of "+to_string(rawdata.size()) );
 
     // Obtaining Data Stucture
     block_words = rawdata[block_position + 0];
     pream_words = rawdata[block_position + 1];
     chann_words = rawdata[block_position + 2 + pream_words];
-    // EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
-    // EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
-    // EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
-    // EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
-    // EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
+     EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
+     EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
+     EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
+     EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
+     EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
 
     // Check our own sixth-graders math: The block header minus peamble minus channel data minus the counters is zero
     if(block_words - pream_words - 2 - chann_words) {
@@ -455,24 +416,18 @@ if(m_digital){
 
         for( auto & word : words ){
 
-  // fill vectors with time bins and waveform
-          
+  // fill vectors with time bins and waveform       
           w_trgid.push_back((word>>5)&0x1);
           w_trg.push_back((word>>1)&0x1);
           w_clk.push_back((word>>14)&0x1);
-
-
           // fill histogram
           if( m_generateRoot ){
             hist_trgid->SetBinContent(w_trgid.size(),w_trgid.back() );
             hist_trg->SetBinContent(w_trg.size(),w_trg.back() );
             hist_clk->SetBinContent(w_clk.size(),w_clk.back());
           }
-
           wfi++;
-
         } // words
-
       } // waveform
 
 
@@ -490,7 +445,6 @@ if(m_digital){
       uint pos = 0;
       for (uint data = 0; data < w_trg.size(); data++) {
         if (w_trg.at(data) == 1) {
-          // std::cout << data << std::endl;
           pos = data + 1.5*binsIn25ns;
           break;
         }
@@ -498,7 +452,6 @@ if(m_digital){
       // now fetch the data
       for (int i = 0; i < 15; ++i) {
         triggerID += uint64_t(w_trgid.at(pos)) << i;
-        /// std::cout << pos << "\t " <<triggerID << std::endl;
         pos += binsIn25ns;
       }
       triggers.push_back(triggerID);
@@ -581,15 +534,6 @@ if(m_digital){
 
       } // channels
 
-//      // check:
-//      for( int c = 0; c<peds.size(); c++ ){
-//        // EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s));
-//        // EUDAQ_DEBUG("  points  " + to_string(wavess.at(c).at(s).size()));
-//        // EUDAQ_DEBUG("  pedestl " + to_string(peds.at(c).at(s)));
-//        // EUDAQ_DEBUG("  ampli   " + to_string(amps.at(c).at(s)));
-//        // EUDAQ_DEBUG("  timestp " + to_string(timestamp));
-//      }
-
 
       // create sub-event for segments
       auto sub_event = eudaq::StandardEvent::MakeShared();
@@ -659,21 +603,18 @@ std::vector<std::vector<waveform>> DSO9254AEvent2StdEventConverter::read_data(ca
 
   for (int nch = 0; nch < (m_channels); ++nch) {
 
-
-    // EUDAQ_DEBUG("Reading channel " + to_string(nch) + " of " +
-    //            to_string(m_channels));
+    EUDAQ_DEBUG("Reading channel " + to_string(nch) + " of " + to_string(m_channels));
 
            // Obtaining Data Stucture
     block_words = rawdata[block_position + 0];
     pream_words = rawdata[block_position + 1];
     chann_words = rawdata[block_position + 2 + pream_words];
-    // // EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " 8 bit block size");
-    // // EUDAQ_DEBUG("  " + to_string(block_position) +
-    //            " current position in block");
-    // // EUDAQ_DEBUG("  " + to_string(block_words) + " words per data block");
-    // // EUDAQ_DEBUG("  " + to_string(pream_words) + " words per preamble");
-    // // EUDAQ_DEBUG("  " + to_string(chann_words) + " words per channel data");
-    // // EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " size of rawdata");
+      EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " 8 bit block size");
+      EUDAQ_DEBUG("  " + to_string(block_position) +   " current position in block");
+      EUDAQ_DEBUG("  " + to_string(block_words) + " words per data block");
+      EUDAQ_DEBUG("  " + to_string(pream_words) + " words per preamble");
+      EUDAQ_DEBUG("  " + to_string(chann_words) + " words per channel data");
+      EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " size of rawdata");
 
            // Data sanity check: Total block size should be:
            // pream_words+channel_data_words+2
