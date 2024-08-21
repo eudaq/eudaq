@@ -57,6 +57,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     // this is the fallback for older data recorded
     if (tags.empty()) {
       EUDAQ_DEBUG("No tags in first event - fallback to manual configuration");
+      m_channels = conf->Get("channels", 4);
+      m_digital = conf->Get("digital", 1);
 
     } else {
       m_digital = 0;
