@@ -65,16 +65,16 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
      m_channels = conf->Get("channels", 4);
       m_digital = conf->Get("digital", 1);
 
-    EUDAQ_DEBUG( "Loaded parameters from configuration file." );
-    EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
-    EUDAQ_DEBUG( "  pedEndTime   = " + to_string( m_pedEndTime ) + " ns" );
-    EUDAQ_DEBUG( "  ampStartTime = " + to_string( m_ampStartTime ) + " ns" );
-    EUDAQ_DEBUG( "  ampEndTime   = " + to_string( m_ampEndTime ) + " ns" );
-    EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
-    EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
-    EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
-    EUDAQ_DEBUG( "  osci_timestamp = " + to_string( m_osci_timestamp ) );
-    EUDAQ_DEBUG( "  channels = " + to_string( m_channels ) );
+    // // EUDAQ_DEBUG( "Loaded parameters from configuration file." );
+    // // EUDAQ_DEBUG( "  pedStartTime = " + to_string( m_pedStartTime ) + " ns" );
+    // // EUDAQ_DEBUG( "  pedEndTime   = " + to_string( m_pedEndTime ) + " ns" );
+    // // EUDAQ_DEBUG( "  ampStartTime = " + to_string( m_ampStartTime ) + " ns" );
+    // // EUDAQ_DEBUG( "  ampEndTime   = " + to_string( m_ampEndTime ) + " ns" );
+    // // EUDAQ_DEBUG( "  chargeScale  = " + to_string( m_chargeScale ) + " a.u." );
+    // // EUDAQ_DEBUG( "  chargeCut    = " + to_string( m_chargeCut ) + " a.u." );
+    // // EUDAQ_DEBUG( "  generateRoot = " + to_string( m_generateRoot ) );
+    // // EUDAQ_DEBUG( "  osci_timestamp = " + to_string( m_osci_timestamp ) );
+    // // EUDAQ_DEBUG( "  channels = " + to_string( m_channels ) );
 
     // check configuration
     bool noData = false;
@@ -135,7 +135,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // all four scope channels in one data block
   auto datablock = ev->GetBlock(0);
-  EUDAQ_DEBUG("DSO9254A frame with " + to_string(datablock.size()) + " entries");
+  // // EUDAQ_DEBUG("DSO9254A frame with " + to_string(datablock.size()) + " entries");
 
 
   // Calulate positions and length of data blocks:
@@ -156,17 +156,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // loop 4 channels -> loop m_channels
   for( int nch = 0; nch < m_channels; nch++ ){
 
-    EUDAQ_DEBUG( "Reading channel " + to_string(nch));
+    // // EUDAQ_DEBUG( "Reading channel " + to_string(nch));
 
     // Obtaining Data Stucture
     block_words = rawdata[block_position + 0];
     pream_words = rawdata[block_position + 1];
     chann_words = rawdata[block_position + 2 + pream_words];
-    EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
-    EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
-    EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
-    EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
-    EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
+    // // EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
+    // // EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
+    // // EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
+    // // EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
+    // // EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
 
     // Check our own sixth-graders math: The block header minus peamble minus channel data minus the counters is zero
     if(block_words - pream_words - 2 - chann_words) {
@@ -180,15 +180,15 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
         i++ ){
       preamble += (char)rawdata[i];
     }
-    EUDAQ_DEBUG("Preamble");
-    EUDAQ_DEBUG("  " + preamble);
+    // EUDAQ_DEBUG("Preamble");
+    // EUDAQ_DEBUG("  " + preamble);
     // parse preamble to vector of strings
     std::string val;
     std::vector<std::string> vals;
     std::istringstream stream(preamble);
     while(std::getline(stream,val,',')){
       vals.push_back(val);
-      EUDAQ_DEBUG( " " + to_string(vals.size()-1) + ": " + to_string(vals.back()));
+      // EUDAQ_DEBUG( " " + to_string(vals.size()-1) + ": " + to_string(vals.back()));
     }
 
     // Pick needed preamble elements
@@ -198,9 +198,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     dy.push_back( stod( vals[7]) );
     y0.push_back( stod( vals[8]) );
 
-    EUDAQ_DEBUG("Acq mode (2=SEGM): " + to_string(vals[18]));
+    // EUDAQ_DEBUG("Acq mode (2=SEGM): " + to_string(vals[18]));
     if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
-      EUDAQ_DEBUG( "Segments: " + to_string(vals[24]));
+      // EUDAQ_DEBUG( "Segments: " + to_string(vals[24]));
       sgmnt_count = stoi( vals[24] );
     }
 
@@ -217,7 +217,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       EUDAQ_WARN("incomplete waveform in block " + to_string(ev->GetEventN())
                  + ", channel " + to_string(nch) );
     }
-    EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
+    // EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
 
     // Check our own eighth-graders math: the number of words in the channel times 4 points per word minus the number of points times number of segments is 0
     if(4 * chann_words - np.at(nch) * sgmnt_count) {
@@ -325,17 +325,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
 if(m_digital){
 
-    EUDAQ_DEBUG( "Reading digital channels, starting with word  " +to_string(block_position)+" of "+to_string(rawdata.size()) );
+    // EUDAQ_DEBUG( "Reading digital channels, starting with word  " +to_string(block_position)+" of "+to_string(rawdata.size()) );
 
     // Obtaining Data Stucture
     block_words = rawdata[block_position + 0];
     pream_words = rawdata[block_position + 1];
     chann_words = rawdata[block_position + 2 + pream_words];
-    EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
-    EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
-    EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
-    EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
-    EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
+    // EUDAQ_DEBUG( "  " + to_string(block_position) + " current position in block");
+    // EUDAQ_DEBUG( "  " + to_string(block_words) + " words per segment");
+    // EUDAQ_DEBUG( "  " + to_string(pream_words) + " words per preamble");
+    // EUDAQ_DEBUG( "  " + to_string(chann_words) + " words per channel data");
+    // EUDAQ_DEBUG( "  " + to_string(rawdata.size()) + " size of rawdata");
 
     // Check our own sixth-graders math: The block header minus peamble minus channel data minus the counters is zero
     if(block_words - pream_words - 2 - chann_words) {
@@ -349,21 +349,21 @@ if(m_digital){
         i++ ){
       preamble += (char)rawdata[i];
     }
-    EUDAQ_DEBUG("Preamble");
-    EUDAQ_DEBUG("  " + preamble);
+    // EUDAQ_DEBUG("Preamble");
+    // EUDAQ_DEBUG("  " + preamble);
     // parse preamble to vector of strings
     std::string val;
     std::vector<std::string> vals;
     std::istringstream stream(preamble);
     while(std::getline(stream,val,',')){
       vals.push_back(val);
-      EUDAQ_DEBUG( " " + to_string(vals.size()-1) + ": " + to_string(vals.back()));
+      // EUDAQ_DEBUG( " " + to_string(vals.size()-1) + ": " + to_string(vals.back()));
     }
 
 
-    EUDAQ_DEBUG("Digital Acq mode (2=SEGM): " + to_string(vals[18]));
+    // EUDAQ_DEBUG("Digital Acq mode (2=SEGM): " + to_string(vals[18]));
     if( vals.size() == 25 ) {// this is segmented mode, possibly more than one waveform in block
-      EUDAQ_DEBUG( "Segments: " + to_string(vals[24]));
+      // EUDAQ_DEBUG( "Segments: " + to_string(vals[24]));
       sgmnt_count = stoi( vals[24] );
     }
 
@@ -416,7 +416,7 @@ if(m_digital){
       // read channel data
       std::vector<int16_t> words;
       words.resize(stoi(vals[2])); // rawdata contains 8 byte words, scope sends 2 byte words
-      EUDAQ_INFO("Size of words: " + to_string(words.size()));
+     // EUDAQ_INFO("Size of words: " + to_string(words.size()));
       int16_t wfi = 0;
       // Read from segment start until the next segment begins:
       for(int i=block_position + 3 + pream_words + (s+0)*chann_words/sgmnt_count;
@@ -486,7 +486,7 @@ if(m_digital){
   // close rootfile
   if( m_generateRoot ){
     histoFile->Close();
-    EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
+    // EUDAQ_DEBUG("Histograms written to " + to_string(histoFile->GetName()));
   }
 
 
@@ -556,11 +556,11 @@ if(m_digital){
 
 //      // check:
 //      for( int c = 0; c<peds.size(); c++ ){
-//        EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s));
-//        EUDAQ_DEBUG("  points  " + to_string(wavess.at(c).at(s).size()));
-//        EUDAQ_DEBUG("  pedestl " + to_string(peds.at(c).at(s)));
-//        EUDAQ_DEBUG("  ampli   " + to_string(amps.at(c).at(s)));
-//        EUDAQ_DEBUG("  timestp " + to_string(timestamp));
+//        // EUDAQ_DEBUG("CHECK: channel "+ to_string(c) + " segment " + to_string(s));
+//        // EUDAQ_DEBUG("  points  " + to_string(wavess.at(c).at(s).size()));
+//        // EUDAQ_DEBUG("  pedestl " + to_string(peds.at(c).at(s)));
+//        // EUDAQ_DEBUG("  ampli   " + to_string(amps.at(c).at(s)));
+//        // EUDAQ_DEBUG("  timestp " + to_string(timestamp));
 //      }
 
 
@@ -608,7 +608,7 @@ if(m_digital){
 
     } // segments
 
-    EUDAQ_DEBUG( "Number of sub events " + to_string(d2->GetNumSubEvent()) );
+    // // EUDAQ_DEBUG( "Number of sub events " + to_string(d2->GetNumSubEvent()) );
 
     d2->SetDetectorType("DSO9254A");
   }
@@ -633,20 +633,20 @@ std::vector<std::vector<waveform>> DSO9254AEvent2StdEventConverter::read_data(ca
   for (int nch = 0; nch < (m_channels); ++nch) {
 
 
-    EUDAQ_DEBUG("Reading channel " + to_string(nch) + " of " +
-                to_string(m_channels));
+    // EUDAQ_DEBUG("Reading channel " + to_string(nch) + " of " +
+    //            to_string(m_channels));
 
            // Obtaining Data Stucture
     block_words = rawdata[block_position + 0];
     pream_words = rawdata[block_position + 1];
     chann_words = rawdata[block_position + 2 + pream_words];
-    EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " 8 bit block size");
-    EUDAQ_DEBUG("  " + to_string(block_position) +
-                " current position in block");
-    EUDAQ_DEBUG("  " + to_string(block_words) + " words per data block");
-    EUDAQ_DEBUG("  " + to_string(pream_words) + " words per preamble");
-    EUDAQ_DEBUG("  " + to_string(chann_words) + " words per channel data");
-    EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " size of rawdata");
+    // // EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " 8 bit block size");
+    // // EUDAQ_DEBUG("  " + to_string(block_position) +
+    //            " current position in block");
+    // // EUDAQ_DEBUG("  " + to_string(block_words) + " words per data block");
+    // // EUDAQ_DEBUG("  " + to_string(pream_words) + " words per preamble");
+    // // EUDAQ_DEBUG("  " + to_string(chann_words) + " words per channel data");
+    // // EUDAQ_DEBUG("  " + to_string(rawdata.size()) + " size of rawdata");
 
            // Data sanity check: Total block size should be:
            // pream_words+channel_data_words+2
@@ -661,7 +661,7 @@ std::vector<std::vector<waveform>> DSO9254AEvent2StdEventConverter::read_data(ca
          i++) {
       preamble += (char)rawdata[i];
     }
-    EUDAQ_DEBUG("Preamble " + preamble);
+    // // EUDAQ_DEBUG("Preamble " + preamble);
     // parse preamble to vector of strings
     std::string val;
     std::vector<std::string> vals;
@@ -682,7 +682,7 @@ std::vector<std::vector<waveform>> DSO9254AEvent2StdEventConverter::read_data(ca
     EUDAQ_INFO("Acq mode (2=SEGM): " + to_string(vals[18]));
     if (vals.size() == 25) { // this is segmented mode, possibly more than one
                              // waveform in block
-      EUDAQ_DEBUG("Segments: " + to_string(vals[24]));
+      // // EUDAQ_DEBUG("Segments: " + to_string(vals[24]));
       m_segmentCount = stoi(vals[24]);
     }
 
@@ -695,7 +695,7 @@ std::vector<std::vector<waveform>> DSO9254AEvent2StdEventConverter::read_data(ca
       EUDAQ_THROW("incomplete waveform in block " + to_string(evt) +
                   ", channel " + to_string(nch));
     }
-    EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
+    // // EUDAQ_DEBUG("WF points per data word: " + to_string(points_per_words));
 
            // Check our own eighth-graders math: the number of words in the channel
            // times 4 points per word minus the number of points times number of
