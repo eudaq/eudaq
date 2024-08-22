@@ -92,18 +92,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   caribou::pearyRawData rawdata;
 
   // internal containers
-  std::vector<std::vector<std::vector<double>>> wavess;
-  std::vector<std::vector<double>> peds;
-  std::vector<std::vector<double>> amps;
-  std::vector<double> time;
   uint64_t timestamp;
-
-  // waveform parameters
-  std::vector<uint64_t> np;
-  std::vector<double> dx;
-  std::vector<double> x0;
-  std::vector<double> dy;
-  std::vector<double> y0;
 
   // Bad event
   if(ev->NumBlocks() != 1) {
@@ -129,6 +118,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   // first we read the analog data:
   auto waveforms_analog = read_data(rawdata, d1->GetEventNumber(), block_position, m_channels);
 
+  if(waveforms_analog.front().empty()){
+    EUDAQ_WARN("No scope data in block " + to_string(ev->GetEventN()));
+    return false;
+  }
   EUDAQ_INFO("Analog channel reading complete: " +
              std::to_string(block_position));
   // second the trigger IDs are extracted from the digital data
@@ -146,70 +139,17 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   }
   // declare map between scope channel number and 2D pixel index
   // TODO make this configurable
-  std::map<int,std::vector<int>> chanToPix;
-  chanToPix[0] = {1,0};
-  chanToPix[1] = {0,0};
-  chanToPix[2] = {1,1};
-  chanToPix[3] = {0,1};
+  std::map<int, std::vector<int>> chanToPix;
+  chanToPix[0] = {1, 0};
+  chanToPix[1] = {0, 0};
+  chanToPix[2] = {1, 1};
+  chanToPix[3] = {0, 1};
 
-  // process waveform data
-  if(time.size() > 0 ){      // only if there are waveform data
-
-    // re-iterate waveforms
-    // wavess.at(channel).at(segment).at(point)
-    // ped   .at(channel).at(segment)
-    for( int s = 0; s<peds.at(0).size(); s++ ){
-      for( int c = 0; c<peds.size(); c++ ){
-
-        // calculate index range for pedestal
-        int i_pedStart = (m_pedStartTime - time.at(0))/dx.at(c);
-        int i_pedEnd = (m_pedEndTime - time.at(0))/dx.at(c);
-        int n_ped = (m_pedEndTime-m_pedStartTime)/dx.at(c);
-        // check index range for pedestal
-        if(i_pedStart < 0 || i_pedEnd >= wavess.at(c).at(s).size()){
-          EUDAQ_WARN("Parameter pedStartTime [ns] " + to_string(m_pedStartTime) + " or pedEndTime " + to_string(m_pedEndTime));
-          EUDAQ_WARN("  Yields invalid index " + to_string(i_pedStart) + " or " + to_string(i_pedEnd));
-          EUDAQ_WARN("  Setting pedestal to 0!");
-          peds.at(c).at(s) = 0;
-          continue;
-        }
-        // calculate pedestal
-        for( int p = i_pedStart; p<i_pedEnd; p++ ){
-          peds.at(c).at(s) += wavess.at(c).at(s).at(p) / n_ped;
-        }
-
-        // calculate index range for amplitude
-        int i_ampStart = (m_ampStartTime - time.at(0))/dx.at(c);
-        int i_ampEnd = (m_ampEndTime - time.at(0))/dx.at(c);
-        // check index range for amplitude
-        if(i_ampStart < 0 || i_ampEnd >= wavess.at(c).at(s).size()){
-          EUDAQ_WARN("Parameter ampStartTime [ns] " + to_string(m_ampStartTime) + " or ampEndTime " + to_string(m_ampEndTime));
-          EUDAQ_WARN("  Yields invalid index " + to_string(i_ampStart) + " or " + to_string(i_ampEnd));
-          EUDAQ_WARN("  Setting amplitude to 0!");
-          amps.at(c).at(s) = 0;
-          continue;
-        }
-        // calculate maximum amplitude in range
-        for( int p = i_ampStart; p<i_ampEnd; p++ ){
-          // amplitude polarity (positive by default)
-          if(m_polarity){
-             if( amps.at(c).at(s) < wavess.at(c).at(s).at(p) - peds.at(c).at(s) ){
-            amps.at(c).at(s) = wavess.at(c).at(s).at(p) - peds.at(c).at(s);
-          }
-          }
-
-          else{
-            if( amps.at(c).at(s) < -wavess.at(c).at(s).at(p) + peds.at(c).at(s) ){
-            amps.at(c).at(s) = -wavess.at(c).at(s).at(p) + peds.at(c).at(s);
-          }
-          }
-
-        }
-
-      } // channels
-
-
-      // create sub-event for segments
+  if (waveforms_analog.front().size() != triggers.size()) {
+    EUDAQ_ERROR("tiggers and data size do not match");
+  }
+  for (int seg = 0; seg < waveforms_analog.front().size(); ++seg) {
+    // create sub-event for segments
       auto sub_event = eudaq::StandardEvent::MakeShared();
 
       // Create a StandardPlane representing one sensor plane
@@ -220,26 +160,26 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
       // fill plane
       plane.SetSizeZS(2, 2, 0);
-      for( int c = 0; c<peds.size(); c++ ){
-        if( amps.at(c).at(s)*m_chargeScale > m_chargeCut ){
-          plane.PushPixel( chanToPix[c].at(0),
-                           chanToPix[c].at(1),
-                           amps.at(c).at(s)*m_chargeScale, timestamp );
-
-          // Set waveforms to each hit pixel.
-          plane.SetWaveform(index, wavess.at(c).at(s), time.at(c), dx.at(c), 0);
+      // Set waveforms to each hit pixel.
+      for (int ch = 0; ch < waveforms_analog.size(); ch++) {
+      auto wave = waveforms_analog.at(ch).at(seg);
+      auto data = wave.data;
+      std::vector<double> w;
+      for (auto &wa : data) {
+        w.push_back(static_cast<double>(wa) * wave.dy);
+      }
+      plane.PushPixel(chanToPix[ch].front(), chanToPix[ch].back(),1);
+     plane.SetWaveform(index, w, wave.x0, wave.dx, 0);
 
           // Increase index number
           index++;
         }
-      }
 
       // derive trigger number from block number - if defined by digital channels use it, otherwise not :)
-      int triggerN = m_digital ? triggers.at(s) : (ev->GetEventN()-1) * peds.at(0).size() + s + 1;
+      int triggerN = m_digital ? triggers.at(seg) : (ev->GetEventN()-1) *waveforms_analog.front().size() + seg + 1;
 
       EUDAQ_INFO("Block number " + to_string(ev->GetEventN()) + " " +
-                  " block size " + to_string(peds.at(0).size()) +
-                  " segments, segment number " + to_string(s) +
+                  " segments, segment number " + to_string(seg) +
                   " trigger number " + to_string(triggerN));
 
       sub_event->AddPlane(plane);
@@ -251,16 +191,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // add sub event to StandardEventSP for output to corry
       d2->AddSubEvent( sub_event );
 
-    } // segments
 
-    // // EUDAQ_DEBUG( "Number of sub events " + to_string(d2->GetNumSubEvent()) );
 
     d2->SetDetectorType("DSO9254A");
   }
-  else{
-    EUDAQ_WARN("No scope data in block " + to_string(ev->GetEventN()));
-    return false;
-  }
+
 
   // Indicate that data were successfully converted
   return true;
