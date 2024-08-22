@@ -96,20 +96,9 @@ namespace eudaq {
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
   private:
     static bool m_configured;
-    static int64_t m_runStartTime;
-    static uint64_t m_segmentCount;
-    static uint64_t m_trigger;
-    static double m_pedStartTime;
-    static double m_pedEndTime;
-    static double m_ampStartTime;
-    static double m_ampEndTime;
-    static double m_chargeScale;
-    static double m_chargeCut;
     static int m_channels;
     static int m_digital;
-    static bool m_polarity;
     static bool m_generateRoot;
-    static bool m_osci_timestamp;
     // Usefull for euCliReaders
     static TFile *m_rootFile;
 

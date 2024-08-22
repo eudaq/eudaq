@@ -14,21 +14,9 @@ namespace{
 
 
 bool    DSO9254AEvent2StdEventConverter::m_configured(0);
-
-int64_t DSO9254AEvent2StdEventConverter::m_runStartTime(-1);
-double DSO9254AEvent2StdEventConverter::m_pedStartTime(0);
-double DSO9254AEvent2StdEventConverter::m_pedEndTime(0);
-double DSO9254AEvent2StdEventConverter::m_ampStartTime(0);
-double DSO9254AEvent2StdEventConverter::m_ampEndTime(0);
-double DSO9254AEvent2StdEventConverter::m_chargeScale(0);
-uint64_t DSO9254AEvent2StdEventConverter::m_segmentCount(1);
-uint64_t DSO9254AEvent2StdEventConverter::m_trigger(0);
-double DSO9254AEvent2StdEventConverter::m_chargeCut(0);
 int DSO9254AEvent2StdEventConverter::m_channels(0);
 int DSO9254AEvent2StdEventConverter::m_digital(1);
-bool DSO9254AEvent2StdEventConverter::m_polarity(1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(1);
-bool DSO9254AEvent2StdEventConverter::m_osci_timestamp(1);
 
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -258,26 +246,26 @@ DSO9254AEvent2StdEventConverter::read_data(caribou::pearyRawData &rawdata,  int 
     wave.x0 = stod(vals[5]) * 1e9;
     wave.dy = stod(vals[7]);
     wave.y0 = stod(vals[8]);
-
+    int segments = 0;
     EUDAQ_INFO("Acq mode (2=SEGM): " + to_string(vals[18]));
     if (vals.size() == 25) { // this is segmented mode, possibly more than one
                              // waveform in block
       EUDAQ_DEBUG("Segments: " + to_string(vals[24]));
-      m_segmentCount = stoi(vals[24]);
+      segments = stoi(vals[24]);
     }
 
-    int points_per_words = wave.points / (chann_words / m_segmentCount);
+    int points_per_words = wave.points / (chann_words / segments);
 
-    for (int s = 0; s < m_segmentCount; s++) { // loop semgents
-      EUDAQ_DEBUG("segment: " + std::to_string(s)+" out of " +std::to_string((m_segmentCount)));
+    for (int s = 0; s < segments; s++) { // loop semgents
+      EUDAQ_DEBUG("segment: " + std::to_string(s)+" out of " +std::to_string((segments)));
       auto current_wave = wave;
       // read channel data
       std::vector<int16_t> words;
       words.resize(points_per_words); // rawdata contains 8 bit words, scope sends 2 8bit words
       int16_t wfi = 0;
       // Read from segment start until the next segment begins:
-      for (int i = block_position + 3 + pream_words +  (s + 0) * chann_words / m_segmentCount;
-           i < block_position + 3 + pream_words +                    (s + 1) * chann_words / m_segmentCount;
+      for (int i = block_position + 3 + pream_words +  (s + 0) * chann_words / segments;
+           i < block_position + 3 + pream_words +                    (s + 1) * chann_words / segments;
            i++) {
                // copy channel data from entire segment data block
         memcpy(&words.front(), &rawdata[i], points_per_words * sizeof(int16_t));
