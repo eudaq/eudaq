@@ -113,11 +113,14 @@ namespace eudaq {
     // Usefull for euCliReaders
     static TFile *m_rootFile;
 
-           // convert a data block to waveforms
+           // convert a data blocks to waveforms
     static std::vector<std::vector<waveform>>
-    read_data(caribou::pearyRawData &rawdata, int evt, uint64_t & block_position);
-    // get the trigger number from the waveforms if we are taking HB data
-    static uint64_t triggerID(waveform &wfTrig, waveform &wfID);
+    read_data(caribou::pearyRawData &rawdata, int evt, uint64_t & block_position, int n_channels);
+    // get the trigger number from the digital waveforns
+    static std::vector<uint64_t> calc_triggers(std::vector<waveform> &waves);
+
+    //plotting macros for an event
+    static void savePlots(std::vector<std::vector<waveform>> & analog,   std::vector<waveform> & digital, int evt, int run);
     // convert scope ascii time stamps
     static uint64_t timeConverter(std::string date, std::string time);
     // parse event number, time stamp pairs from file to EventTime set
