@@ -40,7 +40,7 @@ namespace eudaq {
   }
   // litlle sturct to store all components of a waveform and make it more structured in the converter
   struct waveform{
-    std::vector<double> data;
+    std::vector<int16_t> data; // is this clever for our scopes?
     uint points;
     uint segment;
     double dx;
