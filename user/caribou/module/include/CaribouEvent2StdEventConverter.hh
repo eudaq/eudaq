@@ -40,7 +40,7 @@ namespace eudaq {
   }
   // litlle sturct to store all components of a waveform and make it more structured in the converter
   struct waveform{
-    std::vector<int16_t> data; // is this clever for our scopes?
+    std::vector<int16_t> data;
     uint points;
     uint segment;
     double dx;
@@ -100,13 +100,13 @@ namespace eudaq {
     static int m_digital;
     static bool m_generateRoot;
     static uint64_t m_trigger;
-    // Usefull for euCliReaders
+    // Usefull for euCliReader since we do not dump al waveforms in corry
     static TFile *m_rootFile;
 
            // convert a data blocks to waveforms
     static std::vector<std::vector<waveform>>
     read_data(caribou::pearyRawData &rawdata, int evt, uint64_t & block_position, int n_channels);
-    // get the trigger number from the digital waveforns
+    // get the trigger number from the digital waveforns. This is tailored to the AIDA TLU operating in the AIDA+trigerID mode
     static std::vector<uint64_t> calc_triggers(std::vector<waveform> &waves);
 
     //plotting macros for an event

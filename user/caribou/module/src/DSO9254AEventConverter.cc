@@ -13,7 +13,7 @@ namespace{
 }
 
 
-bool    DSO9254AEvent2StdEventConverter::m_configured(0);
+bool  DSO9254AEvent2StdEventConverter::m_configured(0);
 int DSO9254AEvent2StdEventConverter::m_channels(0);
 int DSO9254AEvent2StdEventConverter::m_digital(1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(1);
@@ -28,8 +28,10 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
   }
 
   // load parameters from config file
-  std::ofstream outfileTimestamps;
   if (!m_configured) {
+    // define if plots are being stored - always from config, defaults to zero (TODO CHANGEME)
+    m_generateRoot = conf->Get("generateRoot", 1);
+
     // generate rootfile to write waveforms as TH1D  - RECREATE it here and append later
     TFile *histoFile = nullptr;
     if (m_generateRoot) {
@@ -46,11 +48,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     m_digital = 0;
 
     for (uint i = 0; i < 15; ++i) {
-      // check if analo channel is existing
+      // check if analog channel is existing
       if (tags.count((":WAVeform:SOURce CHANnel" + std::to_string(i)))) {
         m_channels++;
       }
-      // if one digitral channel is on read all out
+      // if one digital channel is on read all out
       if (tags.count((":DIGital" + std::to_string(i) + ":DISPlay 1"))) {
         m_digital = 1;
       }
@@ -62,13 +64,11 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       EUDAQ_DEBUG(
           "No channel tags in first event - fallback to manual configuration");
       m_channels = conf->Get("channels", 4);
-      m_digital = conf->Get("digital", 1);
+      m_digital = conf->Get("digital", 0);
     }
     EUDAQ_INFO("Analog channels active: " + std::to_string(m_channels));
     EUDAQ_INFO("Digital channels active: " + std::to_string(m_digital));
 
-    // define if plots are being stored - always from config, defaults to zero (TODO CHANGEME)
-    m_generateRoot = conf->Get("generateRoot", 1);
 
     // make sure to only do this once
     m_configured = true;
@@ -88,7 +88,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     return false;
   }
 
- // all four scope channels in one data block
+ // all four scope channels and digital channels in one data block
   auto datablock = ev->GetBlock(0);
   // Calulate positions and length of data blocks:
   // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit
