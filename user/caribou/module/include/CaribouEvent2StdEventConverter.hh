@@ -111,8 +111,6 @@ namespace eudaq {
 
     //plotting macros for an event
     static void savePlots(std::vector<std::vector<waveform>> & analog,   std::vector<waveform> & digital, int evt, int run);
-    // convert scope ascii time stamps
-    static uint64_t timeConverter(std::string date, std::string time);
     // parse event number, time stamp pairs from file to EventTime set
   };
 
