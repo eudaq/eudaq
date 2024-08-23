@@ -72,8 +72,8 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
     // make sure to only do this once
     m_configured = true;
-    return true; // the first part is always only the configuration, no real
-                 // data in there
+     // the first part is always only the configuration, no real data in there
+    return true;
   }              // configure
 
   // Data container:
@@ -90,9 +90,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
  // all four scope channels in one data block
   auto datablock = ev->GetBlock(0);
-  // // EUDAQ_DEBUG("DSO9254A frame with " + to_string(datablock.size()) + " entries");
-
-
   // Calulate positions and length of data blocks:
   // FIXME FIXME FIXME by Simon: this is prone to break since you are selecting bits from a 64bit
   //                             word - but there is no guarantee in the endianness here and you
@@ -110,14 +107,14 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
     EUDAQ_WARN("No scope data in block " + to_string(ev->GetEventN()));
     return false;
   }
-  EUDAQ_INFO("Analog channel reading complete: " +
+  EUDAQ_DEBUG("Analog channel reading complete: " +
              std::to_string(block_position));
   // second the trigger IDs are extracted from the digital data
   std::vector<uint64_t> triggers;
   std::vector<waveform> waveforms_digital;
   if (m_digital) {
     waveforms_digital =  read_data(rawdata, d1->GetEventNumber(), block_position, 1).front();
-    EUDAQ_INFO("Digital channel reading complete: " + std::to_string(block_position));
+    EUDAQ_DEBUG("Digital channel reading complete: " + std::to_string(block_position));
     triggers = calc_triggers(waveforms_digital);
   }
   // close rootfile
@@ -166,7 +163,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       // derive trigger number from block number - if defined by digital channels use it, otherwise not :)
       int triggerN = m_digital ? triggers.at(seg) : (ev->GetEventN()-1) *waveforms_analog.front().size() + seg + 1;
 
-      EUDAQ_INFO("Block number " + to_string(ev->GetEventN()) + " " +
+      EUDAQ_DEBUG("Block number " + to_string(ev->GetEventN()) + " " +
                   " segments, segment number " + to_string(seg) +
                   " trigger number " + to_string(triggerN));
 
@@ -247,7 +244,7 @@ DSO9254AEvent2StdEventConverter::read_data(caribou::pearyRawData &rawdata,  int 
     wave.dy = stod(vals[7]);
     wave.y0 = stod(vals[8]);
     int segments = 0;
-    EUDAQ_INFO("Acq mode (2=SEGM): " + to_string(vals[18]));
+    EUDAQ_DEBUG("Acq mode (2=SEGM): " + to_string(vals[18]));
     if (vals.size() == 25) { // this is segmented mode, possibly more than one
                              // waveform in block
       EUDAQ_DEBUG("Segments: " + to_string(vals[24]));
@@ -300,7 +297,7 @@ DSO9254AEvent2StdEventConverter::calc_triggers(std::vector<waveform> &waves) {
 
   for (auto &wave : waves) {
     auto data = wave.data;
-    double binsIn25ns = 25e-9 / wave.dx;
+    double binsIn25ns = 25. / wave.dx;
     uint64_t triggerID = 0x0;
     uint pos = 0;
     for (pos = 0; pos < data.size(); pos++) {
@@ -313,10 +310,11 @@ DSO9254AEvent2StdEventConverter::calc_triggers(std::vector<waveform> &waves) {
     }
     // now fetch the data
     for (int i = 0; i < 15; ++i) {
-      triggerID += uint64_t(((uint64_t(data.at(pos)) >> m_trigIDOffset) & 0x1))
-                   << i;
+      triggerID += uint64_t(((uint64_t(data.at(pos)) >> m_trigIDOffset) & 0x1))  << i;
       pos += binsIn25ns;
     }
+    EUDAQ_DEBUG("TriggerID: " + std::to_string(triggerID)+": " +std::to_string(wave.dx));
+
     // check if the trigger counter has reached its maximum
     if ((m_trigger % 0x7FFF) > triggerID) {
       m_trigger += 0x8000;
