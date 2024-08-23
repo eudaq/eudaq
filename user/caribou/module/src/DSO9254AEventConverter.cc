@@ -17,7 +17,7 @@ bool    DSO9254AEvent2StdEventConverter::m_configured(0);
 int DSO9254AEvent2StdEventConverter::m_channels(0);
 int DSO9254AEvent2StdEventConverter::m_digital(1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(1);
-
+uint64_t DSO9254AEvent2StdEventConverter::m_trigger(0);
 bool DSO9254AEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
 
@@ -317,6 +317,11 @@ DSO9254AEvent2StdEventConverter::calc_triggers(std::vector<waveform> &waves) {
                    << i;
       pos += binsIn25ns;
     }
+    // check if the trigger counter has reached its maximum
+    if ((m_trigger % 0x7FFF) > triggerID) {
+      m_trigger += 0x8000;
+    }
+    triggerID += (m_trigger & 0xFFFFFFFFFFFF8000);
     triggers.push_back(triggerID);
   }
 

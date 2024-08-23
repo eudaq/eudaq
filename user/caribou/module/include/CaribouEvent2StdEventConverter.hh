@@ -99,6 +99,7 @@ namespace eudaq {
     static int m_channels;
     static int m_digital;
     static bool m_generateRoot;
+    static uint64_t m_trigger;
     // Usefull for euCliReaders
     static TFile *m_rootFile;
 
