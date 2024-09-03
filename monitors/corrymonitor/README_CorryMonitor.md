@@ -8,6 +8,10 @@ The most important take-away is that this monitor utilises the existing test bea
 Since `CorryMonitor` relies on the widely used test beam reconstruction and analysis software `corryvreckan` for plotting of the data, it goes without saying that a local installation of `corryvreckan` is required. `corryvreckan` itself has minimal external dependencies, requiring only a `ROOT` installation. Please see the documentation on the [project website](https://project-corryvreckan.web.cern.ch/project-corryvreckan/page/about/) for details and user guides.
 **Please note that for the `corryvreckan` installation the `-DBUILD_EventLoaderEUDAQ2=ON` flag needs to be set to work with `CorryMonitor`.**
 
+## Installation
+
+To build the `CorryMonitor`, the `EUDAQ_BUILD_CORRYMONITOR` needs to be set to `ON` (default value is `OFF`).
+
 ## Known Restrictions of the `CorryMonitor`
 
 - The CorryMonitor is currently exclusively running on Linux due to the use of *inotify*.

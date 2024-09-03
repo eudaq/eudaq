@@ -1,2 +1,3 @@
 ADD_SUBDIRECTORY(onlinemon)
 ADD_SUBDIRECTORY(rootmonitor)
+ADD_SUBDIRECTORY(corrymonitor)
