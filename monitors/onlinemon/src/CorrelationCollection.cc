@@ -332,12 +332,6 @@ CorrelationCollection::FillWithTracks(const SimpleStandardEvent &simpev) {
 void CorrelationCollection::fillHistograms(
     std::vector<vector<pair<int, SimpleStandardCluster>>> tracks,
     const SimpleStandardEvent &simpEv) {
-  //    std::vector< vector< pair<int, SimpleStandardCluster> > >::iterator
-  //    track;
-  //    std::vector< pair<int, SimpleStandardCluster> >::iterator
-  //    planeClusterPair1;
-  //    std::vector< pair<int, SimpleStandardCluster> >::iterator
-  //    planeClusterPair2;
 
   for (unsigned int trackNr = 0; trackNr < tracks.size(); ++trackNr) {
     vector<pair<int, SimpleStandardCluster>> &currentTrack = tracks.at(trackNr);
