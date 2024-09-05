@@ -315,6 +315,8 @@ namespace eudaq{
   }
 
   void StandardPlane::SetupResult() const {
+    if (m_result_pix)
+      return;
     m_result_x = &m_x[0];
     m_result_y = &m_y[0];
     m_result_time = &m_time[0];
