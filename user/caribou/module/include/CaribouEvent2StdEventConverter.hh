@@ -1,7 +1,11 @@
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
-
+#include <set>
+#include "utils/datatypes.hpp"
+#include "utils/log.hpp"
+#include "utils/utils.hpp"
+#include <TFile.h>
 #include <array>
 #include <vector>
 
@@ -34,7 +38,17 @@ namespace eudaq {
     }
     return stream.str();
   }
+  // litlle sturct to store all components of a waveform and make it more structured in the converter
+  struct waveform{
+    std::vector<int16_t> data;
+    uint points;
+    uint segment;
+    double dx;
+    double  x0;
+    double  dy;
+    double  y0;
 
+  };
   class AD9249Event2StdEventConverter: public eudaq::StdEventConverter{
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
@@ -74,6 +88,30 @@ namespace eudaq {
     static size_t t0_seen_;
     static bool t0_is_high_;
     static uint64_t last_shutter_open_;
+  };
+
+  class DSO9254AEvent2StdEventConverter: public eudaq::StdEventConverter{
+  public:
+    bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouDSO9254AEvent");
+  private:
+    static bool m_configured;
+    static int m_channels;
+    static int m_digital;
+    static bool m_generateRoot;
+    static uint64_t m_trigger;
+    // Usefull for euCliReader since we do not dump al waveforms in corry
+    static TFile *m_rootFile;
+
+           // convert a data blocks to waveforms
+    static std::vector<std::vector<waveform>>
+    read_data(caribou::pearyRawData &rawdata, int evt, uint64_t & block_position, int n_channels);
+    // get the trigger number from the digital waveforns. This is tailored to the AIDA TLU operating in the AIDA+trigerID mode
+    static std::vector<uint64_t> calc_triggers(std::vector<waveform> &waves);
+
+    //plotting macros for an event
+    static void savePlots(std::vector<std::vector<waveform>> & analog,   std::vector<waveform> & digital, int evt, int run);
+    // parse event number, time stamp pairs from file to EventTime set
   };
 
   class dSiPMEvent2StdEventConverter: public eudaq::StdEventConverter{
