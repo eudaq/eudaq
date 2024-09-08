@@ -2,9 +2,7 @@
 
 add_definitions("-DEUDAQ_CORE_EXPORTS")
 
-set(CMAKE_FIND_DEBUG_MODE TRUE)
 find_package(Filesystem)
-set(CMAKE_FIND_DEBUG_MODE FALSE)
 message("file system variable: ")
 message(${CXX_FILESYSTEM_HAVE_FS})
 string(TOLOWER ${CXX_FILESYSTEM_HAVE_FS} CXX_FILESYSTEM_HAVE_FS)
