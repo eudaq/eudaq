@@ -30,7 +30,7 @@ jobs:
             arch: x64
             qt_arch: win64_msvc2022_64
             windows_image: windows-2022
-            root_url: https://root.cern/download/root_v6.32.02.win64.vc17.zip
+            root_url: https://root.cern/download/root_v6.32.04.win64.vc17.zip
         exclude:
           - qt_version: 6
             arch: Win32
@@ -51,12 +51,12 @@ jobs:
          version: ${{matrix.qt_version_full}}
          arch: ${{ matrix.qt_arch }}
          
-    - name: install CERN ROOT
-      id: install_build
-      run: |
-        mkdir $HOME\eudaq_dependencies\
-        Invoke-WebRequest -Uri ${{matrix.root_url}} -OutFile "$HOME\eudaq_dependencies\root.zip"
-        [System.IO.Compression.ZipFile]::ExtractToDirectory("$HOME\eudaq_dependencies\root.zip", "$HOME\eudaq_dependencies\")
+#    - name: install CERN ROOT
+#      id: install_build
+#      run: |
+#        mkdir $HOME\eudaq_dependencies\
+#        Invoke-WebRequest -Uri ${{matrix.root_url}} -OutFile "$HOME\eudaq_dependencies\root.zip"
+#        [System.IO.Compression.ZipFile]::ExtractToDirectory("$HOME\eudaq_dependencies\root.zip", "$HOME\eudaq_dependencies\")
 
         
     - name: Configure CMake
