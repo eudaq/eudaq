@@ -153,6 +153,10 @@ if(find_final)
         # We found the non-experimental header. Don't bother looking for the
         # experimental one.
         set(find_experimental FALSE)
+        message(WARNING "Found the header:")
+        message(WARNING $_CXX_FILESYSTEM_HAVE_HEADER)
+    else()
+        message(WARNING "Did not find the header.")
     endif()
 else()
     set(_CXX_FILESYSTEM_HAVE_HEADER FALSE)
@@ -169,6 +173,7 @@ if(_CXX_FILESYSTEM_HAVE_HEADER)
     set(_have_fs TRUE)
     set(_fs_header filesystem)
     set(_fs_namespace std::filesystem)
+    message(WARNING "Having the good header.")
 elseif(_CXX_FILESYSTEM_HAVE_EXPERIMENTAL_HEADER)
     set(_have_fs TRUE)
     set(_fs_header experimental/filesystem)
@@ -184,6 +189,7 @@ set(CXX_FILESYSTEM_NAMESPACE ${_fs_namespace} CACHE STRING "The C++ namespace th
 set(_found FALSE)
 
 if(CXX_FILESYSTEM_HAVE_FS)
+    message(WARNING "Link checking.")
     # We have some filesystem library available. Do link checks
     string(CONFIGURE [[
         #include <@CXX_FILESYSTEM_HEADER@>
@@ -196,6 +202,8 @@ if(CXX_FILESYSTEM_HAVE_FS)
 
     # Try to compile a simple filesystem program without any linker flags
     check_cxx_source_compiles("${code}" CXX_FILESYSTEM_NO_LINK_NEEDED)
+    message(WARNING "No link needed:")
+    message(WARNING $CXX_FILESYSTEM_NO_LINK_NEEDED)
 
     set(can_link ${CXX_FILESYSTEM_NO_LINK_NEEDED})
 
