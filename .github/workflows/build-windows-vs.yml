@@ -66,14 +66,14 @@ jobs:
         $env:ROOTSYS = "$HOME\eudaq_dependencies\root\"
         Write-Host "path to thisroot : " $HOME\eudaq_dependencies\root\bin\thisroot.bat
         Write-Host "ROOTSYS : " $env:ROOTSYS
-        cmake --debug-trycompile -A ${{ matrix.arch }} -D EUDAQ_BUILD_STDEVENT_MONITOR=ON -D EUDAQ_BUILD_GUI=ON -D USER_BUILD_TLU_ONLY_CONVERTER=ON -D USER_EUDET_BUILD=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        cmake --debug-trycompile --debug-output -A ${{ matrix.arch }} -D EUDAQ_BUILD_STDEVENT_MONITOR=ON -D EUDAQ_BUILD_GUI=ON -D USER_BUILD_TLU_ONLY_CONVERTER=ON -D USER_EUDET_BUILD=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       if: always()
       with:
         name: artifacts
-        path: ${{ github.workspace }}/build/CMakeFiles/CMakeScratch
+        path: ${{ github.workspace }}/build/
         if-no-files-found: error
         retention-days: 1
 
