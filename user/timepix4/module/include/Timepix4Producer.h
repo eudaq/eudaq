@@ -6,11 +6,6 @@
 #include <map>
 #include <bitset>
 
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/sax/HandlerBase.hpp>
-#include <xercesc/util/XMLString.hpp>
-
 #include "TList.h"
 #include "TString.h"
 #include "TObjArray.h"
@@ -18,22 +13,16 @@
 #include "TObject.h"
 #include "TClass.h"
 
-#define TLU
-#include "SpidrController.h"
-#include "SpidrDaq.h"
-#include "tpx3defs.h"
-//#include "dacsdescr.h"
-
 #define NPIXX 256
 #define NPIXY 256
 
 using namespace std;
 
-class Timepix3Config {
+class Timepix4Config {
 
 public:
 
-  Timepix3Config();
+  Timepix4Config();
   void ReadXMLConfig( string fileName );
 
   const char* getTime() { return m_time; };
@@ -61,22 +50,22 @@ private:
 
 };
 
-const map< string, int > TPX3_DAC_CODES = {
-  { "IBIAS_PREAMP_ON"  , TPX3_IBIAS_PREAMP_ON },
-  { "IBIAS_PREAMP_ON"  , TPX3_IBIAS_PREAMP_ON },
-  { "IBIAS_PREAMP_OFF" , TPX3_IBIAS_PREAMP_OFF },
-  { "VPREAMP_NCAS"     , TPX3_VPREAMP_NCAS },
-  { "IBIAS_IKRUM"      , TPX3_IBIAS_IKRUM },
-  { "VFBK"             , TPX3_VFBK },
-  { "IBIAS_DISCS1_ON"  , TPX3_IBIAS_DISCS1_ON },
-  { "IBIAS_DISCS1_OFF" , TPX3_IBIAS_DISCS1_OFF },
-  { "IBIAS_DISCS2_ON"  , TPX3_IBIAS_DISCS2_ON },
-  { "IBIAS_DISCS2_OFF" , TPX3_IBIAS_DISCS2_OFF },
-  { "IBIAS_PIXELDAC"   , TPX3_IBIAS_PIXELDAC },
-  { "IBIAS_TPBUFIN"    , TPX3_IBIAS_TPBUFIN },
-  { "IBIAS_TPBUFOUT"   , TPX3_IBIAS_TPBUFOUT },
-  { "VTP_COARSE"       , TPX3_VTP_COARSE },
-  { "VTP_FINE"         , TPX3_VTP_FINE },
+const map< string, int > TPX4_DAC_CODES = {
+  { "IBIAS_PREAMP_ON"  , TPX4_IBIAS_PREAMP_ON },
+  { "IBIAS_PREAMP_ON"  , TPX4_IBIAS_PREAMP_ON },
+  { "IBIAS_PREAMP_OFF" , TPX4_IBIAS_PREAMP_OFF },
+  { "VPREAMP_NCAS"     , TPX4_VPREAMP_NCAS },
+  { "IBIAS_IKRUM"      , TPX4_IBIAS_IKRUM },
+  { "VFBK"             , TPX4_VFBK },
+  { "IBIAS_DISCS1_ON"  , TPX4_IBIAS_DISCS1_ON },
+  { "IBIAS_DISCS1_OFF" , TPX4_IBIAS_DISCS1_OFF },
+  { "IBIAS_DISCS2_ON"  , TPX4_IBIAS_DISCS2_ON },
+  { "IBIAS_DISCS2_OFF" , TPX4_IBIAS_DISCS2_OFF },
+  { "IBIAS_PIXELDAC"   , TPX4_IBIAS_PIXELDAC },
+  { "IBIAS_TPBUFIN"    , TPX4_IBIAS_TPBUFIN },
+  { "IBIAS_TPBUFOUT"   , TPX4_IBIAS_TPBUFOUT },
+  { "VTP_COARSE"       , TPX4_VTP_COARSE },
+  { "VTP_FINE"         , TPX4_VTP_FINE },
 };
 
 inline vector<TString> tokenise( TString line, const char* delim=" " ) {
@@ -106,7 +95,7 @@ inline void unpack (vector <unsigned char >& src, int index, T& data) {
 inline void my_handler( int s ) {
 
   cout << "\nCaught signal " << s << endl;
-  cout << "Terminating Timepix3Producer" << endl;
+  cout << "Terminating Timepix4Producer" << endl;
   exit( 1 );
 
 }
