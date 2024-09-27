@@ -11,6 +11,8 @@
 #include <Windows.h>
 #else
 #include <sys/time.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <ctime>
 #endif
 #include "Timepix4Producer.h"
@@ -152,12 +154,20 @@ void Timepix4Producer::DoInitialise() {
 
 
   // SPIDR IP & PORT
-  m_spidrIP  = config->Get( "SPIDR_IP", "192.168.100.10" );
+  m_spidrIP  = config->Get( "SPIDR_IP", "192.168.1.10" );
   int ip[4];
   if (!tokenize_ip_addr(m_spidrIP, ip) ) {
       EUDAQ_ERROR("Incorrect SPIDR IP address: " + m_spidrIP);
   }
-  m_spidrPort = config->Get( "SPIDR_Port", 50000 );
+  m_spidrPort = config->Get( "SPIDR_Port", 50051 );
+
+  int clientSocket = socket(AF_INET6, SOCK_STREAM, 0);
+  sockaddr_in6 serverAddress;
+  serverAddress.sin6_family = AF_INET6;
+  serverAddress.sin6_addr = in6addr_any;
+  serverAddress.sin6_port = htons(m_spidrPort);
+
+  connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 
   // Open a control connection to SPIDR-Tpx4 module
 
