@@ -41,6 +41,8 @@ private:
   int m_supported_devices = 0;
   int m_active_devices;
   int m_spidrPort;
+  int m_clientSocket;
+  sockaddr_in6 m_serverAddress;
   string m_spidrIP, m_daqIP, m_xmlfileName, m_chipID;
   bool m_extRefClk, m_extT0;
   int m_xml_VTHRESH = 0;
@@ -154,27 +156,26 @@ void Timepix4Producer::DoInitialise() {
 
 
   // SPIDR IP & PORT
-  m_spidrIP  = config->Get( "SPIDR_IP", "localhost" );
+  m_spidrIP  = config->Get( "SPIDR_IP", "127.0.0.1" );
   int ip[4];
   if (!tokenize_ip_addr(m_spidrIP, ip) ) {
       EUDAQ_ERROR("Incorrect SPIDR IP address: " + m_spidrIP);
   }
-  m_spidrPort = config->Get( "SPIDR_Port", 51000 );
+  m_spidrPort = config->Get( "SPIDR_Port", 50051 );
 
-  int clientSocket = socket(AF_INET6, SOCK_STREAM, 0);
-  sockaddr_in6 serverAddress;
-  serverAddress.sin6_family = AF_INET6;
-  serverAddress.sin6_addr = in6addr_any;
-  serverAddress.sin6_port = htons(m_spidrPort);
+  m_clientSocket = socket(AF_INET6, SOCK_STREAM, 0);
 
-  connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+  m_serverAddress.sin6_family = AF_INET6;
+  m_serverAddress.sin6_addr = in6addr_any;
+  m_serverAddress.sin6_port = htons(m_spidrPort);
 
+  serious_error = connect(m_clientSocket, (struct sockaddr*)&m_serverAddress, sizeof(m_serverAddress));
   // Open a control connection to SPIDR-Tpx4 module
 
 
 
   if (serious_error) {
-    EUDAQ_THROW("Timepix4Producer: There were major errors during initialization. See the log.");
+    EUDAQ_THROW("Timepix4Producer: Could not establish socket connection to TPX4 slow control. Make sure tpx4sc is running");
     return;
   }
   m_init = true;
