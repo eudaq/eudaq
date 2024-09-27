@@ -50,23 +50,6 @@ private:
 
 };
 
-const map< string, int > TPX4_DAC_CODES = {
-  { "IBIAS_PREAMP_ON"  , TPX4_IBIAS_PREAMP_ON },
-  { "IBIAS_PREAMP_ON"  , TPX4_IBIAS_PREAMP_ON },
-  { "IBIAS_PREAMP_OFF" , TPX4_IBIAS_PREAMP_OFF },
-  { "VPREAMP_NCAS"     , TPX4_VPREAMP_NCAS },
-  { "IBIAS_IKRUM"      , TPX4_IBIAS_IKRUM },
-  { "VFBK"             , TPX4_VFBK },
-  { "IBIAS_DISCS1_ON"  , TPX4_IBIAS_DISCS1_ON },
-  { "IBIAS_DISCS1_OFF" , TPX4_IBIAS_DISCS1_OFF },
-  { "IBIAS_DISCS2_ON"  , TPX4_IBIAS_DISCS2_ON },
-  { "IBIAS_DISCS2_OFF" , TPX4_IBIAS_DISCS2_OFF },
-  { "IBIAS_PIXELDAC"   , TPX4_IBIAS_PIXELDAC },
-  { "IBIAS_TPBUFIN"    , TPX4_IBIAS_TPBUFIN },
-  { "IBIAS_TPBUFOUT"   , TPX4_IBIAS_TPBUFOUT },
-  { "VTP_COARSE"       , TPX4_VTP_COARSE },
-  { "VTP_FINE"         , TPX4_VTP_FINE },
-};
 
 inline vector<TString> tokenise( TString line, const char* delim=" " ) {
   vector<TString> retvec;

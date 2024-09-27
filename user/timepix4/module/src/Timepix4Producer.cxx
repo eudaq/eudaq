@@ -154,12 +154,12 @@ void Timepix4Producer::DoInitialise() {
 
 
   // SPIDR IP & PORT
-  m_spidrIP  = config->Get( "SPIDR_IP", "192.168.1.10" );
+  m_spidrIP  = config->Get( "SPIDR_IP", "localhost" );
   int ip[4];
   if (!tokenize_ip_addr(m_spidrIP, ip) ) {
       EUDAQ_ERROR("Incorrect SPIDR IP address: " + m_spidrIP);
   }
-  m_spidrPort = config->Get( "SPIDR_Port", 50051 );
+  m_spidrPort = config->Get( "SPIDR_Port", 51000 );
 
   int clientSocket = socket(AF_INET6, SOCK_STREAM, 0);
   sockaddr_in6 serverAddress;
@@ -194,9 +194,6 @@ void Timepix4Producer::DoConfigure() {
     EUDAQ_WARN("DoConfigure: Trying to configure a running module. Trying to stop it first.");
     m_running = false;
   }
-
-  auto myTimepix4Config = new Timepix4Config();
-
 
   auto config = GetConfiguration();
   EUDAQ_USER("Timepix4Producer configuring: " + config->Name());
