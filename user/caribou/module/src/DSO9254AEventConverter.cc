@@ -330,10 +330,12 @@ DSO9254AEvent2StdEventConverter::calc_triggers(std::vector<waveform> &waves) {
     EUDAQ_DEBUG("TriggerID: " + std::to_string(triggerID));
 
     // check if the trigger counter has reached its maximum
-    if ((m_trigger % 0x7FFF) > triggerID) {
+    if ((m_trigger & 0x7FFF) > triggerID) {
+      EUDAQ_INFO("Trigger counter overflow, adding 0x8000");
       m_trigger += 0x8000;
     }
     triggerID += (m_trigger & 0xFFFFFFFFFFFF8000);
+    m_trigger = triggerID;
     triggers.push_back(triggerID);
   }
 
