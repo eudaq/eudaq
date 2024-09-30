@@ -4,6 +4,7 @@
 #include "TH1D.h"
 #include "time.h"
 #include "utils/log.hpp"
+#include <sstream>
 
 using namespace eudaq;
 
@@ -18,6 +19,9 @@ int DSO9254AEvent2StdEventConverter::m_channels(0);
 int DSO9254AEvent2StdEventConverter::m_digital(1);
 bool DSO9254AEvent2StdEventConverter::m_generateRoot(1);
 uint64_t DSO9254AEvent2StdEventConverter::m_trigger(0);
+std::map<int, std::vector<unsigned int>>
+    DSO9254AEvent2StdEventConverter::m_chanToPix;
+
 bool DSO9254AEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
     eudaq::ConfigurationSPC conf) const {
@@ -70,6 +74,13 @@ bool DSO9254AEvent2StdEventConverter::Converting(
     }
     EUDAQ_INFO("Analog channels active: " + std::to_string(m_channels));
     EUDAQ_INFO("Digital channels active: " + std::to_string(m_digital));
+
+    // get scope channel to pixel mapping.
+    //   syntax: "ch_1_col ch_1_row ch_2_col ch_2_row
+    //            ch_3_col ch_3_row ch_4_col ch_4_row"
+    std::string channel_mapping =
+        conf->Get("channel_mapping", "1 0 0 0 1 1 0 1");
+    parse_channel_mapping(channel_mapping);
 
     // make sure to only do this once
     m_configured = true;
@@ -129,13 +140,6 @@ bool DSO9254AEvent2StdEventConverter::Converting(
               d1->GetRunN());
     EUDAQ_DEBUG("Histograms written");
   }
-  // declare map between scope channel number and 2D pixel index
-  // TODO make this configurable
-  std::map<int, std::vector<int>> chanToPix;
-  chanToPix[0] = {1, 0};
-  chanToPix[1] = {0, 0};
-  chanToPix[2] = {1, 1};
-  chanToPix[3] = {0, 1};
 
   if (waveforms_analog.front().size() != triggers.size()) {
     EUDAQ_ERROR("tiggers and data size do not match");
@@ -160,7 +164,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(
       for (auto &wa : data) {
         w.push_back(static_cast<double>(wa) * wave.dy);
       }
-      plane.PushPixel(chanToPix[ch].front(), chanToPix[ch].back(), 1);
+      plane.PushPixel(m_chanToPix[ch].front(), m_chanToPix[ch].back(), 1);
       plane.SetWaveform(index, w, wave.x0, wave.dx, 0);
 
       // Increase index number
@@ -413,4 +417,47 @@ void DSO9254AEvent2StdEventConverter::savePlots(
   }
 
   histoFile->Close();
+}
+
+void DSO9254AEvent2StdEventConverter::parse_channel_mapping(
+    std::string in_map) {
+
+  EUDAQ_INFO("Decoding scope channel mapping " + in_map);
+
+  std::stringstream elements_string(in_map);
+  std::vector<unsigned int> elements{0, 0, 0, 0, 0, 0, 0, 0};
+
+  for (auto &element : elements) {
+
+    // check if there are enough values
+    if (elements_string.eof()) {
+      EUDAQ_WARN("channel_mapping " + in_map +
+                 " does not provide enough elements. Need 8!");
+    }
+
+    elements_string >> element;
+    std::cout << element << std::endl;
+
+    // check if value makes sense
+    if (element > 1) {
+      EUDAQ_WARN("channel_mapping contains elements larger than 1. Expecting "
+                 "2x2 matrix!");
+    }
+  }
+
+  // check if we have to many values
+  if (!elements_string.eof()) {
+    EUDAQ_WARN("channel_mapping " + in_map +
+               " provide too many elements. Check mapping!");
+  }
+
+  // store lookup table as member variable and print for user to double check
+  for (unsigned int ch = 0; ch < 4; ch++) {
+    m_chanToPix[ch] = {elements.at(2 * ch), elements.at(2 * ch + 1)};
+    EUDAQ_INFO("Mapping scope channel " + to_string(ch + 1) + " to pixel " +
+               to_string(elements.at(2 * ch)) + " " +
+               to_string(elements.at(2 * ch + 1)));
+  }
+
+  return;
 }
