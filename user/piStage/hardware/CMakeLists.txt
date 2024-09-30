@@ -9,15 +9,15 @@ find_library(PI_FOUND NAMES pi_pi_gcs2 HINTS "/usr/local/PI")
 if(NOT PI_FOUND)
   message(FATAL_ERROR "PI  library not found")
 else()
-    message("Found stage controllers")
+    message("Found stage controller lib at ${PI_FOUND}")
 endif()
 
-if(USER_PISTAGE_BUILD)
+if(USER_PISTAGE_BUILD AND PI_FOUND)
   add_library(${USER_HARDWARE_LIBRARY} STATIC ${USER_HARDWARE_SRC})
   target_link_libraries(${USER_HARDWARE_LIBRARY}
                         ${EUDAQ_CORE_LIBRARY}
                         ${USER_HARDWARE_DEP_LIB}
-                        pi_pi_gcs2)
+                        ${PI_FOUND})
   list(APPEND INSTALL_TARGETS ${USER_HARDWARE_LIBRARY})
 endif()
 # end library
