@@ -8,7 +8,7 @@
 #include <array>
 #include <vector>
 
-// Foreward declaration of TF1/TFile, so that the header has no root dependecies
+// Forward declaration of TF1/TFile, so that the header has no root dependencies
 class TF1;
 class TFile;
 
