@@ -5,12 +5,12 @@
 #include "utils/datatypes.hpp"
 #include "utils/log.hpp"
 #include "utils/utils.hpp"
-#include <TFile.h>
 #include <array>
 #include <vector>
 
-// Foreward declaration of TF1, so that the header has no root dependecies
+// Foreward declaration of TF1/TFile, so that the header has no root dependecies
 class TF1;
+class TFile;
 
 /**
  * Caribou event converter, converting from raw detector data to EUDAQ StandardEvent format
