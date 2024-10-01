@@ -1,22 +1,22 @@
 # Timepix4 Module for EUDAQ2
 
-This module allows to integrate a Timepix4 sensor running with the SPIDR readout system into the EUDAQ2 eco system.
+This module allows to integrate a Timepix4 sensor running with the SPIDR4 readout system into the EUDAQ2 eco system.
 
-Currently, this producer is in early development stage and has only been tested in the AIDA mode, i.e. receiving a global clock and a T0 signal at beginning of the run.
-The producer interfaces the SPIDR DAQ software via a `SpidrController` to control the Timepix3. The following actions are performed in the different FSM stages:
+Currently the producer works by connecting to a running tpx4sc from the tpx4tools provided by Nikhef as this is the easiest way to implement. The producer will simply send commands to the tpx4sc to perform the configuration etc. to avoid rewriting the entire communication of the tpx4sc.
+
 
 * **Initialisation**: The device to be instantiated is taken from the name of the producer (added with `-t <name>` on the command line). This means, the following command
 
     ```
-    $ euCliProducer -n Timepix4Producer -t Timepix4 -r <tcp>
+    $ euCliProducer -n Timepix4Producer -t tpx4 -r <tcp>
     ```
+    Initialization connects to as a client socket to the tpx4sc host socket via it's specified port.
+    
 
-    will ask the `SpidrController` to establish a network connection, retrieve software and firmware versions, and determines the number of connected devices.
+* **Configuration**: TODO
 
-* **Configuration**: Before configuration of the device, the producer waits for one second in order to allow the AIDA TLU to fully configure and make the clock available on the DUT outputs. Then, the device is configured.
+* **DAQ Start / Stop**: TODO
 
-* **DAQ Start / Stop**: During DAQ start and stop, the corresponding SPIDR device functions are called.
-
-Since the SPIDR device libraries are not thread-safe, all access to SPIDR libraries is guarded using C++11 `std::lock_guard` with a central class-member mutex to avoid concurrent device access.
+The tpx4tools have no library that can be linked against. Not sure if in the future I will require it to find the tpx4sc or if like right now I set no requirements.
 
 No parameters.

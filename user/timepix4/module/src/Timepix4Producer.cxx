@@ -96,19 +96,6 @@ private:
     else return true;
   }
 
-
-  /** Helper function to return a printed list of an integer vector, used to shield
-  *  debug code from being executed if debug level is not sufficient
-  */
-  template <typename T> std::string listVector(std::map<T, T> vec, std::string separator = ", ") {
-    std::stringstream os;
-    for(auto it : vec) {
-      os << "0x" << to_hex_string(it.first, 1) << ": ";
-      os << static_cast<uint64_t>(it.second);
-      os << separator;
-    }
-    return os.str();
-  };
 };
 
 namespace{
@@ -172,8 +159,6 @@ void Timepix4Producer::DoInitialise() {
   serious_error = connect(m_clientSocket, (struct sockaddr*)&m_serverAddress, sizeof(m_serverAddress));
   // Open a control connection to SPIDR-Tpx4 module
 
-
-
   if (serious_error) {
     EUDAQ_THROW("Timepix4Producer: Could not establish socket connection to TPX4 slow control. Make sure tpx4sc is running");
     return;
@@ -204,12 +189,6 @@ void Timepix4Producer::DoConfigure() {
 
   // sleep for 1 second, to make sure the TLU clock is already present
   sleep (1);
-
-  // set whether external clock (TLU) is used or device runs standalone
-  m_extRefClk = config->Get("external_clock", false);
-  // assume that if we set an external clock we also provide external t0,
-  // but leave the option to configure it
-  m_extT0 = config->Get("external_t0", m_extRefClk);
   EUDAQ_INFO("external_T0 = " + (m_extT0 ? std::string("true") : std::string("false")));
   if (serious_error) {
     EUDAQ_THROW("Timepix4Producer: There were major errors during configuration. See the log.");
