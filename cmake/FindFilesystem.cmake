@@ -117,6 +117,7 @@ include(CheckIncludeFileCXX)
 include(CheckCXXSourceCompiles)
 
 cmake_push_check_state()
+cmake_reset_check_state() 
 
 set(CMAKE_REQUIRED_QUIET ${Filesystem_FIND_QUIETLY})
 
