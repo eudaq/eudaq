@@ -7,10 +7,8 @@ set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 find_package(ROOT QUIET)
 
 if(${ROOT_FOUND})
-# Check which C++ version ROOT was built against
-  if(ROOT_USE_FILE)
-    include(${ROOT_USE_FILE})
-  endif()
+  # Check which C++ version ROOT was built against
+
   MESSAGE("ROOT_CXX_STANDARD variable: ${ROOT_CXX_STANDARD}")
   MESSAGE("ROOT_CXX_FLAGS variable: ${ROOT_CXX_FLAGS}")
   IF(ROOT_CXX_STANDARD MATCHES "20")
