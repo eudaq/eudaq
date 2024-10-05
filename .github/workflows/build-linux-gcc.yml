@@ -118,7 +118,7 @@ jobs:
         cd build
         cmake -DBUILD_pxarui=OFF -D INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/ ..
         make install
-        echo "{PXARPATH}={INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/}" >> "$GITHUB_ENV"
+        echo "{PXARPATH}={INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/pxar}" >> "$GITHUB_ENV"
 
 
     - name: Configure CMake
