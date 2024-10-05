@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-13, macos-12]
+        os: [macos-15, macos-14, macos-13]
         qt_version: [5, 6]
         
     name: eudaq_full_build-${{matrix.os}}-apple-clang-qt-${{matrix.qt_version}}
