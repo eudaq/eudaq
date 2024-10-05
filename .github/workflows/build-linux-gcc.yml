@@ -116,9 +116,9 @@ jobs:
         git checkout testbeam-2016
         mkdir build
         cd build
-        cmake -DBUILD_pxarui=OFF -D PXAR_INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/ ..
+        cmake -DBUILD_pxarui=OFF -D INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/ ..
         make install
-        export PXARPATH=~/pxar
+        export PXARPATH=INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
