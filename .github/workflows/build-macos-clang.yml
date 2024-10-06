@@ -53,8 +53,8 @@ jobs:
         git clone --depth=1 -b v2.8.13 --recurse-submodules https://github.com/ipbus/ipbus-software.git
         cd ipbus-software
         mkdir -p $GITHUB_WORKSPACE/extern/
-        make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
-        make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
+        make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC"
+        make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC"
 
     - name: install cmspixel dependencies
       run: |
