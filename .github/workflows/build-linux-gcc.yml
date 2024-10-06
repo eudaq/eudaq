@@ -132,7 +132,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         source ~/eudaq_dependencies/root/bin/thisroot.sh
-        echo $PXARPATH
+        echo "PXARPATH: $PXARPATH"
         echo "USER_CALICE_BUILD=OFF on linux gcc as compilation fails."
         echo "USER_CARIBOUS_BUILD=OFF on linux gcc as dependency PEARY is missing."
         echo "USER_PISTAGE_BUILD=OFF on linux gcc as dependency GCS lib is missing."
