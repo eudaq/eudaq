@@ -80,6 +80,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         source /opt/homebrew/bin/thisroot.sh
+        export CXX=clang
         echo "PXARPATH: $PXARPATH"
         echo "USER_CALICE_BUILD=OFF on mac clang as compilation fails."
         echo "USER_CARIBOUS_BUILD=OFF on mac clang as dependency PEARY is missing."
