@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-14, macos-13]
+        os: [macos-15, macos-15-large, macos-14, macos-14-large, macos-13, macos-13-large]
         qt_version: [5, 6]
         
     name: eudaq_full_build-${{matrix.os}}-apple-clang-qt-${{matrix.qt_version}}
@@ -81,7 +81,7 @@ jobs:
       run: |
         #source /opt/homebrew/bin/thisroot.sh
         source /usr/local/bin/thisroot.sh
-        export CXX=clang
+        #export CXX=clang
         echo "PXARPATH: $PXARPATH"
         echo "USER_CALICE_BUILD=OFF on mac clang as compilation fails."
         echo "USER_CARIBOUS_BUILD=OFF on mac clang as dependency PEARY is missing."
