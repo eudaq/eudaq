@@ -111,16 +111,17 @@ jobs:
     - name: install cmspixel dependencies
       run: |
         sudo apt-get install --force-yes -y libusb-1.0-0 libusb-1.0-0-dev libftdi1 libftdi-dev
+        mkdir -p ~/eudaq_dependencies
+        cd ~/eudaq_dependencies
         git clone https://github.com/simonspa/pxar.git
         cd pxar
         git checkout testbeam-2016
         mkdir build
         cd build
-        cmake -DBUILD_pxarui=OFF -D INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/ ..
+        cmake -DBUILD_pxarui=OFF ..
         make install
-        ls $GITHUB_WORKSPACE/extern/
-        ls $GITHUB_WORKSPACE/extern/pxar
-        echo "{PXARPATH}={INSTALL_PREFIX=$GITHUB_WORKSPACE/extern/pxar}" >> "$GITHUB_ENV"
+        ls ~/eudaq_dependencies/pxar
+        echo "{PXARPATH}={~/eudaq_dependencies/pxar}" >> "$GITHUB_ENV"
 
 
     - name: Configure CMake
