@@ -26,13 +26,13 @@ jobs:
         arch: [x64, Win32]
         include:
           - qt_version: 6
-            qt_version_full: 6.*.*
+            qt_version_full: 6.6.0
             arch: x64
             qt_arch: win64_msvc2022_64
             windows_image: windows-2022
             root_url: https://root.cern/download/root_v6.32.04.win64.vc17.zip
         exclude:
-          - qt_version: 6.6.0
+          - qt_version: 6
             arch: Win32
         
     name: eudaq_full_build-windows-latest-${{matrix.compiler}}-${{matrix.arch}}-qt-${{matrix.qt_version}}
