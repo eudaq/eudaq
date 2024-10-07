@@ -58,6 +58,7 @@ jobs:
 
     - name: install cmspixel dependencies
       run: |
+        export CXX=clang++
         brew install libusb-compat libusb libftdi
         mkdir -p $GITHUB_WORKSPACE/eudaq_dependencies
         cd $GITHUB_WORKSPACE/eudaq_dependencies
@@ -81,7 +82,7 @@ jobs:
       run: |
         test -f /opt/homebrew/bin/thisroot.sh && source /opt/homebrew/bin/thisroot.sh
         test -f /usr/local/bin/thisroot.sh && source /usr/local/bin/thisroot.sh
-        export CXX=clang
+        export CXX=clang++
         echo "PXARPATH: $PXARPATH"
         echo "USER_CALICE_BUILD=OFF on mac clang as compilation fails."
         echo "USER_CARIBOUS_BUILD=OFF on mac clang as dependency PEARY is missing."
