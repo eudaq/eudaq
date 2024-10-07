@@ -26,7 +26,7 @@ jobs:
         arch: [x64, Win32]
         include:
           - qt_version: 6
-            qt_version_full: 6.6.0
+            qt_version_full: 6.8.0
             arch: x64
             qt_arch: win64_msvc2022_64
             windows_image: windows-2022
