@@ -78,7 +78,7 @@ ENDIF()
 
 # include directories
 #INCLUDE_DIRECTORIES( ./main/include )
-INCLUDE_DIRECTORIES( ./extern/jsoncons-0.110.0/include)
+INCLUDE_DIRECTORIES( ./extern/jsoncons-0.171.1/include)
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
@@ -190,6 +190,11 @@ ENDIF()
 option(BUILD_runsplitter "Compile Runsplitter executable?" ON)
 IF(BUILD_runsplitter)
   add_subdirectory(etc/tools/runsplitter)
+ENDIF()
+
+option(BUILD_desynccorr "Compile desynccorr executable?" OFF)
+IF(BUILD_desynccorr)
+  add_subdirectory(etc/tools/desynccorr)
 ENDIF()
 
 
