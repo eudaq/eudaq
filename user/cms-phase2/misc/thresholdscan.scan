@@ -1,0 +1,16 @@
+[global]
+repeatScans = 15
+allowNested = 0 # overrides local nested arguments
+#configPrefix = "/home/teleuser/Mu3e/scans/dummy_"
+timeBasedScan = 0
+nEventsPerStep = 100000
+timePerStep = 20 #in seconds for now
+
+[0]
+name = Producer.ph2producer
+eventCounter = Producer.ph2producer
+parameter = RelativeThreshold
+default = 45
+start = 5
+stop = 60
+step = 1
