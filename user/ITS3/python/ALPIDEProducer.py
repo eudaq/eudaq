@@ -5,7 +5,7 @@ import alpidedaqboard
 from datetime import datetime
 from time import sleep
 import subprocess
-from utils import exception_handler
+from utils import exception_handler, easter_egg
 
 ALPIDE_DUMP_REGS={
   'COMMAND'        :0x0000,
@@ -64,7 +64,6 @@ class ALPIDEProducer(pyeudaq.Producer):
 
     @exception_handler
     def DoInitialise(self):
-        self.iev=0
         conf=self.GetInitConfiguration().as_dict()
         self.daq=alpidedaqboard.ALPIDEDAQBoard(conf['serial'])
         self.plane=int(conf['plane'])
@@ -141,7 +140,7 @@ class ALPIDEProducer(pyeudaq.Producer):
     def DoStartRun(self):
         self.idev=0
         self.isev=0
-        self.send_status_event(self.isev,self.idev,datetime.now(),bore=True)
+        self.send_status_event(datetime.now(),bore=True)
         self.isev+=1
         self.armtrigger()
         self.is_running=True
@@ -159,8 +158,8 @@ class ALPIDEProducer(pyeudaq.Producer):
 
     @exception_handler
     def DoStatus(self):
-        self.SetStatusTag('StatusEventN','%d'%self.isev);
-        self.SetStatusTag('DataEventN'  ,'%d'%self.idev);
+        self.SetStatusTag('StatusEventN','%d'%self.isev)
+        self.SetStatusTag('DataEventN'  ,'%d'%self.idev)
 
     @exception_handler
     def RunLoop(self):
@@ -169,24 +168,21 @@ class ALPIDEProducer(pyeudaq.Producer):
         ilast=0
         while self.is_running:
             checkstatus=False
-            if self.read_and_send_event(self.idev):
-                self.idev+=1
-            else:
+            if not self.read_and_send_event():
                 checkstatus=True
-            if (self.idev-ilast)%1000==0: checkstatus=True
+            if (self.idev-ilast)%1000==0:
+                checkstatus=True
             if checkstatus:
                 if (datetime.now()-tlast).total_seconds()>=10:
                     tlast=datetime.now()
                     ilast=self.idev
-                    self.send_status_event(self.isev,ilast,tlast)
+                    self.send_status_event(tlast)
                     self.isev+=1
-        tlast=datetime.now()
-        self.send_status_event(self.isev,self.idev,tlast)
+        self.send_status_event(datetime.now())
         self.isev+=1
-        while self.read_and_send_event(self.idev): # try to get anything remaining
-            self.idev+=1
-        tlast=datetime.now()
-        self.send_status_event(self.isev,self.idev,tlast,eore=True)
+        while self.read_and_send_event(): # try to get anything remaining
+            pyeudaq.EUDAQ_INFO("Reading remaining events...")
+        self.send_status_event(datetime.now(),eore=True)
         self.isev+=1
 
     def armtrigger(self):
@@ -206,14 +202,14 @@ class ALPIDEProducer(pyeudaq.Producer):
         elif self.triggermode=='replica':
             self.daq.trg.ctrl.write(0b0001) # replica mode, no masking, force busy
        
-    def send_status_event(self,isev,idev,time,bore=False,eore=False):
+    def send_status_event(self,time,bore=False,eore=False):
         ev=pyeudaq.Event('RawEvent',self.name+'_status')
         idda,iddd,status=self.daq.power_status()
         temp=self.daq.carrier_temp()
         ev.SetTag('IDDA','%.2f mA'%idda)
         ev.SetTag('IDDD','%.2f mA'%iddd)
         ev.SetTag('Temperature','%.2f C'%temp if temp else 'Invalid temperature read!')
-        ev.SetTag('Event','%d'%idev)
+        ev.SetTag('Event','%d'%self.idev)
         ev.SetTag('Time',time.isoformat())
         if bore:
             ev.SetBORE()
@@ -237,7 +233,7 @@ class ALPIDEProducer(pyeudaq.Producer):
                 ev.SetTag('TRGMON_'+reg.upper(),'%d'%self.daq.trgmon.regs[reg].read())
         self.SendEvent(ev)
 
-    def read_and_send_event(self,iev):
+    def read_and_send_event(self):
         raw=self.daq.event_read()
         if raw:
             raw=bytes(raw)
@@ -247,12 +243,12 @@ class ALPIDEProducer(pyeudaq.Producer):
             itrg=sum(b<<(j*8) for j,b in enumerate(raw[4: 8]))
             tev =sum(b<<(j*8) for j,b in enumerate(raw[8:16]))
             ev=pyeudaq.Event('RawEvent',self.name)
-            ev.SetEventN(iev) # clarification: iev is the number of received events (starting from zero) # FIXME: is overwritten in SendEvent
             ev.SetTriggerN(itrg) # clarification: itrg is the event number form the DAQ board
             ev.SetTimestamp(begin=tev,end=tev)
             ev.SetDeviceN(self.plane)
             ev.AddBlock(0,raw)
             self.SendEvent(ev)
+            self.idev += 1
             return True
         else:
             return False

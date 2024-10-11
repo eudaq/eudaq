@@ -6,7 +6,7 @@ endif()
 include_directories(. include)
 include_directories(${CMAKE_BINARY_DIR})
 
-SET(ROOTProducer_name ROOTProducer)
+SET(ROOTProducer_name ${EUDAQ_PREFIX}ROOTProducer)
 SET(ROOTProducer_SOURCES
   src/ROOTProducer.cc)
 

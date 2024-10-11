@@ -62,6 +62,7 @@ class APTSProducer(pyeudaq.Producer):
         trg_thr          =int(conf['trg_thr']          ) if 'trg_thr'           in conf else 20
         n_frames_auto_trg=int(conf['n_frames_auto_trg']) if 'n_frames_auto_trg' in conf else 2
         trg_type         =int(conf['trg_type']         ) if 'trg_type'          in conf else 0 #0 external, 1 internal 
+        trg_mask         =int(conf['trg_mask'],   16   ) if 'trg_mask'          in conf else 0xFFFF
         assert sampling_period>=40 # 6.25 ns units, Max sampling rate 4 MSPs = 40 units
         assert 0<n_frames_before<=100 # max based on Valerio's tests
         assert 0<n_frames_after <=700 # max based on Valerio's tests
@@ -72,11 +73,11 @@ class APTSProducer(pyeudaq.Producer):
         self.daq.write_register(0x3,0x01,sampling_period)
         self.daq.write_register(0x3,0x02,n_frames_after)
         self.daq.write_register(0x3,0x03,n_frames_before)
-        self.daq.write_register(0x3,0x04,1)       # Time between pulse and next sample
-        self.daq.write_register(0x3,0x05,10000)   # SetPulseDuration, irrelevant
-        self.daq.write_register(0x3,0x06,trg_thr) # Auto trigger threshold (1 bit = 38.1 uV)
+        self.daq.write_register(0x3,0x04,1)        # Time between pulse and next sample
+        self.daq.write_register(0x3,0x05,10000)    # SetPulseDuration, irrelevant
+        self.daq.write_register(0x3,0x06,trg_thr)  # Auto trigger threshold (1 bit = 38.1 uV)
         self.daq.write_register(0x3,0x07,n_frames_auto_trg) # num. of frames between samples compared in auto trigger
-        self.daq.write_register(0x3,0x08,0xFFFF)    # Mask pixels for auto triggering TODO make configurable via set_internal_trigger_mask
+        self.daq.write_register(0x3,0x08,trg_mask) # Mask pixels for auto triggering
         self.daq.write_register(0x3,0x09,0)     # Enable pulsing (disables triggering)
         self.daq.write_register(0x3,0x0A,1)     # WaitForTrigger 0 = acquire immediately, 1 = wait for trigger (int or ext)
         self.daq.write_register(0x3,0x0B,trg_type)  # TriggerType 0:external 1: auto
@@ -145,7 +146,6 @@ class APTSProducer(pyeudaq.Producer):
         trg_ts = mlr1daqboard.decode_trigger_timestamp(tsdata)
 
         ev = pyeudaq.Event("RawEvent", self.name)
-        ev.SetEventN(iev)
         ev.SetTriggerN(iev)
         ev.SetTimestamp(begin=trg_ts, end=trg_ts)
         ev.SetDeviceN(self.plane)

@@ -49,13 +49,14 @@ bool dSiPMEvent2StdEventConverter::Converting(
 
   if (!plane_conf->configured && conf != NULL) {
     plane_conf->zeroSupp = conf->Get("zero_suppression", true);
-    plane_conf->discardDuringReset = conf->Get("discard_during_reset", true);
+    plane_conf->discardDuringReset = conf->Get("discard_during_reset", false);
     plane_conf->checkValid = conf->Get("check_valid", false);
     plane_conf->fine_tdc_bin_widths = {
       getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q0", "")),
       getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q1", "")),
       getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q2", "")),
       getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q3", ""))};
+    plane_conf->pixel_delays = getPixelDelays(conf->Get("pixel_delays", ""));
     plane_conf->frame_start = conf->Get("frame_start", 0);
     plane_conf->frame_stop = conf->Get("frame_stop", INT8_MAX);
 
@@ -70,6 +71,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     EUDAQ_INFO("    _q1 " + to_string(plane_conf->fine_tdc_bin_widths[1]));
     EUDAQ_INFO("    _q2 " + to_string(plane_conf->fine_tdc_bin_widths[2]));
     EUDAQ_INFO("    _q3 " + to_string(plane_conf->fine_tdc_bin_widths[3]));
+    EUDAQ_INFO("  pixel_delays first column " + to_string(plane_conf->pixel_delays[0]));
 
     plane_conf->configured = true;
   }
@@ -171,10 +173,15 @@ bool dSiPMEvent2StdEventConverter::Converting(
       if (bunchCount == 0 || clockFine == 0) {
         return false;
       }
-      else {
-        EUDAQ_WARN("Bunch counter == 0. This might screw up timing analysis.");
+    }
+    else {
+      if (!plane_conf->discardDuringResetWarned && (bunchCount == 0 || clockFine == 0)) {
+        EUDAQ_WARN("Bunch counter == 0 || Fine clock == 0. This might screw up timing analysis,"
+                   " consider setting discard_during_reset=1.");
+        plane_conf->discardDuringResetWarned = true;
       }
     }
+
     if (clockFine == 0) {
       // 0 comes after 31
       clockFine = 32;
@@ -233,7 +240,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     EUDAQ_DEBUG(" \t" + to_string(m_trigger[plane_id]) + " \t" + to_string(m_frame[plane_id]) +
                 " \t" + to_string(col) + " \t" + to_string(row) + " \t" +
                 to_string(hitBit) + " \t" + to_string(validBit) + " \t" +
-                to_string(bunchCount) + " \t" +
+                to_string(bunchCount) + " \t\t" +
                 to_string(static_cast<uint64_t>(clockCoarse)) + " \t" +
                 to_string(static_cast<uint64_t>(clockFine)) + " \t" +
                 to_string(timestamp) + " \t" + to_string(frameStart) + " \t" +
