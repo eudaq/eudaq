@@ -1,6 +1,7 @@
 #ifndef H_AIDATLUCONTROLLER_HH
 #define H_AIDATLUCONTROLLER_HH
 
+#include <cstdint>
 #include <deque>
 #include <string>
 #include <vector>

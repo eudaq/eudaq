@@ -1,6 +1,7 @@
 #ifndef H_AIDATLUPOWERMODULE_HH
 #define H_AIDATLUPOWERMODULE_HH
 
+#include <cstdint>
 #include <string>
 #include <iostream>
 #include <vector>
