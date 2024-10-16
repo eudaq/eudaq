@@ -436,7 +436,6 @@ void DSO9254AEvent2StdEventConverter::parse_channel_mapping(
     }
 
     elements_string >> element;
-    std::cout << element << std::endl;
 
     // check if value makes sense
     if (element > 1) {
