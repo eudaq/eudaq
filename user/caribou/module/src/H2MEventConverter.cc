@@ -59,7 +59,7 @@ bool H2MEvent2StdEventConverter::Converting(
 
   } // data from good event
   else if(ev->NumBlocks() == 0) {
-    EUDAQ_DEBUG("Ignoring empty event " + to_string(ev->GetEventNumber()));
+    EUDAQ_DEBUG("Ignoring empty event " + to_string(ev->GetEventNumber()) +  (ev->IsBORE() ? " (BORE)" : (ev->IsEORE() ? " (EORE)" : "")));
     return false;
   }
   else {
