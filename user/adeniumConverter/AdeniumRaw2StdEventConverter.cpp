@@ -19,6 +19,7 @@ bool AdeniumRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::St
   auto block_n_list = ev->GetBlockNumList();
   if(nblocks!=1){
       EUDAQ_ERROR("Wrong number of blocks, expecting 1, received " + std::to_string(nblocks));
+      return false;
   }
   auto block =  ev->GetBlock(0); // this are always 8 bits
   //std::cout << "New event: ********************** "<< d1->GetTriggerN() << std::endl;
