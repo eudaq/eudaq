@@ -5,7 +5,12 @@ add_definitions("-DEUDAQ_CORE_EXPORTS")
 find_package(Filesystem)
 message("file system variable: ")
 message(${CXX_FILESYSTEM_HAVE_FS})
-string(TOLOWER ${CXX_FILESYSTEM_HAVE_FS} CXX_FILESYSTEM_HAVE_FS)
+# looks strange but BOOL value can be true/TRUE/on/ON/1/.... and the preprocessor does accept only a subset where 1/0 is the most cross platform
+if (${CXX_FILESYSTEM_HAVE_FS})
+    set(CXX_FILESYSTEM_HAVE_FS 1)
+else()
+    set(CXX_FILESYSTEM_HAVE_FS 0)
+endif()
 configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
 
 set(EUDAQ_INCLUDE_DIRS
