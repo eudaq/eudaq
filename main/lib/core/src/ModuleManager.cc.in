@@ -5,9 +5,6 @@
 #include <iostream>
 
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-#error Minimum Visual Studio 2015 required
-#endif
 
 #if @CXX_FILESYSTEM_HAVE_FS@
 
@@ -23,7 +20,6 @@ namespace filesystem = @CXX_FILESYSTEM_NAMESPACE@;
 #endif
 
 #if EUDAQ_PLATFORM_IS(WIN32)
-#define NOMINMAX
 #include <windows.h>
 #include <intrin.h>
 #pragma intrinsic(_ReturnAddress)

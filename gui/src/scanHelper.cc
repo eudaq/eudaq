@@ -2,9 +2,6 @@
 
 #include <cmath>
 
-// windows.h workaround on Windows
-#undef max
-#undef min
 
 inline bool file_exists(std::string name) {
     std::ifstream f(name.c_str());
