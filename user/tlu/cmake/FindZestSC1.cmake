@@ -84,24 +84,6 @@ find_zestsc1_in_extern("")
 
 # could not find the package at the usual locations -- try to copy from AFS if accessible
 if (NOT ZESTSC1_LIBRARY)
-#  IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")
-#    MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer; downloading it now via AFS to ./extern ....")
-#    if(DEFINED ENV{TRAVIS})
-#    MESSAGE(STATUS "Running on travis and therefore downloading only the absolutely necessary part of the ZestSC1 driver.")
-#    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-#    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/Inc" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-#    if("$ENV{TRAVIS_OS_NAME}" STREQUAL "linux")
-#	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/linux" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-#    else()
-#	FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1/macosx" DESTINATION ${PROJECT_SOURCE_DIR}/extern/ZestSC1)
-#    endif()    
-#    else()
-#    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1" DESTINATION ${PROJECT_SOURCE_DIR}/extern)
-#    endif()
-#    find_zestsc1_in_extern(NO_DEFAULT_PATH)
-#  ELSE()
-#    MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software. Converter will be built anyway.")
-#  ENDIF()
   FetchContent_Declare(
     tlu-dependencies
     GIT_REPOSITORY    https://github.com/eudaq/tlu-dependencies.git
