@@ -31,7 +31,7 @@ qt5_wrap_ui(euRun_UISrcs ui/euRun.ui)
 qt5_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh)
 list(APPEND RUN_GUI_SRC ${euRun_UISrcs} ${euRun_MOCSrcs})
 add_executable(euRun ${RUN_GUI_SRC})
-target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT} ${EUDAQ_CORE_LIBRARY})
+target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euRun)
 
 set(LOG_GUI_SRC
