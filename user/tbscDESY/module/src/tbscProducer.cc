@@ -9,9 +9,7 @@
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef __APPLE__
 #include <sys/sysmacros.h>
-#endif
 #endif
 #include <time.h>
 #include <stdio.h>
