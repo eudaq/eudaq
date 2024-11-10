@@ -1,7 +1,6 @@
 #ifndef H_AIDATLUHARDWARE_HH
 #define H_AIDATLUHARDWARE_HH
 
-#include <cstdint>
 #include <string>
 #include <iostream>
 #include <vector>
