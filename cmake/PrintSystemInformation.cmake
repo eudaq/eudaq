@@ -9,7 +9,7 @@ MESSAGE( STATUS "CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR} )
 MESSAGE( STATUS "PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR} )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-  execute_process(COMMAND lsb_release --description -s OUTPUT_VARIABLE _linux_dist)
+  exec_program(lsb_release ARGS "--description -s" OUTPUT_VARIABLE _linux_dist)
 endif()
  
 MESSAGE( STATUS "This is CMake " ${CMAKE_VERSION} " (" ${CMAKE_COMMAND} ") running on " ${CMAKE_SYSTEM_NAME} " (" ${CMAKE_SYSTEM_VERSION} " " ${_linux_dist} ")")
