@@ -32,11 +32,12 @@ public:
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("Timepix4Producer");
 private:
+  std::string SendMessage(const char* message);
+  
   std::thread ts_thread;   // thread for 1 sec timestamps
   bool m_running = false;
   bool m_init = false;
   bool m_config = false;
-
 
   int m_supported_devices = 0;
   int m_active_devices;
@@ -47,7 +48,8 @@ private:
   bool m_extRefClk, m_extT0;
   int m_xml_VTHRESH = 0;
   float m_temp;
-
+  int m_threshold;
+  
   /** Return the binary representation of a char as std::string
    */
   template <typename T> std::string to_bit_string(const T data, int length=-1) {
@@ -120,9 +122,11 @@ void Timepix4Producer::DoReset() {
   m_running = false;
   // wait for other functions to finish
 
-
   m_init = false;
   m_config = false;
+
+  string response = SendMessage("reset\n");
+  EUDAQ_USER("Slow control response: " + response);
 
   EUDAQ_USER("Timepix4Producer was reset.");
 } // DoReset()
@@ -163,8 +167,13 @@ void Timepix4Producer::DoInitialise() {
     EUDAQ_THROW("Timepix4Producer: Could not establish socket connection to TPX4 slow control. Make sure tpx4sc is running");
     return;
   }
+
+  string response = SendMessage("get_devid\n");
+  EUDAQ_USER("Init done for deviceID: " + response);
+
   m_init = true;
-  EUDAQ_USER("Timepix4Producer Init done");
+  //  EUDAQ_USER("Timepix4Producer Init done");
+
 } // DoInitialise()
 
 //----------------------------------------------------------
@@ -186,6 +195,7 @@ void Timepix4Producer::DoConfigure() {
 
   // Configuration file values are accessible as config->Get(name, default)
   config->Print();
+  int threshold = config->Get( "threshold", m_threshold );
 
   // sleep for 1 second, to make sure the TLU clock is already present
   sleep (1);
@@ -194,6 +204,14 @@ void Timepix4Producer::DoConfigure() {
     EUDAQ_THROW("Timepix4Producer: There were major errors during configuration. See the log.");
     return;
   }
+
+  string response = SendMessage("configure\n");
+  EUDAQ_USER("Configure message received response: " + response);
+
+  string setthreshold = string("set_threshold ") + to_string(threshold) + string("\n");
+  response = SendMessage(setthreshold.c_str());
+  EUDAQ_USER("Threshold command received response: " + response);
+
   m_config = true;
   // Also display something for us
   EUDAQ_USER("Timepix4Producer configured. Ready to start run. ");
@@ -212,8 +230,20 @@ void Timepix4Producer::DoStartRun() {
     m_running = false;
     EUDAQ_WARN("DoStartRun: Timepix4 producer is already running. I'm trying to stop if first. This might however create a mess in the runs.");
   }
-  m_running = true;
 
+  string response = SendMessage("start_run\n");
+  EUDAQ_USER("Timepix4Producer start command received response: " + response);
+
+
+
+  /* this should do things like ((based on TPX3 producer))
+    - restart timers (T0 sync?!)
+    - selecting data driven readout
+    - open the shutter
+  */
+  
+  m_running = true;
+  
   EUDAQ_USER("Timepix4Producer started run.");
 } // DoStartRun()
 
@@ -233,7 +263,9 @@ void Timepix4Producer::RunLoop() {
 
   EUDAQ_USER("Timepix4Producer starting run loop...");
 
-
+  /* here I need to get the DATA from the SPIDR and put it into events
+     Question: where exactly does the magic happen that starts the sdaq ?
+   */
   while(m_running) {
     }
     // Get a sample of pixel data packets, with timeout in ms
@@ -247,6 +279,30 @@ void Timepix4Producer::RunLoop() {
 void Timepix4Producer::DoStopRun() {
   EUDAQ_USER("Timepix4Producer stopping run...");
 
+  string response = SendMessage("stop_run\n");
+  EUDAQ_USER("Stop command response: " + response);
+
   m_running = false;
   EUDAQ_USER("Timepix4Producer stopped run.");
 } // DoStopRun()
+
+
+
+//----------------------------------------------------------
+// communicating witht the slow control
+//----------------------------------------------------------
+// TO DO: add error handling!
+std::string Timepix4Producer::SendMessage(const char* message) {
+  int returnbytes =  send(m_clientSocket, message, strlen(message), 0);
+  // for the future: change to debug instead of user
+  EUDAQ_USER("Sent " + string(message) + " command, got confirmation for number of sent bytes = " + to_string(returnbytes));
+
+  // Receive a response
+  char buffer[1024];
+  recv(m_clientSocket, buffer, sizeof(buffer), 0);
+  string response=buffer;
+  response=response.substr(0, response.find("\n"));
+
+  return response;
+}
+
