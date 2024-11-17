@@ -5,20 +5,16 @@
 #  ZESTSC1_LIBRARIES - The libraries needed to use ZestSC1
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
-include(FetchContent)
-
+###
 macro(find_zestsc1_in_extern arg)
 # disable a warning about changed behaviour when traversing directories recursively (wrt symlinks)
 IF(COMMAND cmake_policy)
   CMAKE_POLICY(SET CMP0009 NEW)
   CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
 ENDIF(COMMAND cmake_policy)
+
 # determine path to zestsc1 package in ./extern folder
-IF("${arg}" STREQUAL "")
-  file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h )
-ELSE()
-  file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h ${arg}/*ZestSC1.h)
-ENDIF()
+file(GLOB_RECURSE extern_file ${CMAKE_CURRENT_LIST_DIR}/../extern/*ZestSC1.h)
 if (extern_file)
   # should have found multiple files of that name, take root of folder (no 'windows*7/inc' string)
   FOREACH (this_file ${extern_file})
@@ -46,63 +42,67 @@ ELSE(WIN32)
     HINTS "${extern_lib_path}/Inc" ${arg})
 ENDIF(WIN32)
 
-if (WIN32) 
-  if (${EX_PLATFORM} EQUAL 64)
-    find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
+if (WIN32)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    find_library(ZESTSC1_LIBRARY NAMES ZestSC1
       HINTS "${extern_lib_path}/Lib/amd64"
             "${extern_lib_path}/windows_7/Lib/amd64"
       	    "${extern_lib_path}/windows 7/Lib/amd64"
       ${arg}
       )
   else() #32bit
-    find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
+    find_library(ZESTSC1_LIBRARY NAMES ZestSC1
       HINTS "${extern_lib_path}/Lib/x86"
             "${extern_lib_path}/windows_7/Lib/x86"
       	    "${extern_lib_path}/windows 7/Lib/x86"
       ${arg})
-  endif(${EX_PLATFORM} EQUAL 64)
-  elseif (UNIX)
-    MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
-    
+  endif()
+elseif (UNIX)
+    #MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
+
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
 	HINTS "${extern_lib_path}/macosx/Lib" ${arg})
     else()
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-	HINTS "${extern_lib_path}/Lib" 
-	      "${extern_lib_path}/linux/Lib" 
+	HINTS "${extern_lib_path}/Lib"
+	      "${extern_lib_path}/linux/Lib"
         ${arg})
     endif()
-  else()
-    MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
-    find_library(ZESTSC1_LIBRARY NAMES ZestSC1
+else()
+  MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
+  find_library(ZESTSC1_LIBRARY NAMES ZestSC1
       HINTS "${extern_lib_path}/linux" ${arg})
-  endif()
+endif()
 endmacro()
+###
 
 find_zestsc1_in_extern("")
 
 # could not find the package at the usual locations -- try to copy from AFS if accessible
 if (NOT ZESTSC1_LIBRARY)
-  FetchContent_Declare(
-    tlu-dependencies
-    GIT_REPOSITORY    https://github.com/eudaq/tlu-dependencies.git
-    GIT_TAG           origin/master
-    GIT_PROGRESS TRUE
-    GIT_SHALLOW  TRUE
-  ) 
-  
-  IF(NOT tlu-dependencies_POPULATED)
-    FetchContent_Populate( tlu-dependencies )
+  IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")
+    MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer; downloading it now via AFS to ${CMAKE_CURRENT_LIST_DIR}/../extern  ....")
+    if(DEFINED ENV{TRAVIS})
+    MESSAGE(STATUS "Running on travis and therefore downloading only the absolutely necessary part of the ZestSC1 driver.")
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../extern/ZestSC1)
+    copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1/Inc" ${CMAKE_CURRENT_LIST_DIR}/../extern/ZestSC1)
+    if("$ENV{TRAVIS_OS_NAME}" STREQUAL "linux")
+	copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1/linux" ${CMAKE_CURRENT_LIST_DIR}/../extern/ZestSC1)
+    else()
+	copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1/macosx" ${CMAKE_CURRENT_LIST_DIR}/../extern/ZestSC1)
+    endif()
+    else()
+    copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1" ${CMAKE_CURRENT_LIST_DIR}/../extern)
+    endif()
+    find_zestsc1_in_extern(NO_DEFAULT_PATH)
+  ELSE()
+      MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software. Converter will be built anyway.")
+      return()
   ENDIF()
-  
-  FetchContent_GetProperties( tlu-dependencies )
-  MESSAGE(${tlu-dependencies_SOURCE_DIR})
-  find_zestsc1_in_extern(${tlu-dependencies_SOURCE_DIR}/ZestSC1)
-
 endif()
 
-set(ZESTSC1_LIBRARIES ${ZESTSC1_LIBRARY} )
+set(ZESTSC1_LIBRARIES ${ZESTSC1_LIBRARY})
 set(ZESTSC1_INCLUDE_DIRS ${ZESTSC1_INCLUDE_DIR} )
 
 include(FindPackageHandleStandardArgs)
