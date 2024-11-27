@@ -58,6 +58,10 @@ bool H2MEvent2StdEventConverter::Converting(
     EUDAQ_DEBUG("Data block contains " + to_string(data_length) + " words.");
 
   } // data from good event
+  else if(ev->NumBlocks() == 0) {
+    EUDAQ_DEBUG("Ignoring empty event " + to_string(ev->GetEventNumber()) +  (ev->IsBORE() ? " (BORE)" : (ev->IsEORE() ? " (EORE)" : "")));
+    return false;
+  }
   else {
     EUDAQ_WARN("Ignoring bad event " + to_string(ev->GetEventNumber()));
     return false;
