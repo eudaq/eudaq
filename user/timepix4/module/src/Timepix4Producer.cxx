@@ -172,7 +172,7 @@ void Timepix4Producer::DoInitialise() {
 //  CONFIGURE
 //----------------------------------------------------------
 void Timepix4Producer::DoConfigure() {
-  bool serious_error = false;
+  ssize_t bitRecv;
   if (!m_init) {
     EUDAQ_THROW("DoConfigure: Trying to configure an uninitialized module. This will not work.");
     return;
@@ -188,23 +188,25 @@ void Timepix4Producer::DoConfigure() {
   config->Print();
 
   // sleep for 1 second, to make sure the TLU clock is already present
-  sleep (1);
+  sleep(1);
   m_config = true;
-  std::string message = "configure";
-  serious_error = send(m_clientSocket, message.c_str(), message.size(),0);
-  if (serious_error) {
+  std::string message = "configure\n";
+  bitRecv = send(m_clientSocket, message.c_str(), message.size(),0);
+  std::cout << "AAAAAAAAAAA " <<  bitRecv << std::endl;
+  std::cout << message << std::endl;
+  if (bitRecv == -1) {
     EUDAQ_THROW("Timepix4Producer: Could not configure device.");
     return;
   }
 
   EUDAQ_INFO("external_T0 = " + (m_extT0 ? std::string("true") : std::string("false")));
 
-
+  sleep(1);
   int threshold = config->Get("threshold", 1000);
-  message = "set_threshold " + std::to_string(threshold);
-  serious_error = send(m_clientSocket, message.c_str(), message.size(),0);
+  message = "set_threshold " + std::to_string(threshold) + "\n";
+  bitRecv = send(m_clientSocket, message.c_str(), message.size(),0);
   // Also display something for us
-  if (serious_error) {
+  if (bitRecv == -1) {
     EUDAQ_THROW("Timepix4Producer: Could not set threshold.");
     return;
   }
