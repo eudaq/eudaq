@@ -48,7 +48,7 @@ private:
   bool m_extRefClk, m_extT0;
   int m_xml_VTHRESH = 0;
   float m_temp;
-  int m_threshold;
+  int m_threshold = 1000;
   
   /** Return the binary representation of a char as std::string
    */
