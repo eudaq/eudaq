@@ -123,6 +123,7 @@ void Timepix4Producer::DoReset() {
 
   m_init = false;
   m_config = false;
+  close(m_clientSocket);
 
   EUDAQ_USER("Timepix4Producer was reset.");
 } // DoReset()
@@ -143,7 +144,7 @@ void Timepix4Producer::DoInitialise() {
 
 
   // SPIDR IP & PORT
-  m_spidrIP  = config->Get( "SPIDR_IP", "127.0.0.1" );
+  m_spidrIP  = config->Get( "SPIDR_IP", "192.168.1.10" );
   int ip[4];
   if (!tokenize_ip_addr(m_spidrIP, ip) ) {
       EUDAQ_ERROR("Incorrect SPIDR IP address: " + m_spidrIP);
@@ -180,7 +181,6 @@ void Timepix4Producer::DoConfigure() {
     EUDAQ_WARN("DoConfigure: Trying to configure a running module. Trying to stop it first.");
     m_running = false;
   }
-
   auto config = GetConfiguration();
   EUDAQ_USER("Timepix4Producer configuring: " + config->Name());
 
@@ -189,13 +189,25 @@ void Timepix4Producer::DoConfigure() {
 
   // sleep for 1 second, to make sure the TLU clock is already present
   sleep (1);
-  EUDAQ_INFO("external_T0 = " + (m_extT0 ? std::string("true") : std::string("false")));
+  m_config = true;
+  std::string message = "configure";
+  serious_error = send(m_clientSocket, message.c_str(), message.size(),0);
   if (serious_error) {
-    EUDAQ_THROW("Timepix4Producer: There were major errors during configuration. See the log.");
+    EUDAQ_THROW("Timepix4Producer: Could not configure device.");
     return;
   }
-  m_config = true;
+
+  EUDAQ_INFO("external_T0 = " + (m_extT0 ? std::string("true") : std::string("false")));
+
+
+  int threshold = config->Get("threshold", 1000);
+  message = "set_threshold " + std::to_string(threshold);
+  serious_error = send(m_clientSocket, message.c_str(), message.size(),0);
   // Also display something for us
+  if (serious_error) {
+    EUDAQ_THROW("Timepix4Producer: Could not set threshold.");
+    return;
+  }
   EUDAQ_USER("Timepix4Producer configured. Ready to start run. ");
 } // DoConfigure()
 
