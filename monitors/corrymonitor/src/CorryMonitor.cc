@@ -217,7 +217,7 @@ void CorryMonitor::DoConfigure(){
   }
 
 
-  // command to be exectued in DoStartRun(), stored tokenized in m_args.argv
+  // command to be executed in DoStartRun(), stored tokenized in m_args.argv
   std::string my_command = m_corry_path + " -c " + m_corry_config + " " + m_corry_options;
 
   // Clear vector with datacollectors
@@ -522,13 +522,6 @@ void CorryMonitor::DoStartRun(){
     }
 
     m_args.argv = addArg (m_args.argv, &m_args.sz, &m_args.used, 0);
-
-    /*
-    for (const auto & entry : std::filesystem::directory_iterator("/home/andreas/Documents/eudaq/user/example/misc/")){
-        std::cout << entry.path().filename() << std::endl;
-        std::cout << "Is this a match? " << std::string((string_match(pattern_to_match.c_str(), entry.path().filename().c_str(), 0, 0)) ? "Yes" : "No") << std::endl;
-    }
-    */
 
     // save the full command with which corry is called for debugging purposes
     command_ptr = m_args.argv;
