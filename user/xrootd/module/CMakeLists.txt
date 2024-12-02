@@ -45,8 +45,6 @@ find_package(XRootD CONFIG REQUIRED)
 # Add sources
 aux_source_directory(src MODULE_SRC)
 
-
-
 # Create the library target
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 
@@ -57,9 +55,12 @@ target_include_directories(${EUDAQ_MODULE} PRIVATE include)
 if (ROOT_FOUND AND TARGET ROOT::XrdCl)
     message(STATUS "Using XRootD from ROOT")
     target_link_libraries(${EUDAQ_MODULE} PRIVATE ROOT::XrdCl)
+elseif (XROOTD_CLIENT_LIBRARIES)
+    message(STATUS "Using standalone XRootD (manual configuration)")
+    include_directories("${XRootD_INCLUDE_DIRS}")
+    target_link_libraries(${EUDAQ_MODULE} PRIVATE ${XROOTD_CLIENT_LIBRARIES})
 else()
-    message(STATUS "Using standalone XRootD")
-    target_link_libraries(${EUDAQ_MODULE} PRIVATE XRootD::XrdCl)
+    message(FATAL_ERROR "XRootD libraries not found!")
 endif()
 
 # Installation
