@@ -174,5 +174,6 @@ private:
   public:
     bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("CaribouH2MEvent");
+    void loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat) const;
   };
 } // namespace eudaq
