@@ -1,23 +1,28 @@
 find_package(ROOT OPTIONAL_COMPONENTS XrdCl)
 find_package(XRootD CONFIG REQUIRED)
 
-# If XRootD is not found, allow the user to specify the directory manually
+# Check if XRootD libraries and include directories are found
 if (NOT XROOTD_CLIENT_LIBRARIES)
-    message(WARNING "XRootD not found automatically. Make sure to specify the XRootD directory using -DXROOTD_DIRECTORY=/path/to/xrootd/include/")
+    message(WARNING "XRootD not found automatically. Make sure to specify the XRootD library directory manually if needed.")
 
-    set(XROOTD_DIRECTORY "" CACHE PATH "Path to the XRootD installation include directory")
+    # Allow the user to specify the XRootD library directory manually
+    set(XROOTD_LIBRARY_DIRS "" CACHE PATH "Path to the XRootD library directory (e.g., /path/to/xrootd/lib)")
 
-    if (XROOTD_DIRECTORY)
-        # Set include and library paths from the user-defined option
-        set(XROOTD_INCLUDE_DIR ${XROOTD_DIRECTORY}/xrootd/)
-        find_library(XRDCL_LIB XrdCl REQUIRED PATHS ${XROOTD_LIBRARY_DIR})
-
-        if (NOT EXISTS ${XROOTD_INCLUDE_DIR}/XrdCl/XrdClFile.hh)
-            message(FATAL_ERROR "Invalid XRootD directory: Header file not found in ${XROOTD_INCLUDE_DIR}.")
+    # Validate the provided library directory and find the library
+    if (XROOTD_LIBRARY_DIRS)
+        find_library(XROOTD_LIB XrdCl PATHS "${XROOTD_LIBRARY_DIRS}")
+        if (NOT XROOTD_LIB)
+            message(FATAL_ERROR "Invalid XRootD library directory: XrdCl library not found in ${XROOTD_LIBRARY_DIRS}.")
         endif()
+        message(STATUS "Using manually provided XRootD library directory: ${XROOTD_LIBRARY_DIRS}")
+        set(XROOTD_CLIENT_LIBRARIES "${XROOTD_LIB}")
+    endif()
+
+    if (NOT XROOTD_LIBRARY_DIRS)
+        message(FATAL_ERROR "XRootD libraries not found! Please specify manually using -DXROOTD_LIBRARY_DIRS.")
     endif()
 else()
-    message(STATUS "Found XRootD libraries under ${XROOTD_CLIENT_LIBRARIES}")
+    message(STATUS "Found XRootD libraries: ${XROOTD_CLIENT_LIBRARIES}")
 endif()
 
 # Add sources
@@ -26,7 +31,7 @@ aux_source_directory(src MODULE_SRC)
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 
 target_include_directories(${EUDAQ_MODULE} PRIVATE include)
-   
+
 target_link_libraries(${EUDAQ_MODULE} PRIVATE ${EUDAQ_CORE_LIBRARY} ${XROOTD_CLIENT_LIBRARIES})
 
 # Installation
