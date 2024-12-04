@@ -30,7 +30,7 @@ aux_source_directory(src MODULE_SRC)
 
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 
-target_include_directories(${EUDAQ_MODULE} PRIVATE include)
+target_include_directories(${EUDAQ_MODULE} PRIVATE include ${XROOTD_INCLUDE_DIRS})
 
 target_link_libraries(${EUDAQ_MODULE} PRIVATE ${EUDAQ_CORE_LIBRARY} ${XROOTD_CLIENT_LIBRARIES})
 
