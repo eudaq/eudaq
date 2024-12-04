@@ -122,13 +122,17 @@ void Timepix4Producer::DoReset() {
   m_running = false;
   // wait for other functions to finish
 
+  string response = SendMessage("stop_run\n");
+  EUDAQ_USER("Stop run command response: " + response);
+
+  response = SendMessage("reset\n");
+  EUDAQ_USER("Slow control response: " + response);
+
+  
   m_init = false;
   m_config = false;
   close(m_clientSocket);
-
-  string response = SendMessage("reset\n");
-  EUDAQ_USER("Slow control response: " + response);
-
+  
   EUDAQ_USER("Timepix4Producer was reset.");
 } // DoReset()
 
@@ -200,14 +204,6 @@ void Timepix4Producer::DoConfigure() {
   // sleep for 1 second, to make sure the TLU clock is already present
   sleep(1);
   m_config = true;
-  std::string message = "configure\n";
-  bitRecv = send(m_clientSocket, message.c_str(), message.size(),0);
-  std::cout << "AAAAAAAAAAA " <<  bitRecv << std::endl;
-  std::cout << message << std::endl;
-  if (bitRecv == -1) {
-    EUDAQ_THROW("Timepix4Producer: Could not configure device.");
-    return;
-  }
 
   string response = SendMessage("configure\n");
   EUDAQ_USER("Configure message received response: " + response);
@@ -215,6 +211,7 @@ void Timepix4Producer::DoConfigure() {
   string setthreshold = string("set_threshold ") + to_string(threshold) + string("\n");
   response = SendMessage(setthreshold.c_str());
   EUDAQ_USER("Threshold command received response: " + response);
+
 
   m_config = true;
   // Also display something for us
