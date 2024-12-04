@@ -3,7 +3,7 @@ find_package(XRootD CONFIG REQUIRED)
 
 # Check if XRootD libraries and include directories are found
 if (NOT XROOTD_CLIENT_LIBRARIES)
-    message(WARNING "XRootD not found automatically. Make sure to specify the XRootD library directory manually if needed.")
+    message(WARNING "XRootD not found automatically. Make sure to specify the XRootD library directory manually if needed (-DXROOTD_LIBRARY_DIRS and -DXROOTD_INCLUDE_DIRS if necessary).")
 
     # Allow the user to specify the XRootD library directory manually
     set(XROOTD_LIBRARY_DIRS "" CACHE PATH "Path to the XRootD library directory (e.g., /path/to/xrootd/lib)")
