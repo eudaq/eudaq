@@ -157,7 +157,7 @@ bool H2MEvent2StdEventConverter::Converting(
 
 
      } else{
-       EUDAQ_INFO("EMPTY");
+       EUDAQ_DEBUG("ToT calibration is not applied");
      }  // end applyCalibration
 
 
