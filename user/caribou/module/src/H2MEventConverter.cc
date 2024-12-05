@@ -7,6 +7,7 @@
 
 #include <string>
 #include <algorithm>
+#include <cmath>
 
 using namespace eudaq;
 
@@ -15,6 +16,8 @@ namespace {
       H2MEvent2StdEventConverter>(H2MEvent2StdEventConverter::m_id_factory);
 }
 
+static bool m_first_time = true;
+static std::vector<std::vector<float>> vtot; // for ToT calibration
 
 bool H2MEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
@@ -33,6 +36,19 @@ bool H2MEvent2StdEventConverter::Converting(
   // Read acquisition mode from configuration, defaulting to ToT.
   uint8_t acq_mode = conf->Get("acq_mode", 0x1);
   uint64_t delay_to_frame_end = conf->Get("delay_to_frame_end", -999);
+  // Load ToT calibration data from configuration
+  if (m_first_time) {
+    if (conf && conf->Has("calibration_path_tot")) {
+      std::string calibrationPathToT = conf->Get("calibration_path_tot", "");
+
+      EUDAQ_INFO("Applying ToT calibration from " + calibrationPathToT);
+
+      loadCalibration(calibrationPathToT, ' ', vtot);
+    } else {
+      EUDAQ_INFO("No calibration file path for ToT; data will be uncalibrated.");
+    }
+    m_first_time = false;
+  }
 
   // get an instance of the frame decoder
   static caribou::H2MFrameDecoder decoder;
@@ -119,8 +135,34 @@ bool H2MEvent2StdEventConverter::Converting(
     uint64_t timestamp = pixHit->GetMode() == caribou::ACQ_MODE_TOA ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps)) : not_toa_time;
     uint64_t tot = pixHit->GetToT();
 
+    // best guess for charge is ToT if no calibration is available
+    EUDAQ_DEBUG("tot is: " + to_string(tot));
+
+    double charge = static_cast<float>(tot);
+    if(!vtot.empty()) {
+        EUDAQ_DEBUG("Applying calibration to DUT");
+        size_t scol = static_cast<size_t>(col);
+        size_t srow = static_cast<size_t>(row);
+        float a = vtot.at(64 * srow + scol).at(0);
+        float b = vtot.at(64 * srow + scol).at(1);
+        float c = vtot.at(64 * srow + scol).at(2);
+        float t = vtot.at(64 * srow + scol).at(3);
+
+        // Calculating calibrated tot
+        charge = (sqrt(a * a * t * t + 2 * a * b * t + 4 * a * c - 2 * a * t * static_cast<float>(tot) +
+                             b * b - 2 * b * static_cast<float>(tot) + static_cast<float>(tot * tot)) +
+                        a * t - b + static_cast<float>(tot)) /
+                       (2 * a);
+        EUDAQ_DEBUG("charge is: " + to_string(charge));
+
+
+     } else{
+       EUDAQ_DEBUG("ToT calibration is not applied");
+     }  // end applyCalibration
+
+
     // assemble pixel and add to plane
-    plane.PushPixel(col, row, tot, timestamp);
+    plane.PushPixel(col, row, charge, timestamp);
   } // pixels in frame
 
   // Add the plane to the StandardEvent
@@ -142,4 +184,50 @@ bool H2MEvent2StdEventConverter::Converting(
 
   // Indicate that data was successfully converted
   return true;
+}
+
+void H2MEvent2StdEventConverter::loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat) const {
+    std::ifstream f;
+    f.open(path);
+    dat.clear();
+
+    // check if file is open
+    if(!f.is_open()) {
+        throw DataInvalid("Cannot open calibration file:\n\t" + path);
+        return;
+    }
+
+    // read file line by line
+    int i = 0;
+    std::string line;
+    while(!f.eof()) {
+        std::getline(f, line);
+
+        // check if line is empty or a comment
+        // if not write to output vector
+
+        if(line.size() > 0 && isdigit(line.at(0))) {
+            std::stringstream ss(line);
+            std::string word;
+            std::vector<float> row;
+            for (size_t i = 0; i < 6; ++i) {
+                std::getline(ss, word, delim);
+                if (i >= 2) { // Keep only calibration data
+                    row.push_back(std::stof(word));
+                }
+            }
+            if (row.size() != 4) { // Expected A, B, C, D parameters
+                throw DataInvalid("Unexpected number of parameters in calibration file. Expected 4 parameters (A, B, C, D), but found " + std::to_string(row.size()) + "\n\t");
+            }
+
+            dat.push_back(row);
+        }
+    }
+
+    // warn if too few entries
+    if(dat.size() != 64 * 16) {
+        throw DataInvalid("Something went wrong. Found only " + to_string(i) + " entries. Not enough for H2M.\n\t");
+    }
+
+    f.close();
 }
