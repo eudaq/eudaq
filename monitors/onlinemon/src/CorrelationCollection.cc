@@ -12,6 +12,7 @@ CorrelationCollection::CorrelationCollection()
     : BaseCollection(), _map(), _planes(), skip_this_plane(),
       correlateAllPlanes(false), selected_planes_to_skip(),
       planesNumberForCorrelation(0), windowWidthForCorrelation(0) {
+  // cout << " Initializing Correlation Collection"<<endl;
   CollectionType = CORRELATION_COLLECTION_TYPE;
 }
 
@@ -124,7 +125,20 @@ void CorrelationCollection::Fill(const SimpleStandardEvent &simpev) {
   } else {
     for (int planeA = 0; planeA < nPlanes; planeA++) {
       const SimpleStandardPlane &simpPlane = simpev.getPlane(planeA);
+#ifdef DEBUG
+      std::cout << "CorrelationCollection : Checking Plane "
+                << simpPlane.getName() << " " << simpPlane.getID() << "..."
+                << std::endl;
+      std::cout << "CorrelationCollection : " << planeA << std::endl;
+#endif
+
       if (!isPlaneRegistered(simpPlane)) {
+#ifdef DEBUG
+        std::cout << "CorrelationCollection: Plane " << simpPlane.getName()
+                  << " " << simpPlane.getID() << " is not registered"
+                  << std::endl;
+#endif
+
         plane_vector_size =
             _planes.size(); // how many planes we did look at beforehand
         if (correlateAllPlanes) {
@@ -391,6 +405,12 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
 void CorrelationCollection::registerPlaneCorrelations(
     const SimpleStandardPlane &p1, const SimpleStandardPlane &p2) {
 
+#ifdef DEBUG
+  std::cout << "CorrelationCollection:: Correlating: " << p1.getName() << " "
+            << p1.getID() << " with " << p2.getName() << " " << p2.getID()
+            << std::endl;
+
+#endif
   CorrelationHistos *tmphisto = new CorrelationHistos(p1, p2);
   pair<SimpleStandardPlane, SimpleStandardPlane> pdouble(p1, p2);
   _map[pdouble] = tmphisto;
@@ -420,7 +440,23 @@ void CorrelationCollection::registerPlaneCorrelations(
         tree, getCorrelationHistos(p1, p2)->getCorrYHisto(), "COLZ", 0);
     _mon->getOnlineMon()->registerMutex(
 	tree, getCorrelationHistos(p1, p2)->getMutex());
-
+ 
+    sprintf(tree, "%s/%s %i/%s %i in XY", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrXYHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    sprintf(tree, "%s/%s %i/%s %i in YX", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrYXHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
     sprintf(tree, "%s/%s %i", dirName.c_str(), p1.getName().c_str(),
             p1.getID());
     _mon->getOnlineMon()->makeTreeItemSummary(tree);
@@ -452,6 +488,23 @@ void CorrelationCollection::registerPlaneCorrelations(
         tree, getCorrelationHistos(p1, p2)->getCorrTimeYHisto(), "COLZ", 0);
     _mon->getOnlineMon()->registerMutex(
 	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    sprintf(tree, "%s/%s %i/%s %i in XY Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeXYHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    
+    sprintf(tree, "%s/%s %i/%s %i in YX Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeYXHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());    
 
     sprintf(tree, "%s/%s %i", dirName.c_str(), p1.getName().c_str(),
             p1.getID());
