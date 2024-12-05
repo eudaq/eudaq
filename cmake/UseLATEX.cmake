@@ -1,7 +1,7 @@
 # File: UseLATEX.cmake
 # CMAKE commands to actually use the LaTeX compiler
-# Version: 2.7.2
-# Author: Kenneth Moreland <kmorel@sandia.gov>
+# Version: 2.8.1
+# Author: Kenneth Moreland <morelandkd@ornl.gov>
 #
 # Copyright 2004, 2015 Sandia Corporation.
 # Under the terms of Contract DE-AC04-94AL85000, there is a non-exclusive
@@ -118,7 +118,17 @@
 #       should look for input files. It accepts both files relative to the
 #       binary directory and absolute paths.
 #
+#       The <name>_dvi and <name>_pdf targets have a property named
+#       COMPILER_FLAGS. The text in this property is added as flags to the
+#       latex and pdflatex commands, respectively.
+#
 # History:
+#
+# 2.8.1 Replace use of the deprecated exec_program with execute_process.
+#
+# 2.8.0 Add COMPILER_FLAGS property to *_dvi and *_pdf targets. Setting
+#       the property will add flags to the LaTeX compilation (in addition
+#       to any flags provided by CMake cache variables).
 #
 # 2.7.2 Add CONFIGURE_DEPENDS option when globbing files to better detect
 #       when files in a directory change. This only happens for CMake 3.12
@@ -644,8 +654,9 @@ function(latex_makeglossaries)
 
       message("${XINDY_COMPILER} ${MAKEGLOSSARIES_COMPILER_ARGS} ${language_flags} ${codepage_flags} -I xindy -M ${glossary_name} -t ${glossary_log} -o ${glossary_out} ${glossary_in}"
         )
-      exec_program(${XINDY_COMPILER}
-        ARGS ${MAKEGLOSSARIES_COMPILER_ARGS}
+      execute_process(
+        COMMAND ${XINDY_COMPILER}
+          ${MAKEGLOSSARIES_COMPILER_ARGS}
           ${language_flags}
           ${codepage_flags}
           -I xindy
@@ -655,7 +666,7 @@ function(latex_makeglossaries)
           ${glossary_in}
         OUTPUT_VARIABLE xindy_output
         )
-      message("${xindy_output}")
+      #message("${xindy_output}")
 
       # So, it is possible (perhaps common?) for aux files to specify a
       # language and codepage that are incompatible with each other.  Check
@@ -663,8 +674,9 @@ function(latex_makeglossaries)
       # codepage.
       if("${xindy_output}" MATCHES "^Cannot locate xindy module for language (.+) in codepage (.+)\\.$")
         message("*************** Retrying xindy with default codepage.")
-        exec_program(${XINDY_COMPILER}
-          ARGS ${MAKEGLOSSARIES_COMPILER_ARGS}
+        execute_process(
+          COMMAND ${XINDY_COMPILER}
+            ${MAKEGLOSSARIES_COMPILER_ARGS}
             ${language_flags}
             -I xindy
             -M ${glossary_name}
@@ -676,7 +688,8 @@ function(latex_makeglossaries)
 
     else()
       message("${MAKEINDEX_COMPILER} ${MAKEGLOSSARIES_COMPILER_ARGS} -s ${istfile} -t ${glossary_log} -o ${glossary_out} ${glossary_in}")
-      exec_program(${MAKEINDEX_COMPILER} ARGS ${MAKEGLOSSARIES_COMPILER_ARGS}
+      execute_process(COMMAND
+        ${MAKEINDEX_COMPILER} ${MAKEGLOSSARIES_COMPILER_ARGS}
         -s ${istfile} -t ${glossary_log} -o ${glossary_out} ${glossary_in}
         )
     endif()
@@ -697,7 +710,8 @@ function(latex_makenomenclature)
   set(nomencl_out ${LATEX_TARGET}.nls)
   set(nomencl_in ${LATEX_TARGET}.nlo)
 
-  exec_program(${MAKEINDEX_COMPILER} ARGS ${MAKENOMENCLATURE_COMPILER_ARGS}
+  execute_process(COMMAND
+    ${MAKEINDEX_COMPILER} ${MAKENOMENCLATURE_COMPILER_ARGS}
     ${nomencl_in} -s "nomencl.ist" -o ${nomencl_out}
     )
 endfunction(latex_makenomenclature)
@@ -731,8 +745,8 @@ function(latex_correct_synctex)
     configure_file(${synctex_file_gz} ${synctex_file}.bak.gz COPYONLY)
 
     message("Uncompressing synctex file.")
-    exec_program(${GZIP}
-      ARGS --decompress ${synctex_file_gz}
+    execute_process(COMMAND
+      ${GZIP} --decompress ${synctex_file_gz}
       )
 
     message("Reading synctex file.")
@@ -761,8 +775,8 @@ function(latex_correct_synctex)
     file(WRITE ${synctex_file} "${synctex_data}")
 
     message("Compressing synctex file.")
-    exec_program(${GZIP}
-      ARGS ${synctex_file}
+    execute_process(COMMAND
+      ${GZIP} ${synctex_file}
       )
 
   else()
@@ -1494,6 +1508,24 @@ endfunction(parse_add_latex_arguments)
 function(add_latex_targets_internal)
   latex_get_output_path(output_dir)
 
+  if(NOT LATEX_TARGET_NAME)
+    # Use the main filename (minus the .tex) as the target name. Remove any
+    # spaces since CMake cannot have spaces in its target names.
+    string(REPLACE " " "_" LATEX_TARGET_NAME ${LATEX_TARGET})
+  endif()
+
+  # Some LaTeX commands may need to be modified (or may not work) if the main
+  # tex file is in a subdirectory. Make a flag for that.
+  get_filename_component(LATEX_MAIN_INPUT_SUBDIR ${LATEX_MAIN_INPUT} DIRECTORY)
+
+  # Set up target names.
+  set(dvi_target      ${LATEX_TARGET_NAME}_dvi)
+  set(pdf_target      ${LATEX_TARGET_NAME}_pdf)
+  set(ps_target       ${LATEX_TARGET_NAME}_ps)
+  set(safepdf_target  ${LATEX_TARGET_NAME}_safepdf)
+  set(html_target     ${LATEX_TARGET_NAME}_html)
+  set(auxclean_target ${LATEX_TARGET_NAME}_auxclean)
+
   if(LATEX_USE_SYNCTEX)
     set(synctex_flags ${LATEX_SYNCTEX_ARGS})
   else()
@@ -1502,7 +1534,11 @@ function(add_latex_targets_internal)
 
   # The commands to run LaTeX.  They are repeated multiple times.
   set(latex_build_command
-    ${LATEX_COMPILER} ${LATEX_COMPILER_ARGS} ${synctex_flags} ${LATEX_MAIN_INPUT}
+    ${LATEX_COMPILER}
+    ${LATEX_COMPILER_ARGS}
+    $<TARGET_PROPERTY:${dvi_target},COMPILER_FLAGS>
+    ${synctex_flags}
+    ${LATEX_MAIN_INPUT}
     )
   if(LATEX_COMPILER_ARGS MATCHES ".*batchmode.*")
     # Wrap command in script that dumps the log file on error. This makes sure
@@ -1518,7 +1554,11 @@ function(add_latex_targets_internal)
       )
   endif()
   set(pdflatex_build_command
-    ${PDFLATEX_COMPILER} ${PDFLATEX_COMPILER_ARGS} ${synctex_flags} ${LATEX_MAIN_INPUT}
+    ${PDFLATEX_COMPILER}
+    ${PDFLATEX_COMPILER_ARGS}
+    $<TARGET_PROPERTY:${pdf_target},COMPILER_FLAGS>
+    ${synctex_flags}
+    ${LATEX_MAIN_INPUT}
     )
   if(PDFLATEX_COMPILER_ARGS MATCHES ".*batchmode.*")
     # Wrap command in script that dumps the log file on error. This makes sure
@@ -1558,24 +1598,6 @@ function(add_latex_targets_internal)
     set(pdflatex_build_command
       ${CMAKE_COMMAND} -E env TEXINPUTS=${TEXINPUTS} ${pdflatex_build_command})
   endif()
-
-  if(NOT LATEX_TARGET_NAME)
-    # Use the main filename (minus the .tex) as the target name. Remove any
-    # spaces since CMake cannot have spaces in its target names.
-    string(REPLACE " " "_" LATEX_TARGET_NAME ${LATEX_TARGET})
-  endif()
-
-  # Some LaTeX commands may need to be modified (or may not work) if the main
-  # tex file is in a subdirectory. Make a flag for that.
-  get_filename_component(LATEX_MAIN_INPUT_SUBDIR ${LATEX_MAIN_INPUT} DIRECTORY)
-
-  # Set up target names.
-  set(dvi_target      ${LATEX_TARGET_NAME}_dvi)
-  set(pdf_target      ${LATEX_TARGET_NAME}_pdf)
-  set(ps_target       ${LATEX_TARGET_NAME}_ps)
-  set(safepdf_target  ${LATEX_TARGET_NAME}_safepdf)
-  set(html_target     ${LATEX_TARGET_NAME}_html)
-  set(auxclean_target ${LATEX_TARGET_NAME}_auxclean)
 
   # Probably not all of these will be generated, but they could be.
   # Note that the aux file is added later.
