@@ -22,32 +22,26 @@ size_t CMSPixelBaseConverter::m_planeid;
 size_t CMSPixelBaseConverter::m_nplanes;
 std::string CMSPixelBaseConverter::m_detector;
 bool CMSPixelBaseConverter::m_rotated_pcb;
-bool CMSPixelBaseConverter::m_is_initialized = false;
 pxar::evtSource CMSPixelBaseConverter::src;
 pxar::passthroughSplitter CMSPixelBaseConverter::splitter;
 pxar::dtbEventDecoder CMSPixelBaseConverter::decoder;
 pxar::dataSink<pxar::Event *> CMSPixelBaseConverter::Eventpump;
 bool CMSPixelBaseConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
 
-  EUDAQ_DEBUG("Starting event decoding");
-
   // If we receive the EORE print the collected statistics:
   if (d1->IsEORE()) {
     // Set decoder to INFO level for statistics printout:
-    //std::cout << "Decoding statistics for detector " << m_detector << std::endl;
-    //pxar::Log::ReportingLevel() = pxar::Log::FromString("INFO");
-    //decoder.getStatistics().dump();
+    std::cout << "Decoding statistics for detector " << m_detector
+    << std::endl;
+    pxar::Log::ReportingLevel() = pxar::Log::FromString("INFO");
+    decoder.getStatistics().dump();
     return true;
   }
   // Check if we have BORE:
   else if (d1->IsBORE()) {
-    EUDAQ_INFO("Starting initialization...");
+    std::cout << "Starting initialization..." << std::endl;
     Initialize(d1, conf);
     return true;
-  }
-
-  if(!m_is_initialized) {
-    return false;
   }
 
   auto in_raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
@@ -77,13 +71,6 @@ bool CMSPixelBaseConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventS
     // a module with just one sensor plane:
     GetSinglePlane(d2, m_planeid, evt);
   }
-
-
-  d2->SetEventN(d1->GetEventN());
-  d2->SetTriggerN(d1->GetTriggerN());
-
-  // Identify the detetor type
-  d2->SetDetectorType("CMSPixel");
   return true;
 }
 
@@ -137,8 +124,7 @@ EUDAQ_THROW("Data contains invalid TBM type: " + tbmtype);
   src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype, FLAG_DISABLE_EVENTID_CHECK);
   src >> splitter >> decoder >> Eventpump;
 
-  EUDAQ_DEBUG("Finished initializing CMSPixel converter for detector " + m_detector);
-  m_is_initialized = true;
+  std::cout << "Finished initializing CMSPixel converter for detector " << m_detector << std::endl;
 }
 
 inline uint16_t CMSPixelBaseConverter::roc_to_mod_row(uint8_t roc, uint16_t row) {
