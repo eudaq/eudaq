@@ -143,10 +143,10 @@ bool H2MEvent2StdEventConverter::Converting(
         EUDAQ_DEBUG("Applying calibration to DUT");
         size_t scol = static_cast<size_t>(col);
         size_t srow = static_cast<size_t>(row);
-        float a = vtot.at(64 * srow + scol).at(2);
-        float b = vtot.at(64 * srow + scol).at(3);
-        float c = vtot.at(64 * srow + scol).at(4);
-        float t = vtot.at(64 * srow + scol).at(5);
+        float a = vtot.at(64 * srow + scol).at(0);
+        float b = vtot.at(64 * srow + scol).at(1);
+        float c = vtot.at(64 * srow + scol).at(2);
+        float t = vtot.at(64 * srow + scol).at(3);
 
         // Calculating calibrated tot
         charge = (sqrt(a * a * t * t + 2 * a * b * t + 4 * a * c - 2 * a * t * static_cast<float>(tot) +
@@ -205,14 +205,21 @@ void H2MEvent2StdEventConverter::loadCalibration(std::string path, char delim, s
 
         // check if line is empty or a comment
         // if not write to output vector
+
         if(line.size() > 0 && isdigit(line.at(0))) {
             std::stringstream ss(line);
             std::string word;
             std::vector<float> row;
-            while(std::getline(ss, word, delim)) {
-                i += 1;
-                row.push_back(stof(word));
+            for (size_t i = 0; i < 6; ++i) {
+                std::getline(ss, word, delim);
+                if (i >= 2) { // Keep only calibration data
+                    row.push_back(std::stof(word));
+                }
             }
+            if (row.size() != 4) { // Expected A, B, C, D parameters
+                throw DataInvalid("Unexpected number of parameters in calibration file. Expected 4 parameters (A, B, C, D), but found " + std::to_string(row.size()) + "\n\t");
+            }
+
             dat.push_back(row);
         }
     }
