@@ -3,6 +3,7 @@ IF(COMMAND CMAKE_POLICY)
     CMAKE_POLICY(SET CMP0003 NEW) # change linker path search behaviour
     CMAKE_POLICY(SET CMP0048 NEW) # set project version
     CMAKE_POLICY(SET CMP0065 OLD) # Use old linking behavior
+    CMAKE_POLICY(SET CMP0057 NEW) # enable IN_LIST
     IF(${CMAKE_VERSION} VERSION_GREATER "3.13")
         CMAKE_POLICY(SET CMP0077 NEW) # allow overwriting options with normal variables
         CMAKE_POLICY(SET CMP0079 NEW) # Allow lookup of linking libraries in other directories

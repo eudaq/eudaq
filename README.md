@@ -1,8 +1,10 @@
 EUDAQ version 2
 =====
 
-![Github actions](https://github.com/eudaq/eudaq/actions/workflows/cmake.yml/badge.svg)
-[![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/master?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/master)
+[![linux with clang](https://github.com/eudaq/eudaq/actions/workflows/build-linux-clang.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-clang.yml)
+[![linux with gcc](https://github.com/eudaq/eudaq/actions/workflows/build-linux-gcc.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-gcc.yml)
+[![macos with apple clang](https://github.com/eudaq/eudaq/actions/workflows/build-macos-clang.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-macos-clang.yml)
+[![windows with visual studio](https://github.com/eudaq/eudaq/actions/workflows/build-windows-vs.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-windows-vs.yml)
 
 EUDAQ is a Generic Multi-platform Data Acquisition Framework.
 Version 2 comes with more flexible cross connectivity between components, multiple data collectors, and a cleaner seperation between core functionalities and user modules. 
@@ -42,9 +44,7 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 ## Prerequisites
 
 ### For the core Library, Executables and GUI
-EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build [GUIs](gui/README.md).
-We recommend a gcc version 4.9 or later.
-ROOT 6 is required for the Online Monitor GUI.
+EUDAQ requires a C++14 compliant compiler and a Qt version 5 or higher to build [GUIs](gui/README.md). CERN ROOT 6 is required for the Online Monitor GUI and some other parts.
 
 ### User projects and modules
 - Dummy: Skeletons to add user modules - not to be changed. Required by
