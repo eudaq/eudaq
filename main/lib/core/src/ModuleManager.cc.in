@@ -4,19 +4,13 @@
 #include <vector>
 #include <iostream>
 
-#if !defined(__GNUC__) || (__GNUC__ > 5) || (__GNUC__ == 5 && (__GNUC_MINOR__ > 2))
-#define EUDAQ_CXX17_FS
-#endif
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-#error Minimum Visual Studio 2015 required
-#endif
 
-#ifdef EUDAQ_CXX17_FS
+#if @CXX_FILESYSTEM_HAVE_FS@
 
 //This C++17 filesystem is available in GCC >= 5.3 or VisualStudio >= vs2015 (1900)
-#include <experimental/filesystem>
-namespace filesystem = std::experimental::filesystem;
+#include <@CXX_FILESYSTEM_HEADER@>
+namespace filesystem = @CXX_FILESYSTEM_NAMESPACE@;
 #else
 #include <libgen.h>
 #include <dirent.h>
@@ -61,7 +55,7 @@ namespace eudaq{
     }
 
     std::string core_lib_path_str = GetModulePath();
-#ifdef EUDAQ_CXX17_FS
+#if @CXX_FILESYSTEM_HAVE_FS@
     filesystem::path core_lib_dir = filesystem::path(core_lib_path_str).parent_path();
     LoadModuleDir(core_lib_dir.string());
 #else
@@ -87,7 +81,7 @@ namespace eudaq{
 #endif
 
     uint32_t n=0;
-#ifdef EUDAQ_CXX17_FS
+#if @CXX_FILESYSTEM_HAVE_FS@
     if(!filesystem::is_directory(dir)){
       EUDAQ_INFO("Ignored module path which does not exist: "+dir);
       return 0;
