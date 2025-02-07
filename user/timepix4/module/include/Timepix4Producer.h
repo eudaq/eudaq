@@ -43,6 +43,8 @@ private:
   const char* m_user;
   const char* m_host;
 
+  bool m_extShutter;
+
   map< string, int > m_dacs;
 
   vector< vector< int > > m_matrixDACs;

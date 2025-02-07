@@ -38,6 +38,7 @@ private:
   bool m_running = false;
   bool m_init = false;
   bool m_config = false;
+  bool m_extShutter = false;
 
   int m_supported_devices = 0;
   int m_active_devices;
@@ -200,6 +201,7 @@ void Timepix4Producer::DoConfigure() {
   // Configuration file values are accessible as config->Get(name, default)
   config->Print();
   int threshold = config->Get( "threshold", m_threshold );
+  m_extShutter = config->Get("extShutter", false);
 
   // sleep for 1 second, to make sure the TLU clock is already present
   sleep(1);
@@ -248,7 +250,9 @@ void Timepix4Producer::DoStartRun() {
   */
   
   m_running = true;
-  
+  if (m_extShutter == false) response = SendMessage("open_shutter\n");
+  EUDAQ_USER("Timepix4Producer open shutter command received response: " + response);
+
   EUDAQ_USER("Timepix4Producer started run.");
 } // DoStartRun()
 
@@ -283,8 +287,10 @@ void Timepix4Producer::RunLoop() {
 //----------------------------------------------------------
 void Timepix4Producer::DoStopRun() {
   EUDAQ_USER("Timepix4Producer stopping run...");
+  string response = SendMessage("close_shutter\n");
+  EUDAQ_USER("Close shutter command response: " + response);
 
-  string response = SendMessage("stop_run\n");
+  response = SendMessage("stop_run\n");
   EUDAQ_USER("Stop command response: " + response);
 
   m_running = false;
