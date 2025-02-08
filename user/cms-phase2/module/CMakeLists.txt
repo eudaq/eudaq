@@ -3,7 +3,7 @@ INCLUDE_DIRECTORIES(include)
 LIST(APPEND MODULE_SRC src/CMSPhase2Event2StdEventConverter.cc)
 MESSAGE(STATUS "CMS Phase2 StandardEvent converter will be built")
 
-find_package(Boost REQUIRED COMPONENTS headers)
+find_package(Boost REQUIRED CONFIG)
 
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} Boost::headers)
