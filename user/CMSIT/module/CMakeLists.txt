@@ -8,10 +8,7 @@ string(ASCII 27 Esc)
 set(Reset    "${Esc}[m")
 set(BoldRed  "${Esc}[1;31m")
 set(BoldBlue "${Esc}[1;34m")
-set(BOOST_ROOT "" CACHE PATH "Boost library path")
-set(Boost_NO_SYSTEM_PATHS on CACHE BOOL "Do not search system for Boost")
-find_package(Boost 1.53 REQUIRED serialization)
-include_directories(${Boost_INCLUDE_DIRS})
+find_package(Boost 1.53 REQUIRED COMPONENTS serialization)
 IF (Boost_FOUND)
   message("${BoldBlue}=== I found BOOST version ${Boost_VERSION} ===${Reset}")
 ELSE (Boost_FOUND)
@@ -32,7 +29,7 @@ ENDIF(ROOT_USE_FILE)
 cmake_dependent_option(USER_CMSIT_BUILD "src/CMSITConverterPlugin (requires ROOT)" OFF "ROOT_FOUND" OFF)
 
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EXT_LIBRARIES} ${Boost_SERIALIZATION_LIBRARY} ${ROOT_LIBRARIES})
+TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} Boost::serialization ${ROOT_LIBRARIES})
 
 INSTALL(TARGETS
   ${EUDAQ_MODULE}
