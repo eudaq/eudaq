@@ -98,7 +98,7 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
   m_pitchY1=1;
   m_pitchX2=1;
   m_pitchY2=1;
-  
+
   if(_sensor1=="MIMOSA26"){
     m_pitchX1=18.4;
     m_pitchY1=18.4;
@@ -222,6 +222,7 @@ void CorrelationHistos::FillCorrVsTime(const SimpleStandardCluster &cluster1,
 
 }
 
+
 void CorrelationHistos::Reset() {
   _2dcorrX->Reset();
   _2dcorrY->Reset();
@@ -240,7 +241,11 @@ void CorrelationHistos::Write() {
   _2dcorrX->Write();
   _2dcorrY->Write();
   _2dcorrXY->Write();
-  _2dcorrYX->Write();	
+  _2dcorrYX->Write();
+  _2dcorrTimeX->Write();
+  _2dcorrTimeY->Write();
+  _2dcorrTimeXY->Write();
+  _2dcorrTimeYX->Write();
 }
 
 
