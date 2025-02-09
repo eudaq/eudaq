@@ -14,6 +14,7 @@ typedef char int8_t;
 
 #ifndef __CINT__
 #ifdef WIN32
+#define NOMINMAX
 #include <windows.h>
 typedef __int16 int16_t;
 typedef unsigned __int16 uint16_t;
