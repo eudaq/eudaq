@@ -17,7 +17,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
       _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL),
       _clusterYWidth(NULL), _nbadHits(NULL), _nHotPixels(NULL),
       _hitmapSections(NULL), is_MIMOSA26(false), is_APIX(false),
-      is_USBPIX(false), is_USBPIXI4(false), is_RD53A(false), is_RD53B(false), is_ITKPIXV2(false), is_RD53BQUAD(false), is_ITKPIXV2QUAD(false) {
+      is_USBPIX(false), is_USBPIXI4(false), is_RD53A(false), is_RD53B(false), is_ITKPIXV2(false), is_RD53BQUAD(false), is_ITKPIXV2QUAD(false), is_REF(false) {
   char out[1024], out2[1024];
 
   _mon = mon;
@@ -30,6 +30,8 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     is_RD53A = true;
   } else if (_sensor == std::string("RD53B")) {
     is_RD53B = true;
+  } else if (_sensor == std::string("REF")) {
+    is_REF = true;
   } else if (_sensor == std::string("ITKPIXV2")) {
     is_ITKPIXV2 = true;
   } else if (_sensor == std::string("RD53BQUAD")) {
@@ -76,7 +78,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     sprintf(out, "%s %i LVL1 Pixel Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1_%s_%i", _sensor.c_str(), _id);
     unsigned int lvl1_bin = 16;
-    if(p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD)
+    if(p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD || p.is_REF)
     {
        lvl1_bin = 32;
      }

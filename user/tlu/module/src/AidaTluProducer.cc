@@ -26,6 +26,7 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("AidaTluProducer");
 private:
   bool m_exit_of_run;
+  bool compact_data_ = false; // select if you will write the data in a more compact binary format
   std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
 
   std::unique_ptr<tlu::AidaTluController> m_tlu;
@@ -77,6 +78,7 @@ void AidaTluProducer::RunLoop(){
       uint64_t ts_raw = data->timestamp;
       uint64_t ts_ns = ts_raw*25;
       auto ev = eudaq::Event::MakeUnique("TluRawDataEvent");
+      std::vector<uint8_t> datablock(7);//6 (fineTS) + 1 (6x triggers, but that is only a single bit each,so one uint8 should be fine) + 4 (32bit eventtype) + 7*4 scalers (dropped for now ???)
       ev->SetTimestamp(ts_ns, ts_ns+25, false);
       ev->SetTriggerN(trigger_n);
 
@@ -84,6 +86,7 @@ void AidaTluProducer::RunLoop(){
       //triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
       triggerss<< std::to_string(data->input5) << std::to_string(data->input4) << std::to_string(data->input3) << std::to_string(data->input2) << std::to_string(data->input1) << std::to_string(data->input0);
       ev->SetTag("TRIGGER", triggerss.str());
+      if(!compact_data_){
       ev->SetTag("FINE_TS0", std::to_string(data->sc0));
       ev->SetTag("FINE_TS1", std::to_string(data->sc1));
       ev->SetTag("FINE_TS2", std::to_string(data->sc2));
@@ -91,11 +94,22 @@ void AidaTluProducer::RunLoop(){
       ev->SetTag("FINE_TS4", std::to_string(data->sc4));
       ev->SetTag("FINE_TS5", std::to_string(data->sc5));
       ev->SetTag("TYPE", std::to_string(data->eventtype));
-
+      } else {
+      // write compact event data
+      datablock[0] = uint8_t(data->sc0);
+      datablock[1] = uint8_t(data->sc1);
+      datablock[2] = uint8_t(data->sc2);
+      datablock[3] = uint8_t(data->sc3);
+      datablock[4] = uint8_t(data->sc4);
+      datablock[5] = uint8_t(data->sc5);
+      datablock[6] =( (data->input5 &0x1)<<5) +((data->input4 &0x1) <<4) + ((data->input3 &0x1) << 3) + ((data->input2 &0x1) << 2) + ((data->input1 &0x1) << 1) + (data->input0 &0x1);
+      ev->AddBlock(0,datablock);
+      }
       if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
       	pt=m_tlu->GetPreVetoTriggers();
+        if(!compact_data_){
         ev->SetTag("PARTICLES", std::to_string(pt));
       	ev->SetTag("SCALER0", std::to_string(sl0));
       	ev->SetTag("SCALER1", std::to_string(sl1));
@@ -103,6 +117,9 @@ void AidaTluProducer::RunLoop(){
       	ev->SetTag("SCALER3", std::to_string(sl3));
         ev->SetTag("SCALER4", std::to_string(sl4));
         ev->SetTag("SCALER5", std::to_string(sl5));
+        } else {
+          // does anyone need it? I do not think so, so we  simply drop it for now?
+        }
         if(m_exit_of_run){
           ev->SetEORE();
         }
@@ -257,7 +274,7 @@ void AidaTluProducer::DoConfigure() {
     if(m_verbose > 0) EUDAQ_INFO(" -ADJUST STRETCH AND DELAY");
     m_tlu->SetPulseStretchPack(stretcVec, m_verbose);
     m_tlu->SetPulseDelayPack(delayVec, m_verbose);
-
+    compact_data_ = (bool)(conf->Get("compact_data",false));
     // Set triggerMask
     // The conf function does not seem happy with a 32-bit default. Need to check.
     if(m_verbose > 0) EUDAQ_INFO(" -DEFINE TRIGGER MASK");

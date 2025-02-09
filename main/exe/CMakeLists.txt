@@ -50,8 +50,13 @@ install(TARGETS ${INSTALL_TARGETS}
   ARCHIVE DESTINATION lib)
 
 
+#https://stackoverflow.com/questions/59376924/ctest-cmake-mingw-executables-build-but-fail-to-run-because-fresh-dll-is-n
 enable_testing()
 add_test(
    NAME test_mimosa_tlu_io
    COMMAND euCliReader -i "${CMAKE_SOURCE_DIR}/testing/data/mimosa_tlu.raw" -std -e 0 -E 5 -s
 )
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.27)
+set_tests_properties(test_mimosa_tlu_io
+   PROPERTIES ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<JOIN:$<TARGET_RUNTIME_DLL_DIRS:euCliReader>,\;>")
+endif()

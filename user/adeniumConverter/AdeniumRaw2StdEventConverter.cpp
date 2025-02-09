@@ -15,10 +15,15 @@ namespace{
 
 bool AdeniumRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+
   size_t nblocks= ev->NumBlocks();
   auto block_n_list = ev->GetBlockNumList();
-  if(nblocks!=1){
-      EUDAQ_ERROR("Wrong number of blocks");
+  if(nblocks != 1) {
+      if(!ev->IsBORE() && !ev->IsEORE()) {
+        EUDAQ_ERROR("Wrong number of blocks, expecting 1, received " + std::to_string(nblocks));
+      }
+      EUDAQ_DEBUG("Empty event " + std::to_string(ev->GetEventNumber()) + (ev->IsBORE() ? " (BORE)" : (ev->IsEORE() ? " (EORE)" : "")));
+      return false;
   }
   auto block =  ev->GetBlock(0); // this are always 8 bits
   //std::cout << "New event: ********************** "<< d1->GetTriggerN() << std::endl;

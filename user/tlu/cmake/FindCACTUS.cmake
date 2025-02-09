@@ -9,7 +9,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 file(GLOB_RECURSE CACTUS_UHAL_HEADER_FOUND
-  ${CMAKE_CURRENT_LIST_DIR}/../extern/*/uhal.hpp)
+  ${CMAKE_CURRENT_LIST_DIR}/../extern/*/uhal.hpp
+  ${PROJECT_SOURCE_DIR}/extern/include/*/uhal.hpp
+)
 
 # Adjust location of installation
 if(NOT CACTUS_UHAL_HEADER_FOUND)

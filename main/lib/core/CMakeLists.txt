@@ -2,6 +2,17 @@
 
 add_definitions("-DEUDAQ_CORE_EXPORTS")
 
+find_package(Filesystem)
+message("file system variable: ")
+message(${CXX_FILESYSTEM_HAVE_FS})
+# looks strange but BOOL value can be true/TRUE/on/ON/1/.... and the preprocessor does accept only a subset where 1/0 is the most cross platform
+if (${CXX_FILESYSTEM_HAVE_FS})
+    set(CXX_FILESYSTEM_HAVE_FS 1)
+else()
+    set(CXX_FILESYSTEM_HAVE_FS 0)
+endif()
+configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
+
 set(EUDAQ_INCLUDE_DIRS
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/include/eudaq
@@ -12,6 +23,7 @@ include_directories(include)
 include_directories(include/eudaq)
 
 aux_source_directory(src CORE_SRC)
+list(APPEND CORE_SRC ${CMAKE_CURRENT_BINARY_DIR}/ModuleManager.cc)
 add_library(${EUDAQ_CORE_LIBRARY} SHARED ${CORE_SRC})
 
 # generate the dictionary source code if ROOT is available
@@ -31,10 +43,11 @@ IF(ROOT_FOUND)
   SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/eudaqCoreDict.cxx
     PROPERTIES
     GENERATED TRUE
-    COMPILE_FLAGS "-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}"
+
+    COMPILE_FLAGS  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:"-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}">
     )
 
-  TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
+  TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} ROOT::Core)
 
   # Also install the dictionary objects
   INSTALL(FILES
@@ -47,9 +60,10 @@ set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES DEFINE_SYMBOL "core_EXPOR
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR})
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES EXPORT_NAME ${EUDAQ_TARGET})
 
-if(CMAKE_COMPILER_IS_GNUCXX AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.3))
-  list(APPEND ADDITIONAL_LIBRARIES stdc++fs)
+if(CMAKE_CXX_STANDARD>=17 AND CXX_FILESYSTEM_HAVE_FS)
+  list(APPEND ADDITIONAL_LIBRARIES std::filesystem)
 endif()
+configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
 
 list(APPEND ADDITIONAL_LIBRARIES ${CMAKE_DL_LIBS})
 target_link_libraries(${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})

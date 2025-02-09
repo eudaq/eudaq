@@ -74,17 +74,8 @@ CorrelationCollection::getCorrelationHistos(const SimpleStandardPlane &p1,
 }
 
 void CorrelationCollection::Reset() {
-  std::map<std::pair<SimpleStandardPlane, SimpleStandardPlane>,
-           CorrelationHistos *>::iterator it;
-  for (it = _map.begin(); it != _map.end(); ++it) {
-    if((*it).second)
-      (*it).second->Reset();
-    else {
-      // Is this to do with order of first and second?
-      // auto &plane = it->first;
-      // std::cout << "No correlations for " << plane.first.getName()
-      // 		<< " vs " << plane.second.getName() << '\n';
-    }
+  for (auto& it : _map) {
+    it.second->Reset();
   }
 }
 
@@ -327,6 +318,8 @@ CorrelationCollection::FillWithTracks(const SimpleStandardEvent &simpev) {
           if (nextPlaneIndex == lastPlane || noClusterFound) {
             if (singleTrack.size() >= getPlanesNumberForCorrelation())
               reconstructedTracks.push_back(singleTrack);
+            //                        std::cout<< "SIZE: " <<
+            //                        reconstructedTracks.size() <<endl;
           }
         }
       }
@@ -371,7 +364,11 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
 
   std::pair<SimpleStandardPlane, SimpleStandardPlane> plane(p1, p2);
   CorrelationHistos *corrmap = _map[plane];
-  if (corrmap) {
+  if (corrmap == NULL) {
+    // std::cout << "CorrelationCollection: Histogram not registered ...yet  "
+    // << p1.getName()<< " "<<p1.getID() <<" / "<< p2.getName()<<"
+    // "<<p2.getID()<<std::endl;
+  } else {
     const std::vector<SimpleStandardCluster> aClusters = p1.getClusters();
     const std::vector<SimpleStandardCluster> bClusters = p2.getClusters();
 
@@ -416,6 +413,7 @@ void CorrelationCollection::registerPlaneCorrelations(
   _map[pdouble] = tmphisto;
 
   if (_mon != NULL) {
+    // cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     std::string dirName;
 
     if (_mon->getUseTrack_corr() == true)
@@ -460,10 +458,11 @@ void CorrelationCollection::registerPlaneCorrelations(
     sprintf(tree, "%s/%s %i", dirName.c_str(), p1.getName().c_str(),
             p1.getID());
     _mon->getOnlineMon()->makeTreeItemSummary(tree);
-  }
+ }
 
 
   if (_mon != NULL) {
+    // cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     std::string dirName;
 
     if (_mon->getUseTrack_corr() == true)
@@ -550,12 +549,16 @@ void CorrelationCollection::Write(TFile *file) {
     gDirectory->mkdir("Correlations");
     gDirectory->cd("Correlations");
   }
-  std::map<std::pair<SimpleStandardPlane, SimpleStandardPlane>,
-           CorrelationHistos *>::iterator it;
 
-  for (it = _map.begin(); it != _map.end(); ++it) {
-    if(it->second)
-      it->second->Write();
+  for (auto& it : _map) {
+    // char sensorfolder[255]="";
+    // sprintf(sensorfolder,"%s_%d:%s_%d",it->first.getPlane1().getName().c_str(),it->first.getPlane1().getID(),
+    // it->first.getPlane2().getName().c_str(),it->first.getPlane2().getID());
+    // gDirectory->mkdir(sensorfolder);
+    // gDirectory->cd(sensorfolder);
+    it.second->Write();
+
+    // gDirectory->cd("..");
   }
   gDirectory->cd("..");
 }
