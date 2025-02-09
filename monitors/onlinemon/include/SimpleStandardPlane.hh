@@ -94,6 +94,11 @@ public:
   bool is_REF;
   bool is_APTS;
   bool is_OPAMP;
+  bool is_RD53A;
+  bool is_RD53B;
+  bool is_ITKPIXV2;
+  bool is_RD53BQUAD;
+  bool is_ITKPIXV2QUAD;
   bool is_UNKNOWN;
 
 private:
