@@ -123,6 +123,10 @@ jobs:
     - name: install tbscDESY dependencies
       run: |
         sudo apt-get install --force-yes -y unixodbc-dev
+        
+    - name: install CorryMonitor dependencies
+      run: |
+        sudo apt-get install --force-yes -y xrootd-client xrootd-server python3-xrootd libxrootd-dev
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
