@@ -50,35 +50,6 @@ private:
   int m_xml_VTHRESH = 0;
   float m_temp;
   int m_threshold = 1000;
-  
-  /** Return the binary representation of a char as std::string
-   */
-  template <typename T> std::string to_bit_string(const T data, int length=-1) {
-    std::ostringstream stream;
-    // if length is not defined, use a standard (full) one
-    if (length<0 || length > std::numeric_limits<T>::digits) {
-      length = std::numeric_limits<T>::digits;
-      // std::numeric_limits<T>::digits does not include sign bits
-      if (std::numeric_limits<T>::is_signed) {
-        length++;
-      }
-    }
-    while(--length >= 0) {
-      stream << ((data >> length) & 1);
-    }
-    return stream.str();
-  }
-
-  template <typename T> std::string to_hex_string(const T i, int length=-1) {
-    std::ostringstream stream;
-    // if length is not defined, use a standard (full) one
-    if (length<0 || length > ((std::numeric_limits<T>::digits+1)/4)) {
-      length = (std::numeric_limits<T>::digits+1) / 4;
-    }
-    stream << std::hex << std::setfill('0') << std::setw(length)
-           << static_cast<uint64_t>(i);
-    return stream.str();
-  }
 
   bool tokenize_ip_addr(const std::string addr, int *ip) {
     int j=0;
@@ -166,6 +137,8 @@ void Timepix4Producer::DoInitialise() {
   m_serverAddress.sin6_addr = in6addr_any;
   m_serverAddress.sin6_port = htons(m_spidrPort);
 
+  EUDAQ_USER("Opening socket connection to tpx4sc");
+
   serious_error = connect(m_clientSocket, (struct sockaddr*)&m_serverAddress, sizeof(m_serverAddress));
   // Open a control connection to SPIDR-Tpx4 module
 
@@ -201,6 +174,8 @@ void Timepix4Producer::DoConfigure() {
   // Configuration file values are accessible as config->Get(name, default)
   config->Print();
   int threshold = config->Get( "threshold", m_threshold );
+
+  // sets whether an external or a software shutter should be used
   m_extShutter = config->Get("extShutter", false);
 
   // sleep for 1 second, to make sure the TLU clock is already present
@@ -216,7 +191,7 @@ void Timepix4Producer::DoConfigure() {
 
 
   m_config = true;
-  // Also display something for us
+  // Throws an error in case threshold not not be set
   if (bitRecv == -1) {
     EUDAQ_THROW("Timepix4Producer: Could not set threshold.");
     return;
@@ -240,16 +215,9 @@ void Timepix4Producer::DoStartRun() {
 
   string response = SendMessage("start_run\n");
   EUDAQ_USER("Timepix4Producer start command received response: " + response);
-
-
-
-  /* this should do things like ((based on TPX3 producer))
-    - restart timers (T0 sync?!)
-    - selecting data driven readout
-    - open the shutter
-  */
   
   m_running = true;
+  // if no external shutter is requested then the system just gets told to open the shutter. Otherwise the system is running but will not take any data except heartbeat
   if (m_extShutter == false) response = SendMessage("open_shutter\n");
   EUDAQ_USER("Timepix4Producer open shutter command received response: " + response);
 
