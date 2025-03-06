@@ -143,14 +143,16 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       coarse_ts-=0x8;
   }
 
-  // with combined fineTS: replace the 3lsb of the coarse timestamp with the 3msb of the finets_avg and add the 4 lsb of fine ts at the end:
+  // with combined fineTS: replace the 5lsb of the coarse timestamp with the 5msb of the finets_avg and add the 3 lsb of fine ts at the end:
   auto ts = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets_avg & 0xFF))) * 1000.);
-
+  // Now we know that d1->GetTimestampEnd() is not in sync with the trigger signal the TLU is sending but shifted by 6.25ns.
+  // We can get the correct result from the fine timestamp though. Basically as we do it above.
+  auto ts_end = static_cast<uint64_t>((25. / 32. * (((coarse_ts << 5) & 0xFFFFFFFFFFFFFF00) + (finets_avg & 0xE0)) + 25.) * 1000.);
 
    // Set times for StdEvent in picoseconds (timestamps provided in nanoseconds):
   d2->SetTimeBegin(ts);
-  d2->SetTimeEnd(d1->GetTimestampEnd() * 1000);
-  d2->SetTimestamp(ts, d1->GetTimestampEnd() * 1000, d1->IsFlagTimestamp());
+  d2->SetTimeEnd(ts_end);
+  d2->SetTimestamp(ts, ts_end, d1->IsFlagTimestamp());
 
   // Identify the detetor type
   d2->SetDetectorType("TLU");
