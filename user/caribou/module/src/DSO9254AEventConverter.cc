@@ -162,7 +162,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(
       auto data = wave.data;
       std::vector<double> w;
       for (auto &wa : data) {
-        w.push_back(static_cast<double>(wa) * wave.dy);
+        w.push_back(static_cast<double>(wa) * wave.dy + wave.y0);
       }
       plane.PushPixel(m_chanToPix[ch].front(), m_chanToPix[ch].back(), 1);
       plane.SetWaveform(index, w, wave.x0, wave.dx, 0);
