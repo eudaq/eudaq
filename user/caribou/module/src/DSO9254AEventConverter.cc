@@ -159,8 +159,9 @@ bool DSO9254AEvent2StdEventConverter::Converting(
     // Set waveforms to each hit pixel.
     for (int ch = 0; ch < waveforms_analog.size(); ch++) {
       auto wave = waveforms_analog.at(ch).at(seg);
-      auto data = wave.data;
+      const auto& data = wave.data;
       std::vector<double> w;
+      w.reserve(data.size());
       for (auto &wa : data) {
         w.push_back(static_cast<double>(wa) * wave.dy + wave.y0);
       }
