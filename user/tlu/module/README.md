@@ -1,4 +1,4 @@
-### AidaTLUProducer
+# AidaTLUProducer
 
 This module communicates with the AIDA-TLU. A complete documentation can be found [here](https://www.ohwr.org/project/fmc-mtlu/blob/master/Documentation/Main_TLU.pdf)
 
@@ -8,7 +8,7 @@ In the following the user relevant parameters are listed
 
 
 
-# initilization:
+### initilization:
 
 * `initid`: Define the TLU initilization ID, defaults to `0`
 * `ConnectionFile`: File that defines the interface connections, no default.
@@ -18,7 +18,7 @@ In the following the user relevant parameters are listed
 * `CONFCLOCK`: Define if the clock chip should be configured. Needs to be done at leat once after power up. Defaults to `1`
 * `CLOCK_CFG_FILE`: the file path to the clock chip configuration. Defaults to the file shipped with eudaq `./../user/eudet/misc/hw_conf/aida_tlu/fmctlu_clock_config.txt`
 
-# configuration:
+### configuration:
 
 * `verbose`: Define if verbose messaging should be enabled. Defaults to `0`
 * `delayStart`: Define the delay before starting a run. Defaults to `0`
@@ -40,3 +40,12 @@ In the following the user relevant parameters are listed
 * `DUTIgnoreBusy`: Mask to ignore the busy for DUT channels 0..3. If set to `1` other channels receive further triggers even if the channel is busy. Defaults to `0xF`
 * `DUTIgnoreShutterVeto`: Ignore shutter features. Defaults to 1.
 * Several shutter settings for linear collider modes that are not used at the test beam right now afaik
+
+# TluRawEvent2StdEventConverter
+
+By convention the decoder returns two timestamps, referring to the begin and the end of the event. By convention, the begin coincides with the time at which the signal from an external device (e.g. a scintillator) passes the configured threshold. If a coincidence of several signals is required for the trigger decision, the signals are averaged. The end of the event is given by the time at which the TLU in turn issues the signal used to trigger other devices in the setup, e.g. the DUT or the beam telescope. This happens at the next rising edge of the 25 ns period clock.
+
+### configuration
+
+* `triggerMask`: Defines which of the trigger signals are considered in te weighted average. Defaults to `0x3F`.
+* `delay_scint0` to `delay_scint5`: adjust the delay between the external trigger channels in bins of 781.25ps. Defaults to `0`.
