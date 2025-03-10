@@ -4,6 +4,10 @@
 
 #include <iostream>
 
+#ifdef max
+#undef max
+#endif
+
 int main(int /*argc*/, const char **argv) {
   eudaq::OptionParser op("EUDAQ Command Line FileReader modified for TLU", "2.1", "EUDAQ FileReader (TLU)");
   eudaq::Option<std::string> file_input(op, "i", "input", "", "string", "input file");
