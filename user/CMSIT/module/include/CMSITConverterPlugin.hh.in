@@ -10,7 +10,7 @@
 
 #ifndef CMSITConverterPlugin_H
 #define CMSITConverterPlugin_H
-#define ROOTSYS getenv("ROOTSYS")
+
 
 #include "CMSITEventData.hh"
 
@@ -20,7 +20,7 @@
 #include <cmath>
 
 // ROOT
-#ifdef ROOTSYS
+#if @CMSIT_WITH_ROOT_SUPPORT@
 #include "TCanvas.h"
 #include "TDirectory.h"
 #include "TFile.h"
@@ -84,7 +84,7 @@ class TheConverter
   public:
     struct calibrationParameters
     {
-#ifdef ROOTSYS
+#if @CMSIT_WITH_ROOT_SUPPORT@
         TFile* calibrationFile;
         TH2D*  hSlope;
         TH2D*  hIntercept;
@@ -135,7 +135,7 @@ class CMSITConverterPlugin : public StdEventConverter
   private:
     void         Initialize();
     TheConverter GetChipGeometry(const std::string& cfgFromData, const std::string& cfgFromFile, int& nRows, int& nCols, std::string& ChipType, int deviceId, int& planeId) const;
-#ifdef ROOTSYS
+#if @CMSIT_WITH_ROOT_SUPPORT@
     TH2D* FindHistogram(const std::string& nameInHisto, uint16_t hybridId, uint16_t chipId);
 #endif
     bool Deserialize(const EventSPC ev, CMSITEventData::EventData& theEvent) const;
