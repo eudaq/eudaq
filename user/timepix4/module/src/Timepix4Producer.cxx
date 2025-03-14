@@ -213,7 +213,7 @@ void Timepix4Producer::DoStartRun() {
     EUDAQ_WARN("DoStartRun: Timepix4 producer is already running. I'm trying to stop if first. This might however create a mess in the runs.");
   }
 
-  string response = SendMessage("start_run\n");
+  string response = SendMessage(std::string("start_run "+std::to_string(GetRunNumber())+"\n").c_str());
   EUDAQ_USER("Timepix4Producer start command received response: " + response);
   
   m_running = true;
