@@ -9,6 +9,7 @@
 
 #ifdef _WIN32
 #ifndef __CINT__
+#define NOMINMAX
 #include <winsock.h>
 #endif
 #else

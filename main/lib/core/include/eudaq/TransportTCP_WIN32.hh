@@ -9,6 +9,7 @@
 #ifndef __CINT__
 // using winsock2.h here would cause conflicts when including Windows4Root.h
 // required e.g. by the ROOT online monitor
+#define NOMINAMAX
 #include <winsock.h>
 #endif
 
