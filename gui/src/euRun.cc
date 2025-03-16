@@ -4,6 +4,7 @@
 #include "euRun.hh"
 #include "Colours.hh"
 #include "eudaq/Config.hh"
+#include "eudaq/Utils.hh"
 
 using std::cout;
 using std::endl;
