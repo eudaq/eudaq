@@ -517,7 +517,10 @@ bool RunControlGUI::updateStatusDisplay() {
 }
 
 bool RunControlGUI::addAdditionalStatus(std::string info) {
+#pragma push_macro("splitString")
+#undef splitString
     std::vector<std::string> results = eudaq::splitString(info,',');
+#pragma pop_macro("splitString")
     if(results.size()%2!=0) {
         QMessageBox::warning(NULL,"ERROR","Additional Status Display inputs are not correctly formatted - please check");
        return false;
