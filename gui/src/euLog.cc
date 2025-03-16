@@ -204,7 +204,10 @@ void LogCollectorGUI::on_txtSearch_editingFinished() {
 }
 
 void LogCollectorGUI::on_viewLog_activated(const QModelIndex &i) {
+#pragma push_macro("GetMessage")
+#undef GetMessage
   new LogDialog(m_model.GetMessage(i.row()));
+#pragma pop_macro("GetMessage")
 }
 
 void LogCollectorGUI::AddMessage(const eudaq::LogMessage &msg) {

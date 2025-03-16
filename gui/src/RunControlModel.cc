@@ -65,7 +65,10 @@ QVariant RunControlModel::data(const QModelIndex &index, int role) const {
       return QString::fromStdString(con->GetRemote());
     case 4:
       if(sta)
+#pragma push_macro("GetMessage")
+#undef GetMessage
 	return QString::fromStdString(sta->GetMessage());
+#pragma pop_macro("GetMessage")
       else
 	return QString("");
     case 5:{

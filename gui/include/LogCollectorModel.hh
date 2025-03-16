@@ -60,8 +60,10 @@ public:
   void SetDisplayNames(const std::string &type, const std::string &name);
   void SetSearch(const std::string &regexp);
   void UpdateDisplayed();
-
+#pragma push_macro("GetMessage")
+#undef GetMessage
   const LogMessage &GetMessage(int row) const;
+#pragma pop_macro("GetMessage")
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   QVariant data(const QModelIndex &index, int role) const override;

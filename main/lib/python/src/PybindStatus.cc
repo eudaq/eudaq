@@ -34,7 +34,10 @@ void  init_pybind_status(py::module &m){
 	       return oss.str();
 	     });
   status_.def("GetState", &eudaq::Status::GetState);
+#pragma push_macro("GetMessage")
+#undef GetMessage
   status_.def("GetMessage", &eudaq::Status::GetMessage);
+#pragma pop_macro("GetMessage")
   status_.def("SetTag", &eudaq::Status::SetTag,
 	      "Set a tag", py::arg("key"), py::arg("val"));
   status_.def("SetTag", &eudaq::Status::SetTag,

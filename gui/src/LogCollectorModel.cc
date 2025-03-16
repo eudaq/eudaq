@@ -132,7 +132,8 @@ QString LogMessage::operator[](int i) const {
     return this->Text(i).c_str();
   }
 }
-
+#pragma push_macro("GetMessage")
+#undef GetMessage
 std::string LogMessage::Text(int i) const {
   switch (i) {
   case 0:
@@ -153,6 +154,7 @@ std::string LogMessage::Text(int i) const {
     return "";
   }
 }
+#pragma pop_macro("GetMessage")
 
 int LogMessage::NumColumns() { return sizeof g_columns.size(); }
 
@@ -278,15 +280,18 @@ QVariant LogCollectorModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 
   if (index.column() < columnCount() && index.row() < rowCount())
+#pragma push_macro("GetMessage")
+#undef GetMessage
     return GetMessage(index.row())[index.column()];
-
+#pragma pop_macro("GetMessage")
   return QVariant();
 }
-
+#pragma push_macro("GetMessage")
+#undef GetMessage
 const LogMessage &LogCollectorModel::GetMessage(int row) const {
   return m_all[m_disp[row]];
 }
-
+#pragma pop_macro("GetMessage")
 QVariant LogCollectorModel::headerData(int section, Qt::Orientation orientation,
                                        int role) const {
   if (role != Qt::DisplayRole)

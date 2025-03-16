@@ -50,7 +50,10 @@ namespace eudaq{
     void SetTag(const std::string &key, const std::string &val);
     int GetLevel() const;
     int GetState() const;
+#pragma push_macro("GetMessage")
+#undef GetMessage
     std::string GetMessage() const;
+#pragma pop_macro("GetMessage")
     std::string GetStateString()const;
     std::string GetTag(const std::string &key,
                        const std::string &val= "") const;

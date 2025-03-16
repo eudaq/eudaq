@@ -64,11 +64,12 @@ namespace eudaq {
   void Status::SetMessage(const std::string &msg){
     m_msg = msg;
   }
-
+#pragma push_macro("GetMessage")
+#undef GetMessage
   std::string Status::GetMessage() const{
     return m_msg;
   }
-
+#pragma pop_macro("GetMessage")
   int Status::GetLevel() const{
     return m_level;
   }

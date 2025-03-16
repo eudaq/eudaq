@@ -84,8 +84,10 @@ namespace eudaq {
       else
           os <<" [unknown sender] "<<std::flush;
       // the actual message and a new line
+#pragma push_macro("GetMessage")
+#undef GetMessage
       os << GetMessage()<<std::flush;
-
+#pragma pop_macro("GetMessage")
 #else
       os << "\x1B[0m"<<"\x1B[1m" <<"["<< m_time.Formatted()<<"] "<< "\x1B[0m"<<std::flush;
       // we can add some colors for different levels:
@@ -109,13 +111,14 @@ namespace eudaq {
  #endif
   }
 
-
+#pragma push_macro("GetMessage")
+#undef GetMessage
   void LogMessage::Write(std::ostream &os) const {
     os << Level2String(GetLevel()) << "\t" << escape_string(GetMessage()) << "\t"
        << m_time.Formatted() << "\t" << GetSender() << "\t" << m_file << ":"
        << m_line << "\t" << m_func << "\n";
   }
-
+#pragma pop_macro("GetMessage")
   LogMessage &LogMessage::SetLocation(const std::string &file, unsigned line,
                                       const std::string &func) {
     m_file = file;
