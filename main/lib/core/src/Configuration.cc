@@ -153,7 +153,10 @@ namespace eudaq {
       if(!GetString(key,retval)){
         return def;
       } else {
+#pragma push_macro("from_string")
+#undef from_string
         return from_string(retval, def);
+#pragma pop_macro("from_string")
       }
   }
 
@@ -162,7 +165,10 @@ namespace eudaq {
     if(!GetString(key,retval)){
       return def;
     } else {
+#pragma push_macro("from_string")
+#undef from_string
       return from_string(retval, def);
+#pragma pop_macro("from_string")
     }
   }
 
