@@ -1,8 +1,3 @@
-if(WIN32)
-  message("StdEvent monitor is not to be built on windows")
-  return()
-endif()
-
 cmake_dependent_option(EUDAQ_BUILD_STDEVENT_MONITOR "monitor/StdEventMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
