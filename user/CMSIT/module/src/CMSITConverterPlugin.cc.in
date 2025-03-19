@@ -302,7 +302,7 @@ void CMSITConverterPlugin::Initialize()
 #else
                         myString.clear();
                         myString.str("");
-                        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> ROOTSYS not defined";
+                        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> compiled without ROOT";
                         EUDAQ_INFO(myString.str().c_str());
 #endif
                     }
