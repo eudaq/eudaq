@@ -2,6 +2,7 @@
 #define ONLINE_MON_WINDOW_H
 
 #ifdef WIN32
+#define NOMINMAX
 #include <Windows4Root.h>
 #endif
 
