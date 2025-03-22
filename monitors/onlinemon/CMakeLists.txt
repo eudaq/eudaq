@@ -23,3 +23,11 @@ install(TARGETS ${THISMON}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
+  
+set(StdEvtMonitor_PCM ${CMAKE_CURRENT_BINARY_DIR}/libStdEventMonitor_ROOT_rdict.pcm)
+set(StdEvtMonitor_MAP ${CMAKE_CURRENT_BINARY_DIR}/libStdEventMonitor_ROOT.rootmap)
+install(FILES
+ ${StdEvtMonitor_PCM}
+ ${StdEvtMonitor_MAP}
+DESTINATION lib)
+
