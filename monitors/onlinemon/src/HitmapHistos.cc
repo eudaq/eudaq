@@ -101,11 +101,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
       _totSingle = new TH1I(out2, out, 255, -127, 127);
     } else {
       _totSingle = new TH1I(out2, out, 256, 0, 255);
-#ifdef EUDAQ_LIB_ROOT6
       _totSingle->SetCanExtend(TH1::kAllAxes);
-#else
-      _totSingle->SetBit(TH1::kCanRebin);
-#endif
     }
 
     sprintf(out, "%s %i TOT Clusters", _sensor.c_str(), _id);
