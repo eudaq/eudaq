@@ -51,6 +51,10 @@ jobs:
           sudo apt-get install qt6-base-dev
         fi
       shell: bash
+      
+    - name: install xrootd
+      run: |
+        sudo apt-get install libxrootd-dev libxrootd-client-dev
 
     - name: install CERN ROOT dependencies
       id: root_install_dependencies
