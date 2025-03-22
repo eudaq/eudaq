@@ -8,7 +8,7 @@
 using std::cout;
 using std::endl;
 RunControlGUI::RunControlGUI()
-  : QMainWindow(0, 0),
+  : QMainWindow(0, Qt::Widget),
     m_display_col(0),
     m_scan_active(false),
     m_scan_interrupt_received(false),
@@ -77,6 +77,7 @@ RunControlGUI::RunControlGUI()
   }
 
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
+  setWindowIcon(QIcon(":/euRun.ico"));
   connect(&m_timer_display, SIGNAL(timeout()), this, SLOT(DisplayTimer()));
   connect(&m_scanningTimer,SIGNAL(timeout()), this, SLOT(nextStep()));
   m_timer_display.start(1000); // internal update time of GUI
@@ -256,10 +257,10 @@ eudaq::Status::State RunControlGUI::updateInfos(){
       }
     }
 
-    QRegExp rx_init(".+(\\.ini$)");
-    QRegExp rx_conf(".+(\\.conf$)");
-    bool confLoaded = rx_conf.exactMatch(txtConfigFileName->text());
-    bool initLoaded = rx_init.exactMatch(txtInitFileName->text());
+    QRegularExpression rx_init(".+(\\.ini$)");
+    QRegularExpression rx_conf(".+(\\.conf$)");
+    bool confLoaded = rx_conf.match(txtConfigFileName->text()).hasMatch();
+    bool initLoaded = rx_init.match(txtInitFileName->text()).hasMatch();
 
     btnInit->setEnabled(state == eudaq::Status::STATE_UNINIT && initLoaded);
     btnConfig->setEnabled((state == eudaq::Status::STATE_UNCONF ||

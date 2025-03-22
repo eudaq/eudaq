@@ -1,87 +1,129 @@
-cmake_minimum_required(VERSION 3.1.0)
+# 3.16 mininum for Qt6 according to  professional cmake: a practical guide
+cmake_minimum_required(VERSION 3.16.0)
+
 include(CMakeDependentOption)
-find_package(Qt5Widgets CONFIG)
 
-cmake_dependent_option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT5)" ON
-  "Qt5Widgets_FOUND" OFF)
+option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT6 or QT5)" ON)
+cmake_dependent_option(EUDAQ_FORCE_QT5 "Force usage QT5 even if Qt6 is available" OFF "EUDAQ_BUILD_GUI" OFF)
 
-if(NOT EUDAQ_BUILD_GUI)
-    message(STATUS "GUIs of executables (euRun, euLog) are NOT to be built (EUDAQ_BUILD_GUI=OFF)")
+if(NOT EUDAQ_FORCE_QT5)
+  message(STATUS "checking for Qt6")
+  find_package(Qt6 COMPONENTS Widgets)
+endif()
+
+if((NOT Qt6_FOUND) OR (NOT DEFINED Qt6_FOUND))
+  message(STATUS "checking for Qt5")
+  find_package(Qt5 5.15 COMPONENTS Widgets)
+endif()
+
+set(Qt5_or_Qt6_FOUND FALSE)
+set(Qt5_or_Qt6_FOUND (Qt6_FOUND OR Qt5_FOUND))
+
+
+if(EUDAQ_BUILD_GUI)
+  if((NOT Qt5_or_Qt6_FOUND) AND (NOT EUDAQ_FORCE_QT5))
+     message(STATUS "GUIs of executables (euRun, euLog) were meant to be built (EUDAQ_BUILD_GUI=ON) but finally it is not possible as neither Qt5 nor Qt6 were found")
+     return()     
+  elseif(NOT Qt5_or_Qt6_FOUND)
+     message(STATUS "GUIs of executables (euRun, euLog) were meant to be built (EUDAQ_BUILD_GUI=ON) but finally it is not possible as Qt5 was forced but not found")
+     return()     
+  endif()
+else()
+  message(STATUS "GUIs of executables (euRun, euLog) are NOT to be built (EUDAQ_BUILD_GUI=OFF)")
   return()
 endif()
-message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=ON)")
 
-find_package(Qt5Widgets REQUIRED)
-message(STATUS "Qt5Widgets: ${Qt5Widgets_DIR}")
-set(EXTERNAL_LIB_QT Qt5::Widgets)
-include_directories(${Qt5Widgets_INCLUDE_DIRS})
-add_definitions(${Qt5Widgets_DEFINITIONS})
+if(Qt6_FOUND)
+  message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=ON) with Qt6")
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-include_directories(include)
+  set(CMAKE_AUTOUIC YES)
+  set(CMAKE_AUTORCC YES)
+  set(CMAKE_INCLUDE_CURRENT_DIR YES)
 
-set(RUN_GUI_SRC
-  src/euRun.cxx
-  src/euRun.cc
-  src/RunControlModel.cc
-  src/euRun.rc
-  src/scanHelper.cc
-  )
-qt5_wrap_ui(euRun_UISrcs ui/euRun.ui)
-qt5_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh)
-list(APPEND RUN_GUI_SRC ${euRun_UISrcs} ${euRun_MOCSrcs})
-add_executable(euRun ${RUN_GUI_SRC})
-target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
-list(APPEND INSTALL_TARGETS euRun)
+  qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh)
+  qt_wrap_ui(euRun_UIrcs ui/euRun.ui)
 
-set(LOG_GUI_SRC
-  src/euLog.cxx
-  src/euLog.cc
-  src/LogCollectorModel.cc
-  # src/euLog.rc
-  )
+  add_executable(euRun 
+    ${euRun_MOCSrcs}
+    ${euRun_UIrcs}
+    src/euRun.cxx
+    src/euRun.cc
+    src/RunControlModel.cc
+    src/euRun.rc
+    src/scanHelper.cc
+    images/euRun.qrc
+    )
+  
+  target_include_directories(euRun PRIVATE include )
+  target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} Qt6::Widgets)
 
-set(PRD_GUI_SRC
-  src/euProd.cxx
-  src/euProd.cc
-  # src/euProd.rc
-  )
+  qt_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh)
+  qt_wrap_ui(euLog_UIrcs ui/euLog.ui ui/LogDialog.ui)
 
-
-set(MODULE_SRC
-  src/euLog.cc
-  src/LogCollectorModel.cc
-  src/euProd.cc
-  # src/euLog.rc
-  # src/euProd.rc
-  )
+  add_executable(euLog 
+    ${euLog_MOCSrcs}
+    ${euLog_UIrcs}
+    src/euLog.cxx
+    src/euLog.cc
+    src/LogCollectorModel.cc
+    images/euLog.qrc
+    )
 
 
-qt5_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
-qt5_wrap_ui(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
-list(APPEND MODULE_SRC ${euLog_UISrcs} ${euLog_MOCSrcs})
+  target_include_directories(euLog PRIVATE include )
+  target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} Qt6::Widgets)
 
-qt5_wrap_cpp(euProd_MOCSrcs include/euProd.hh )
-qt5_wrap_ui(euProd_UISrcs ui/euProd.ui)
-list(APPEND MODULE_SRC ${euProd_UISrcs} ${euProd_MOCSrcs})
+  install(TARGETS euRun euLog
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)  
 
-get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-set(EUDAQ_MODULE ${EUDAQ_PREFIX}module_${MODULE_NAME})
-add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
-list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})
+   return()    
+endif()
 
-add_executable(euLog src/euLog.cxx src/euLog.rc)
-set_property(TARGET euLog PROPERTY PROJECT_LABEL "BinEuLog") 
-target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
-list(APPEND INSTALL_TARGETS euLog)
+if(Qt5_FOUND)
+  message(STATUS "GUIs of executables (euRun, euLog) are to be built (EUDAQ_BUILD_GUI=ON) with Qt5")
 
-# add_executable(euProd src/euProd.cxx src/euProd.rc)
-# set_property(TARGET euProd PROPERTY PROJECT_LABEL "BinEuProd")
-# target_link_libraries(euProd ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
-# list(APPEND INSTALL_TARGETS euProd)
+  set(CMAKE_AUTOUIC YES)
+  set(CMAKE_AUTORCC YES)
+  set(CMAKE_INCLUDE_CURRENT_DIR YES)
 
-install(TARGETS ${INSTALL_TARGETS}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
+  qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh)
+  qt_wrap_ui(euRun_UIrcs ui/euRun.ui)
+
+  add_executable(euRun 
+    ${euRun_MOCSrcs}
+    ${euRun_UIrcs}
+    src/euRun.cxx
+    src/euRun.cc
+    src/RunControlModel.cc
+    src/euRun.rc
+    src/scanHelper.cc
+    images/euRun.qrc
+    )
+  
+  target_include_directories(euRun PRIVATE include )
+  target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} Qt5::Widgets)
+
+  qt_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh)
+  qt_wrap_ui(euLog_UIrcs ui/euLog.ui ui/LogDialog.ui)
+
+  add_executable(euLog 
+    ${euLog_MOCSrcs}
+    ${euLog_UIrcs}
+    src/euLog.cxx
+    src/euLog.cc
+    src/LogCollectorModel.cc
+    images/euLog.qrc
+    )
+
+  target_include_directories(euLog PRIVATE include )
+  target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} Qt5::Widgets)
+
+  install(TARGETS euRun euLog
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)  
+   
+   return() 
+endif()
