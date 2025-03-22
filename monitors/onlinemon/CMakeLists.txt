@@ -9,12 +9,6 @@ message(STATUS "monitor/StdEventMonitor is to be built (EUDAQ_BUILD_STDEVENT_MON
 
 find_package(ROOT REQUIRED COMPONENTS Core Gui Hist)
 
-
-
-if(ROOT_VERSION_MAJOR GREATER 5)
-  add_definitions(-DEUDAQ_LIB_ROOT6)
-endif()
-
 set(THISMON StdEventMonitor)
 set(THISMON_DICT_CXX ${CMAKE_CURRENT_BINARY_DIR}/${THISMON}_ROOT.cxx)
 root_generate_dictionary(${THISMON}_ROOT include/OnlineMonWindow.hh)
