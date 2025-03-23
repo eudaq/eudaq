@@ -27,7 +27,7 @@ bool AdeniumRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::St
   }
   auto block =  ev->GetBlock(0); // this are always 8 bits
   //std::cout << "New event: ********************** "<< d1->GetTriggerN() << std::endl;
-  for(uint bit = 0; bit < block.size();bit++){
+  for(auto bit = 0; bit < block.size();bit++){
     auto  word = eudaq::getlittleendian<uint8_t>(&block[0]+bit);
     // first entry == plane id
     auto planeID = word;

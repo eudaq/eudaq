@@ -120,7 +120,7 @@ void TheConverter::operator()(int& row, int& col, int& charge, const int& chipId
 
 int TheConverter::ChargeConverter(const int row, const int col, const int ToT, const calibrationParameters& calibPar, const int& chargeCut)
 {
-#ifdef ROOTSYS
+#if @CMSIT_WITH_ROOT_SUPPORT@
     if((calibPar.hIntercept != nullptr) && (calibPar.hSlope != nullptr) && (calibPar.hSlope->GetBinContent(col + 1, row + 1) != 0))
     {
         double value = -1;
@@ -271,7 +271,7 @@ void CMSITConverterPlugin::Initialize()
                     if(calibFileName != "")
                     {
                         calibMap[calibration] = TheConverter::calibrationParameters();
-#ifdef ROOTSYS
+#if @CMSIT_WITH_ROOT_SUPPORT@
                         calibMap[calibration].calibrationFile = TFile::Open(calibFileName.c_str());
                         if((calibMap[calibration].calibrationFile != nullptr) && (calibMap[calibration].calibrationFile->IsOpen() == true))
                         {
@@ -302,7 +302,7 @@ void CMSITConverterPlugin::Initialize()
 #else
                         myString.clear();
                         myString.str("");
-                        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> ROOTSYS not defined";
+                        myString << "[EUDAQ::CMSITConverterPlugin::Initialize] --> compiled without ROOT";
                         EUDAQ_INFO(myString.str().c_str());
 #endif
                     }
@@ -378,7 +378,7 @@ TheConverter CMSITConverterPlugin::GetChipGeometry(const std::string& cfgFromDat
     return theConverter;
 }
 
-#ifdef ROOTSYS
+#if @CMSIT_WITH_ROOT_SUPPORT@
 TH2D* CMSITConverterPlugin::FindHistogram(const std::string& nameInHisto, uint16_t hybridId, uint16_t chipId)
 {
     TDirectory* dir = gDirectory;
