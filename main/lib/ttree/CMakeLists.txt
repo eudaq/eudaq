@@ -1,8 +1,3 @@
-if(WIN32)
-  message(STATUS "TTree Conversion is no supported in Windows, disable building of eudaq ttree library")
-  return()
-endif()
-
 cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "lib/ttree library (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
