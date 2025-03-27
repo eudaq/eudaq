@@ -66,14 +66,14 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: ~/eudaq_dependencies/root
-        key: root-v6.32.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.34.06-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
         
     - name: build CERN ROOT
       id: root_build
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
-        export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.source.tar.gz
-        wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
+        export CERN_ROOT_DOWNLOAD_NAME=v6-34-06.tar.gz
+        wget -nv https://github.com/root-project/root/archive/refs/tags/$CERN_ROOT_DOWNLOAD_NAME
         mkdir root_source
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME -C ./root_source --strip-components=1
         rm -f $CERN_ROOT_DOWNLOAD_NAME
@@ -95,7 +95,7 @@ jobs:
       with:
         path: |
           ~/eudaq_dependencies/root
-        key: root-v6.32.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.34.06-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
         
     - name: install TLU dependencies
       run: |
