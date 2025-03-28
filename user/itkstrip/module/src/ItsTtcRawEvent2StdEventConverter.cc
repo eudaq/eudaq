@@ -23,9 +23,9 @@ namespace{
 bool ItsTtcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2,
 						  eudaq::ConfigSPC conf) const{
   auto raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  if (!raw){
-    EUDAQ_THROW("dynamic_cast error: from eudaq::Event to eudaq::RawEvent");
-  } 
+  //if (!raw){
+  //  EUDAQ_THROW("dynamic_cast error: from eudaq::Event to eudaq::RawEvent");
+  //} 
 
   uint32_t deviceId = d1->GetStreamN();
   ItsTtc::TtcInfo eTtc(raw->GetBlock(0), deviceId);
