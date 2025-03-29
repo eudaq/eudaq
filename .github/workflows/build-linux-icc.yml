@@ -85,6 +85,7 @@ jobs:
         -DCMAKE_INSTALL_PREFIX=~/eudaq_dependencies/root/ \
         -Dclad=OFF \
         -Dxrootd=OFF \
+        -Ddavix=OFF \
         -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}} \
         -DCMAKE_CXX_COMPILER=icpx \
         -DCMAKE_C_COMPILER=icx \
