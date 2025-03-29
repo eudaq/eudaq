@@ -52,12 +52,65 @@ jobs:
       shell: bash
       run: |
         sudo apt install intel-oneapi-mkl-devel
+        
+    - name: install CERN ROOT dependencies
+      id: root_install_dependencies
+      run: |
+        sudo apt-get install binutils cmake dpkg-dev g++ gcc libssl-dev git libx11-dev libxext-dev libxft-dev libxpm-dev python3 libtbb-dev
+        
+    - name: restore CERN ROOT from cache
+      id: root_restore_from_cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/eudaq_dependencies/root
+        key: root-v6.32.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        
+    - name: build CERN ROOT
+      id: root_build
+      if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
+      run: |
+        export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.source.tar.gz
+        wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
+        mkdir root_source
+        tar -xzf $CERN_ROOT_DOWNLOAD_NAME -C ./root_source --strip-components=1
+        rm -f $CERN_ROOT_DOWNLOAD_NAME
+        mkdir -p ~/eudaq_dependencies/root/
+        mkdir root_build
+        cd root_build
+        echo "C++ compiler used: ${{ steps.install_cc.outputs.cxx }}"
+        echo "C compiler used: ${{ steps.install_cc.outputs.cc }}"
+        cmake -D CMAKE_CXX_COMPILER=${{ steps.install_cc.outputs.cxx }} \
+        -D CMAKE_C_COMPILER=${{ steps.install_cc.outputs.cc }} \
+        -DCMAKE_INSTALL_PREFIX=~/eudaq_dependencies/root/ \
+        -Dclad=OFF \
+        -Dxrootd=OFF \
+        -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}} \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_C_COMPILER=icx \
+        -DIntelDPCPP_DIR="/opt/intel/oneapi/compiler/latest/linux/cmake/SYCL" \
+        -DMKL_ROOT="/opt/intel/oneapi/mkl/latest" \
+        -DTBB_ROOT="/opt/intel/oneapi/tbb/latest" \
+        ../root_source/
+        make -j12 install
+        cd ..
+        rm -rf root_source
+        rm -rf root_build
+        
+    - name: cache CERN ROOT
+      id: root_save_to_cache
+      uses: actions/cache/save@v4
+      if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
+      with:
+        path: |
+          ~/eudaq_dependencies/root
+        key: root-v6.32.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
                   
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         source /opt/intel/oneapi/setvars.sh
+        source ~/eudaq_dependencies/root/bin/thisroot.sh
         echo "Only core library on ICC for the moment."
         
         cmake -D CMAKE_CXX_COMPILER=${{ steps.install_cc.outputs.cxx }} \
