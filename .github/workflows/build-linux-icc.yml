@@ -81,7 +81,7 @@ jobs:
         -D EUDAQ_BUILD_CORRYMONITOR=OFF \
         -B ${{github.workspace}}/build \
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-        -DCMAKE_CXX_COMPILER=dpcpp \
+        -DCMAKE_CXX_COMPILER=icpx \
         -DCMAKE_C_COMPILER=icx \
         -DIntelDPCPP_DIR="/opt/intel/oneapi/compiler/latest/linux/cmake/SYCL" \
         -DMKL_ROOT="/opt/intel/oneapi/mkl/latest" \
