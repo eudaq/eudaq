@@ -69,6 +69,7 @@ jobs:
       id: root_build
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
+        source /opt/intel/oneapi/setvars.sh
         export CERN_ROOT_DOWNLOAD_NAME=root_v6.32.02.source.tar.gz
         wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
         mkdir root_source
