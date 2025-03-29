@@ -93,7 +93,7 @@ jobs:
         -DMKL_ROOT="/opt/intel/oneapi/mkl/latest" \
         -DTBB_ROOT="/opt/intel/oneapi/tbb/latest" \
         ../root_source/
-        make -j12 install
+        make install
         cd ..
         rm -rf root_source
         rm -rf root_build
