@@ -7,8 +7,11 @@
 #include <iostream>
 #include <cctype>
 
+#include <algorithm>
 #include <chrono>
+#include <string_view>
 #include <thread>
+#include <unordered_map>
 
 namespace eudaq {
   
@@ -136,6 +139,25 @@ namespace eudaq {
     if (!x.substr(end).empty())
       throw std::invalid_argument("Invalid argument: " + x);
     return result;
+  }
+  
+  template <> bool from_string(const std::string &x, const bool &def) {
+    if (x == "")
+      return def;
+    
+    static const std::unordered_map<std::string_view, bool> lookup = {
+        {"1", true}, {"true", true}, {"yes", true}, {"on", true},
+        {"0", false}, {"false", false}, {"no", false}, {"off", false}
+    };
+
+    std::string lowercase(x);
+    std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(), ::tolower);
+
+    if (auto it = lookup.find(lowercase); it != lookup.end()) {
+        return it->second;
+    }
+    
+    throw std::invalid_argument("Invalid boolean string: " + std::string(x));
   }
 
   void WriteStringToFile(const std::string &fname, const std::string &val) {
