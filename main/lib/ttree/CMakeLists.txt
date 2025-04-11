@@ -14,6 +14,7 @@ aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
 add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
 
+target_compile_definitions(${EUDAQ_COMPONENT} PUBLIC "EUDAQ_CORE_EXPORTS")
 target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ROOT::Tree)
 target_include_directories(${EUDAQ_COMPONENT} PUBLIC . include include/eudaq)
 
