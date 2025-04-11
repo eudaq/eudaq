@@ -1,5 +1,4 @@
-find_package(ROOT QUIET)
-
+find_package(ROOT REQUIRED COMPONENTS Core Gui Hist RIO)
 cmake_dependent_option(EUDAQ_BUILD_ONLINE_ROOT_MONITOR "monitor/ROOTMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
@@ -10,19 +9,18 @@ if(NOT EUDAQ_BUILD_ONLINE_ROOT_MONITOR)
 endif()
 message(STATUS "monitor/ROOTMonitor is to be built (EUDAQ_BUILD_ONLINE_ROOT_MONITOR=ON)")
 
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-find_package(ROOT REQUIRED COMPONENTS Core Gui Hist RIO)
-
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_ROOT_MONITOR_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq root monitoring library")
 
+add_library(rootmonitor SHARED 
+  src/ROOTMonitor.cc  
+  src/ROOTMonitorWindow.cc)
 
-aux_source_directory(src EUDAQ_COMPONENT_SRC)
-
-add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
-
-target_include_directories(${EUDAQ_COMPONENT} PUBLIC . include)
-target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ROOT::Core ROOT::Gui ROOT::Hist ROOT::RIO)
+target_include_directories(${EUDAQ_COMPONENT} 
+  PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(rootmonitor ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ROOT::Core ROOT::Gui ROOT::Hist ROOT::RIO)
 
 root_generate_dictionary(rootmonitorDict eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh
   LINKDEF include/LinkDef.h
