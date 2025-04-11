@@ -8,7 +8,7 @@
 #include <cstring>
 
 #ifdef _WIN32
-#ifndef __CINT__
+#ifndef __ROOTCLING__
 #define NOMINMAX
 #include <winsock.h>
 #endif
