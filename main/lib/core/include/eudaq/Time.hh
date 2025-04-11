@@ -11,6 +11,9 @@
 #ifndef __ROOTCLING__
 #define NOMINMAX
 #include <winsock.h>
+#ifdef SendMessage
+   #undef SendMessage
+#endif
 #else
 // just to satisfy ROOTCLING conflict on Windows
 struct timeval {
