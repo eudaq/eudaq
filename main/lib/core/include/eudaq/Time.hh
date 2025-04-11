@@ -11,6 +11,12 @@
 #ifndef __ROOTCLING__
 #define NOMINMAX
 #include <winsock.h>
+#else
+// just to satisfy ROOTCLING conflict on Windows
+struct timeval {
+  long tv_sec;
+  long tv_usec;
+};
 #endif
 #else
 #include <sys/time.h>
