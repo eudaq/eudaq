@@ -38,6 +38,8 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     is_RD53BQUAD = true;
   } else if (_sensor == std::string("ITKPIXV2QUAD")) {
     is_ITKPIXV2QUAD = true;
+  } else if (_sensor == std::string("RD53BTRIPLETLINEAR")) {
+    is_RD53BTRIPLETLINEAR = true;
   } else if ((_sensor == std::string("USBPIX")) || (_sensor.find("USBPIXI-") != std::string::npos)) {
     is_USBPIX = true;
   } else if ((_sensor == std::string("USBPIXI4")) || (_sensor.find("USBPIXI4-") == std::string::npos)) {
@@ -78,7 +80,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     sprintf(out, "%s %i LVL1 Pixel Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1_%s_%i", _sensor.c_str(), _id);
     unsigned int lvl1_bin = 16;
-    if(p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD || p.is_REF)
+    if(p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD || p.is_RD53BTRIPLETLINEAR || p.is_REF)
     {
        lvl1_bin = 32;
      }
@@ -95,7 +97,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i TOT Single Pixels", _sensor.c_str(), _id);
     sprintf(out2, "h_totsingle_%s_%i", _sensor.c_str(), _id);
-    if (p.is_USBPIXI4|| p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD) {
+    if (p.is_USBPIXI4|| p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD || p.is_RD53BTRIPLETLINEAR) {
       _totSingle = new TH1I(out2, out, 16, 0, 15);
     } else if (p.is_DEPFET) {
       _totSingle = new TH1I(out2, out, 255, -127, 127);
@@ -110,7 +112,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i TOT Clusters", _sensor.c_str(), _id);
     sprintf(out2, "h_totcluster_%s_%i", _sensor.c_str(), _id);
-    if (p.is_USBPIXI4|| p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD)
+    if (p.is_USBPIXI4|| p.is_RD53A || p.is_RD53B || p.is_ITKPIXV2 || p.is_RD53BQUAD || p.is_ITKPIXV2QUAD || p.is_RD53BTRIPLETLINEAR)
       _totCluster = new TH1I(out2, out, 80, 0, 79);
     else
       _totCluster = new TH1I(out2, out, 256, 0, 255);
@@ -275,7 +277,7 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
   if ((pixel_x < _maxX) && (pixel_y < _maxY)) {
     plane_map_array[pixel_x][pixel_y] = plane_map_array[pixel_x][pixel_y] + 1;
   }
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_DEPFET)|| (is_RD53A) || (is_RD53B) || (is_ITKPIXV2) || (is_RD53BQUAD) || (is_ITKPIXV2QUAD)) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_DEPFET)|| (is_RD53A) || (is_RD53B) || (is_ITKPIXV2) || (is_RD53BQUAD) || (is_ITKPIXV2QUAD || is_RD53BTRIPLETLINEAR)) {
     if (_totSingle != NULL)
       _totSingle->Fill(hit.getTOT());
     if (_lvl1Distr != NULL)
@@ -331,7 +333,7 @@ void HitmapHistos::Fill(const SimpleStandardCluster &cluster) {
     }
   }
 
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4)|| is_RD53A || is_RD53B || is_ITKPIXV2 || is_RD53BQUAD || is_ITKPIXV2QUAD) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4)|| is_RD53A || is_RD53B || is_ITKPIXV2 || is_RD53BQUAD || is_ITKPIXV2QUAD || is_RD53BTRIPLETLINEAR) {
     if (_lvl1Width != NULL)
       _lvl1Width->Fill(cluster.getLVL1Width());
     if (_totCluster != NULL)
