@@ -370,7 +370,7 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1,
 					uint16_t transformed_col;
 					uint16_t transformed_row;
 					switch (m_chip_info_by_uid[prodID][block_n].chipLocationOnModule) {
-					case 1:
+					case 3:
 						transformed_col = hit.col;
 						transformed_row = hit.row;
 						break;
@@ -378,7 +378,7 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1,
 						transformed_col = hit.col + 384;
 						transformed_row = hit.row;
 						break;
-					case 3:
+					case 1:
 						transformed_col = hit.col + 2 * 384;
 						transformed_row = hit.row;
 						break;
