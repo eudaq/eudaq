@@ -375,11 +375,11 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1,
 						transformed_row = hit.row;
 						break;
 					case 2:
-						transformed_col = hit.col + 384;
+						transformed_col = hit.col + 400;
 						transformed_row = hit.row;
 						break;
 					case 1:
-						transformed_col = hit.col + 2 * 384;
+						transformed_col = hit.col + 2 * 400;
 						transformed_row = hit.row;
 						break;
 					default:
