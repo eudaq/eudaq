@@ -18,14 +18,16 @@ def exception_handler(method):
     return inner
 
 class SourcemeterPyProducer(pyeudaq.Producer):
-    def __init__(self, name, runctrl):
+    def __init__(self, name, runctrl, makebuffers):
         pyeudaq.Producer.__init__(self, name, runctrl)
         self.name = name
         self.ip=None
         self.is_running = 0
         self.keithley=None
+        self.makeBuffers=makebuffers
         self.lock=threading.Lock()
         EUDAQ_INFO('New instance of SourcemeterPyProducer')
+
 
     @exception_handler
     def DoInitialise(self):
@@ -44,10 +46,23 @@ class SourcemeterPyProducer(pyeudaq.Producer):
 
         self.source_voltage_range = 200
 
+        doReset = False
+        if 'resetSourcemeter' in iniList:
+            doReset = iniList['resetSourcemeter'].lower() in ("yes", "true", "t", "1")
+
+        # communicate with the sourcemeter
         self.keithley = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.keithley.connect((self.ip, 5025))
         self.keithley.sendall('*IDN?\n'.encode())
-        time.sleep(0.01)   
+        time.sleep(0.01)
+
+        # reset the device - think before you do this, this will also set output off!
+        if doReset:
+            self.keithley.sendall('*RST\n'.encode())
+            self.makeBuffers=True
+            EUDAQ_INFO(f'Keithley sourcemeter was reset.')
+            time.sleep(0.01)
+        
         self.keithley.sendall((f'SOUR:VOLT:RANG {self.source_voltage_range}\n').encode())
         time.sleep(0.01)   
         print((self.keithley.recv(1024)).decode())
@@ -61,15 +76,21 @@ class SourcemeterPyProducer(pyeudaq.Producer):
         self.keithley.sendall('SENS:CURR:RANG:AUTO ON\n'.encode())
         time.sleep(0.01)        
         self.keithley.sendall(':OUTP ON\n'.encode())
-        time.sleep(0.01)   
-        self.keithley.sendall('TRAC:DEL "voltMeas"\n'.encode()) # delete buffers before creating them again
         time.sleep(0.01)
-        self.keithley.sendall('TRAC:DEL "currMeas"\n'.encode()) 
-        time.sleep(0.01)
-        self.keithley.sendall('TRACe:MAKE "voltMeas", 800\n'.encode())
-        time.sleep(0.01)
-        self.keithley.sendall('TRACe:MAKE "currMeas", 800\n'.encode())
-        time.sleep(0.01)
+        # create the buffers if requested (just the first time after starting)
+        if self.makeBuffers:
+            EUDAQ_INFO(f'Keithley sourcemeter creating buffers for voltage and current.')
+            self.keithley.sendall('TRACe:MAKE "voltMeas", 15\n'.encode())
+            time.sleep(0.01)
+            self.keithley.sendall('TRACe:MAKE "currMeas", 15\n'.encode())
+            time.sleep(0.01)
+            # use continuous fill mode - with circular buffer, I don't have to worry about overflow
+            self.keithley.sendall('TRACe:FILL:MODE CONT, "voltMeas"\n'.encode())
+            time.sleep(0.01)
+            self.keithley.sendall('TRACe:FILL:MODE CONT, "currMeas"\n'.encode())
+            time.sleep(0.01)
+            self.makeBuffers=False
+
 
     @exception_handler
     def DoConfigure(self):        
@@ -121,16 +142,21 @@ class SourcemeterPyProducer(pyeudaq.Producer):
     def DoStartRun(self):
         EUDAQ_INFO('DoStartRun')
         self.is_running = 1
-        
+
+
     @exception_handler
     def DoStopRun(self):        
         EUDAQ_INFO('DoStopRun')
         self.is_running = 0
 
+
     @exception_handler
     def DoReset(self):        
         EUDAQ_INFO('DoReset')
         self.is_running = 0
+        # close the socket connection
+        self.keithley.close()
+
 
     @exception_handler
     def RunLoop(self):
@@ -150,28 +176,26 @@ class SourcemeterPyProducer(pyeudaq.Producer):
                 logline=f'{volt}V {curr*1e6}uA {t}s'
                 EUDAQ_INFO(logline)
                 trigger_n += 1
-
-                self.keithley.sendall('TRACe:CLEar "voltMeas"\n'.encode()) # clear buffers to avoid overflow
-                time.sleep(0.01)
-                self.keithley.sendall('TRACe:CLEar "currMeas"\n'.encode()) # clear buffers to avoid overflow
-                time.sleep(0.01)
-                self.keithley.sendall('TRACe:CLEar "defbuffer1"\n'.encode())
-                time.sleep(0.01)
                 starttime=datetime.now()
                 
             time.sleep(1)
 
         EUDAQ_INFO("End of RunLoop in SourcemeterPyProducer")
 
+
 if __name__ == "__main__":
     import argparse
-    parser=argparse.ArgumentParser(description='Sourcemeter Python Producer',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--run-control' ,'-r',default='tcp://localhost:44000')
-#    parser.add_argument('--run-control' ,'-r',default='tcp://localhost:44123')
-    parser.add_argument('--name' ,'-n',default='KeithleyPyProducer')
+    parser=argparse.ArgumentParser(description='Sourcemeter python producer for Keithley 2450 or 2470',
+                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--run-control' ,'-r', default='tcp://localhost:44000', help="where to find euRun")
+    parser.add_argument('--name' ,'-n', default='KeithleyPyProducer', help="name of this producer instance")
+    parser.add_argument('--create-buffers', action="store_true", help="force creation of measurement buffers, e.g. after power-cycle")
     args=parser.parse_args()
 
-    keiSMproducer = SourcemeterPyProducer(args.name,args.run_control)
+    if args.create_buffers:
+        keiSMproducer = SourcemeterPyProducer(args.name,args.run_control, makebuffers=True)
+    else:
+        keiSMproducer = SourcemeterPyProducer(args.name,args.run_control, makebuffers=False)
     print (f"connecting to runcontrol in {args.run_control}")
     keiSMproducer.Connect()
     time.sleep(2)
