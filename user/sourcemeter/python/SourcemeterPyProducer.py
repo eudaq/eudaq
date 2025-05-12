@@ -104,6 +104,7 @@ class SourcemeterPyProducer(pyeudaq.Producer):
 
         nsteps = 10
         steppause=2.0
+        precision=0.01 # for comparing current and target voltage
         self.update_every = 15.0
 
         if 'update_every' in confList:
@@ -112,34 +113,40 @@ class SourcemeterPyProducer(pyeudaq.Producer):
             nsteps = int(confList['nsteps'])
         if 'steppause' in confList:
             steppause = int(confList['steppause'])
-        
+        if 'precision' in confList:
+            precision = float(confList['precision'])
+
         # more fancy would be to have a polarity init parameter in the future
         if self.vtarget > 0:
-            print("Don't kill the sensor!")
+            raise ValueError('Check polarity. Please do not kill the sensor.')
+
         else:
-            print(f'Keithley set to ramp to {self.vtarget} V in {nsteps} steps')
+            EUDAQ_INFO(f'Keithley set to ramp to {self.vtarget} V in {nsteps} steps')
             #could also be parameters: steps, pause-in-seconds
             # get current voltage and ramp to there
             self.keithley.sendall(':MEAS:VOLT? "voltMeas"\n'.encode())
             time.sleep(0.1)
-            vmeas =int(float((self.keithley.recv(1024)).decode())+0.5) #proper rounding
-            stepsize=(self.vtarget - vmeas)/nsteps
-            thesteps = np.arange(vmeas, self.vtarget+(stepsize*0.5), stepsize)
-            for step in thesteps:
-                self.keithley.sendall((f'SOUR:VOLT {step}\n').encode())
-                time.sleep(steppause)  
-                self.keithley.sendall(':MEAS:VOLT? "voltMeas"\n'.encode())
-                volt=(float((self.keithley.recv(1024)).decode()))        
-                self.keithley.sendall(':MEAS:CURR? "currMeas"\n'.encode())
-                curr=(float((self.keithley.recv(1024)).decode()))
-                self.keithley.sendall(':MEAS? "defbuffer1", SEC\n'.encode())
-                t=(float((self.keithley.recv(1024)).decode()))
-                logline=f'{volt}V {curr*1e6}uA {t}s'
-                #print(logline)
-            EUDAQ_INFO(logline)
+            vmeas=float((self.keithley.recv(1024)).decode())
+            if abs(vmeas-self.vtarget)<precision:
+                EUDAQ_INFO(f'Target voltage {self.vtarget} and current voltage {vmeas} already agree within {precision}')
+            else:
+                stepsize=(self.vtarget - vmeas)/nsteps
+                thesteps = np.arange(vmeas, self.vtarget+(stepsize*0.5), stepsize)
+                print(thesteps)
+                for step in thesteps:
+                    self.keithley.sendall((f'SOUR:VOLT {step}\n').encode())
+                    time.sleep(steppause)
+                    self.keithley.sendall(':MEAS:VOLT? "voltMeas"\n'.encode())
+                    volt=(float((self.keithley.recv(1024)).decode()))
+                    self.keithley.sendall(':MEAS:CURR? "currMeas"\n'.encode())
+                    curr=(float((self.keithley.recv(1024)).decode()))
+                    self.keithley.sendall(':MEAS? "defbuffer1", SEC\n'.encode())
+                    t=(float((self.keithley.recv(1024)).decode()))
+                    logline=f'{volt}V {curr*1e6}uA {t}s'
+                    #print(logline)
+                EUDAQ_INFO(logline)
 
 
-            
     @exception_handler
     def DoStartRun(self):
         EUDAQ_INFO('DoStartRun')
