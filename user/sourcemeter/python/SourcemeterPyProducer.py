@@ -31,19 +31,21 @@ class SourcemeterPyProducer(pyeudaq.Producer):
 
     @exception_handler
     def DoInitialise(self):
+
+        # parse the ini file
         iniList=self.GetInitConfiguration().as_dict()
 
         if 'IPaddress' not in iniList:
             raise ValueError('need to specify sourcemeter IPaddress in ini file')
         self.ip = iniList['IPaddress']
-        print(f'Keithley IPaddress = {self.ip}')
+        EUDAQ_INFO(f'Keithley IPaddress = {self.ip}')
 
         self.compliance_current = 20e-6
         if 'compliance' in iniList:
             self.compliance_current = float(iniList['compliance'])
-        print(f'compliance will be set to = {self.compliance_current}')
-        # could also make these ini parameter in the future
+        EUDAQ_INFO(f'compliance will be set to = {self.compliance_current}')
 
+        # could also make these ini parameters in the future
         self.source_voltage_range = 200
 
         doReset = False
@@ -62,19 +64,19 @@ class SourcemeterPyProducer(pyeudaq.Producer):
             self.makeBuffers=True
             EUDAQ_INFO(f'Keithley sourcemeter was reset.')
             time.sleep(0.01)
-        
+
         self.keithley.sendall((f'SOUR:VOLT:RANG {self.source_voltage_range}\n').encode())
-        time.sleep(0.01)   
+        time.sleep(0.01)
         print((self.keithley.recv(1024)).decode())
 
         self.keithley.sendall((f':SOUR:VOLT:ILIM {self.compliance_current}\n').encode())
-        time.sleep(0.01)   
+        time.sleep(0.01)
         self.keithley.sendall('SOUR:FUNC VOLT\n'.encode())
         time.sleep(0.01)
         self.keithley.sendall('SENS:FUNC "CURR"\n'.encode())
         time.sleep(0.01)
         self.keithley.sendall('SENS:CURR:RANG:AUTO ON\n'.encode())
-        time.sleep(0.01)        
+        time.sleep(0.01)
         self.keithley.sendall(':OUTP ON\n'.encode())
         time.sleep(0.01)
         # create the buffers if requested (just the first time after starting)
@@ -93,7 +95,7 @@ class SourcemeterPyProducer(pyeudaq.Producer):
 
 
     @exception_handler
-    def DoConfigure(self):        
+    def DoConfigure(self):
         EUDAQ_INFO('DoConfigure')
         confList = self.GetConfiguration().as_dict()
         if 'bias' not in confList:
@@ -145,13 +147,13 @@ class SourcemeterPyProducer(pyeudaq.Producer):
 
 
     @exception_handler
-    def DoStopRun(self):        
+    def DoStopRun(self):
         EUDAQ_INFO('DoStopRun')
         self.is_running = 0
 
 
     @exception_handler
-    def DoReset(self):        
+    def DoReset(self):
         EUDAQ_INFO('DoReset')
         self.is_running = 0
         # close the socket connection
@@ -168,7 +170,7 @@ class SourcemeterPyProducer(pyeudaq.Producer):
             ev.SetTriggerN(trigger_n)
             if (datetime.now() - starttime).total_seconds()>self.update_every:
                 self.keithley.sendall(':MEAS:VOLT? "voltMeas"\n'.encode())
-                volt=(float((self.keithley.recv(1024)).decode()))        
+                volt=(float((self.keithley.recv(1024)).decode()))
                 self.keithley.sendall(':MEAS:CURR? "currMeas"\n'.encode())
                 curr=(float((self.keithley.recv(1024)).decode()))
                 self.keithley.sendall(':MEAS? "defbuffer1", SEC\n'.encode())
@@ -177,7 +179,7 @@ class SourcemeterPyProducer(pyeudaq.Producer):
                 EUDAQ_INFO(logline)
                 trigger_n += 1
                 starttime=datetime.now()
-                
+
             time.sleep(1)
 
         EUDAQ_INFO("End of RunLoop in SourcemeterPyProducer")
