@@ -168,6 +168,14 @@ class SourcemeterPyProducer(pyeudaq.Producer):
 
 
     @exception_handler
+    def DoTerminate(self):
+        EUDAQ_INFO('DoTerminate')
+        self.is_running = 0
+        # close the socket connection
+        self.keithley.close()
+
+
+    @exception_handler
     def RunLoop(self):
         EUDAQ_INFO("Start of RunLoop in SourcemeterPyProducer")
         trigger_n = 0;
