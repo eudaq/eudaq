@@ -18,13 +18,13 @@ def exception_handler(method):
     return inner
 
 class SourcemeterPyProducer(pyeudaq.Producer):
-    def __init__(self, name, runctrl, makebuffers):
+    def __init__(self, name, runctrl):
         pyeudaq.Producer.__init__(self, name, runctrl)
         self.name = name
-        self.ip=None
+        self.ip = None
         self.is_running = 0
-        self.keithley=None
-        self.makeBuffers=makebuffers
+        self.keithley = None
+        self.OUTPUT = None
         self.lock=threading.Lock()
         EUDAQ_INFO('New instance of SourcemeterPyProducer')
 
@@ -32,25 +32,27 @@ class SourcemeterPyProducer(pyeudaq.Producer):
     @exception_handler
     def DoInitialise(self):
 
-        # parse the ini file
+        # restore default values, then parse the ini file
+        self.do_reset = False
+        self.source_voltage_range = None
+        self.compliance_current = 20e-6
+        self.biaslog = None
+
         iniList=self.GetInitConfiguration().as_dict()
 
         if 'IPaddress' not in iniList:
             raise ValueError('need to specify sourcemeter IPaddress in ini file')
         self.ip = iniList['IPaddress']
         EUDAQ_INFO(f'Keithley IPaddress = {self.ip}')
-
-        self.compliance_current = 20e-6
         if 'compliance' in iniList:
             self.compliance_current = float(iniList['compliance'])
-        EUDAQ_INFO(f'compliance will be set to = {self.compliance_current}')
-
-        # could also make these ini parameters in the future
-        self.source_voltage_range = 200
-
-        doReset = False
+        if 'voltageRange' in iniList:
+            self.source_voltage_range = iniList['voltageRange']
         if 'resetSourcemeter' in iniList:
-            doReset = iniList['resetSourcemeter'].lower() in ("yes", "true", "t", "1")
+            self.do_reset = iniList['resetSourcemeter'].lower() in ("yes", "true", "t", "1")
+        if 'biasLog' in iniList:
+           self.biaslog = iniList['biasLog']
+           self.OUTPUT = open(iniList['biasLog'], "a")
 
         # communicate with the sourcemeter
         self.keithley = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,17 +61,22 @@ class SourcemeterPyProducer(pyeudaq.Producer):
         time.sleep(0.01)
 
         # reset the device - think before you do this, this will also set output off!
-        if doReset:
+        if self.do_reset:
             self.keithley.sendall('*RST\n'.encode())
-            self.makeBuffers=True
             EUDAQ_INFO(f'Keithley sourcemeter was reset.')
             time.sleep(0.01)
-
-        self.keithley.sendall((f'SOUR:VOLT:RANG {self.source_voltage_range}\n').encode())
-        time.sleep(0.01)
-        print((self.keithley.recv(1024)).decode())
-
+        if self.source_voltage_range is not None:
+            self.keithley.sendall((f'SOUR:VOLT:RANG {self.source_voltage_range}\n').encode())
+            time.sleep(0.01)
+            print((self.keithley.recv(1024)).decode())
+            EUDAQ_INFO(f'source voltage range set to = {self.source_voltage_range}')
+        else:
+            self.keithley.sendall((f'SOUR:VOLT:RANG:AUTO ON\n').encode())
+            time.sleep(0.01)
+            print((self.keithley.recv(1024)).decode())
+            EUDAQ_INFO(f'source voltage range set to AUTO')
         self.keithley.sendall((f':SOUR:VOLT:ILIM {self.compliance_current}\n').encode())
+        EUDAQ_INFO(f'compliance set to = {self.compliance_current}')
         time.sleep(0.01)
         self.keithley.sendall('SOUR:FUNC VOLT\n'.encode())
         time.sleep(0.01)
@@ -79,20 +86,6 @@ class SourcemeterPyProducer(pyeudaq.Producer):
         time.sleep(0.01)
         self.keithley.sendall(':OUTP ON\n'.encode())
         time.sleep(0.01)
-        # create the buffers if requested (just the first time after starting)
-        if self.makeBuffers:
-            EUDAQ_INFO(f'Keithley sourcemeter creating buffers for voltage and current.')
-            self.keithley.sendall('TRACe:MAKE "voltMeas", 15\n'.encode())
-            time.sleep(0.01)
-            self.keithley.sendall('TRACe:MAKE "currMeas", 15\n'.encode())
-            time.sleep(0.01)
-            # use continuous fill mode - with circular buffer, I don't have to worry about overflow
-            self.keithley.sendall('TRACe:FILL:MODE CONT, "voltMeas"\n'.encode())
-            time.sleep(0.01)
-            self.keithley.sendall('TRACe:FILL:MODE CONT, "currMeas"\n'.encode())
-            time.sleep(0.01)
-            self.makeBuffers=False
-
 
     @exception_handler
     def DoConfigure(self):
@@ -121,10 +114,9 @@ class SourcemeterPyProducer(pyeudaq.Producer):
             raise ValueError('Check polarity. Please do not kill the sensor.')
 
         else:
-            EUDAQ_INFO(f'Keithley set to ramp to {self.vtarget} V in {nsteps} steps')
-            #could also be parameters: steps, pause-in-seconds
             # get current voltage and ramp to there
-            self.keithley.sendall(':MEAS:VOLT? "voltMeas"\n'.encode())
+            EUDAQ_INFO(f'Keithley set to ramp to {self.vtarget} V in {nsteps} steps')
+            self.keithley.sendall(':MEAS:VOLT? "defbuffer1"\n'.encode())
             time.sleep(0.1)
             vmeas=float((self.keithley.recv(1024)).decode())
             if abs(vmeas-self.vtarget)<precision:
@@ -132,19 +124,19 @@ class SourcemeterPyProducer(pyeudaq.Producer):
             else:
                 stepsize=(self.vtarget - vmeas)/nsteps
                 thesteps = np.arange(vmeas, self.vtarget+(stepsize*0.5), stepsize)
-                print(thesteps)
                 for step in thesteps:
                     self.keithley.sendall((f'SOUR:VOLT {step}\n').encode())
                     time.sleep(steppause)
-                    self.keithley.sendall(':MEAS:VOLT? "voltMeas"\n'.encode())
+                    self.keithley.sendall(':MEAS:VOLT? "defbuffer1"\n'.encode())
                     volt=(float((self.keithley.recv(1024)).decode()))
-                    self.keithley.sendall(':MEAS:CURR? "currMeas"\n'.encode())
+                    self.keithley.sendall(':MEAS:CURR? "defbuffer2"\n'.encode())
                     curr=(float((self.keithley.recv(1024)).decode()))
-                    self.keithley.sendall(':MEAS? "defbuffer1", SEC\n'.encode())
-                    t=(float((self.keithley.recv(1024)).decode()))
-                    logline=f'{volt}V {curr*1e6}uA {t}s'
-                    #print(logline)
-                EUDAQ_INFO(logline)
+                    timenow=datetime.now().strftime("%Y-%m-%d %I:%M:%S")
+                    logline=f'{volt}V {curr*1e6}uA {timenow}'
+                    EUDAQ_INFO(logline)
+                    if self.biaslog is not None:
+                        self.OUTPUT.write(f'{logline}\n')
+
 
 
     @exception_handler
@@ -163,16 +155,18 @@ class SourcemeterPyProducer(pyeudaq.Producer):
     def DoReset(self):
         EUDAQ_INFO('DoReset')
         self.is_running = 0
-        # close the socket connection
         self.keithley.close()
+        if self.biaslog is not None:
+            self.OUTPUT.close()
 
 
     @exception_handler
     def DoTerminate(self):
         EUDAQ_INFO('DoTerminate')
         self.is_running = 0
-        # close the socket connection
         self.keithley.close()
+        if self.biaslog is not None:
+            self.OUTPUT.close()
 
 
     @exception_handler
@@ -184,19 +178,19 @@ class SourcemeterPyProducer(pyeudaq.Producer):
             ev = pyeudaq.Event("RawEvent", "sub_name")
             ev.SetTriggerN(trigger_n)
             if (datetime.now() - starttime).total_seconds()>self.update_every:
-                self.keithley.sendall(':MEAS:VOLT? "voltMeas"\n'.encode())
+                self.keithley.sendall(':MEAS:VOLT? "defbuffer1"\n'.encode())
                 volt=(float((self.keithley.recv(1024)).decode()))
-                self.keithley.sendall(':MEAS:CURR? "currMeas"\n'.encode())
+                self.keithley.sendall(':MEAS:CURR? "defbuffer2"\n'.encode())
                 curr=(float((self.keithley.recv(1024)).decode()))
-                self.keithley.sendall(':MEAS? "defbuffer1", SEC\n'.encode())
-                t=(float((self.keithley.recv(1024)).decode()))
-                logline=f'{volt}V {curr*1e6}uA {t}s'
+                timenow=datetime.now().strftime("%Y-%m-%d %I:%M:%S")
+                logline=f'{volt}V {curr*1e6}uA {timenow}'
                 EUDAQ_INFO(logline)
+                if self.biaslog is not None:
+                    self.OUTPUT.write(f'{logline}\n')
+                    self.OUTPUT.flush()
                 trigger_n += 1
                 starttime=datetime.now()
-
             time.sleep(1)
-
         EUDAQ_INFO("End of RunLoop in SourcemeterPyProducer")
 
 
@@ -206,18 +200,11 @@ if __name__ == "__main__":
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--run-control' ,'-r', default='tcp://localhost:44000', help="where to find euRun")
     parser.add_argument('--name' ,'-n', default='KeithleyPyProducer', help="name of this producer instance")
-    parser.add_argument('--create-buffers', action="store_true", help="force creation of measurement buffers, e.g. after power-cycle")
     args=parser.parse_args()
 
-    if args.create_buffers:
-        keiSMproducer = SourcemeterPyProducer(args.name,args.run_control, makebuffers=True)
-    else:
-        keiSMproducer = SourcemeterPyProducer(args.name,args.run_control, makebuffers=False)
-    print (f"connecting to runcontrol in {args.run_control}")
+    keiSMproducer = SourcemeterPyProducer(args.name,args.run_control)
+    print (f'Connecting to runcontrol in {args.run_control}')
     keiSMproducer.Connect()
     time.sleep(2)
     while(keiSMproducer.IsConnected()):
         time.sleep(1)
-
-
-
