@@ -13,6 +13,6 @@ endif()
 
 include_directories(${EUDAQ_INCLUDE_DIRS})
 
-FIND_PACKAGE(Peary 0.14 REQUIRED)
+FIND_PACKAGE(Peary 0.15.2 REQUIRED)
 
 add_subdirectory(module)

@@ -1,9 +1,9 @@
 #include "CaribouEvent2StdEventConverter.hh"
 #include "eudaq/Exception.hh"
 
-#include "H2MFrameDecoder.hpp"
-#include "h2m_pixels.hpp"
-#include "utils/log.hpp"
+#include <devices/H2M/H2MFrameDecoder.hpp>
+#include <devices/H2M/h2m_pixels.hpp>
+#include <peary/utils/log.hpp>
 
 #include <string>
 #include <algorithm>
