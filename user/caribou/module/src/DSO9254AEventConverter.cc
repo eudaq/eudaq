@@ -141,7 +141,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(
     EUDAQ_DEBUG("Histograms written");
   }
 
-  if (waveforms_analog.front().size() != triggers.size()) {
+  if (m_digital && waveforms_analog.front().size() != triggers.size()) {
     EUDAQ_ERROR("tiggers and data size do not match");
   }
   for (int seg = 0; seg < waveforms_analog.front().size(); ++seg) {
