@@ -131,11 +131,7 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     sprintf(out2, "h_corrVsTime_X_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
             _sensor2.c_str(), _id2);
     _2dcorrTimeX = new TH2I(out2, out, 1000, 0, 1000, 200, 0, 10);
-#ifdef EUDAQ_LIB_ROOT6
     _2dcorrTimeX->SetCanExtend(TH2I::kAllAxes);
-#else
-    _2dcorrTimeX->SetBit(TH2I::kCanRebin);
-#endif
   }
   if (_maxY1 != -1 && _maxY2 != -1) {
     sprintf(out, "Y CorrelationVsTime of %s %i and %s %i", _sensor1.c_str(), _id1,
@@ -143,11 +139,7 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     sprintf(out2, "h_corrVsTime_Y_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
             _sensor2.c_str(), _id2);
     _2dcorrTimeY = new TH2I(out2, out, 1000, 0, 1000, 200, 0, 10);
-#ifdef EUDAQ_LIB_ROOT6
     _2dcorrTimeY->SetCanExtend(TH2I::kAllAxes);
-#else
-    _2dcorrTimeY->SetBit(TH2I::kCanRebin);
-#endif
   }
   
   if (_maxX1 != -1 && _maxX2 != -1) {
@@ -156,11 +148,7 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     sprintf(out2, "h_corrVsTime_XY_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
             _sensor2.c_str(), _id2);
     _2dcorrTimeXY = new TH2I(out2, out, 1000, 0, 1000, 200, 0, 10);
-#ifdef EUDAQ_LIB_ROOT6
     _2dcorrTimeXY->SetCanExtend(TH2I::kAllAxes);
-#else
-    _2dcorrTimeXY->SetBit(TH2I::kCanRebin);
-#endif
   }
   if (_maxY1 != -1 && _maxY2 != -1) {
     sprintf(out, "YX CorrelationVsTime of %s %i and %s %i", _sensor1.c_str(), _id1,
@@ -168,11 +156,7 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     sprintf(out2, "h_corrVsTime_YX_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
             _sensor2.c_str(), _id2);
     _2dcorrTimeYX = new TH2I(out2, out, 1000, 0, 1000, 200, 0, 10);
-#ifdef EUDAQ_LIB_ROOT6
     _2dcorrTimeYX->SetCanExtend(TH2I::kAllAxes);
-#else
-    _2dcorrTimeYX->SetBit(TH2I::kCanRebin);
-#endif
   }  
 
 }
