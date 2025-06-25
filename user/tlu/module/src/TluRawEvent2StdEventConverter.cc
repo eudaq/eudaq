@@ -53,7 +53,9 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   // Allowing compact data requires us to also take care of reading data
   // Compact data contains a data block, whcih is used as check
   if (d1->NumBlocks()==1){
-      auto data = d1->GetBlock(0);
+    auto data = d1->GetBlock(0);
+    if(data.size() != 24) {
+      // medium-legacy data format - already decoded and re-packed
       fts_0 = data[0];
       fts_1 = data[1];
       fts_2 = data[2];
@@ -61,6 +63,16 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       fts_4 = data[4];
       fts_5 = data[5];
       triggersFired = data[6];
+    } else {
+      // raw data format as sent by the TLU, but chopped into bytes instead of 32bit words in little-endian
+      fts_0 = data[11];
+      fts_1 = data[10];
+      fts_2 = data[9];
+      fts_3 = data[8];
+      fts_4 = data[19];
+      fts_5 = data[18];
+      triggersFired = data[2];
+    }
   }else {
       // try/catch for std::stoi()
      try{
