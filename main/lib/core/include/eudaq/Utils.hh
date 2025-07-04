@@ -165,6 +165,9 @@ namespace eudaq {
   from_string(const std::string &x, const uint16_t &def) {
     return static_cast<uint16_t>(from_string(x, (uint64_t)def));
   }
+  
+  template <>
+  bool DLLEXPORT from_string(const std::string &x, const bool &def);
 
   template <typename T> struct hexdec_t {
     enum { DIGITS = 2 * sizeof(T) };
