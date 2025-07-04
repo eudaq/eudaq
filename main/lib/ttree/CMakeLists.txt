@@ -1,48 +1,22 @@
-if(WIN32)
-  message(STATUS "TTree Conversion is no supported in Windows, disable building of eudaq ttree library")
-  return()
-endif()
-
 cmake_dependent_option(EUDAQ_LIBRARY_BUILD_TTREE "lib/ttree library (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
 if(NOT EUDAQ_LIBRARY_BUILD_TTREE)
     message(STATUS "lib/ttree is NOT to be built (EUDAQ_LIBRARY_BUILD_TTREE=OFF)")
   unset(EUDAQ_TTREE_LIBRARY CACHE)
-  unset(TTREE_LIBRARIES CACHE)
   return()
 endif()
 
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_TTREE_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq ttree library")
 
-set (TTREE_LIBRARIES ${TTREE_LIBRARIES} CACHE INTERNAL "external ttree library")
-  set(EUDAQ_INCLUDE_DIRS
-    ${EUDAQ_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_LIST_DIR}/include
-    ${ROOT_INCLUDE_DIRS}
-    CACHE INTERNAL "directory of eudaq include")
-include_directories(${EUDAQ_INCLUDE_DIRS})	
-include_directories(${ROOT_INCLUDE_DIR})
-
-include_directories(. include)
-include_directories(${CMAKE_BINARY_DIR})
-
 aux_source_directory(src EUDAQ_COMPONENT_SRC)
 
 add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(TTREE_LIBRARIES
-      ${EUDAQ_INSTALL_PREFIX}/extern/lib/libttree.dylib
-      CACHE INTERNAL "external ttree library")
-  else()
-    set(TTREE_LIBRARIES
-      ${EUDAQ_INSTALL_PREFIX}/extern/lib/libttree.so
-      CACHE INTERNAL "external ttree library")
-  endif()
-
-target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
+target_compile_definitions(${EUDAQ_COMPONENT} PUBLIC "EUDAQ_CORE_EXPORTS")
+target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ROOT::Tree)
+target_include_directories(${EUDAQ_COMPONENT} PUBLIC . include include/eudaq)
 
 install(TARGETS ${EUDAQ_COMPONENT}
   RUNTIME DESTINATION bin

@@ -1,5 +1,4 @@
-find_package(ROOT QUIET)
-
+find_package(ROOT REQUIRED COMPONENTS Core Gui Hist RIO)
 cmake_dependent_option(EUDAQ_BUILD_ONLINE_ROOT_MONITOR "monitor/ROOTMonitor executable (requires ROOT)" OFF
   "ROOT_FOUND" OFF)
 
@@ -10,42 +9,24 @@ if(NOT EUDAQ_BUILD_ONLINE_ROOT_MONITOR)
 endif()
 message(STATUS "monitor/ROOTMonitor is to be built (EUDAQ_BUILD_ONLINE_ROOT_MONITOR=ON)")
 
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-if(WIN32)
-  find_package(ROOT REQUIRED COMPONENTS libGui libCore libHist libRIO)
-else()
-  find_package(ROOT REQUIRED COMPONENTS Gui)
-endif()
-
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_ROOT_MONITOR_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq root monitoring library")
 
-set(EUDAQ_INCLUDE_DIRS
-    ${EUDAQ_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_LIST_DIR}/include
-    ${ROOT_INCLUDE_DIRS}
-    CACHE INTERNAL "directory of eudaq include")
+add_library(rootmonitor SHARED 
+  src/ROOTMonitor.cc  
+  src/ROOTMonitorWindow.cc)
 
-include_directories(${EUDAQ_INCLUDE_DIRS})
-
-if(ROOT_USE_FILE)
-  include(${ROOT_USE_FILE})
-endif()
-
-include_directories(. include)
-include_directories(${CMAKE_BINARY_DIR})
-
-aux_source_directory(src EUDAQ_COMPONENT_SRC)
+target_include_directories(${EUDAQ_COMPONENT} 
+  PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(rootmonitor ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ROOT::Core ROOT::Gui ROOT::Hist ROOT::RIO)
 
 root_generate_dictionary(rootmonitorDict eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh
   LINKDEF include/LinkDef.h
     MODULE
     rootmonitor        
   )
-list(APPEND EUDAQ_COMPONENT_SRC ${CMAKE_CURRENT_BINARY_DIR}/rootmonitorDict.cxx)
-add_library(${EUDAQ_COMPONENT} SHARED ${EUDAQ_COMPONENT_SRC})
-
-target_link_libraries(${EUDAQ_COMPONENT} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES})
 
 install(TARGETS ${EUDAQ_COMPONENT}
   EXPORT eudaqTargets
@@ -53,14 +34,13 @@ install(TARGETS ${EUDAQ_COMPONENT}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
-if(ROOT_VERSION_MAJOR GREATER 5)
-  set(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_rootmonitor_rdict.pcm)
-  set(ROOTProducer_MAP ${CMAKE_CURRENT_BINARY_DIR}/libeudaq_rootmonitor.rootmap)
-  install(FILES
-    ${ROOTProducer_PCM}
-    ${ROOTProducer_MAP}
-    DESTINATION lib)
-endif()
+
+set(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/librootmonitor_rdict.pcm)
+set(ROOTProducer_MAP ${CMAKE_CURRENT_BINARY_DIR}/librootmonitor.rootmap)
+install(FILES
+  ${ROOTProducer_PCM}
+  ${ROOTProducer_MAP}
+  DESTINATION lib)
 
 file(GLOB INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/eudaq/*.hh")
 install(FILES ${INC_FILES} DESTINATION include/eudaq)
