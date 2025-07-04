@@ -67,7 +67,7 @@ configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
 
 list(APPEND ADDITIONAL_LIBRARIES ${CMAKE_DL_LIBS})
 target_link_libraries(${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
+target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 
 install(TARGETS ${EUDAQ_CORE_LIBRARY}
   EXPORT eudaqTargets
