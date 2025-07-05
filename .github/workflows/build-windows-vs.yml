@@ -30,10 +30,14 @@ jobs:
             arch: x64
             qt_arch: win64_msvc2022_64
             windows_image: windows-2022
-            root_url: https://github.com/root-project/root/releases/download/v6-36-00/root_v6.36.00.win32.python311.vc17.relwithdebinfo.zip
-        exclude:
+            root_url: https://github.com/root-project/root/releases/download/v6-36-00/root_v6.36.00.win64.python311.vc17.relwithdebinfo.zip
+        include:
           - qt_version: 6
+            qt_version_full: 6.8.0
             arch: Win32
+            qt_arch: win32_msvc2022
+            windows_image: windows-2022
+            root_url: https://github.com/root-project/root/releases/download/v6-36-00/root_v6.36.00.win32.python311.vc17.relwithdebinfo.zip
         
     name: eudaq_full_build-windows-latest-${{matrix.compiler}}-${{matrix.arch}}-qt-${{matrix.qt_version}}
 
