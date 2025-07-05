@@ -48,10 +48,10 @@ at some places we have constructions like:
 #include <iostream>
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
-#include "TransportTCP_WIN32.hh"
+#include "eudaq/TransportTCP_WIN32.hh"
 #pragma comment(lib, "Ws2_32.lib")
 #else
-#include "TransportTCP_POSIX.hh"
+#include "eudaq/TransportTCP_POSIX.hh"
 #endif
 
 // print debug messages that are optimized out if DEBUG_TRANSPORT is not set:

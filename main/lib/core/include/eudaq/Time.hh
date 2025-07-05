@@ -1,7 +1,7 @@
 #ifndef EUDAQ_INCLUDED_Time
 #define EUDAQ_INCLUDED_Time
 
-#include "Platform.hh"
+#include "eudaq/Platform.hh"
 #include <ostream>
 #include <iomanip>
 #include <string>

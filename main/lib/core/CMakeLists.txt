@@ -19,8 +19,6 @@ set(EUDAQ_INCLUDE_DIRS
   CACHE INTERNAL "directory of eudaq include")
 
 
-include_directories(include)
-include_directories(include/eudaq)
 
 aux_source_directory(src CORE_SRC)
 list(APPEND CORE_SRC ${CMAKE_CURRENT_BINARY_DIR}/ModuleManager.cc)
@@ -55,7 +53,7 @@ IF(ROOT_FOUND)
       ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${EUDAQ_CORE_LIBRARY}.rootmap
       DESTINATION lib)
 ENDIF()
-
+	
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES DEFINE_SYMBOL "core_EXPORTS" )
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR})
 set_target_properties(${EUDAQ_CORE_LIBRARY} PROPERTIES EXPORT_NAME ${EUDAQ_TARGET})
@@ -67,7 +65,7 @@ configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
 
 list(APPEND ADDITIONAL_LIBRARIES ${CMAKE_DL_LIBS})
 target_link_libraries(${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
+target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 
 install(TARGETS ${EUDAQ_CORE_LIBRARY}
   EXPORT eudaqTargets
