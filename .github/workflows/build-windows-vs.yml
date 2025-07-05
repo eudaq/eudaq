@@ -30,7 +30,7 @@ jobs:
             arch: x64
             qt_arch: win64_msvc2022_64
             windows_image: windows-2022
-            root_url: https://github.com/root-project/root/releases/download/v6-34-06/root_v6.34.06.win32.python311.vc17.relwithdebinfo.zip
+            root_url: https://github.com/root-project/root/releases/download/v6-36-00/root_v6.36.00.win32.python311.vc17.relwithdebinfo.zip
         exclude:
           - qt_version: 6
             arch: Win32
