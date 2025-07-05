@@ -1,5 +1,5 @@
-#include "Processor.hh"
-#include "Utils.hh"
+#include "eudaq/Processor.hh"
+#include "eudaq/Utils.hh"
 
 using namespace eudaq;
 

@@ -1,6 +1,6 @@
-#include "FileWriter.hh"
-#include "FileNamer.hh"
-#include "Exception.hh"
+#include "eudaq/FileWriter.hh"
+#include "eudaq/FileNamer.hh"
+#include "eudaq/Exception.hh"
 
 namespace eudaq {
 

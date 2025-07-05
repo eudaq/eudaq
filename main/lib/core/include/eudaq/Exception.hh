@@ -4,7 +4,7 @@
 #include "eudaq/Utils.hh"
 #include <exception>
 #include <string>
-#include "Platform.hh"
+#include "eudaq/Platform.hh"
 
 #ifndef EUDAQ_FUNC
 #define EUDAQ_FUNC ""
