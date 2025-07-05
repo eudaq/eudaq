@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <fstream>
 
-#include "Platform.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 

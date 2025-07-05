@@ -1,4 +1,4 @@
-#include "Serializable.hh"
+#include "eudaq/Serializable.hh"
 
 namespace eudaq {
   
