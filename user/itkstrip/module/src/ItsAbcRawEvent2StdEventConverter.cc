@@ -69,6 +69,7 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 	if (deviceId < 300 ) {
 		superplane.SetSizeZS(282, 1, 0);//r0
 	} else {
+
 		superplane.SetSizeZS(1280, 4, 0);
 		//add your own module plane here
 		if(moduletype == "SS") superplane_module.SetSizeZS(1280,4,0);
@@ -77,6 +78,7 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 		if(moduletype == "R3Right") superplane_module.SetSizeZS(896,4,0);
 		if(moduletype == "R5Left") superplane_module.SetSizeZS(1152,2,0);
 		if(moduletype == "R5Right") superplane_module.SetSizeZS(1152,2,0);
+
 	}
 	for(auto &block_n: block_n_list){
 		std::vector<uint8_t> block = raw->GetBlock(block_n);
