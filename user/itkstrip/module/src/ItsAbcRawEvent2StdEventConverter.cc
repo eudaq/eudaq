@@ -70,6 +70,7 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 		superplane.SetSizeZS(282, 1, 0);//r0
 	} else {
 		superplane.SetSizeZS(1280, 4, 0);
+		//add your own module plane here
 		if(moduletype == "SS") superplane_module.SetSizeZS(1280,4,0);
 		if(moduletype == "R1") superplane_module.SetSizeZS(1408,4,0);
 		if(moduletype == "R3Left") superplane_module.SetSizeZS(896,4,0);
@@ -152,6 +153,7 @@ bool ItsAbcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
 					for(size_t i = 0; i < channels.size(); ++i) {
 						if(channels[i]){
 						  plane.PushPixel(i, 0 , 1);//r0
+						  //Write your own module type here:
 				   	  						      	
 							//R3:
 							if(moduletype == "R3Left"){
