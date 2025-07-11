@@ -240,6 +240,14 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1,
 			width = 1200;
 			height = 384;
 			local_plane_type = "RD53BTRIPLETLINEAR";
+		} else if ((m_FrontEndType.at(prodID) == "Itkpixv2")
+				&& (m_module_size_by_module_index[prodID][currentPlaneIndex]
+						== "ITk_triplet_linear")) {
+			width = 1200;
+			height = 384;
+			local_plane_type = "ITKPIXV2TRIPLETLINEAR";
+		} else {
+			std::cout << "undefined front end type and module type combination" << std::endl;
 		}
 		;
 		unsigned int local_id =
