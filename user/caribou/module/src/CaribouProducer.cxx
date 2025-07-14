@@ -165,7 +165,7 @@ void CaribouProducer::DoConfigure() {
 
   if(!adc_signal_.empty()) {
     // Try it out directly to catch misconfiugration
-    auto adc_value = device_->getADC(adc_signal_);
+    auto adc_value = device_->getVoltage(adc_signal_);
     EUDAQ_USER("Will probe ADC signal \"" + adc_signal_ + "\" every " + std::to_string(adc_freq_) + " events");
   }
 
@@ -246,7 +246,7 @@ void CaribouProducer::RunLoop() {
         // Query ADC if wanted:
         if(m_ev%adc_freq_ == 0) {
           if(!adc_signal_.empty()) {
-            auto adc_value = device_->getADC(adc_signal_);
+            auto adc_value = device_->getVoltage(adc_signal_);
             LOG(DEBUG) << "Reading ADC: " << adc_value << "V";
             EUDAQ_USER("ADC reading: " + adc_signal_ + " =  " + std::to_string(adc_value));
             event->SetTag(adc_signal_, adc_value);
