@@ -3,13 +3,16 @@
 
 #include <devices/H2M/H2MFrameDecoder.hpp>
 #include <devices/H2M/h2m_pixels.hpp>
-#include <peary/utils/log.hpp>
+#include <peary/log/log.hpp>
 
 #include <string>
 #include <algorithm>
 #include <cmath>
 
 using namespace eudaq;
+using namespace peary::dut;
+using namespace peary::utils;
+using namespace peary::device;
 
 namespace {
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
@@ -53,7 +56,7 @@ bool H2MEvent2StdEventConverter::Converting(
   }
 
   // get an instance of the frame decoder
-  static caribou::H2MFrameDecoder decoder;
+  static H2MFrameDecoder decoder;
 
   // Data container:
   std::vector<uint32_t> rawdata;
@@ -111,11 +114,11 @@ bool H2MEvent2StdEventConverter::Converting(
   rawdata.erase(rawdata.begin(),rawdata.begin()+6);
 
   // Decode the event raw data - no zero suppression
-  caribou::pearydata frame;
+  pearydata frame;
   try{
     frame = decoder.decodeFrame<uint32_t>(rawdata, acq_mode);
   }
-  catch(caribou::DataCorrupt&){
+  catch(DataTakingError&){
     EUDAQ_ERROR("H2M decoder failed!");
     EUDAQ_ERROR("Length of rawdata (should be 262): " +to_string(rawdata.size()));
     return false;
@@ -137,7 +140,7 @@ bool H2MEvent2StdEventConverter::Converting(
     auto [col, row] = pixel.first;
 
     // cast into right type of pixel and retrieve stored data
-    auto pixHit = dynamic_cast<caribou::h2m_pixel_readout *>(pixel.second.get());
+    auto pixHit = dynamic_cast<h2m_pixel_readout *>(pixel.second.get());
 
     // Pixel value of whatever equals zero means: no hit
     if(pixHit->GetData() == 0) {
@@ -147,7 +150,7 @@ bool H2MEvent2StdEventConverter::Converting(
     // Fetch timestamp from pixel if on ToA mode,
     // otherwise set to frame center (CERN mode) or configure a position with respect to the frame end (in ps, DESY mode)
     uint64_t not_toa_time = delay_to_frame_end > 0 ? frameEnd - delay_to_frame_end : ((frameStart + frameEnd) / 2);
-    uint64_t timestamp = pixHit->GetMode() == caribou::ACQ_MODE_TOA ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps)) : not_toa_time;
+    uint64_t timestamp = pixHit->GetMode() == ACQ_MODE_TOA ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps)) : not_toa_time;
     uint64_t tot = pixHit->GetToT();
 
     // best guess for charge is ToT if no calibration is available
