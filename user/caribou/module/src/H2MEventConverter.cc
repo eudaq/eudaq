@@ -3,18 +3,18 @@
 
 #include "H2MFrameDecoder.hpp"
 #include "h2m_pixels.hpp"
-#include "utils/log.hpp"
+#include "log/log.hpp"
 
-#include <string>
 #include <algorithm>
+#include <string>
 
 using namespace eudaq;
+using namespace peary;
 
 namespace {
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
       H2MEvent2StdEventConverter>(H2MEvent2StdEventConverter::m_id_factory);
 }
-
 
 bool H2MEvent2StdEventConverter::Converting(
     eudaq::EventSPC d1, eudaq::StandardEventSP d2,
@@ -35,7 +35,7 @@ bool H2MEvent2StdEventConverter::Converting(
   uint64_t delay_to_frame_end = conf->Get("delay_to_frame_end", -999);
 
   // get an instance of the frame decoder
-  static caribou::H2MFrameDecoder decoder;
+  static dut::H2MFrameDecoder decoder;
 
   // Data container:
   std::vector<uint32_t> rawdata;
@@ -63,26 +63,28 @@ bool H2MEvent2StdEventConverter::Converting(
     return false;
   } // bad event
 
-  EUDAQ_DEBUG("Length of rawdata (should be 262): " +to_string(rawdata.size()));
+  EUDAQ_DEBUG("Length of rawdata (should be 262): " +
+              to_string(rawdata.size()));
   //  first decode the header
-  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, length, t0] = decoder.decodeHeader<uint32_t>(rawdata);
+  auto [ts_trig, ts_sh_open, ts_sh_close, frameID, length, t0] =
+      decoder.decodeHeader<uint32_t>(rawdata);
 
-  if(t0 == false || ts_sh_close < ts_sh_open) {
-      EUDAQ_DEBUG("No T0 signal seen yet, skipping event");
-      return false;
+  if (t0 == false || ts_sh_close < ts_sh_open) {
+    EUDAQ_DEBUG("No T0 signal seen yet, skipping event");
+    return false;
   }
 
   // remove the 6 elements from the header
-  rawdata.erase(rawdata.begin(),rawdata.begin()+6);
+  rawdata.erase(rawdata.begin(), rawdata.begin() + 6);
 
   // Decode the event raw data - no zero suppression
-  caribou::pearydata frame;
-  try{
+  utils::pearydata frame;
+  try {
     frame = decoder.decodeFrame<uint32_t>(rawdata, acq_mode);
-  }
-  catch(caribou::DataCorrupt&){
+  } catch (device::DataTakingError &) {
     EUDAQ_ERROR("H2M decoder failed!");
-    EUDAQ_ERROR("Length of rawdata (should be 262): " +to_string(rawdata.size()));
+    EUDAQ_ERROR("Length of rawdata (should be 262): " +
+                to_string(rawdata.size()));
     return false;
   }
 
@@ -92,9 +94,11 @@ bool H2MEvent2StdEventConverter::Converting(
   plane.SetSizeZS(64, 16, 0);
   // start and end are in 100MHz units -> to ps
   int _100MHz_to_ps = 10000;
-  uint64_t frameStart = ts_sh_open*_100MHz_to_ps;
-  uint64_t frameEnd = ts_sh_close*_100MHz_to_ps;
-  EUDAQ_DEBUG("FrameID: "+ to_string(frameID) +"\t Shutter open: "+to_string(frameStart)+"\t shutter close "+to_string(frameEnd) +"\t t_0: "+to_string(t0));
+  uint64_t frameStart = ts_sh_open * _100MHz_to_ps;
+  uint64_t frameEnd = ts_sh_close * _100MHz_to_ps;
+  EUDAQ_DEBUG("FrameID: " + to_string(frameID) + "\t Shutter open: " +
+              to_string(frameStart) + "\t shutter close " +
+              to_string(frameEnd) + "\t t_0: " + to_string(t0));
   for (const auto &pixel : frame) {
 
     // get pixel information
@@ -102,17 +106,22 @@ bool H2MEvent2StdEventConverter::Converting(
     auto [col, row] = pixel.first;
 
     // cast into right type of pixel and retrieve stored data
-    auto pixHit = dynamic_cast<caribou::h2m_pixel_readout *>(pixel.second.get());
+    auto pixHit = dynamic_cast<dut::h2m_pixel_readout *>(pixel.second.get());
 
     // Pixel value of whatever equals zero means: no hit
-    if(pixHit->GetData() == 0) {
+    if (pixHit->GetData() == 0) {
       continue;
     }
 
     // Fetch timestamp from pixel if on ToA mode,
-    // otherwise set to frame center (CERN mode) or configure a position with respect to the frame end (in ps, DESY mode)
-    uint64_t not_toa_time = delay_to_frame_end > 0 ? frameEnd - delay_to_frame_end : ((frameStart + frameEnd) / 2);
-    uint64_t timestamp = pixHit->GetMode() == caribou::ACQ_MODE_TOA ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps)) : not_toa_time;
+    // otherwise set to frame center (CERN mode) or configure a position with
+    // respect to the frame end (in ps, DESY mode)
+    uint64_t not_toa_time = delay_to_frame_end > 0
+                                ? frameEnd - delay_to_frame_end
+                                : ((frameStart + frameEnd) / 2);
+    uint64_t timestamp = pixHit->GetMode() == dut::ACQ_MODE_TOA
+                             ? (frameEnd - (pixHit->GetToA() * _100MHz_to_ps))
+                             : not_toa_time;
     uint64_t tot = pixHit->GetToT();
 
     // assemble pixel and add to plane
@@ -125,7 +134,8 @@ bool H2MEvent2StdEventConverter::Converting(
   // Store frame begin and end in picoseconds
   d2->SetTimeBegin(frameStart);
   d2->SetTimeEnd(frameEnd);
-  // The frame ID is not necessarily related to a trigger but rather to an event ID:
+  // The frame ID is not necessarily related to a trigger but rather to an event
+  // ID:
   d2->SetEventN(frameID);
 
   // Identify the detetor type

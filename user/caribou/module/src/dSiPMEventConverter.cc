@@ -4,21 +4,23 @@
 
 #include "dSiPMFrameDecoder.hpp"
 #include "dSiPMPixels.hpp"
-#include "utils/log.hpp"
+#include "log/log.hpp"
 
-#include <string>
 #include <algorithm>
+#include <string>
 
 using namespace eudaq;
+using namespace peary;
 
 namespace {
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
       dSiPMEvent2StdEventConverter>(dSiPMEvent2StdEventConverter::m_id_factory);
 }
 
-constexpr double design_width = 1e6/(32*408);
+constexpr double design_width = 1e6 / (32 * 408);
 
-std::vector<dSiPMEvent2StdEventConverter::PlaneConfiguration> dSiPMEvent2StdEventConverter::m_configuration({});
+std::vector<dSiPMEvent2StdEventConverter::PlaneConfiguration>
+    dSiPMEvent2StdEventConverter::m_configuration({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_trigger({});
 std::vector<uint64_t> dSiPMEvent2StdEventConverter::m_frame({});
 
@@ -45,24 +47,25 @@ bool dSiPMEvent2StdEventConverter::Converting(
   }
 
   // Shorthand for the configuration of this plane
-  auto* plane_conf = &m_configuration[plane_id];
+  auto *plane_conf = &m_configuration[plane_id];
 
   if (!plane_conf->configured && conf != NULL) {
     plane_conf->zeroSupp = conf->Get("zero_suppression", true);
     plane_conf->discardDuringReset = conf->Get("discard_during_reset", false);
     plane_conf->checkValid = conf->Get("check_valid", false);
     plane_conf->fine_tdc_bin_widths = {
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q0", "")),
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q1", "")),
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q2", "")),
-      getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q3", ""))};
+        getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q0", "")),
+        getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q1", "")),
+        getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q2", "")),
+        getFineTDCWidths(conf->Get("fine_tdc_bin_widths_q3", ""))};
     plane_conf->pixel_delays = getPixelDelays(conf->Get("pixel_delays", ""));
     plane_conf->frame_start = conf->Get("frame_start", 0);
     plane_conf->frame_stop = conf->Get("frame_stop", INT8_MAX);
 
     EUDAQ_INFO("Using configuration for plane ID " + to_string(plane_id) + ":");
     EUDAQ_INFO("  zero_suppression = " + to_string(plane_conf->zeroSupp));
-    EUDAQ_INFO("  discard_during_reset = " + to_string(plane_conf->discardDuringReset));
+    EUDAQ_INFO("  discard_during_reset = " +
+               to_string(plane_conf->discardDuringReset));
     EUDAQ_INFO("  check_valid = " + to_string(plane_conf->checkValid));
     EUDAQ_INFO("  frame_start = " + to_string(plane_conf->frame_start));
     EUDAQ_INFO("  frame_stop = " + to_string(plane_conf->frame_stop));
@@ -71,13 +74,14 @@ bool dSiPMEvent2StdEventConverter::Converting(
     EUDAQ_INFO("    _q1 " + to_string(plane_conf->fine_tdc_bin_widths[1]));
     EUDAQ_INFO("    _q2 " + to_string(plane_conf->fine_tdc_bin_widths[2]));
     EUDAQ_INFO("    _q3 " + to_string(plane_conf->fine_tdc_bin_widths[3]));
-    EUDAQ_INFO("  pixel_delays first column " + to_string(plane_conf->pixel_delays[0]));
+    EUDAQ_INFO("  pixel_delays first column " +
+               to_string(plane_conf->pixel_delays[0]));
 
     plane_conf->configured = true;
   }
 
   // get an instance of the frame decoder
-  static caribou::dSiPMFrameDecoder decoder;
+  static dut::dSiPMFrameDecoder decoder;
 
   // Data container:
   std::vector<uint32_t> rawdata;
@@ -114,12 +118,15 @@ bool dSiPMEvent2StdEventConverter::Converting(
   // decode trailer with time info from FPGA
   auto fpgadata = decoder.decodeTrailer(rawdata);
   // derive frame counter (inside trigger number)
-  m_frame[plane_id] = (fpgadata.trigger_id == m_trigger[plane_id] ? m_frame[plane_id]+1 : 0);
+  m_frame[plane_id] =
+      (fpgadata.trigger_id == m_trigger[plane_id] ? m_frame[plane_id] + 1 : 0);
   // store for next frame
   m_trigger[plane_id] = fpgadata.trigger_id;
 
-  EUDAQ_DEBUG("Decoded trigger "  + to_string(m_trigger[plane_id]) + " frame " + to_string(m_frame[plane_id]));
-  if (m_frame[plane_id] < plane_conf->frame_start || m_frame[plane_id] > plane_conf->frame_stop) {
+  EUDAQ_DEBUG("Decoded trigger " + to_string(m_trigger[plane_id]) + " frame " +
+              to_string(m_frame[plane_id]));
+  if (m_frame[plane_id] < plane_conf->frame_start ||
+      m_frame[plane_id] > plane_conf->frame_stop) {
     EUDAQ_DEBUG("Skipping frame");
     return false;
   }
@@ -143,7 +150,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     auto row = pixel.first.second;
     auto quad = getQuadrant(col, row);
     // cast into right type of pixel and retrieve stored data
-    auto ds_pix = dynamic_cast<caribou::dsipm_pixel *>(pixel.second.get());
+    auto ds_pix = dynamic_cast<dut::dsipm_pixel *>(pixel.second.get());
     // binary hit information
     auto hitBit = ds_pix->getBit();
     // valid bit
@@ -156,7 +163,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // check valid bits if requested
     if (plane_conf->checkValid == true && hitBit == true && validBit == false) {
       EUDAQ_WARN(
-        "This pixel is hit, but the valid bit for the quadrant is not set");
+          "This pixel is hit, but the valid bit for the quadrant is not set");
       EUDAQ_WARN("  col and row " + to_string(col) + " " + to_string(row));
       return false;
     }
@@ -173,10 +180,11 @@ bool dSiPMEvent2StdEventConverter::Converting(
       if (bunchCount == 0 || clockFine == 0) {
         return false;
       }
-    }
-    else {
-      if (!plane_conf->discardDuringResetWarned && (bunchCount == 0 || clockFine == 0)) {
-        EUDAQ_WARN("Bunch counter == 0 || Fine clock == 0. This might screw up timing analysis,"
+    } else {
+      if (!plane_conf->discardDuringResetWarned &&
+          (bunchCount == 0 || clockFine == 0)) {
+        EUDAQ_WARN("Bunch counter == 0 || Fine clock == 0. This might screw up "
+                   "timing analysis,"
                    " consider setting discard_during_reset=1.");
         plane_conf->discardDuringResetWarned = true;
       }
@@ -204,7 +212,8 @@ bool dSiPMEvent2StdEventConverter::Converting(
         static_cast<uint64_t>((bunchCount - 0) * 1e6 / 3. - 5. * 1e6 / 408);
 
     // Calculate fine timestamp by summing over fine bin widths
-    // Remember: fine clock starts at 1, so we need to subtract 1 for array access
+    // Remember: fine clock starts at 1, so we need to subtract 1 for array
+    // access
     double fine_ts = 0.;
     for (size_t n = 0; n < clockFine - 1; ++n) {
       fine_ts += plane_conf->fine_tdc_bin_widths[quad][n];
@@ -220,12 +229,13 @@ bool dSiPMEvent2StdEventConverter::Converting(
     // coarse clock runs with 408 MHz in ps +
     // fine clock runs with nominally 13056 MHz (408 MHz * nBitEff) in ps +
     // shift by dead time.
-    uint64_t timestamp =
-        static_cast<uint64_t>((bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
-                              (clockCoarse - 1) * 1e6 / 408. + fine_ts - pixel_delay);
+    uint64_t timestamp = static_cast<uint64_t>(
+        (bunchCount - 1) * 1e6 / 3. + 3. * 1e6 / 408. +
+        (clockCoarse - 1) * 1e6 / 408. + fine_ts - pixel_delay);
 
     // check frame start if we want valid check
-    if (plane_conf->checkValid && (frameStart > 0 && frameStart != thisPixFrameStart)) {
+    if (plane_conf->checkValid &&
+        (frameStart > 0 && frameStart != thisPixFrameStart)) {
       EUDAQ_ERROR("This frame start does not match prev. pixels frame start "
                   "(from same event)");
       EUDAQ_ERROR("  bunch counter ID " + to_string(bunchCount));
@@ -237,10 +247,10 @@ bool dSiPMEvent2StdEventConverter::Converting(
     frameStart = thisPixFrameStart;
     frameEnd = thisPixFrameEnd;
 
-    EUDAQ_DEBUG(" \t" + to_string(m_trigger[plane_id]) + " \t" + to_string(m_frame[plane_id]) +
-                " \t" + to_string(col) + " \t" + to_string(row) + " \t" +
-                to_string(hitBit) + " \t" + to_string(validBit) + " \t" +
-                to_string(bunchCount) + " \t\t" +
+    EUDAQ_DEBUG(" \t" + to_string(m_trigger[plane_id]) + " \t" +
+                to_string(m_frame[plane_id]) + " \t" + to_string(col) + " \t" +
+                to_string(row) + " \t" + to_string(hitBit) + " \t" +
+                to_string(validBit) + " \t" + to_string(bunchCount) + " \t\t" +
                 to_string(static_cast<uint64_t>(clockCoarse)) + " \t" +
                 to_string(static_cast<uint64_t>(clockFine)) + " \t" +
                 to_string(timestamp) + " \t" + to_string(frameStart) + " \t" +
@@ -282,7 +292,8 @@ uint8_t dSiPMEvent2StdEventConverter::getQuadrant(const uint16_t &col,
   return 1;
 }
 
-template<size_t N> std::array<double, N> convert_config_to_double_array(std::string& config) {
+template <size_t N>
+std::array<double, N> convert_config_to_double_array(std::string &config) {
   auto out = std::array<double, N>();
 
   // remove whitespaces and quotes
@@ -290,7 +301,7 @@ template<size_t N> std::array<double, N> convert_config_to_double_array(std::str
   config.erase(std::remove(config.begin(), config.end(), '"'), config.end());
 
   // split by comma
-  std::vector<std::string> substrs {};
+  std::vector<std::string> substrs{};
   size_t pos_start = 0, pos_end = 0;
   while ((pos_end = config.find(',', pos_start)) != std::string::npos) {
     substrs.push_back(config.substr(pos_start, pos_end - pos_start));
@@ -306,7 +317,7 @@ template<size_t N> std::array<double, N> convert_config_to_double_array(std::str
   for (size_t n = 0; n < out.size(); ++n) {
     try {
       out[n] = std::stod(substrs[n]);
-    } catch(std::invalid_argument& error) {
+    } catch (std::invalid_argument &error) {
       throw Exception("Failed to convert substring to double in config");
     }
   }
@@ -314,7 +325,8 @@ template<size_t N> std::array<double, N> convert_config_to_double_array(std::str
   return out;
 }
 
-std::array<double, 32> dSiPMEvent2StdEventConverter::getFineTDCWidths(std::string config) {
+std::array<double, 32>
+dSiPMEvent2StdEventConverter::getFineTDCWidths(std::string config) {
   // no config, use defaults
   if (config == "") {
     auto out = std::array<double, 32>();
@@ -327,7 +339,8 @@ std::array<double, 32> dSiPMEvent2StdEventConverter::getFineTDCWidths(std::strin
   return convert_config_to_double_array<32>(config);
 }
 
-std::array<std::array<double, 32>, 32> dSiPMEvent2StdEventConverter::getPixelDelays(std::string config) {
+std::array<std::array<double, 32>, 32>
+dSiPMEvent2StdEventConverter::getPixelDelays(std::string config) {
   auto out = std::array<std::array<double, 32>, 32>();
 
   // no config, no delays
@@ -340,7 +353,7 @@ std::array<std::array<double, 32>, 32> dSiPMEvent2StdEventConverter::getPixelDel
     return out;
   }
 
-  auto tmp = convert_config_to_double_array<32*32>(config);
+  auto tmp = convert_config_to_double_array<32 * 32>(config);
   for (size_t col = 0; col < out.size(); ++col) {
     for (size_t row = 0; row < out[col].size(); ++row) {
       out[col][row] = tmp[col * 32 + row];

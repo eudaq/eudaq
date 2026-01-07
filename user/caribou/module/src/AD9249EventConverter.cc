@@ -1,16 +1,18 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
-#include "utils/log.hpp"
+#include "log/log.hpp"
 
+#include "TF1.h"
 #include <algorithm>
 #include <fstream>
-#include "TF1.h"
 
 using namespace eudaq;
+using namespace peary;
 
 namespace {
-auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
-    AD9249Event2StdEventConverter>(AD9249Event2StdEventConverter::m_id_factory);
+  auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
+      AD9249Event2StdEventConverter>(
+      AD9249Event2StdEventConverter::m_id_factory);
 }
 
 size_t AD9249Event2StdEventConverter::trig_(0);
@@ -26,14 +28,13 @@ int AD9249Event2StdEventConverter::m_ampEnd(270);
 // calibration functions
 double AD9249Event2StdEventConverter::m_calib_range_min(0);
 double AD9249Event2StdEventConverter::m_calib_range_max(16384);
-std::vector<std::string>
-  AD9249Event2StdEventConverter::m_calib_strings(16,"x");
-std::vector<TF1>
-  AD9249Event2StdEventConverter::m_calib_functions(16, TF1());
+std::vector<std::string> AD9249Event2StdEventConverter::m_calib_strings(16,
+                                                                        "x");
+std::vector<TF1> AD9249Event2StdEventConverter::m_calib_functions(16, TF1());
 
 void AD9249Event2StdEventConverter::decodeChannel(
     const size_t adc, const std::vector<uint8_t> &data, size_t size,
-    size_t offset, std::vector<std::vector<uint16_t> > &waveforms,
+    size_t offset, std::vector<std::vector<uint16_t>> &waveforms,
     uint64_t &timestamp) const {
 
   // Timestamp index
@@ -83,10 +84,9 @@ void AD9249Event2StdEventConverter::decodeChannel(
   timestamp = static_cast<uint64_t>((timestamp - ts_lost) * 1e6 / 65.);
 }
 
-bool
-AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
-                                          eudaq::StandardEventSP d2,
-                                          eudaq::ConfigurationSPC conf) const {
+bool AD9249Event2StdEventConverter::Converting(
+    eudaq::EventSPC d1, eudaq::StandardEventSP d2,
+    eudaq::ConfigurationSPC conf) const {
 
   if (!m_configured) {
     m_blStart = conf->Get("blStart", m_blStart);
@@ -147,7 +147,7 @@ AD9249Event2StdEventConverter::Converting(eudaq::EventSPC d1,
   }
 
   // Read waveforms
-  std::vector<std::vector<uint16_t> > waveforms;
+  std::vector<std::vector<uint16_t>> waveforms;
   waveforms.resize(16);
 
   uint32_t size_ADC0 = (static_cast<uint32_t>(datablock0.at(7)) << 24) +
