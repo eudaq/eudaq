@@ -3,7 +3,7 @@
 #include "eudaq/Logger.hh"
 #include <set>
 #include "utils/datatypes.hpp"
-#include "utils/log.hpp"
+#include "log/log.hpp"
 #include "utils/utils.hpp"
 #include <array>
 #include <vector>
@@ -107,7 +107,7 @@ namespace eudaq {
 
     // convert a data blocks to waveforms
     static std::vector<std::vector<waveform>>
-    read_data(caribou::pearyRawData &rawdata, int evt, uint64_t & block_position, int n_channels);
+    read_data(peary::utils::pearyRawData &rawdata, int evt, uint64_t & block_position, int n_channels);
     // get the trigger number from the digital waveforns. This is tailored to the AIDA TLU operating in the AIDA+trigerID mode
     static std::vector<uint64_t> calc_triggers(std::vector<waveform> &waves);
     // parse the channel mapping from string
