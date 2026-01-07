@@ -47,7 +47,7 @@ IF(ROOT_FOUND)
     COMPILE_FLAGS  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:"-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}">
     )
 
-  TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} ROOT::Core)
+  TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} PUBLIC ROOT::Core)
 
   # Also install the dictionary objects
   INSTALL(FILES
