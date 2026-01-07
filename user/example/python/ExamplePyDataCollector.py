@@ -16,7 +16,7 @@ def exception_handler(method):
 
 class ExamplePyDataCollector(pyeudaq.DataCollector):
     def __init__(self, name, runctrl):
-        pyeudaq.DataCollector.__init__(self, 'PyDataCollector', name, runctrl)
+        pyeudaq.DataCollector.__init__(self, name, runctrl)
         EUDAQ_INFO('New instance of ExamplePyDataCollector')
         self.dict_con_ev = {}
 

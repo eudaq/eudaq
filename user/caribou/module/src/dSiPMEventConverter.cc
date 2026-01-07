@@ -2,9 +2,9 @@
 
 #include "eudaq/Exception.hh"
 
-#include "dSiPMFrameDecoder.hpp"
-#include "dSiPMPixels.hpp"
-#include "log/log.hpp"
+#include <devices/dSiPM/dSiPMFrameDecoder.hpp>
+#include <devices/dSiPM/dSiPMPixels.hpp>
+#include <peary/log/log.hpp>
 
 #include <algorithm>
 #include <string>

@@ -1,9 +1,9 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
 
-#include "config/configuration.hpp"
-#include "device/DeviceManager.hpp"
-#include "log/log.hpp"
+#include "peary/config/configuration.hpp"
+#include "peary/device/DeviceManager.hpp"
+#include "peary/log/log.hpp"
 
 #include <thread>
 #include <vector>
@@ -125,7 +125,7 @@ void CaribouProducer::DoInitialise() {
   // Add secondary device if it is configured:
   if (ini->Has("secondary_device")) {
     std::string secondary = ini->Get("secondary_device", std::string());
-    auto sec_config = cfg.GetConfig(name_);
+    auto sec_config = cfg.GetConfig(secondary);
     size_t device_id2 = manager_->addDevice(secondary, sec_config);
     EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id2) +
                ", fetching secondary device...");
@@ -163,6 +163,15 @@ void CaribouProducer::DoConfigure() {
     auto key = config->Get("register_key", "");
     auto value = config->Get("register_value", 0);
     device_->setRegister(key, value);
+    EUDAQ_USER("Setting " + key + " = " + std::to_string(value));
+  }
+
+  // Set specified supply / bias DAC
+
+  if (config->Has("voltage_key") || config->Has("voltage_value")) {
+    auto key = config->Get("voltage_key", "");
+    auto value = config->Get("voltage_value", 0.0);
+    device_->setVoltage(key, value);
     EUDAQ_USER("Setting " + key + " = " + std::to_string(value));
   }
 

@@ -1,8 +1,8 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
-#include "CLICTDFrameDecoder.hpp"
-#include "CLICTDPixels.hpp"
-#include "log/log.hpp"
+#include <devices/CLICTD/CLICTDFrameDecoder.hpp>
+#include <devices/CLICTD/CLICTDPixels.hpp>
+#include <peary/log/log.hpp>
 
 using namespace eudaq;
 using namespace peary;

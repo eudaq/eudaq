@@ -15,7 +15,7 @@ def exception_handler(method):
 
 class ExamplePyProducer(pyeudaq.Producer):
     def __init__(self, name, runctrl):
-        pyeudaq.Producer.__init__(self, 'PyProducer', name, runctrl)
+        pyeudaq.Producer.__init__(self, name, runctrl)
         self.is_running = 0
         EUDAQ_INFO('New instance of ExamplePyProducer')
 
