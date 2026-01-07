@@ -3,10 +3,11 @@
 #include "TGraph.h"
 #include "TH1D.h"
 #include "time.h"
-#include "utils/log.hpp"
+#include "log/log.hpp"
 #include <sstream>
 
 using namespace eudaq;
+using namespace peary::utils;
 
 namespace {
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
@@ -89,7 +90,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(
   } // configure
 
   // Data container:
-  caribou::pearyRawData rawdata;
+  pearyRawData rawdata;
 
   // internal containers
   uint64_t timestamp;
@@ -201,7 +202,7 @@ bool DSO9254AEvent2StdEventConverter::Converting(
 // return the vectors of waveform objects (size given by number of segments) for
 // each active channesl
 std::vector<std::vector<waveform>>
-DSO9254AEvent2StdEventConverter::read_data(caribou::pearyRawData &rawdata,
+DSO9254AEvent2StdEventConverter::read_data(pearyRawData &rawdata,
                                            int evt, uint64_t &block_position,
                                            int n_channels) {
 

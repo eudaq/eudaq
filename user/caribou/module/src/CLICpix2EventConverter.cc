@@ -1,10 +1,13 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
 #include <devices/CLICpix2/framedecoder/clicpix2_frameDecoder.hpp>
-#include <peary/utils/log.hpp>
+#include <peary/log/log.hpp>
 #include <devices/CLICpix2/clicpix2_pixels.hpp>
 
 using namespace eudaq;
+using namespace peary::device;
+using namespace peary::dut;
+using namespace peary::utils;
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
@@ -28,18 +31,18 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   // Prepare matrix decoder:
   static auto matrix_config = [counting, longcnt]() {
-    std::map<std::pair<uint8_t, uint8_t>, caribou::pixelConfig> matrix;
+    std::map<std::pair<uint8_t, uint8_t>, pixelConfig> matrix;
     for(uint8_t x = 0; x < 128; x++) {
       for(uint8_t y = 0; y < 128; y++) {
         // FIXME hard-coded matrix configuration for CLICpix2 - needs to be read from a configuration!
-        matrix[std::make_pair(y,x)] = caribou::pixelConfig(true, 3, counting, false, longcnt);
+        matrix[std::make_pair(y,x)] = pixelConfig(true, 3, counting, false, longcnt);
       }
     }
     return matrix;
   };
 
   static auto matrix = matrix_config();
-  static caribou::clicpix2_frameDecoder decoder(comp, sp_comp, matrix);
+  static clicpix2_frameDecoder decoder(comp, sp_comp, matrix);
   // No event
   if(!ev) {
     return false;
@@ -161,7 +164,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
 
   plane.SetSizeZS(128, 128, 0);
   for(const auto& px : data) {
-    auto cp2_pixel = dynamic_cast<caribou::pixelReadout*>(px.second.get());
+    auto cp2_pixel = dynamic_cast<pixelReadout*>(px.second.get());
     int col = px.first.first;
     int row = px.first.second;
 
@@ -176,7 +179,7 @@ bool CLICpix2Event2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Stan
       if(tot < discard_tot_below) {
         continue;
       }
-    } catch(caribou::DataException&) {
+    } catch(DataTakingError&) {
       // Set ToT to one if not defined.
       tot = 1;
     }
