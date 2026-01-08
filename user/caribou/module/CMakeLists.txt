@@ -16,7 +16,7 @@ endif()
 
 ADD_LIBRARY(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} PUBLIC ${EUDAQ_CORE_LIBRARY})
-target_link_libraries(${EUDAQ_MODULE} PRIVATE Peary::peary Peary::devices)
+target_link_libraries(${EUDAQ_MODULE} PRIVATE Caribou::peary Caribou::devices)
 
 IF(ROOT_FOUND)
   TARGET_LINK_LIBRARIES(${EUDAQ_MODULE} PUBLIC ${ROOT_LIBRARIES})
