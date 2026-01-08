@@ -251,7 +251,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       if(tot < discard_tot_below) {
         continue;
       }
-    } catch(DataTakingError&) {
+    } catch(DataAcquisitionError&) {
       // Set ToT to one if not defined.
       tot = 1;
     }
