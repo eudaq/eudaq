@@ -118,7 +118,7 @@ bool H2MEvent2StdEventConverter::Converting(
   try{
     frame = decoder.decodeFrame<uint32_t>(rawdata, acq_mode);
   }
-  catch(DataTakingError&){
+  catch(DataAcquisitionError&){
     EUDAQ_ERROR("H2M decoder failed!");
     EUDAQ_ERROR("Length of rawdata (should be 262): " +to_string(rawdata.size()));
     return false;
