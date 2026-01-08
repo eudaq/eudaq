@@ -49,16 +49,16 @@ jobs:
         echo "installing libusb - tlu 1 requirement"
         brew install libusb-compat
         brew install libusb
-        #echo "installing ipbus - tlu 2 requirement"
-        #brew install erlang boost pugixml python@3.12 rsyslog
-        #echo "installing ipbus"
-        #mkdir -p $GITHUB_WORKSPACE/eudaq_dependencies/ipbus/
-        #cd $GITHUB_WORKSPACE/eudaq_dependencies/ipbus/
-        #git clone --depth=1 -b v2.8.13 --recurse-submodules https://github.com/ipbus/ipbus-software.git
-        #cd ipbus-software
-        #mkdir -p $GITHUB_WORKSPACE/extern/
-        #make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC"
-        #make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC"
+        # echo "installing ipbus - tlu 2 requirement"
+        # brew install erlang boost pugixml python@3.12 rsyslog
+        # echo "installing ipbus"
+        # mkdir -p $GITHUB_WORKSPACE/eudaq_dependencies/ipbus/
+        # cd $GITHUB_WORKSPACE/eudaq_dependencies/ipbus/
+        # git clone --depth=1 -b v2.8.13 --recurse-submodules https://github.com/ipbus/ipbus-software.git
+        # cd ipbus-software
+        # mkdir -p $GITHUB_WORKSPACE/extern/
+        # make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC"
+        # make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC"
 
     - name: install cmspixel dependencies
       run: |
@@ -66,15 +66,15 @@ jobs:
         brew install libusb-compat libusb libftdi
         mkdir -p $GITHUB_WORKSPACE/eudaq_dependencies
         cd $GITHUB_WORKSPACE/eudaq_dependencies
-#        git clone https://github.com/simonspa/pxar.git
-#        cd pxar
-#        git checkout testbeam-2016
-#        mkdir build
-#        cd build
-#        cmake -DBUILD_pxarui=OFF ..
-#        make install
-#        ls $GITHUB_WORKSPACE/eudaq_dependencies/pxar
-#        echo "PXARPATH=$GITHUB_WORKSPACE/eudaq_dependencies/pxar" >> "$GITHUB_ENV"
+        # git clone https://github.com/simonspa/pxar.git
+        # cd pxar
+        # git checkout testbeam-2016
+        # mkdir build
+        # cd build
+        # cmake -DBUILD_pxarui=OFF ..
+        # make install
+        # ls $GITHUB_WORKSPACE/eudaq_dependencies/pxar
+        # echo "PXARPATH=$GITHUB_WORKSPACE/eudaq_dependencies/pxar" >> "$GITHUB_ENV"
         echo "pxar not installed as no longer compatible with moden cmake"
 
     - name: install tbscDESY dependencies
