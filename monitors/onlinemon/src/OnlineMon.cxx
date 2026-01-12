@@ -1,5 +1,6 @@
 #ifdef WIN32
 #include <Windows4Root.h>
+#define NOMINMAX
 #endif
 
 // ROOT includes

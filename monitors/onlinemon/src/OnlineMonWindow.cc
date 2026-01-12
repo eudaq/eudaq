@@ -22,6 +22,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef WIN32
+#define NOMINMAX
+#endif
+
 #ifndef S_ISDIR
 #define S_ISDIR(mode) (((mode)&S_IFMT) == S_IFDIR)
 #endif
