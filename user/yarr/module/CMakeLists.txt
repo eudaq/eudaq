@@ -12,7 +12,7 @@ set(JSONCONS_BUILD_TESTS OFF CACHE INTERNAL "")
 include(FetchContent)
 FetchContent_Declare(extern_jsoncons
 GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
-GIT_TAG v0.176.0
+GIT_TAG v1.5.0
 GIT_SHALLOW 1
 )
 FetchContent_MakeAvailable(extern_jsoncons)
