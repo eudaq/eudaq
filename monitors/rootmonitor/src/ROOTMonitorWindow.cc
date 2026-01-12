@@ -15,6 +15,7 @@
 #include "TH2.h"
 #include "TMultiGraph.h"
 
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <sstream>
