@@ -70,7 +70,7 @@ jobs:
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
         export CERN_ROOT_DOWNLOAD_NAME=root_v6.38.00.source.tar.gz
-        wget -nv https://root.cern/download/$CERN_ROOT_DOWNLOAD_NAME
+        wget -nv https://github.com/root-project/root/releases/download/v6-38-00/$CERN_ROOT_DOWNLOAD_NAME
         mkdir root_source
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME -C ./root_source --strip-components=1
         rm -f $CERN_ROOT_DOWNLOAD_NAME
