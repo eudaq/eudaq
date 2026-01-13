@@ -16,6 +16,10 @@ root_generate_dictionary(${THISMON}_ROOT include/OnlineMonWindow.hh)
 aux_source_directory(src THISMON_SRC)
 add_executable(${THISMON} ${THISMON_SRC} ${THISMON_DICT_CXX})
 
+target_compile_definitions(${THISMON} PRIVATE
+  $<$<PLATFORM_ID:Windows>:NOMINMAX;WIN32_LEAN_AND_MEAN>
+)
+
 target_link_libraries(${THISMON} ${EUDAQ_CORE_LIBRARY} ROOT::Core ROOT::Gui ROOT::Hist)
 target_include_directories(${THISMON} PRIVATE . include)
 
