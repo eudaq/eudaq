@@ -97,6 +97,8 @@ public:
   bool is_ITKPIXV2;
   bool is_RD53BQUAD;
   bool is_ITKPIXV2QUAD;
+  bool is_RD53BTRIPLETLINEAR;
+  bool is_ITKPIXV2TRIPLETLINEAR;   
   bool is_UNKNOWN;
 
 private:

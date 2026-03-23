@@ -234,6 +234,20 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1,
 			width = 800;
 			height = 768;
 			local_plane_type = "ITKPIXV2QUAD";
+		} else if ((m_FrontEndType.at(prodID) == "Rd53b")
+				&& (m_module_size_by_module_index[prodID][currentPlaneIndex]
+						== "ITk_triplet_linear")) {
+			width = 1200;
+			height = 384;
+			local_plane_type = "RD53BTRIPLETLINEAR";
+		} else if ((m_FrontEndType.at(prodID) == "Itkpixv2")
+				&& (m_module_size_by_module_index[prodID][currentPlaneIndex]
+						== "ITk_triplet_linear")) {
+			width = 1200;
+			height = 384;
+			local_plane_type = "ITKPIXV2TRIPLETLINEAR";
+		} else {
+			std::cout << "undefined front end type and module type combination" << std::endl;
 		}
 		;
 		unsigned int local_id =
@@ -357,6 +371,33 @@ bool YarrRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1,
 								|| m_FrontEndType.at(prodID) == "Itkpixv2")) {
 					standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixelHelper(
 							hit.col - 1, hit.row - 1, hit.tot, l1id*25000, false, l1id);
+				} else if ((m_chip_info_by_uid[prodID][block_n].moduleType
+						== "ITk_triplet_linear")
+						&& (m_FrontEndType.at(prodID) == "Rd53b"
+								|| m_FrontEndType.at(prodID) == "Itkpixv2")) {
+					uint16_t transformed_col;
+					uint16_t transformed_row;
+					switch (m_chip_info_by_uid[prodID][block_n].chipLocationOnModule) {
+					case 3:
+						transformed_col = hit.col;
+						transformed_row = hit.row;
+						break;
+					case 2:
+						transformed_col = hit.col + 400;
+						transformed_row = hit.row;
+						break;
+					case 1:
+						transformed_col = hit.col + 2 * 400;
+						transformed_row = hit.row;
+						break;
+					default:
+						break;
+					}
+					;
+					standard_plane_by_module_index[m_chip_info_by_uid[prodID][block_n].internalModuleIndex].PushPixelHelper(
+							transformed_col - 1, transformed_row - 1, hit.tot,
+							l1id*25000, false, l1id);
+
 				} else {
 					std::cout << "undefined module type" << std::endl;
 					return false;
