@@ -21,6 +21,7 @@ target_compile_definitions(${THISMON} PRIVATE
 )
 
 target_link_libraries(${THISMON} ${EUDAQ_CORE_LIBRARY} ROOT::Core ROOT::Gui ROOT::Hist)
+set_target_properties(${THISMON} PROPERTIES ENABLE_EXPORTS true)
 target_include_directories(${THISMON} PRIVATE . include)
 
 install(TARGETS ${THISMON}
