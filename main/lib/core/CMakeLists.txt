@@ -47,7 +47,7 @@ IF(ROOT_FOUND)
     COMPILE_FLAGS  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:"-Wno-unused-function -Wno-overlength-strings -Wno-zero-as-null-pointer-constant -w -I${CMAKE_CURRENT_SOURCE_DIR}">
     )
 
-  TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} ROOT::Core)
+  TARGET_LINK_LIBRARIES(${EUDAQ_CORE_LIBRARY} PUBLIC ROOT::Core)
 
   # Also install the dictionary objects
   INSTALL(FILES
@@ -66,7 +66,7 @@ endif()
 configure_file(src/ModuleManager.cc.in ModuleManager.cc @ONLY)
 
 list(APPEND ADDITIONAL_LIBRARIES ${CMAKE_DL_LIBS})
-target_link_libraries(${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+target_link_libraries(${EUDAQ_CORE_LIBRARY} PUBLIC ${EUDAQ_THREADS_LIB} PRIVATE ${ADDITIONAL_LIBRARIES})
 target_include_directories(${EUDAQ_CORE_LIBRARY} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
 
 install(TARGETS ${EUDAQ_CORE_LIBRARY}
