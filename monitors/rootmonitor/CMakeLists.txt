@@ -12,20 +12,20 @@ message(STATUS "monitor/ROOTMonitor is to be built (EUDAQ_BUILD_ONLINE_ROOT_MONI
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_ROOT_MONITOR_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq root monitoring library")
 
-add_library(rootmonitor SHARED 
-  src/ROOTMonitor.cc  
+add_library(rootmonitor SHARED
+  src/ROOTMonitor.cc
   src/ROOTMonitorWindow.cc)
 
-target_include_directories(${EUDAQ_COMPONENT} 
-  PUBLIC 
+target_include_directories(${EUDAQ_COMPONENT}
+  PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(rootmonitor ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ROOT::Core ROOT::Gui ROOT::Hist ROOT::RIO)
+target_link_libraries(rootmonitor PUBLIC ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ROOT::Core ROOT::Gui ROOT::Hist ROOT::RIO)
 
 root_generate_dictionary(rootmonitorDict eudaq/ROOTMonitor.hh eudaq/ROOTMonitorWindow.hh
   LINKDEF include/LinkDef.h
     MODULE
-    rootmonitor        
+    rootmonitor
   )
 
 install(TARGETS ${EUDAQ_COMPONENT}
