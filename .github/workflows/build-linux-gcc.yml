@@ -28,7 +28,7 @@ jobs:
     name: eudaq_full_build-ubuntu-latest-${{matrix.compiler}}-cxx_standard-${{matrix.cpp_standard}}-qt-${{matrix.qt_version}}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: update repo
       run: |

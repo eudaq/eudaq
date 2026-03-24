@@ -38,7 +38,7 @@ jobs:
     name: eudaq_full_build-windows-latest-${{matrix.compiler}}-${{matrix.arch}}-qt-${{matrix.qt_version}}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - uses: ilammy/msvc-dev-cmd@v1
       with:
