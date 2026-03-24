@@ -60,7 +60,7 @@ jobs:
 
     - name: restore CERN ROOT from cache
       id: root_restore_from_cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: ~/eudaq_dependencies/root
         key: root-v6.38.00-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
@@ -87,7 +87,7 @@ jobs:
         
     - name: cache CERN ROOT
       id: root_save_to_cache
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       with:
         path: |
