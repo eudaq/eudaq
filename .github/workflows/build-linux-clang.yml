@@ -20,7 +20,7 @@ jobs:
       matrix:
         qt_version: [5, 6]
         compiler: [clang-latest]
-        cpp_standard: [17, 20]
+        cpp_standard: [17, 20, 23]
         
     name: eudaq_full_build-ubuntu-latest-${{matrix.compiler}}-cxx_standard-${{matrix.cpp_standard}}-qt-${{matrix.qt_version}}
 
