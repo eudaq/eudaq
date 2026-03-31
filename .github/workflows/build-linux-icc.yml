@@ -22,12 +22,12 @@ jobs:
     strategy:
       matrix:
         compiler: [icc-latest]
-        cpp_standard: [17, 20]
+        cpp_standard: [17, 20, 23]
         
     name: eudaq_core_build-ubuntu-latest-${{matrix.compiler}}-cxx_standard-${{matrix.cpp_standard}}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: update repo
       run: |
@@ -60,18 +60,18 @@ jobs:
         
     - name: restore CERN ROOT from cache
       id: root_restore_from_cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: ~/eudaq_dependencies/root
-        key: root-v6.34.06-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.38.04-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
         
     - name: build CERN ROOT
       id: root_build
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
         source /opt/intel/oneapi/setvars.sh
-        export CERN_ROOT_DOWNLOAD_NAME=root_v6.34.06.source.tar.gz
-        wget https://github.com/root-project/root/releases/download/v6-34-06/root_v6.34.06.source.tar.gz
+        export CERN_ROOT_DOWNLOAD_NAME=root_v6.38.04.source.tar.gz
+        wget https://github.com/root-project/root/releases/download/v6-38-04/root_v6.38.04.source.tar.gz
         mkdir root_source
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME -C ./root_source --strip-components=1
         rm -f $CERN_ROOT_DOWNLOAD_NAME
@@ -100,7 +100,7 @@ jobs:
         
     - name: cache CERN ROOT
       id: root_save_to_cache
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       with:
         path: |
