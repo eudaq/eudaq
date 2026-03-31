@@ -3,6 +3,7 @@
 #include <mutex>
 #include <deque>
 #include <map>
+#include <limits>
 
 namespace eudaq {
   class TimestampSyncDataCollector :public DataCollector{
@@ -119,7 +120,7 @@ namespace eudaq {
     }
     
     while(ready_c == m_event_ready.size()){
-      uint64_t ts_next_end = -1;
+      uint64_t ts_next_end = std::numeric_limits<uint64_t>::max();
       uint64_t ts_next_beg = ts_next_end - 1;
       auto ev_wrap = Event::MakeUnique(GetFullName());
       ev_wrap->SetFlagPacket();
