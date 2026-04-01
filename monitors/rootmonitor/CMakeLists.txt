@@ -10,7 +10,7 @@ endif()
 message(STATUS "monitor/ROOTMonitor is to be built (EUDAQ_BUILD_ONLINE_ROOT_MONITOR=ON)")
 
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
-set(EUDAQ_ROOT_MONITOR_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq root monitoring library")
+set(EUDAQ_ROOT_MONITOR_LIBRARY ${EUDAQ_COMPONENT})
 
 add_library(${EUDAQ_COMPONENT} SHARED
   src/ROOTMonitor.cc
