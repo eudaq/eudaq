@@ -1,6 +1,6 @@
 # File: UseLATEX.cmake
 # CMAKE commands to actually use the LaTeX compiler
-# Version: 2.8.1
+# Version: 2.8.3
 # Author: Kenneth Moreland <morelandkd@ornl.gov>
 #
 # Copyright 2004, 2015 Sandia Corporation.
@@ -123,6 +123,11 @@
 #       latex and pdflatex commands, respectively.
 #
 # History:
+#
+# 2.8.3 Add *.bbx files to the list of config files copied to the build
+#       directory.
+#
+# 2.8.2 Fix line endings for SyncTeX on Windows. (Thanks to Michael Haider.)
 #
 # 2.8.1 Replace use of the deprecated exec_program with execute_process.
 #
@@ -773,6 +778,9 @@ function(latex_correct_synctex)
 
     message("Writing synctex file.")
     file(WRITE ${synctex_file} "${synctex_data}")
+
+    # Ensure `LF` line endings, as required by SyncTeX
+    configure_file(${synctex_file} ${synctex_file} @ONLY NEWLINE_STYLE LF)
 
     message("Compressing synctex file.")
     execute_process(COMMAND
@@ -2068,6 +2076,7 @@ function(add_latex_document latex_main_input)
     endforeach(input)
 
     latex_copy_globbed_files(${CMAKE_CURRENT_SOURCE_DIR}/*.cls ${output_dir})
+    latex_copy_globbed_files(${CMAKE_CURRENT_SOURCE_DIR}/*.bbx ${output_dir})
     latex_copy_globbed_files(${CMAKE_CURRENT_SOURCE_DIR}/*.bst ${output_dir})
     latex_copy_globbed_files(${CMAKE_CURRENT_SOURCE_DIR}/*.clo ${output_dir})
     latex_copy_globbed_files(${CMAKE_CURRENT_SOURCE_DIR}/*.sty ${output_dir})
