@@ -3,6 +3,7 @@ EUDAQ version 2
 
 [![linux with clang](https://github.com/eudaq/eudaq/actions/workflows/build-linux-clang.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-clang.yml)
 [![linux with gcc](https://github.com/eudaq/eudaq/actions/workflows/build-linux-gcc.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-gcc.yml)
+[![linux with icc](https://github.com/eudaq/eudaq/actions/workflows/build-linux-icc.yml/badge.svg)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-icc.yml)
 [![macos with apple clang](https://github.com/eudaq/eudaq/actions/workflows/build-macos-clang.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-macos-clang.yml)
 [![windows with visual studio](https://github.com/eudaq/eudaq/actions/workflows/build-windows-vs.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-windows-vs.yml)
 
