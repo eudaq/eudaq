@@ -4,12 +4,13 @@
 
 #include <devices/dSiPM/dSiPMFrameDecoder.hpp>
 #include <devices/dSiPM/dSiPMPixels.hpp>
-#include <peary/utils/log.hpp>
+#include <peary/log/log.hpp>
 
 #include <string>
 #include <algorithm>
 
 using namespace eudaq;
+using namespace peary::dut;
 
 namespace {
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::Register<
@@ -77,7 +78,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
   }
 
   // get an instance of the frame decoder
-  static caribou::dSiPMFrameDecoder decoder;
+  static dSiPMFrameDecoder decoder;
 
   // Data container:
   std::vector<uint32_t> rawdata;
@@ -143,7 +144,7 @@ bool dSiPMEvent2StdEventConverter::Converting(
     auto row = pixel.first.second;
     auto quad = getQuadrant(col, row);
     // cast into right type of pixel and retrieve stored data
-    auto ds_pix = dynamic_cast<caribou::dsipm_pixel *>(pixel.second.get());
+    auto ds_pix = dynamic_cast<dsipm_pixel *>(pixel.second.get());
     // binary hit information
     auto hitBit = ds_pix->getBit();
     // valid bit

@@ -2,13 +2,16 @@
 #include "eudaq/Configuration.hh"
 
 #include "peary/device/DeviceManager.hpp"
-#include "peary/utils/configuration.hpp"
-#include "peary/utils/log.hpp"
+#include "peary/config/configuration.hpp"
+#include "peary/log/log.hpp"
 
 #include <vector>
 #include <thread>
 
-using namespace caribou;
+using namespace peary::config;
+using namespace peary::device;
+using namespace peary::log;
+using namespace peary::utils;
 
 class CaribouProducer : public eudaq::Producer {
 public:
@@ -90,14 +93,14 @@ void CaribouProducer::DoInitialise() {
     LogLevel log_level = Log::getLevelFromString(level);
     Log::setReportingLevel(log_level);
     LOG(INFO) << "Set verbosity level to \"" << std::string(level) << "\"";
-  } catch(std::invalid_argument& e) {
+  } catch(InvalidArgumentError& e) {
     LOG(ERROR) << "Invalid verbosity level \"" << std::string(level) << "\", ignoring.";
   }
 
   level_ = Log::getReportingLevel();
 
   // Open configuration file and create object:
-  caribou::ConfigParser cfg;
+  ConfigParser cfg;
   auto confname = ini->Get("config_file", "");
   std::ifstream file(confname);
   EUDAQ_INFO("Attempting to use initial device configuration \"" + confname + "\"");
@@ -105,7 +108,7 @@ void CaribouProducer::DoInitialise() {
     LOG(ERROR) << "No configuration file provided.";
     EUDAQ_ERROR("No Caribou configuration file provided.");
   } else {
-    cfg = caribou::ConfigParser(file);
+    cfg = ConfigParser(file);
   }
 
   // Select section from the configuration file relevant for this device:
@@ -175,7 +178,7 @@ void CaribouProducer::DoConfigure() {
 
   if(!adc_signal_.empty()) {
     // Try it out directly to catch misconfiugration
-    auto adc_value = device_->getADC(adc_signal_);
+    auto adc_value = device_->getVoltage(adc_signal_);
     EUDAQ_USER("Will probe ADC signal \"" + adc_signal_ + "\" every " + std::to_string(adc_freq_) + " events");
   }
 
@@ -256,7 +259,7 @@ void CaribouProducer::RunLoop() {
         // Query ADC if wanted:
         if(m_ev%adc_freq_ == 0) {
           if(!adc_signal_.empty()) {
-            auto adc_value = device_->getADC(adc_signal_);
+            auto adc_value = device_->getVoltage(adc_signal_);
             LOG(DEBUG) << "Reading ADC: " << adc_value << "V";
             EUDAQ_USER("ADC reading: " + adc_signal_ + " =  " + std::to_string(adc_value));
             event->SetTag(adc_signal_, adc_value);
@@ -286,13 +289,11 @@ void CaribouProducer::RunLoop() {
       }
 
       LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev;
-    } catch(caribou::NoDataAvailable&) {
-        continue;
-    } catch(caribou::DataException& e) {
+    } catch(DataAcquisitionError& e) {
       // Retrieval failed, retry once more before aborting:
       EUDAQ_WARN(std::string(e.what()) + ", skipping data packet");
       continue;
-    } catch(caribou::caribouException& e) {
+    } catch(Exception& e) {
       EUDAQ_ERROR(e.what());
       break;
     }
