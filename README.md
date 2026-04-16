@@ -1,11 +1,24 @@
+```
+
+git clone -b v3.0.0 https://github.com/jdamgov/eudaq_tb2024.git
+mkdir eudaq_tb2024/build
+cd eudaq_tb2024/build
+cmake -D EUDAQ_BUILD_ONLINE_ROOT_MONITOR=ON -D EUDAQ_LIBRARY_BUILD_TTREE=ON ..
+make -j 10 install
+
+```
+
+Comunication to a Scope requires VISA
+```
+apt install ni-visa
+apt install ni-visa-devel
+```
+
 EUDAQ version 2
 =====
 
-[![linux with clang](https://github.com/eudaq/eudaq/actions/workflows/build-linux-clang.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-clang.yml)
-[![linux with gcc](https://github.com/eudaq/eudaq/actions/workflows/build-linux-gcc.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-gcc.yml)
-[![linux with icc](https://github.com/eudaq/eudaq/actions/workflows/build-linux-icc.yml/badge.svg)](https://github.com/eudaq/eudaq/actions/workflows/build-linux-icc.yml)
-[![macos with apple clang](https://github.com/eudaq/eudaq/actions/workflows/build-macos-clang.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-macos-clang.yml)
-[![windows with visual studio](https://github.com/eudaq/eudaq/actions/workflows/build-windows-vs.yml/badge.svg?branch=master)](https://github.com/eudaq/eudaq/actions/workflows/build-windows-vs.yml)
+![Github actions](https://github.com/eudaq/eudaq/actions/workflows/cmake.yml/badge.svg)
+[![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg/branch/master?svg=true)](https://ci.appveyor.com/project/eudaq/eudaq/branch/master)
 
 EUDAQ is a Generic Multi-platform Data Acquisition Framework.
 Version 2 comes with more flexible cross connectivity between components, multiple data collectors, and a cleaner seperation between core functionalities and user modules. 
@@ -45,7 +58,9 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 ## Prerequisites
 
 ### For the core Library, Executables and GUI
-EUDAQ requires a C++14 compliant compiler and a Qt version 5 or higher to build [GUIs](gui/README.md). CERN ROOT 6 is required for the Online Monitor GUI and some other parts.
+EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build [GUIs](gui/README.md).
+We recommend a gcc version 4.9 or later.
+ROOT 6 is required for the Online Monitor GUI.
 
 ### User projects and modules
 - Dummy: Skeletons to add user modules - not to be changed. Required by
@@ -171,12 +186,6 @@ Play around with Init, Configure, Start, Stop, Re-Start or Re-Configure and Star
 For Initialising and Configuring you have to Load to set the path to the the ini or conf file:
 - ../eudaq/user/example/misc/Ex0.ini
 - ../eudaq/user/example/misc/Ex0.conf
-
-As an example, the config files used during 2S module beam tests at DESY are given in: 
-- ../eudaq/user/cms-phase2/misc/cmsph2_beam.ini
-- ../eudaq/user/cms-phase2/misc/cmsph2_beam.conf
-- ../eudaq/user/cms-phase2/misc/thresholdscan.scan
-To start the RunControl and all necessary modules to run the beam test at DESY, the STARTRUN.sh script was used which can be found at the same location. 
 
 A description for operating the EUDET-type beam telescopes is under construction:
 https://telescopes.desy.de/User_manual
