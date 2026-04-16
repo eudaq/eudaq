@@ -17,3 +17,5 @@ include_directories(${EUDAQ_INCLUDE_DIRS})
 #-- Add component folder
 add_subdirectory(fers) 
 add_subdirectory(xdc)
+add_subdirectory(rc)
+add_subdirectory(dc)
