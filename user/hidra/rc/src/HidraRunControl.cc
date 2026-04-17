@@ -9,14 +9,14 @@ public:
   void Exec() override;
   static const uint32_t m_id_factory = eudaq::cstr2hash("HidraRunControl");
 
-  //void DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st) override;
+  void DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st) override;
 
 private:
   uint32_t m_stop_second;
   bool m_flag_running;
   std::chrono::steady_clock::time_point m_tp_start_run;
-  //std::map<std::string, std::string> module_state; 
-  //std::mutex mtx;
+  std::map<std::string, std::string> module_state; 
+  std::mutex mtx;
 };
 
 namespace{
@@ -55,21 +55,18 @@ void HidraRunControl::Exec(){
       if(du_ts.count()/1000000000>m_stop_second)
 	StopRun();
     }
-    /*for(auto &p : module_state) {
+    for(auto &p : module_state) {
 
 	    std::lock_guard<std::mutex> lock(mtx);
-	    std::cout << "[DEVICE]: " << p.first << " [STATUS]: " << p << std::endl;
+	    std::cout << "[DEVICE]: " << p.first << " [STATUS]: " << p.second << std::endl;
     
-    }*/	    
+    }	    
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 }
 
-//void HidraRunControl::DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st){
-//return; } 
-/*
+void HidraRunControl::DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st){ 
 	std::lock_guard<std::mutex> lock(mtx);
-	module_state[con->GetName()] = st->GetStatus();
-
-}*/
+	module_state[con->GetName()] = st->GetState();
+}
 

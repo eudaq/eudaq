@@ -17,12 +17,17 @@ cmake_config() {
 
 # Helper per buildare il codice senza dover tornare a mano in build.
 # Si sposta nella cartella eudaq_hidra/build, esegue make -j 10, e ritorna nella cartella di esecuzione
-build_hidra() {
+
+hidra_build() {
     local original_dir=$(pwd)
     cd "$REPO_ROOT/build"
     make -j 10
     make install -j 10
     cd "$original_dir"
+}
+
+build_hidra() {
+    hidra_build
 }
 
 # Helper per pulire la cartella di build e relative altre cartelle (lib, etc.).

@@ -19,6 +19,7 @@ public:
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("HidraDataCollector");
 
+  uint64_t m_max_events;
 
   void DoInitialise() override {
     auto ini = GetInitConfiguration();
@@ -34,7 +35,7 @@ public:
       EUDAQ_WARN("HidraDataCollector: missing run configuration");
     }
     EUDAQ_INFO("HidraDataCollector configured");
-    //m_max_events = conf->Get("EX0_MAX_EVENTS", 0);
+    m_max_events = conf->Get("EX0_MAX_EVENTS", 0);
   }
 
   void DoStartRun() override {
@@ -87,14 +88,20 @@ public:
     }
    
     //To increment events and stop when maximum is reached 
-    /*m_evt_c++;
+    uint32_t xdc_evt_num = ev->GetEventN();
 
-    if (m_max_events > 0 && m_evt_c >= m_max_events) {
+    if (m_max_events > 0 && xdc_evt_num >= m_max_events) {
     
-	    EUDAQ_INFO("Max events reached -> stopping run");
+	    EUDAQ_INFO("Max events reached. Sending STOP request");
 
-            SendCommand(eudaq::Command::StopRun());
-    }*/
+	    // TODO: shall we lock the push thread?
+	    // TOOD: shall we do smth like: while (cmd_socket<=0) { printf("cmd_send():: Wait for connection sock=%d\n",cmd_socket); sleep(1);}
+
+	    // TOOD: how to implement this?
+	    //eudaq::CommandReceiver::SetStatus(eudaq::Status::State(LVL_OK), "STOP_REQUEST");
+	    //eudaq::CommandReceiver::SendStatus();
+	    //SendCommand(eudaq::Command::StopRun());
+    }
 
     // Optional filter:
     // if (desc != "CAENQTPRaw") return;
@@ -102,8 +109,6 @@ public:
     // Forward to the standard EUDAQ DataCollector writing path.
     WriteEvent(std::move(ev));
   }
-
-  //uint64_t m_max_events;
 
 };
 namespace {
