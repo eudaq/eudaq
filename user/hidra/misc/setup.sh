@@ -11,7 +11,7 @@ cmake_config() {
     cd "$REPO_ROOT"
     mkdir -p build
     cd build
-    cmake -DEUDAQ_BUILD_ONLINE_ROOT_MONITOR=ON -DEUDAQ_LIBRARY_BUILD_TTREE=ON -DUSER_HIDRA_BUILD=ON --fresh ..
+    cmake -DEUDAQ_BUILD_ONLINE_ROOT_MONITOR=OFF -DEUDAQ_LIBRARY_BUILD_TTREE=ON -DUSER_HIDRA_BUILD=ON --fresh ..
     cd "$original_dir"
 }
 
@@ -21,6 +21,7 @@ build_hidra() {
     local original_dir=$(pwd)
     cd "$REPO_ROOT/build"
     make -j 10
+    make install -j 10
     cd "$original_dir"
 }
 

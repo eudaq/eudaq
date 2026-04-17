@@ -1,10 +1,10 @@
 ##-- OPT: Compile FERS?
-option(USER_FERS_BUILD "build FERS" OFF)
-if(NOT USER_FERS_BUILD)
-    message(STATUS "user/fers is NOT to be built (USER_FERS_BUILD=OFF)")
-  return()
-endif()
-message(STATUS "user/fers is to be built (USER_FERS_BUILD=ON)")
+#option(USER_FERS_BUILD "build FERS" OFF)
+#if(NOT USER_FERS_BUILD)
+#message(STATUS "user/fers is NOT to be built (USER_FERS_BUILD=OFF)")
+# return()
+#endif()
+#message(STATUS "user/fers is to be built (USER_FERS_BUILD=ON)")
 
 ##-- Global Preparation:
 #-- EUDAQ_MODULE needed for compilation at lower level CMakeLists

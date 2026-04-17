@@ -1,15 +1,15 @@
 #include "eudaq/RunControl.hh"
 
-class PaviaRunControl: public eudaq::RunControl{
+class HidraRunControl: public eudaq::RunControl{
 public:
-  PaviaRunControl(const std::string & listenaddress);
+  HidraRunControl(const std::string & listenaddress);
   void Configure() override;
   void StartRun() override;
   void StopRun() override;
   void Exec() override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("PaviaRunControl");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("HidraRunControl");
 
-  void DoStatus() override;
+  //void DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st) override;
 
 private:
   uint32_t m_stop_second;
@@ -21,32 +21,32 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::RunControl>::
-    Register<PaviaRunControl, const std::string&>(PaviaRunControl::m_id_factory);
+    Register<HidraRunControl, const std::string&>(HidraRunControl::m_id_factory);
 }
 
-PaviaRunControl::PaviaRunControl(const std::string & listenaddress)
+HidraRunControl::HidraRunControl(const std::string & listenaddress)
   :RunControl(listenaddress){
   m_flag_running = false;
 }
 
-void PaviaRunControl::StartRun(){
+void HidraRunControl::StartRun(){
   RunControl::StartRun();
   m_tp_start_run = std::chrono::steady_clock::now();
   m_flag_running = true;
 }
 
-void PaviaRunControl::StopRun(){
+void HidraRunControl::StopRun(){
   RunControl::StopRun();
   m_flag_running = false;
 }
 
-void PaviaRunControl::Configure(){
+void HidraRunControl::Configure(){
   auto conf = GetConfiguration();
   m_stop_second = conf->Get("EX0_STOP_RUN_AFTER_N_SECONDS", 0);
   RunControl::Configure();
 }
 
-void PaviaRunControl::Exec(){
+void HidraRunControl::Exec(){
   StartRunControl();
   while(IsActiveRunControl()){
     if(m_flag_running && m_stop_second){
@@ -65,8 +65,9 @@ void PaviaRunControl::Exec(){
   }
 }
 
-/*void PaviaRunControl::DoStatus(ConnectionSPC con, StatusSPC st){
-
+//void HidraRunControl::DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st){
+//return; } 
+/*
 	std::lock_guard<std::mutex> lock(mtx);
 	module_state[con->GetName()] = st->GetStatus();
 

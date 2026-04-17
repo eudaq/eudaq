@@ -10,52 +10,52 @@
 #include <string>
 #include <memory>
 
-class QTPDPaviaDataCollector : public eudaq::DataCollector {
+class HidraDataCollector : public eudaq::DataCollector {
 public:
-  QTPDPaviaDataCollector(const std::string &name, const std::string &runcontrol)
+  HidraDataCollector(const std::string &name, const std::string &runcontrol)
       : eudaq::DataCollector(name, runcontrol) {}
 
-  ~QTPDPaviaDataCollector() override = default;
+  ~HidraDataCollector() override = default;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("QTPDPaviaDataCollector");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("HidraDataCollector");
 
 
   void DoInitialise() override {
     auto ini = GetInitConfiguration();
     if (!ini) {
-      EUDAQ_WARN("QTPDPaviaDataCollector: missing init configuration");
+      EUDAQ_WARN("HidraDataCollector: missing init configuration");
     }
-    EUDAQ_INFO("QTPDPaviaDataCollector initialized");
+    EUDAQ_INFO("HidraDataCollector initialized");
   }
 
   void DoConfigure() override {
     auto conf = GetConfiguration();
     if (!conf) {
-      EUDAQ_WARN("QTPDPaviaDataCollector: missing run configuration");
+      EUDAQ_WARN("HidraDataCollector: missing run configuration");
     }
-    EUDAQ_INFO("QTPDPaviaDataCollector configured");
+    EUDAQ_INFO("HidraDataCollector configured");
     //m_max_events = conf->Get("EX0_MAX_EVENTS", 0);
   }
 
   void DoStartRun() override {
-    EUDAQ_INFO("QTPDPaviaDataCollector start run " + std::to_string(GetRunNumber()));
+    EUDAQ_INFO("HidraDataCollector start run " + std::to_string(GetRunNumber()));
   }
 
   void DoStopRun() override {
-    EUDAQ_INFO("QTPDPaviaDataCollector stop run " + std::to_string(GetRunNumber()));
+    EUDAQ_INFO("HidraDataCollector stop run " + std::to_string(GetRunNumber()));
   }
 
   void DoReset() override {
-    EUDAQ_INFO("QTPDPaviaDataCollector reset");
+    EUDAQ_INFO("HidraDataCollector reset");
   }
 
   void DoTerminate() override {
-    EUDAQ_INFO("QTPDPaviaDataCollector terminate");
+    EUDAQ_INFO("HidraDataCollector terminate");
   }
 
   void DoStatus() override {
     SetStatusTag("Status", "OK");
-    SetStatusMsg("QTPDPaviaDataCollector running");
+    SetStatusMsg("HidraDataCollector running");
   }
 
   void DoConnect(eudaq::ConnectionSPC id) override {
@@ -70,7 +70,7 @@ public:
 
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override {
     if (!ev) {
-      EUDAQ_WARN("QTPDPaviaDataCollector received null event");
+      EUDAQ_WARN("HidraDataCollector received null event");
       return;
     }
 
@@ -109,7 +109,7 @@ public:
 namespace {
   auto dummy0 =
     eudaq::Factory<eudaq::DataCollector>::
-	Register<QTPDPaviaDataCollector, const std::string&, const std::string&>
-	(QTPDPaviaDataCollector::m_id_factory);
+	Register<HidraDataCollector, const std::string&, const std::string&>
+	(HidraDataCollector::m_id_factory);
 
 }

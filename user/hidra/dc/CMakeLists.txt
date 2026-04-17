@@ -1,6 +1,6 @@
 include_directories(include /usr/include)
 link_directories(/usr/lib)
-aux_source_directory(src MODULE_SRC)
+aux_source_directory(src DC_SRC)
 
 # if(NOT EUDAQ_TTREE_LIBRARY)
 #   list(REMOVE_ITEM MODULE_SRC src/QTPProducerEvent2TTreeEventConverter.cc)
@@ -8,11 +8,12 @@ aux_source_directory(src MODULE_SRC)
 #   list(REMOVE_ITEM MODULE_SRC src/FERSProducerEvent2TTreeEventConverter.cc)
 # endif()
 
-add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_TTREE_LIBRARY} ${EUDAQ_ROOT_MONITOR_LIBRARY} )
+add_library(${EUDAQ_MODULE}_dc SHARED ${DC_SRC})
+target_link_libraries(${EUDAQ_MODULE}_dc ${EUDAQ_CORE_LIBRARY} ${EUDAQ_TTREE_LIBRARY} ${EUDAQ_ROOT_MONITOR_LIBRARY} )
 
 install(TARGETS
-  ${EUDAQ_MODULE}
+  ${EUDAQ_MODULE}_dc
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
+
