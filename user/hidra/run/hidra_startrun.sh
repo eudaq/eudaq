@@ -5,5 +5,5 @@ $BINPATH/euRun -n HidraRunControl &
 sleep 1
 $BINPATH/euCliCollector -n HidraDataCollector -t my_dc &
 sleep 1
-$BINPATH/euCliProducer -n QTPDPaviaProducer -t my_pd0 
+$BINPATH/euCliProducer -n HidraQTPDProducer -t my_pd0 
 
