@@ -98,9 +98,9 @@ public:
 	    // TOOD: shall we do smth like: while (cmd_socket<=0) { printf("cmd_send():: Wait for connection sock=%d\n",cmd_socket); sleep(1);}
 
 	    // TOOD: how to implement this?
-	    //eudaq::CommandReceiver::SetStatus(eudaq::Status::State(LVL_OK), "STOP_REQUEST");
+	    eudaq::CommandReceiver::SetStatus(eudaq::Status::STATE_STOPPED, "STOP_REQUEST");
 	    //eudaq::CommandReceiver::SendStatus();
-	    //SendCommand(eudaq::Command::StopRun());
+	    //eudaq::SendCommand(eudaq::Command::StopRun());
     }
 
     // Optional filter:
