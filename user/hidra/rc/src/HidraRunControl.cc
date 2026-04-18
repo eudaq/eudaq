@@ -1,3 +1,4 @@
+#include "Status.hh"
 #include "eudaq/RunControl.hh"
 
 class HidraRunControl: public eudaq::RunControl{
@@ -15,7 +16,7 @@ private:
   uint32_t m_stop_second;
   bool m_flag_running;
   std::chrono::steady_clock::time_point m_tp_start_run;
-  std::map<std::string, std::string> module_state; 
+  std::map<std::string, int> module_state; 
   std::mutex mtx;
 };
 
@@ -52,14 +53,16 @@ void HidraRunControl::Exec(){
     if(m_flag_running && m_stop_second){
       auto tp_now = std::chrono::steady_clock::now();
       std::chrono::nanoseconds du_ts(tp_now - m_tp_start_run);
-      if(du_ts.count()/1000000000>m_stop_second)
-	StopRun();
+      if(du_ts.count()/1000000000>m_stop_second) {
+	      StopRun();
+      }
     }
     for(auto &p : module_state) {
 
 	    std::lock_guard<std::mutex> lock(mtx);
 	    std::cout << "[DEVICE]: " << p.first << " [STATUS]: " << p.second << std::endl;
-    
+      if (p.second == eudaq::Status::STATE_STOPPED)
+        StopRun();
     }	    
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
