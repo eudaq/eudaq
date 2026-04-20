@@ -10,6 +10,9 @@
    - In the web browser go to pull request, select master as target branch and your branch as source and create the pull request
    - When request is ready to merge -----> merge it.
 
+## Tricks
+
+- List processes listening to a port: `lsof -i :44000`
 
 ## Data format
 
@@ -19,7 +22,7 @@ Decoder in [DRCalo/DreamDaqMon](https://github.com/DRCalo/DreamDaqMon)
 
 TB data in [cernbox](https://cernbox.cern.ch/s/H6yDF4TNRez6jsw), or `/eos/user/i/ideadr/TB2025_H8`.
 
-- **Event header**: 14 words, 32 bits each (in brackets fixed expected valuesd)
+- **Event header**: 14 words, 32 bits each: (in brackets fixed expected values)
  ```
  eventMarker (0xccaaffee) | eventNumber | spillNumber |
  headerSize (0xe) | trailerSize (0x1) |  dataSize | eventSize (=header+trailer+data) |
@@ -28,7 +31,7 @@ TB data in [cernbox](https://cernbox.cern.ch/s/H6yDF4TNRez6jsw), or `/eos/user/i
  sanityFlag | headerEndMarker (0xaccadead)
  ```
 - **VME modules data** CAEN data format (QDCs V792, V792N; TDCs V775, V775N)
-  - For each module: 1 header word + $n_chan$ data words + 1 trailer. 32 bits each word
+  - For each module: 1 header word + $n_{chan}$ data words + 1 trailer. 32 bits each word
 
 - **Event trailer**: 1 word, 32 bits
  ```

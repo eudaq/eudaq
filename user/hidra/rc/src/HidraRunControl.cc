@@ -60,7 +60,7 @@ void HidraRunControl::Exec(){
     for(auto &p : module_state) {
 
 	    std::lock_guard<std::mutex> lock(mtx);
-	    std::cout << "[DEVICE]: " << p.first << " [STATUS]: " << p.second << std::endl;
+	    EUDAQ_DEBUG("[DEVICE]: "+p.first+ " [STATUS]: " + std::to_string(p.second));
       if (p.second == eudaq::Status::STATE_STOPPED)
         StopRun();
     }	    
