@@ -19,7 +19,10 @@ public:
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("HidraDataCollector");
 
+private:
+  uint64_t m_event_count;
   uint64_t m_max_events;
+  bool m_stop_sent = false;
 
   void DoInitialise() override {
     auto ini = GetInitConfiguration();
@@ -27,6 +30,7 @@ public:
       EUDAQ_WARN("HidraDataCollector: missing init configuration");
     }
     EUDAQ_INFO("HidraDataCollector initialized");
+    m_event_count = 0;
   }
 
   void DoConfigure() override {
@@ -36,9 +40,13 @@ public:
     }
     EUDAQ_INFO("HidraDataCollector configured");
     m_max_events = conf->Get("EX0_MAX_EVENTS", 0);
+    if(m_max_events == 0) {
+	    EUDAQ_WARN("In hidra.config file: missing max event number initializzation");
+    }	    
   }
 
   void DoStartRun() override {
+    m_event_count = 0;
     EUDAQ_INFO("HidraDataCollector start run " + std::to_string(GetRunNumber()));
   }
 
@@ -82,35 +90,31 @@ public:
     } else if (ev->IsEORE()) {
       EUDAQ_INFO("Received EORE from " + id->GetName() + " type=" + desc);
     } else {
-      EUDAQ_DEBUG("Received event " + std::to_string(ev->GetEventN()) +
+	    if(!m_stop_sent && m_event_count < m_max_events){
+
+      
+		    EUDAQ_DEBUG("Received event " + std::to_string(ev->GetEventN()) +
                   " from " + id->GetName() +
                   " type=" + desc);
-    }
-   
-    //To increment events and stop when maximum is reached 
-    uint32_t xdc_evt_num = ev->GetEventN();
+		    ++m_event_count;
+		    std::cout << "Event number: " << m_event_count << std::endl;
+		    WriteEvent(std::move(ev));
+	    }
 
-    if (m_max_events > 0 && xdc_evt_num >= m_max_events) {
-    
-	    EUDAQ_INFO("Max events reached. Sending STOP request");
+	    else if (!m_stop_sent && m_event_count >= m_max_events) {
+	  
+		    m_stop_sent = true;
 
-	    // TODO: shall we lock the push thread?
-	    // TOOD: shall we do smth like: while (cmd_socket<=0) { printf("cmd_send():: Wait for connection sock=%d\n",cmd_socket); sleep(1);}
+		    EUDAQ_INFO("Max events reached. Sending STOP request");
+		    SetStatus(eudaq::Status::STATE_RUNNING, "STOP_REQUEST");
+		    SendStatus();
 
-	    // TOOD: how to implement this?
-	    SetStatus(eudaq::Status::STATE_STOPPED, "STOP_REQUEST");
-	    //eudaq::CommandReceiver::SendStatus();
-	    //eudaq::SendCommand(eudaq::Command::StopRun());
+	    }
     }
 
-    // Optional filter:
-    // if (desc != "CAENQTPRaw") return;
-
-    // Forward to the standard EUDAQ DataCollector writing path.
-    WriteEvent(std::move(ev));
-  }
-
+  } 
 };
+
 namespace {
   auto dummy0 =
     eudaq::Factory<eudaq::DataCollector>::
