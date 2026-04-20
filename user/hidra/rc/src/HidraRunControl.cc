@@ -16,7 +16,9 @@ private:
   uint32_t m_stop_second;
   bool m_flag_running;
   std::chrono::steady_clock::time_point m_tp_start_run;
-  std::map<std::string, int> module_state; 
+  std::chrono::steady_clock::time_point m_tp_stop_run;
+  std::map<std::string, std::string> module_state;
+  std::map<std::string, std::string> last_printed_state; 
   std::mutex mtx;
 };
 
@@ -38,38 +40,53 @@ void HidraRunControl::StartRun(){
 
 void HidraRunControl::StopRun(){
   RunControl::StopRun();
+  m_tp_stop_run = std::chrono::steady_clock::now();
   m_flag_running = false;
 }
 
 void HidraRunControl::Configure(){
-  auto conf = GetConfiguration();
-  m_stop_second = conf->Get("EX0_STOP_RUN_AFTER_N_SECONDS", 0);
   RunControl::Configure();
 }
 
-void HidraRunControl::Exec(){
-  StartRunControl();
-  while(IsActiveRunControl()){
-    if(m_flag_running && m_stop_second){
-      auto tp_now = std::chrono::steady_clock::now();
-      std::chrono::nanoseconds du_ts(tp_now - m_tp_start_run);
-      if(du_ts.count()/1000000000>m_stop_second) {
-	      StopRun();
-      }
-    }
-    for(auto &p : module_state) {
+void HidraRunControl::Exec() {
+    StartRunControl();
 
-	    std::lock_guard<std::mutex> lock(mtx);
-	    std::cout << "[DEVICE]: " << p.first << " [STATUS]: " << p.second << std::endl;
-      if (p.second == eudaq::Status::STATE_STOPPED)
-        StopRun();
-    }	    
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  }
+    while (IsActiveRunControl()) {
+
+        {
+
+            for (auto &p : module_state) {
+ 
+                std::lock_guard<std::mutex> lock(mtx);
+                const std::string &name = p.first;
+                const std::string &state = p.second;
+
+                // stampa SOLO se cambiato
+                if (last_printed_state[name] != state) {
+
+		    EUDAQ_INFO("[DEVICE]: " + name + " [STATUS]: " + state);	
+                    /*std::cout << "[DEVICE]: " << name
+                              << " [STATUS]: " << state
+                              << std::endl;*/
+
+                    last_printed_state[name] = state;
+                }
+
+		static bool stop_sent = false;
+
+                if (state == "STOP_REQUEST") {
+		    stop_sent = true;
+                    StopRun();
+                }
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
 }
 
 void HidraRunControl::DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st){ 
 	std::lock_guard<std::mutex> lock(mtx);
-	module_state[con->GetName()] = st->GetState();
+	module_state[con->GetName()] = st->GetMessage();
 }
 
