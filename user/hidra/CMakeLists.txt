@@ -4,6 +4,7 @@ option(USER_HIDRA_BUILD "Build HiDRa DAQ system" OFF)
 ##-- OPT: Compile each module?
 option(USER_HIDRA_FERS_BUILD "Build HiDRa FERS component" OFF)
 option(USER_HIDRA_XDC_BUILD "Build HiDRa XDC component" ON)
+option(USER_HIDRA_DRY_BUILD "Build HiDRa XDC component" OFF)
 option(USER_HIDRA_DAQ_BUILD "Build HiDRa DAQ component" ON)
 
 if(NOT USER_HIDRA_BUILD)
@@ -41,6 +42,16 @@ if(USER_HIDRA_XDC_BUILD)
 	target_link_libraries(${EUDAQ_MODULE} PUBLIC ${EUDAQ_MODULE}_xdc)
 else()
 	message(STATUS "user/hidra XDC component is NOT to be built (USER_HIDRA_XDC_BUILD=OFF)")
+endif()
+
+
+if(USER_HIDRA_DRY_BUILD)
+	message(STATUS "user/hidra dry-run component is to be built (USER_HIDRA_DRY_BUILD=ON)")
+
+        add_subdirectory(dry)
+	target_link_libraries(${EUDAQ_MODULE} PUBLIC ${EUDAQ_MODULE}_dry)
+else()
+	message(STATUS "user/hidra dry-run component is NOT to be built (USER_HIDRA_DRY_BUILD=OFF)")
 endif()
 
 

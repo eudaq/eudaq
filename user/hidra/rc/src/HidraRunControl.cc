@@ -83,7 +83,6 @@ void HidraRunControl::Exec() {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
-}
 
 void HidraRunControl::DoStatus(eudaq::ConnectionSPC con, eudaq::StatusSPC st){ 
 	std::lock_guard<std::mutex> lock(mtx);
