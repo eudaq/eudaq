@@ -1,12 +1,18 @@
-find_package(ROOT REQUIRED COMPONENTS Core Gui Hist RIO)
-cmake_dependent_option(EUDAQ_BUILD_ONLINE_ROOT_MONITOR "monitor/ROOTMonitor executable (requires ROOT)" OFF
-  "ROOT_FOUND" OFF)
+option(EUDAQ_BUILD_ONLINE_ROOT_MONITOR
+  "Build monitor/ROOTMonitor executable (requires ROOT)"
+  OFF
+)
 
-if(NOT EUDAQ_BUILD_ONLINE_ROOT_MONITOR)
+if(EUDAQ_BUILD_ONLINE_ROOT_MONITOR)
+  message(STATUS "Trying to find ROOT for ROOTMonitor")
+  find_package(ROOT REQUIRED COMPONENTS Core Gui Hist RIO)
+  message(STATUS "Found ROOT for ROOTMonitor")
+else()
   message(STATUS "monitor/ROOTMonitor is NOT to be built (EUDAQ_BUILD_ONLINE_ROOT_MONITOR=OFF)")
   unset(EUDAQ_ROOT_MONITOR_LIBRARY CACHE)
   return()
 endif()
+
 message(STATUS "monitor/ROOTMonitor is to be built (EUDAQ_BUILD_ONLINE_ROOT_MONITOR=ON)")
 
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
