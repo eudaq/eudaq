@@ -4,6 +4,7 @@
 #include <deque>
 #include <map>
 #include <set>
+#include <limits>
 
 class Ex0TgDataCollector:public eudaq::DataCollector{
 public:
@@ -72,7 +73,7 @@ void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp
   }
   m_conn_evque[idx].push_back(evsp);
 
-  uint32_t trigger_n = -1;
+  uint32_t trigger_n = std::numeric_limits<uint32_t>::max();
   for(auto &conn_evque: m_conn_evque){
     if(conn_evque.second.empty())
       return;
