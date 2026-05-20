@@ -1,15 +1,25 @@
 #ifndef EUDAQ_INCLUDED_Time
 #define EUDAQ_INCLUDED_Time
 
-#include "Platform.hh"
+#include "eudaq/Platform.hh"
 #include <ostream>
 #include <iomanip>
 #include <string>
 #include <cstring>
 
 #ifdef _WIN32
-#ifndef __CINT__
+#ifndef __ROOTCLING__
+#define NOMINMAX
 #include <winsock.h>
+#ifdef SendMessage
+   #undef SendMessage
+#endif
+#else
+// just to satisfy ROOTCLING conflict on Windows
+struct timeval {
+  long tv_sec;
+  long tv_usec;
+};
 #endif
 #else
 #include <sys/time.h>

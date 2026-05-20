@@ -52,6 +52,12 @@ namespace eudaq {
      */
     std::vector<std::string> Keylist() const;
 
+    /**
+     * @brief get the list of sections in the configuration
+     * @return list of sections in configuration
+     */
+    std::vector<std::string> Sectionlist() const;
+
     void Save(std::ostream &file) const;
     void Load(std::istream &file, const std::string &section);
     bool SetSection(const std::string &section) const;

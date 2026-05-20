@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <fstream>
 
-#include "Platform.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
@@ -34,7 +34,7 @@ namespace eudaq {
   }
 
   uint32_t DLLEXPORT str2hash(const std::string &stdstr);
-  std::vector<std::string> splitString(std::string str, char delimiter);
+  std::vector<std::string> DLLEXPORT splitString(std::string str, char delimiter);
 
   /** Sleep for a specified number of milliseconds.
    * \param ms The number of milliseconds
@@ -165,6 +165,9 @@ namespace eudaq {
   from_string(const std::string &x, const uint16_t &def) {
     return static_cast<uint16_t>(from_string(x, (uint64_t)def));
   }
+  
+  template <>
+  bool DLLEXPORT from_string(const std::string &x, const bool &def);
 
   template <typename T> struct hexdec_t {
     enum { DIGITS = 2 * sizeof(T) };

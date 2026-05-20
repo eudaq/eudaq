@@ -97,3 +97,4 @@ The following parameters can be passed in the configuration in order to influenc
 The following parameters can be passed in the configuration in order to influence the decoding behavior of this module:
 
 * `acq_mode`: Select value of acquisition mode of the H2M pixel matrix, defaults to `1` (ToT).
+* `wait_for_frame_jump`: Select whether to discard events until there is a backwards jump in the frame ID. Defaults to `0`, i.e. false.

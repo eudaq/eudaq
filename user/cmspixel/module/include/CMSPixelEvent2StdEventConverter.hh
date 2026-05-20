@@ -29,7 +29,6 @@ namespace eudaq {
     static size_t m_nplanes;
     static std::string m_detector;
     static bool m_rotated_pcb;
-    static bool m_is_initialized;
 
     // The pipeworks:
     static pxar::evtSource src;

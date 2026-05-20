@@ -1,0 +1,19 @@
+#!/bin/bash
+# cleanup of DAQ
+PROCESSES="euCliCollector euCliMonitor euLog euRun CliNiProducer euCliProducer StdEventMonitor STcontrol_eudaq"
+for thisprocess in $PROCESSES
+do
+    echo "Checking if $thisprocess is running... "
+    pid=`pgrep -f $thisprocess`
+    for i in $pid
+    do 
+     if [ $i ]
+     then
+	echo "Killing $thisprocess with pid: $pid"
+        killall  $thisprocess 
+	kill -9 $pid
+     fi
+    done
+done
+# exit with status message if any process has been killed
+printf '\033[1;32;48mKILLING DAQ COMPLETE, type STARTRUN to relaunch\033[0m \n'

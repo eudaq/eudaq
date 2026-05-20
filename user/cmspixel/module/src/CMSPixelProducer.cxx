@@ -68,7 +68,7 @@ void CMSPixelProducer::DoConfigure() {
 
   int shift_trigger_id = config->Get("shift_trigger_id", 0);
   if(shift_trigger_id != 0) {
-    EUDAQ_WARN("Will be shifting the trigger ID for CMSPixel by " + std::to_string(shift_trigger_id));
+    EUDAQ_WARN(std::string("Will be shifting the trigger ID for CMSPixel by ") + std::to_string(shift_trigger_id));
   }
 
   bool confTrimming(false), confDacs(false);

@@ -232,6 +232,14 @@ namespace eudaq {
    return keys;
   }
 
+  std::vector<std::string> Configuration::Sectionlist() const
+  {
+   std::vector<std::string> sections;
+   for(auto & m : m_config)
+       sections.push_back(m.first);
+   return sections;
+  }
+
   void Configuration::SetString(const std::string &key,
                                 const std::string &val) {
     (*m_cur)[key] = val;

@@ -28,13 +28,8 @@ EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev) {
   m_EventN_vs_TimeStamp->GetYaxis()->SetTitle("event number");
 
   
-#ifdef EUDAQ_LIB_ROOT6
   Hits_vs_EventsTotal->SetCanExtend(TH1::kAllAxes);
   TracksPerEvent->SetCanExtend(TH1::kAllAxes);
-#else
-  Hits_vs_EventsTotal->SetBit(TH1::kCanRebin);
-  TracksPerEvent->SetBit(TH1::kCanRebin);
-#endif
   
   for (unsigned int i = 0; i < nplanes; i++) {
 
@@ -57,11 +52,7 @@ EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev) {
       Hits_vs_Events[i]->SetMarkerColor(i + 2);
     }
 
-#ifdef EUDAQ_LIB_ROOT6
     Hits_vs_Events[i]->SetCanExtend(TH1::kAllAxes);
-#else
-    Hits_vs_Events[i]->SetBit(TH1::kCanRebin);
-#endif
   }
 }
 

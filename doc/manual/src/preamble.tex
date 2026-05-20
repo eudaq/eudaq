@@ -1,8 +1,10 @@
 % !TEX root = EUDAQUserManual.tex
 \documentclass[12pt, oneside, notitlepage, a4paper]{scrartcl}
-\usepackage{epsfig, scrlayer-scrpage, graphicx, listings, microtype, setspace, upquote}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern, xcolor, scrlayer-scrpage, graphicx, listings, microtype, setspace, upquote}
 \usepackage[british]{babel}
 \usepackage{hyperref} % must be the last package (apart from glossaries)
+\usepackage{bookmark}
 \usepackage[toc, nonumberlist]{glossaries} % must go after hyperref, so entries are clickable
 
 \setcounter{secnumdepth}{3}
@@ -68,9 +70,7 @@
 %} 
 
 \lstset{
-    %basicstyle=\ttfamily
     keywordstyle=\color[rgb]{0,0,0.8},
-    %identifierstyle=\color[rgb]{0,0,0},
     commentstyle=\color[rgb]{0,0.4,0},
     stringstyle=\color[rgb]{0.4,0,0.8},
     showstringspaces=false,
@@ -80,50 +80,44 @@
     numbersep=10pt,
     tabsize=2,
     breaklines=true,
-    prebreak = \raisebox{0ex}[0ex][0ex]{\color[rgb]{0.6,0.6,0.6}\ensuremath{\hookleftarrow}},
     breakatwhitespace=true,
-    %aboveskip={1.5\baselineskip},
     columns=fixed,
     upquote=true,
-    extendedchars=false,
     framerule=0pt,
-    belowskip={0.5\baselineskip},
+    belowskip=0.5\baselineskip
 }
 \lstdefinestyle{plain}{
     basicstyle=\normalsize\ttfamily,
     numbers=none,
     frame=none,
-    %belowskip={0.5\baselineskip},
-    backgroundcolor={},
+    backgroundcolor={}
 }
+
 \lstdefinestyle{shaded}{
     basicstyle=\small\ttfamily,
     numbers=none,
     frame=single,
-    backgroundcolor=\color[rgb]{1,0.98,0.95},
+    backgroundcolor=\color[rgb]{1,0.98,0.95}
 }
+
 \lstdefinestyle{full}{
     basicstyle=\small\ttfamily,
     numbers=left,
     frame=single,
-    %belowskip={\baselineskip},
-    backgroundcolor=\color[rgb]{1,1,0.95},
+    backgroundcolor=\color[rgb]{1,1,0.95}
 }
 
 \lstdefinestyle{cpp}{
-    language=C++, 
-    morekeywords={override, final},
+    language=C++,
+    morekeywords={override,final},
     basicstyle=\small\ttfamily,
     numbers=left,
     frame=single,
-    %belowskip={\baselineskip},
     backgroundcolor=\color[rgb]{1,1,0.95},
-    %% texcl=true,
     rangeprefix=//----------DOC-MARK-----,
     rangesuffix=-----DOC-MARK----------,
     includerangemarker=false,
-    columns=flexible,
-    %% escapeinside={//TODO}{.},
+    columns=flexible
 }
 
 

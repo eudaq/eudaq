@@ -9,6 +9,11 @@
 #include <map>
 #include <ostream>
 
+// due to collision with GetMessage introduced by windows.h on Windows systems
+#ifdef GetMessage
+#undef GetMessage
+#endif
+
 namespace eudaq{
   class Serializer;
   class Deserializer;

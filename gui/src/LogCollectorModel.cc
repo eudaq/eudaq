@@ -164,8 +164,7 @@ QString LogMessage::ColumnName(int i) {
 }
 
 LogSearcher::LogSearcher() : m_set(false) {
-  m_regexp.setPatternSyntax(QRegExp::Wildcard);
-  m_regexp.setCaseSensitivity(Qt::CaseInsensitive);
+  m_regexp.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
 }
 
 void LogSearcher::SetSearch(const std::string &regexp) {
@@ -177,7 +176,7 @@ bool LogSearcher::Match(const LogMessage &msg) {
   if (!m_set)
     return true;
   for (int i = 0; i < LogMessage::NumColumns(); ++i) {
-    if (m_regexp.indexIn(msg[i]) >= 0)
+    if (m_regexp.match(msg[i]).hasMatch())
       return true;
   }
   return false;
