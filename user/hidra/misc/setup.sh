@@ -422,6 +422,7 @@ alias build_dir='cd "$REPO_ROOT/build"'
 alias hidra_run='cd "$REPO_ROOT/user/hidra/run"'
 alias hidra_dir='cd "$REPO_ROOT/user/hidra"'
 alias hidra_backup_data='$REPO_ROOT/user/hidra/misc/hidra_backup_data.sh'
+alias hidra_health='$REPO_ROOT/user/hidra/misc/hidra_health.py'
 
 # Print a short, user-friendly summary of the commands this script provides.
 # Shown automatically when the script is sourced; run `hidra_help` to see it
