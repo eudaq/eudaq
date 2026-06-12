@@ -19,7 +19,7 @@ REFRESH_INTERVAL = 3  # seconds
 PROCESS_TO_CHECK = "cernbox"
 DIRECTORIES_TO_CHECK = [
     os.path.expanduser("~/cernbox/TB2026_H8"),
-    os.path.expanduser("~/cernbox/TB2026_TrackerData")
+    os.path.expanduser("~/TB2026_TrackerData")
 ]
 DISK_THRESHOLD = 90.0  # % percentage threshold to trigger warning
 RAM_THRESHOLD = 80.0   # % percentage threshold to trigger warning
