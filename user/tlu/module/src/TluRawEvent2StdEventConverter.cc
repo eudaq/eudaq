@@ -62,7 +62,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       fts_3 = data[3];
       fts_4 = data[4];
       fts_5 = data[5];
-      triggersFired = data[6];
+      triggersFired = triggerMask & data[6];
     } else {
       // raw data format as sent by the TLU, but chopped into bytes instead of 32bit words in little-endian
       fts_0 = data[11];
@@ -71,7 +71,7 @@ bool TluRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       fts_3 = data[8];
       fts_4 = data[19];
       fts_5 = data[18];
-      triggersFired = data[2];
+      triggersFired = triggerMask & data[2];
     }
   }else {
       // try/catch for std::stoi()
