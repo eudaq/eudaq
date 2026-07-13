@@ -62,15 +62,15 @@ jobs:
       uses: actions/cache/restore@v5
       with:
         path: ~/eudaq_dependencies/root
-        key: root-v6.40.00-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.40.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
         
     - name: build CERN ROOT
       id: root_build
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
         source /opt/intel/oneapi/setvars.sh
-        export CERN_ROOT_DOWNLOAD_NAME=v6-40-00.tar.gz
-        wget https://github.com/root-project/root/archive/refs/tags/v6-40-00.tar.gz
+        export CERN_ROOT_DOWNLOAD_NAME=v6-40-02.tar.gz
+        wget https://github.com/root-project/root/archive/refs/tags/v6-40-02.tar.gz
         mkdir root_source
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME -C ./root_source --strip-components=1
         rm -f $CERN_ROOT_DOWNLOAD_NAME
@@ -104,7 +104,7 @@ jobs:
       with:
         path: |
           ~/eudaq_dependencies/root
-        key: root-v6.40.00-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.40.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
                   
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
