@@ -15,9 +15,9 @@ public:
 private:
   static bool m_configured;
   static bool m_correct_spurious_rollovers;
-  static std::vector<uint64_t> m_previous_trigger_id;
-  static std::vector<uint64_t> m_spurious_rollovers;
-
+  static uint64_t m_previous_trigger_id;
+  static uint64_t m_spurious_rollovers;
+  static uint64_t m_last_corrected_ID;
 };
 
 namespace{
@@ -27,8 +27,9 @@ namespace{
 
 bool NiRawEvent2StdEventConverter::m_configured = false;
 bool NiRawEvent2StdEventConverter::m_correct_spurious_rollovers;
-std::vector<uint64_t> NiRawEvent2StdEventConverter::m_previous_trigger_id;
-std::vector<uint64_t> NiRawEvent2StdEventConverter::m_spurious_rollovers;
+uint64_t NiRawEvent2StdEventConverter::m_previous_trigger_id=0;
+uint64_t NiRawEvent2StdEventConverter::m_spurious_rollovers=0;
+uint64_t NiRawEvent2StdEventConverter::m_last_corrected_ID=0;
 
 bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
@@ -36,12 +37,6 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 
   if (!m_configured) {
     m_correct_spurious_rollovers = conf->Get("correct_spurious_rollovers", false);
-    m_spurious_rollovers.reserve(m_ids.size());
-    m_previous_trigger_id.reserve(m_ids.size());
-    for (size_t id = 0; id < m_ids.size(); ++id) {
-      m_spurious_rollovers.push_back(0);
-      m_previous_trigger_id.push_back(0);
-    }
     m_configured = true;
   }
 
@@ -124,26 +119,31 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     if(m_correct_spurious_rollovers) {
 
       // if we are respecting the telescope busy we do not expect jumps in the trigger ID
-      auto abs_difference = std::abs(static_cast<int64_t>(d1->GetTriggerN()) - static_cast<int64_t>(m_previous_trigger_id[id]));
+      auto abs_difference = std::abs(static_cast<int64_t>(d1->GetTriggerN()) - static_cast<int64_t>(m_previous_trigger_id));
 
       // these are additional conditions for rollover correction in the Producer
       bool condition_this = (0x7fff & d1->GetTriggerN()) < 0x2000;
-      bool condition_previous = (0x7fff & m_previous_trigger_id[id]) > 0x6000;
+      bool condition_previous = (0x7fff & m_previous_trigger_id) > 0x6000;
 
       // if we see a jump and the two conditions are met, correction might have been spurious
       if(abs_difference > 1 && condition_this && condition_previous) {
-        m_spurious_rollovers[id]++;
+        if(m_last_corrected_ID != d1->GetTriggerN()){
+          m_spurious_rollovers++;
+          // can not keep track of plane ID 
+          // need to check if this was already corrected
+          m_last_corrected_ID = d1->GetTriggerN();
+        }
         EUDAQ_WARN("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
-        EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id[id]));
-        EUDAQ_WARN("    rollover counter incremented to: " + std::to_string(m_spurious_rollovers[id]++));
+        EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id));
+        EUDAQ_WARN("    rollover counter incremented to: " + std::to_string(m_spurious_rollovers));
         return false;
       }
 
       // revert the spurious rollover correction
-      d2->SetTriggerN(d1->GetTriggerN() - (m_spurious_rollovers[id] << 15U), d1->IsFlagTrigger());
+      d2->SetTriggerN(d1->GetTriggerN() - (m_spurious_rollovers << 15U), d1->IsFlagTrigger());
 
       // store trigger ID for next event
-      m_previous_trigger_id[id] = d1->GetTriggerN();
+      m_previous_trigger_id = d1->GetTriggerN();
     }
     else{
       // simply get the trigger from data and pass it on
