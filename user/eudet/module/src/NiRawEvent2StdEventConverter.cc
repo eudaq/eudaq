@@ -133,8 +133,10 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
       // if we see a jump and the two conditions are met, correction might have been spurious
       if(abs_difference > 1 && condition_this && condition_previous) {
         m_spurious_rollovers[id]++;
-        EUDAQ_WARN("Detected spurious rollover in event" + std::to_string(d1->GetTriggerN()));
-        EUDAQ_WARN("   rollover counter incremented to " + std::to_string(m_spurious_rollovers[id]++));
+        EUDAQ_WARN("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
+        EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id[id]));
+        EUDAQ_WARN("    rollover counter incremented to: " + std::to_string(m_spurious_rollovers[id]++));
+        return false;
       }
 
       // revert the spurious rollover correction
