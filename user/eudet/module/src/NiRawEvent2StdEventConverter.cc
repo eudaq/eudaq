@@ -127,17 +127,19 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 
       // if we see a jump and the two conditions are met, correction might have been spurious
       if(abs_difference > 1 && condition_this && condition_previous) {
-        EUDAQ_WARN("            Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
-        EUDAQ_WARN("                                 previous event: " + std::to_string(m_previous_trigger_id));
+        EUDAQ_WARN("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
+        EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id));
         if(m_last_corrected_ID != d1->GetTriggerN()){
           m_spurious_rollovers++;
           // can not keep track of plane ID 
           // need to check if this was already corrected
           m_last_corrected_ID = d1->GetTriggerN();
-          EUDAQ_WARN("                rollover counter incremented to: " + std::to_string(m_spurious_rollovers));
+          EUDAQ_WARN("    rollover counter incremented to: " + std::to_string(m_spurious_rollovers));
+          EUDAQ_WARN("Be weary and check synchonization!");
+
         }
         else{
-          EUDAQ_WARN(" rollover counter already incremented for event: " + std::to_string(m_last_corrected_ID));
+          EUDAQ_WARN("Event already corrected.");
         }
         
         return false;
