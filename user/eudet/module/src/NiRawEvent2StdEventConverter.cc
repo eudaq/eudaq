@@ -12,6 +12,12 @@ public:
   void DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
            const uint8_t *const d, const size_t l32, bool fix_pivot = false) const;
   static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawDataEvent");
+private:
+  static bool m_configured;
+  static bool m_correct_spurious_rollovers;
+  static std::vector<uint64_t> m_previous_trigger_id;
+  static std::vector<uint64_t> m_spurious_rollovers;
+
 };
 
 namespace{
@@ -19,9 +25,26 @@ namespace{
     Register<NiRawEvent2StdEventConverter>(NiRawEvent2StdEventConverter::m_id_factory);
 }
 
+bool NiRawEvent2StdEventConverter::m_configured = false;
+bool NiRawEvent2StdEventConverter::m_correct_spurious_rollovers;
+std::vector<uint64_t> NiRawEvent2StdEventConverter::m_previous_trigger_id;
+std::vector<uint64_t> NiRawEvent2StdEventConverter::m_spurious_rollovers;
+
 bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
   static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5};
+
+  if (!m_configured) {
+    m_correct_spurious_rollovers = conf->Get("correct_spurious_rollovers", false);
+    m_spurious_rollovers.reserve(m_ids.size());
+    m_previous_trigger_id.reserve(m_ids.size());
+    for (size_t id = 0; id < m_ids.size(); ++id) {
+      m_spurious_rollovers.push_back(0);
+      m_previous_trigger_id.push_back(0);
+    }
+    m_configured = true;
+  }
+
   //TODO: number of telescope plane may be less than 6. Decode additional tags
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   if(!ev)
@@ -35,7 +58,6 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     d2->SetRunN(d1->GetRunN());
     d2->SetEventN(d1->GetEventN());
     d2->SetStreamN(d1->GetStreamN());
-    d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
     d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
   }
 
@@ -98,6 +120,33 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     DecodeFrame(plane, 0, &it0[8], len0, use_all_hits);
     DecodeFrame(plane, 1, &it1[8], len1, use_all_hits);
     d2->AddPlane(plane);
+
+    if(m_correct_spurious_rollovers) {
+
+      // if we are respecting the telescope busy we do not expect jumps in the trigger ID
+      auto abs_difference = std::abs(static_cast<int64_t>(d1->GetTriggerN()) - static_cast<int64_t>(m_previous_trigger_id[id]));
+
+      // these are additional conditions for rollover correction in the Producer
+      bool condition_this = (0x7fff & d1->GetTriggerN()) < 0x2000;
+      bool condition_previous = (0x7fff & m_previous_trigger_id[id]) > 0x6000;
+
+      // if we see a jump and the two conditions are met, correction might have been spurious
+      if(abs_difference > 1 && condition_this && condition_previous) {
+        m_spurious_rollovers[id]++;
+        EUDAQ_WARN("Detected spurious rollover in event" + std::to_string(d1->GetTriggerN()));
+        EUDAQ_WARN("   rollover counter incremented to " + std::to_string(m_spurious_rollovers[id]++));
+      }
+
+      // revert the spurious rollover correction
+      d2->SetTriggerN(d1->GetTriggerN() - (m_spurious_rollovers[id] << 15U), d1->IsFlagTrigger());
+
+      // store trigger ID for next event
+      m_previous_trigger_id[id] = d1->GetTriggerN();
+    }
+    else{
+      // simply get the trigger from data and pass it on
+      d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
+    }
 
     bool advance_one_block_0 = false;
     bool advance_one_block_1 = false;
