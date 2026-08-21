@@ -26,7 +26,7 @@ namespace{
 }
 
 bool NiRawEvent2StdEventConverter::m_configured = false;
-bool NiRawEvent2StdEventConverter::m_correct_spurious_rollovers;
+bool NiRawEvent2StdEventConverter::m_correct_spurious_rollovers=false;
 uint64_t NiRawEvent2StdEventConverter::m_previous_trigger_id=0;
 uint64_t NiRawEvent2StdEventConverter::m_spurious_rollovers=0;
 uint64_t NiRawEvent2StdEventConverter::m_last_corrected_ID=0;
