@@ -68,18 +68,21 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
 
       // if we see a jump and the two conditions are met, correction might have been spurious
       if(abs_difference > 1 && condition_this && condition_previous) {
-        EUDAQ_WARN("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
-        EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id));
 
         // need to check if this was already corrected in the call of the decoder from a different plane
         if(m_last_corrected_ID != d1->GetTriggerN()){
           m_spurious_rollovers++;
           m_last_corrected_ID = d1->GetTriggerN();
+          EUDAQ_WARN("");
+          EUDAQ_WARN("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
+          EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id));
           EUDAQ_WARN("    rollover counter incremented to: " + std::to_string(m_spurious_rollovers));
-          EUDAQ_WARN("Be weary and check synchonization!");
+          EUDAQ_WARN("Carefull: CHECK SYNCHRONIZATION");
         }
         else{
-          EUDAQ_WARN("Event already corrected.");
+          EUDAQ_DEBUG("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
+          EUDAQ_DEBUG("               last corrected event: " + std::to_string(m_last_corrected_ID));
+          EUDAQ_DEBUG("No additional correction applied.");
         }
 
         return false;
