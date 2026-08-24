@@ -29,7 +29,7 @@ bool NiRawEvent2StdEventConverter::m_configured = false;
 bool NiRawEvent2StdEventConverter::m_correct_spurious_rollovers=false;
 uint64_t NiRawEvent2StdEventConverter::m_previous_trigger_id=0;
 uint64_t NiRawEvent2StdEventConverter::m_spurious_rollovers=0;
-uint64_t NiRawEvent2StdEventConverter::m_last_corrected_ID=0;
+uint64_t NiRawEvent2StdEventConverter::m_last_corrected_ID=std::numeric_limits<uint64_t>::max();
 
 bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
