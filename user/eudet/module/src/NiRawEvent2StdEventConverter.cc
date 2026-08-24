@@ -54,6 +54,48 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     d2->SetEventN(d1->GetEventN());
     d2->SetStreamN(d1->GetStreamN());
     d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
+
+    // In some cases the trigger ID needs to be corrected for spurious counter rollovers.
+    // these can be caused by wrong trigger IDs in the data stream.
+    if(m_correct_spurious_rollovers) {
+
+      // if we are respecting the telescope busy we do not expect jumps in the trigger ID
+      auto abs_difference = std::abs(static_cast<int64_t>(d1->GetTriggerN()) - static_cast<int64_t>(m_previous_trigger_id));
+
+      // these are additional conditions for rollover correction in the Producer
+      bool condition_this = (0x7fff & d1->GetTriggerN()) < 0x2000;
+      bool condition_previous = (0x7fff & m_previous_trigger_id) > 0x6000;
+
+      // if we see a jump and the two conditions are met, correction might have been spurious
+      if(abs_difference > 1 && condition_this && condition_previous) {
+        EUDAQ_WARN("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
+        EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id));
+
+        // need to check if this was already corrected in the call of the decoder from a different plane
+        if(m_last_corrected_ID != d1->GetTriggerN()){
+          m_spurious_rollovers++;
+          m_last_corrected_ID = d1->GetTriggerN();
+          EUDAQ_WARN("    rollover counter incremented to: " + std::to_string(m_spurious_rollovers));
+          EUDAQ_WARN("Be weary and check synchonization!");
+        }
+        else{
+          EUDAQ_WARN("Event already corrected.");
+        }
+
+        return false;
+      }
+
+      // revert the spurious rollover correction
+      d2->SetTriggerN(d1->GetTriggerN() - (m_spurious_rollovers << 15U), d1->IsFlagTrigger());
+
+      // store trigger ID for next event
+      m_previous_trigger_id = d1->GetTriggerN();
+    }
+    else{
+      // simply get the trigger from data and pass it on
+      d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
+    }
+
   }
 
   auto &rawev = *ev;
@@ -115,46 +157,6 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     DecodeFrame(plane, 0, &it0[8], len0, use_all_hits);
     DecodeFrame(plane, 1, &it1[8], len1, use_all_hits);
     d2->AddPlane(plane);
-
-    if(m_correct_spurious_rollovers) {
-
-      // if we are respecting the telescope busy we do not expect jumps in the trigger ID
-      auto abs_difference = std::abs(static_cast<int64_t>(d1->GetTriggerN()) - static_cast<int64_t>(m_previous_trigger_id));
-
-      // these are additional conditions for rollover correction in the Producer
-      bool condition_this = (0x7fff & d1->GetTriggerN()) < 0x2000;
-      bool condition_previous = (0x7fff & m_previous_trigger_id) > 0x6000;
-
-      // if we see a jump and the two conditions are met, correction might have been spurious
-      if(abs_difference > 1 && condition_this && condition_previous) {
-        EUDAQ_WARN("Detected spurious rollover in event: " + std::to_string(d1->GetTriggerN()));
-        EUDAQ_WARN("                     previous event: " + std::to_string(m_previous_trigger_id));
-        if(m_last_corrected_ID != d1->GetTriggerN()){
-          m_spurious_rollovers++;
-          // can not keep track of plane ID 
-          // need to check if this was already corrected
-          m_last_corrected_ID = d1->GetTriggerN();
-          EUDAQ_WARN("    rollover counter incremented to: " + std::to_string(m_spurious_rollovers));
-          EUDAQ_WARN("Be weary and check synchonization!");
-
-        }
-        else{
-          EUDAQ_WARN("Event already corrected.");
-        }
-        
-        return false;
-      }
-
-      // revert the spurious rollover correction
-      d2->SetTriggerN(d1->GetTriggerN() - (m_spurious_rollovers << 15U), d1->IsFlagTrigger());
-
-      // store trigger ID for next event
-      m_previous_trigger_id = d1->GetTriggerN();
-    }
-    else{
-      // simply get the trigger from data and pass it on
-      d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
-    }
 
     bool advance_one_block_0 = false;
     bool advance_one_block_1 = false;
