@@ -3,6 +3,7 @@
 #include <deque>
 #include <map>
 #include <set>
+#include <limits>
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class Ex0TsDataCollector:public eudaq::DataCollector{
@@ -106,7 +107,7 @@ void Ex0TsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp
 
 void Ex0TsDataCollector::BuildEvent(){
   while(!m_event_ready_ts.empty() && m_event_ready_ts.size() == m_que_event_ts.size()){
-    uint64_t ts_next_end = -1;
+    uint64_t ts_next_end = std::numeric_limits<uint64_t>::max();
     uint64_t ts_next_beg = ts_next_end - 1;
     auto ev_sync = eudaq::Event::MakeUnique(GetFullName());
     ev_sync->SetTimestamp(m_ts_curr_beg, m_ts_curr_end);
