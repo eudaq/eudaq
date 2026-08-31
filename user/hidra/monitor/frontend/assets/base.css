@@ -1,0 +1,208 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+/* Clickable detector map: show a pointer cursor over the plot area so it
+   reads as clickable. `.nsewdrag` is Plotly's main hover/drag layer that
+   covers the data region. */
+.detector-clickable .nsewdrag {
+  cursor: pointer !important;
+}
+
+/* Per-plot controls: a modebar-style toolbar in the top-right corner that
+   fades in on hover. The graph and this overlay share a `.plot-cell`
+   (position: relative) parent. */
+.plot-cell {
+  position: relative;
+}
+
+.plot-ctl-overlay {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 8px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: rgba(30, 33, 40, 0.85);
+  font-family: monospace;
+  font-size: 11px;
+  color: #ddd;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Reveal on hover of the plot, or while interacting with the controls. */
+.plot-cell:hover .plot-ctl-overlay,
+.plot-ctl-overlay:hover,
+.plot-ctl-overlay:focus-within {
+  opacity: 1;
+}
+
+.plot-ctl-logy {
+  color: #ddd;
+  white-space: nowrap;
+}
+
+.plot-ctl-btn {
+  background: #2b2f37;
+  color: #ddd;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.plot-ctl-btn:hover {
+  background: #3a3f49;
+}
+
+/* Segmented rebin control (×1/×2/×4/×8). The dcc.RadioItems renders one
+   <label><input> per factor; we hide the radio inputs and style the labels as a
+   joined button group, highlighting the selected one (the default ×1). */
+.plot-ctl-rebin {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #555;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.plot-ctl-rebin label {
+  margin: 0;
+  padding: 1px 6px;
+  background: #2b2f37;
+  color: #ddd;
+  border-left: 1px solid #555;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.plot-ctl-rebin label:first-child {
+  border-left: none;
+}
+.plot-ctl-rebin input {
+  display: none;
+}
+.plot-ctl-rebin label:hover {
+  background: #3a3f49;
+}
+/* Active factor: relies on :has() (supported by current browsers). */
+.plot-ctl-rebin label:has(input:checked) {
+  background: #89b4fa; /* theme PRIMARY */
+  color: #1e1e2e;
+  font-weight: bold;
+}
+
+/* "Wow" header cards: rounded, with a soft accent glow and a subtle lift on
+   hover. Colours reuse the existing palette (OK green / PRIMARY blue) only as
+   a halo — the card background stays the plot's own colour. */
+.metric-card {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.glow-rate {
+  box-shadow: 0 0 0 1px rgba(166, 227, 161, 0.25), 0 0 18px rgba(166, 227, 161, 0.16);
+}
+
+.glow-count {
+  box-shadow: 0 0 0 1px rgba(137, 180, 250, 0.25), 0 0 18px rgba(137, 180, 250, 0.16);
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+}
+
+.glow-rate:hover {
+  box-shadow: 0 0 0 1px rgba(166, 227, 161, 0.45), 0 0 26px rgba(166, 227, 161, 0.30);
+}
+
+.glow-count:hover {
+  box-shadow: 0 0 0 1px rgba(137, 180, 250, 0.45), 0 0 26px rgba(137, 180, 250, 0.30);
+}
+
+/* Header event-count pill: a compact rounded box with the same blue glow as the
+   Summary "Events" count card (glow-count), so the always-on total matches it. */
+.header-count {
+  padding: 2px 14px;
+  border-radius: 10px;
+  background: rgba(137, 180, 250, 0.08);
+  box-shadow: 0 0 0 1px rgba(137, 180, 250, 0.25), 0 0 18px rgba(137, 180, 250, 0.16);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.header-count:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(137, 180, 250, 0.45), 0 0 26px rgba(137, 180, 250, 0.30);
+}
+
+/* Sticky header: a soft shadow underneath so it reads as floating above the
+   scrolling panels. */
+.app-header {
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6);
+}
+
+/* Button hover/active polish (palette only). */
+.btn {
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+.btn:hover {
+  background-color: #3a3f49 !important;
+  border-color: #cba6f7 !important;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* ── Dark Catppuccin dropdowns (dcc.Dropdown = react-select v1) ────────── */
+.Select-control,
+.is-open > .Select-control,
+.Select.is-focused:not(.is-open) > .Select-control {
+  background-color: #313244 !important;
+  border: 1px solid #45475a !important;
+  box-shadow: none !important;
+}
+.Select-control:hover {
+  border-color: #cba6f7 !important;
+}
+.Select-menu-outer {
+  background-color: #313244 !important;
+  border: 1px solid #45475a !important;
+}
+.Select-value-label,
+.has-value.Select--single > .Select-control .Select-value .Select-value-label,
+.Select--single > .Select-control .Select-value .Select-value-label,
+.Select-input > input {
+  color: #cdd6f4 !important;
+}
+.Select-placeholder {
+  color: #9399b2 !important;
+}
+.Select-option {
+  background-color: #313244 !important;
+  color: #cdd6f4 !important;
+}
+.Select-option.is-focused {
+  background-color: #45475a !important;
+}
+.Select-option.is-selected {
+  background-color: #585b70 !important;
+  color: #cba6f7 !important;
+}
+.Select-arrow {
+  border-color: #cdd6f4 transparent transparent !important;
+}
+.Select-clear {
+  color: #cdd6f4 !important;
+}

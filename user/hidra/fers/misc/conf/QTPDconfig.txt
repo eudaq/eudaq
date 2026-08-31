@@ -1,0 +1,95 @@
+# ***********************************************************************
+# Configuration File for the QTPD_DAQ 
+# ***********************************************************************
+
+# ***********************************************************************
+# Connection type V1718 | V2718 | V3718 | V4718 | A4818
+#
+# Examples:
+#			V1718 => usbV1718 
+#			V2718 => pciV2718 
+#			V3718 => usbV3718 | pciV3718 
+#			V4718 => usbV4718 PID
+#			V4718 => pciV4718 
+#			V4718 => ethV4718 ipaddress
+			A4818 => usbA4818 PID
+#
+# ************************************************************************
+
+CONNECTION usbV4718 58232
+
+
+# ***********************************************************************
+# Settings for the QTP (Analog QDC, TDC and Peak sensing ADC)
+# Supported Models
+# Q = QDC       : V792, V792N, V862, V965, V965A
+# T = TDC       : V775, V775N
+# P = Peak ADC  : V785, V785N, V1785
+# ***********************************************************************
+
+# ----------------------------------------------------------------
+# Base Address (32 hex number) of the QTP board (0 if not present)
+# ----------------------------------------------------------------
+#QTP_BASE_ADDRESS   EE000000
+QTP_BASE_ADDRESS   05000000
+
+# ----------------------------------------------------------------
+# Iped (pedestal for the QDC or range for the TDC)
+# ----------------------------------------------------------------
+IPED 100
+
+# ----------------------------------------------------------------
+# Low Level Discriminator for the ADC (values below LLD will be discarded)
+# Syntax: QTP_LLD ch lld
+# ch = channel (0 to 31; -1 means all channels), lld = low level threshold in ADC channels (0 to 4095, granularity = 16)
+# ----------------------------------------------------------------
+QTP_LLD -1 0
+
+# ----------------------------------------------------------------
+# Enable Zero and Overflow suppression (zero suppression means ADC_VALUE < QTP_LLD)
+# ----------------------------------------------------------------
+ENABLE_SUPPRESSION  1
+
+# ----------------------------------------------------------------
+# Output Files
+# ----------------------------------------------------------------
+ENABLE_LIST_FILE        0   # List of events (event number + ADC values of the unsuppressed channels) in text format
+ENABLE_RAW_DATA_FILE    0   # Raw data (board memory dump); 32 bit words in binary format. 
+ENABLE_HISTO_FILES      0   # If enabled, the channel histograms (spectra) are saved every second during the run.
+                            # NOTE: histograms are also saved at the end of the run or when 's' is pressed during the run.
+
+
+# ***********************************************************************
+# Settings for the Discriminator (CFD, LED)
+# Supported Models: V812, V814, V895
+# ***********************************************************************
+
+# ----------------------------------------------------------------
+# Base Address (32 hex number) of Discriminator (0 if not present)
+# ----------------------------------------------------------------
+# DISCR_BASE_ADDRESS   99990000
+
+# ----------------------------------------------------------------
+# Discr Thresholds
+# Syntax: DISCR_THRESHOLD ch thr
+# ch = channel (-1 means all channels), thr = threshold in mV
+# ----------------------------------------------------------------
+# DISCR_THRESHOLD -1 5      # set all threshold = 5mV
+# DISCR_THRESHOLD  0 5      # set threshold = 5mV for ch0 only
+
+# ----------------------------------------------------------------
+# Discr Output Width (any number from 0 to 255)
+# 0   => about 11 ns
+# 105 => about 21 ns
+# 195 => about 51 ns
+# 225 => about 87 ns
+# 240 => about 130 ns
+# 255 => about 240 ns
+# ----------------------------------------------------------------
+# DISCR_OUTPUT_WIDTH 255
+
+# ----------------------------------------------------------------
+# Discr Channel Enable Mask (16 bit hex number)
+# ----------------------------------------------------------------
+# DISCR_CHANNEL_MASK 0001
+

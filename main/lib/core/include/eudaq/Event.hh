@@ -9,7 +9,6 @@
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
 #include "eudaq/Deserializer.hh"
-#include "eudaq/Exception.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Factory.hh"

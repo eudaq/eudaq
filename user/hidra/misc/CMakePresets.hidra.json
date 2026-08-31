@@ -1,0 +1,63 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "hidra-configure",
+            "displayName": "HiDRA Configure (setup.sh equivalent)",
+            "description": "Configura in ${sourceDir}/build con gli stessi flag di misc/setup.sh",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "EUDAQ_BUILD_ONLINE_ROOT_MONITOR": "OFF",
+                "EUDAQ_LIBRARY_BUILD_TTREE": "OFF",
+                "USER_HIDRA_BUILD": "ON",
+                "USER_HIDRA_XDC_BUILD": "ON",
+                "USER_HIDRA_FERS_BUILD": "OFF",
+                "USER_HIDRA_FERS2_BUILD": "ON",
+                "USER_HIDRA_DRY_BUILD": "ON",
+                "USER_HIDRA_DC_ROOT_OUTPUT": "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "hidra-build",
+            "displayName": "HiDRA Build",
+            "description": "Equivalente a make -j 10 in build",
+            "configurePreset": "hidra-configure",
+            "jobs": 10
+        },
+        {
+            "name": "hidra-install",
+            "displayName": "HiDRA Install",
+            "description": "Equivalente a make install -j 10 in build",
+            "configurePreset": "hidra-configure",
+            "targets": [
+                "install"
+            ],
+            "jobs": 10
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "hidra-full",
+            "displayName": "HiDRA Build + Install",
+            "description": "Configure + Build + Install (equivalente a build_hidra)",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "hidra-configure"
+                },
+                {
+                    "type": "build",
+                    "name": "hidra-build"
+                },
+                {
+                    "type": "build",
+                    "name": "hidra-install"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,7 @@
+dash>=2.14,<3
+plotly>=5.18,<6
+requests>=2.31
+numpy>=1.24
+PyYAML>=6
+uproot>=5.0
+gunicorn>=21.2

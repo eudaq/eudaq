@@ -1,0 +1,206 @@
+# ****************************************************************
+# WaveDump Configuration File
+# ****************************************************************
+
+# NOTE:
+# The lines between the commands @OFF and @ON will be skipped.
+# This can be used to exclude parts of the file.
+
+# ----------------------------------------------------------------
+# Settings common to all channels
+# ----------------------------------------------------------------
+[COMMON]
+
+# OPEN: open the digitizer
+# options: USB 0 0      			Desktop/NIM digitizer through USB              
+#          USB 0 BA     			VME digitizer through USB-V1718/V3718 (BA = BaseAddress of the VME board, 32 bit hex)
+#          PCI 0 0 0    			Desktop/NIM/VME through CONET (optical link) 
+#          PCI 0 0 BA   			VME digitizer through V2718/V3718 (BA = BaseAddress of the VME board, 32 bit hex)
+#          USB_A4818 X 0 0			Desktop/NIM digitizer through USB->A4818->CONET (X is the PID (product id) of A4818)
+#          USB_A4818_V2718 X 0 BA   VME digitizer through USB-A4818-V2718 (BA = BaseAddress of the VME board, 32 bit hex) (X is the PID (product id) of A4818)
+#          USB_A4818_V3718 X 0 BA   VME digitizer through USB-A4818-V3718 (BA = BaseAddress of the VME board, 32 bit hex) (X is the PID (product id) of A4818)
+OPEN USB 0 0
+#OPEN USB_A4818 12345 0 0 
+#OPEN USB_A4818_V2718 12345 0 32100000
+#OPEN USB 0 32100000
+#OPEN PCI 0 0 0
+#OPEN PCI 0 0 32100000
+
+# RECORD_LENGTH = number of samples in the acquisition window
+# For 742 family the options available are only 1024, 520, 256 and 136
+RECORD_LENGTH  1024
+
+# POST_TRIGGER: post trigger size in percent of the whole acquisition window
+# options: 0 to 100
+# For x742 there is a delay of about 42 nsec on Fast Trigger TR, and about 115 nsec on TRG-IN; 
+# the post trigger is added to this delay  
+POST_TRIGGER  1
+
+#PULSE_POLARITY: input signal polarity.
+#options: POSITIVE, NEGATIVE
+#
+PULSE_POLARITY NEGATIVE
+
+# EXTERNAL_TRIGGER: external trigger input settings. When enabled, the ext. trg. can be either 
+# propagated (ACQUISITION_AND_TRGOUT) or not (ACQUISITION_ONLY) through the TRGOUT
+# options: DISABLED, ACQUISITION_ONLY, ACQUISITION_AND_TRGOUT
+EXTERNAL_TRIGGER   ACQUISITION_ONLY
+
+# FAST_TRIGGER: fast trigger input settings. ONLY FOR 742 MODELS. When enabled, the fast trigger is used
+# for the data acquisition 
+# options: DISABLED, ACQUISITION_ONLY
+FAST_TRIGGER  ACQUISITION_ONLY
+
+# FAST_TRIGGER_DIGITIZING: ONLY FOR 742 MODELS. If enabled the fast trigger signal is digitized and it is
+# present in data readout as channel n.8 for each group.
+# options: YES, NO
+ENABLED_FAST_TRIGGER_DIGITIZING		YES
+
+# Correction Level to use with x742 Digitizers Family
+# Syntax: CORRECTION_LEVEL <CORR_MASK> <CUST_TABLE_MASK> <FILENAME1> <FILENAME2> ...
+# Values:
+# CORR_MASK:
+#   AUTO: Uses Automatic Corrections
+#   0 -> 7: Corrections Mask
+# CUST_TABLE_MASK (Only if CORR_MASK != AUTO):
+#   AUTO: Reads the correction tables from digitizer flash
+#   0 -> 16: Specifies the GroupMask which should use the tables specified in the following files
+# FILENAME<i>: Base Filename of the file which contains the custom correction tables for group <i>.
+#              The files which will be loaded will have the following names:
+#                   a) baseInputFileName + "_cell.txt"
+#                   b) baseInputFileName + "_nsample.txt"
+#                   c) baseInputFileName + "_time.txt"
+# Examples:
+# Automatic Corrections:
+# CORRECTION_LEVEL AUTO
+# Manual Corrections with Digitizer's Flash tables:
+# CORRECTION_LEVEL 7 AUTO
+# Manual Corrections with Digitizer's Flash tables for group 1 and with custom tables for the other groups:
+# CORRECTION_LEVEL 7 13 Table_gr0 Table_gr2 Table_gr3
+CORRECTION_LEVEL AUTO
+
+# Set the DRS4 Chip Frequency (for X742 boards only)
+# Values:
+#   0 = 5 GHz
+#   1 = 2.5 GHz
+#   2 = 1 GHz
+#   3 = 750 MHz
+DRS4_FREQUENCY 0
+
+# OUTPUT_FILE_FORMAT: output file can be either ASCII (column of decimal numbers) or binary 
+# (2 bytes per sample)
+# options: BINARY, ASCII
+OUTPUT_FILE_FORMAT  ASCII
+
+# OUTPUT_FILE_HEADER: if enabled, the header is included in the output file data
+# options: YES, NO
+OUTPUT_FILE_HEADER  NO
+
+# TEST_PATTERN: if enabled, data from ADC are replaced by test pattern (triangular wave)
+# options: YES, NO
+TEST_PATTERN   NO
+
+# FPIO_LEVEL: type of the front panel I/O LEMO connectors 
+# options: NIM, TTL
+FPIO_LEVEL  NIM
+
+# WRITE_REGISTER: generic write register access. This command allows the user to have a direct write access
+# to the registers of the board. NOTE: all the direct write accesses are executed AFTER the other settings,
+# thus it might happen that the direct write overwrites a specific setting.
+# To avoid this use the right "MASK".
+# Syntax: WRITE_REGISTER ADDRESS DATA MASK, where ADDRESS is the address offset of the register (16 bit hex), DATA
+# is the value being written (32 bit hex) and MASK is the bitmask to be used for DATA masking.
+# Example: Set only bit [8] of register 1080 to 1, leaving the other bits to their previous value
+# WRITE_REGISTER 1080 0100 0100
+# Example: Set only bit [8] of register 1080 to 0, leaving the other bits to their previous value
+# WRITE_REGISTER 1080 0000 0100
+# Example: Set register 1080 to the value of 0x45:
+# WRITE_REGISTER 1080 45 FFFFFFFF
+
+# ----------------------------------------------------------------
+# Individual Settings 
+# ----------------------------------------------------------------
+# The following setting are usually applied on channel by channel
+# basis; however, you can put them also in the [COMMON] section in
+# order to apply them to all the channels.
+# ----------------------------------------------------------------
+
+# ENABLE_INPUT: enable/disable one group of channels 
+# options: YES, NO
+ENABLE_INPUT          NO
+
+# DC_OFFSET: DC offset adjust (DAC channel setting) in percent of the Full Scale. 
+# For model 742* the DC offset adjust is the same for all channels in the group 
+# -50: analog input dynamic range = -Vpp to 0 (negative signals)*
+# +50: analog input dynamic range = 0 to +Vpp (positive signals)*
+# 0:   analog input dynamic range = -Vpp/2 to +Vpp/2 (bipolar signals)*
+#options: -50 to 50
+DC_OFFSET              0 
+
+# GRP_CH_DC_OFFSET dc_0, dc_1, dc_2, dc_3, dc_4, dc_5, dc_6, dc_7
+# Available only for model 742, allows to set different DC offset adjust for each channel (DAC channel setting) in percent of the Full Scale. 
+# -50: analog input dynamic range = -3Vpp/2 to -Vpp/2 (max negative dynamic)
+# +50: analog input dynamic range = +Vpp/2 to +3Vpp/2 (max positive dynamic)
+# 0: analog input dynamic range = -Vpp/2 to +Vpp/2 (bipolar signals)
+# options: -50.0 to 50.0  (floating point)
+
+
+#In the following, you can see the use of some individual settings to:
+#	-enable group [0]
+#	-set DC offset to 10% of the full scale, to use the input dynamic range in a better way
+#	-adjust channel 0 DC_OFFSET within 3%
+
+[0]
+ENABLE_INPUT           YES
+#DC_OFFSET              10
+#GRP_CH_DC_OFFSET       3,0,0,0,0,0,0,0 
+
+[1]
+ENABLE_INPUT           YES
+
+
+[2]
+ENABLE_INPUT           YES
+
+
+[3]
+ENABLE_INPUT           YES
+
+
+# ----------------------------------------------------------------
+# Custom Setting for Model 742 
+# ----------------------------------------------------------------
+# FAST TRIGGER CONDITION SETTINGS.
+# Remember that signal TR0 is the Fast Trigger for Groups 0 and 1, while signal TR1 is the Fast Trigger for Groups 2 and 3.
+# DC_OFFSET: DC offset adjust is DAC setting: 0 to 65535
+# TRIGGER_THRESHOLD: Trigger Threshold is the DAC setting for the comparation level: 0 to 65535 
+
+# EXAMPLES pcb rev0 (see also User's Manual):
+# NIM signal on TR
+# 	DC_OFFSET 4096 
+#  	TRIGGER_THRESHOLD 29053 
+# AC signal on TR
+# 	DC_OFFSET 4096 
+#  	TRIGGER_THRESHOLD 27776 
+# TTL signal on TR
+# 	DC_OFFSET 16384 
+# 	TRIGGER_THRESHOLD 29016
+
+# EXAMPLES pcb rev1 (see also User's Manual):
+# NIM signal on TR
+# 	DC_OFFSET 32768 
+#  	TRIGGER_THRESHOLD 20934 
+# AC signal on TR
+# 	DC_OFFSET 32768 
+#  	TRIGGER_THRESHOLD 26214 
+# +2V signal on TR
+# 	DC_OFFSET 43520 
+# 	TRIGGER_THRESHOLD 26214
+
+[TR0]
+DC_OFFSET              32768	
+TRIGGER_THRESHOLD      20934	
+
+[TR1]
+DC_OFFSET              32768
+TRIGGER_THRESHOLD      20934
