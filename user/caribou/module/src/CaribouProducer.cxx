@@ -1,14 +1,17 @@
 #include "eudaq/Producer.hh"
-#include "eudaq/Configuration.hh"
 
 #include "peary/device/DeviceManager.hpp"
-#include "peary/utils/configuration.hpp"
-#include "peary/utils/log.hpp"
+#include "peary/config/configuration.hpp"
+#include "peary/log/log.hpp"
 
+#include <string>
+#include <utility>
 #include <vector>
-#include <thread>
 
-using namespace caribou;
+using namespace peary::config;
+using namespace peary::device;
+using namespace peary::log;
+using namespace peary::utils;
 
 class CaribouProducer : public eudaq::Producer {
 public:
@@ -30,6 +33,7 @@ private:
   Device* device_{nullptr};
   Device* secondary_device_{nullptr};
   std::string name_;
+  std::string type_;
 
   std::mutex device_mutex_;
   LogLevel level_;
@@ -44,6 +48,15 @@ private:
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
     Register<CaribouProducer, const std::string&, const std::string&>(CaribouProducer::m_id_factory);
+
+  std::string get_device_type(const std::string& name) {
+      // Separate the device type from the device identifier denoted by underscore
+      const auto pos = name.find_last_of('_');
+      if(pos != std::string::npos) {
+          return name.substr(0, pos);
+      }
+      return name;
+  }
 }
 
 CaribouProducer::CaribouProducer(const std::string name, const std::string &runcontrol)
@@ -52,15 +65,9 @@ CaribouProducer::CaribouProducer(const std::string name, const std::string &runc
   Log::addStream(std::cout);
 
   // Separate the device name from the device identifier, the latter is only relevant for EUDAQ:
-  auto const pos = name.find_last_of('_');
-  if(pos == std::string::npos) {
-    name_ = name;
-    LOG(INFO) << "Instantiated CaribouProducer for device \"" << name << "\"";
-  } else {
-    name_ = name.substr(0, pos);
-    const auto identifier = name.substr(pos + 1);
-    LOG(INFO) << "Instantiated CaribouProducer for device \"" << name << "\" with identifier \"" << identifier << "\"";
-  }
+  name_ = name;
+  type_ = get_device_type(name);
+  LOG(INFO) << "Instantiated CaribouProducer for device \"" << type_ << "\" with identifier \"" << name_ << "\"";
 
   // Create new Peary device manager
   manager_ = new DeviceManager();
@@ -90,14 +97,14 @@ void CaribouProducer::DoInitialise() {
     LogLevel log_level = Log::getLevelFromString(level);
     Log::setReportingLevel(log_level);
     LOG(INFO) << "Set verbosity level to \"" << std::string(level) << "\"";
-  } catch(std::invalid_argument& e) {
+  } catch(InvalidArgumentError& e) {
     LOG(ERROR) << "Invalid verbosity level \"" << std::string(level) << "\", ignoring.";
   }
 
   level_ = Log::getReportingLevel();
 
   // Open configuration file and create object:
-  caribou::ConfigParser cfg;
+  ConfigParser cfg;
   auto confname = ini->Get("config_file", "");
   std::ifstream file(confname);
   EUDAQ_INFO("Attempting to use initial device configuration \"" + confname + "\"");
@@ -105,22 +112,23 @@ void CaribouProducer::DoInitialise() {
     LOG(ERROR) << "No configuration file provided.";
     EUDAQ_ERROR("No Caribou configuration file provided.");
   } else {
-    cfg = caribou::ConfigParser(file);
+    cfg = ConfigParser(file);
   }
 
   // Select section from the configuration file relevant for this device:
   auto config = cfg.GetConfig(name_);
 
   std::lock_guard<std::mutex> lock{device_mutex_};
-  size_t device_id = manager_->addDevice(name_, config);
+  size_t device_id = manager_->addDevice(name_, type_, config);
   EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id) + ", fetching device...");
   device_ = manager_->getDevice(device_id);
 
   // Add secondary device if it is configured:
   if(ini->Has("secondary_device")) {
-    std::string secondary = ini->Get("secondary_device", std::string());
-    auto sec_config = cfg.GetConfig(secondary);
-    size_t device_id2 = manager_->addDevice(secondary, sec_config);
+    std::string secondary_name = ini->Get("secondary_device", std::string());
+    auto sec_config = cfg.GetConfig(secondary_name);
+    const auto secondary_type = get_device_type(secondary_name);
+    size_t device_id2 = manager_->addDevice(secondary_name, secondary_type, sec_config);
     EUDAQ_INFO("Manager returned device ID " + std::to_string(device_id2) + ", fetching secondary device...");
     secondary_device_ = manager_->getDevice(device_id2);
   }
@@ -175,7 +183,7 @@ void CaribouProducer::DoConfigure() {
 
   if(!adc_signal_.empty()) {
     // Try it out directly to catch misconfiugration
-    auto adc_value = device_->getADC(adc_signal_);
+    auto adc_value = device_->getVoltage(adc_signal_);
     EUDAQ_USER("Will probe ADC signal \"" + adc_signal_ + "\" every " + std::to_string(adc_freq_) + " events");
   }
 
@@ -196,7 +204,7 @@ void CaribouProducer::DoStartRun() {
 
   // Sending initial Begin-of-run event, just containing tags with detector information:
   // Create new event
-  auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+  auto event = eudaq::Event::MakeUnique("Caribou" + type_ + "Event");
   event->SetBORE();
   event->SetTag("software",  device_->getVersion());
   event->SetTag("firmware",  device_->getFirmwareVersion());
@@ -245,18 +253,18 @@ void CaribouProducer::RunLoop() {
       // Retrieve data from the device:
       auto data = device_->getRawData();
 
-      if(!data.empty()) {
+      if(data.has_value()) {
         // Create new event
-        auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+        auto event = eudaq::Event::MakeUnique("Caribou" + type_ + "Event");
         // Set event ID
         event->SetEventN(m_ev);
         // Add data to the event
-        event->AddBlock(0, data);
+        event->AddBlock(0, data.value());
 
         // Query ADC if wanted:
         if(m_ev%adc_freq_ == 0) {
           if(!adc_signal_.empty()) {
-            auto adc_value = device_->getADC(adc_signal_);
+            auto adc_value = device_->getVoltage(adc_signal_);
             LOG(DEBUG) << "Reading ADC: " << adc_value << "V";
             EUDAQ_USER("ADC reading: " + adc_signal_ + " =  " + std::to_string(adc_value));
             event->SetTag(adc_signal_, adc_value);
@@ -277,7 +285,7 @@ void CaribouProducer::RunLoop() {
 
       // Buffer of sub-events is full, let's ship this off to the Data Collector
       if(!data_buffer.empty() && data_buffer.size() == number_of_subevents_) {
-        auto evup = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+        auto evup = eudaq::Event::MakeUnique("Caribou" + type_ + "Event");
         for(auto& subevt : data_buffer) {
           evup->AddSubEvent(subevt);
         }
@@ -286,13 +294,11 @@ void CaribouProducer::RunLoop() {
       }
 
       LOG_PROGRESS(STATUS, "status") << "Frame " << m_ev;
-    } catch(caribou::NoDataAvailable&) {
-        continue;
-    } catch(caribou::DataException& e) {
+    } catch(DataAcquisitionError& e) {
       // Retrieval failed, retry once more before aborting:
       EUDAQ_WARN(std::string(e.what()) + ", skipping data packet");
       continue;
-    } catch(caribou::caribouException& e) {
+    } catch(Exception& e) {
       EUDAQ_ERROR(e.what());
       break;
     }
@@ -301,7 +307,7 @@ void CaribouProducer::RunLoop() {
   // Send remaining pixel data:
   if(!data_buffer.empty()) {
     LOG(INFO) << "Sending remaining " << data_buffer.size() << " events from data buffer";
-    auto evup = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
+    auto evup = eudaq::Event::MakeUnique("Caribou" + type_ + "Event");
     for(auto& subevt : data_buffer) {
       evup->AddSubEvent(subevt);
     }
