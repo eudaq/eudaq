@@ -248,13 +248,13 @@ void CaribouProducer::RunLoop() {
       // Retrieve data from the device:
       auto data = device_->getRawData();
 
-      if(!data.empty()) {
+      if(data.has_value()) {
         // Create new event
         auto event = eudaq::Event::MakeUnique("Caribou" + name_ + "Event");
         // Set event ID
         event->SetEventN(m_ev);
         // Add data to the event
-        event->AddBlock(0, data);
+        event->AddBlock(0, data.value());
 
         // Query ADC if wanted:
         if(m_ev%adc_freq_ == 0) {
