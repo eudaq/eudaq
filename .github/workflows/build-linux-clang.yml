@@ -103,7 +103,7 @@ jobs:
         sudo apt-get install -y make erlang g++ libboost-all-dev libpugixml-dev rsyslog
         echo "installing ipbus"
         mkdir -p ~/eudaq_dependencies/ipbus/
-        git clone --depth=1 -b v2.8.13 --recurse-submodules https://github.com/ipbus/ipbus-software.git
+        git clone --depth=1 -b v2.8.22 --recurse-submodules https://github.com/ipbus/ipbus-software.git
         cd ipbus-software
         mkdir -p $GITHUB_WORKSPACE/extern/
         make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
