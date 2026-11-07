@@ -122,18 +122,13 @@ typedef unsigned int uint;
                     return count;
             }
     */
+    static constexpr uint shiftOf(uint mask, uint n = 0) {
+      return (mask == 0u || (mask & 1u)) ? n : shiftOf(mask >> 1, n + 1);
+    }
+
     template <uint bitmask> struct myBitMask {
-      static uint getShift() {
-        uint count = 0;
-        std::bitset<32> maskField(bitmask);
-
-        while (maskField[count] != true) {
-          count++;
-        }
-        return count;
-      }
-
-      enum { shiftValue = getShift() };
+      static_assert(bitmask != 0u, "bitmask must not be zero");
+      static constexpr uint shiftValue = shiftOf(bitmask);
     };
 
   }; // class ATLASFEI4Interpreter
