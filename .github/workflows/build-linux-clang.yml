@@ -120,7 +120,7 @@ jobs:
         git checkout testbeam-2016
         mkdir build
         cd build
-        cmake -DBUILD_pxarui=OFF ..
+        cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DBUILD_pxarui=OFF ..
         make install
         ls $HOME/eudaq_dependencies/pxar
         echo "PXARPATH=$HOME/eudaq_dependencies/pxar" >> "$GITHUB_ENV"
