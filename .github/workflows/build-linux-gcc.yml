@@ -110,8 +110,8 @@ jobs:
         cd ipbus-software
         sed -i '/^[[:space:]]*boost_system[[:space:]]*\\$/d' uhal/uhal/Makefile uhal/tests/Makefile uhal/python/Makefile
         mkdir -p $GITHUB_WORKSPACE/extern/
-        make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
-        make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
+        make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
+        make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
         
     - name: install cmspixel dependencies
       run: |
