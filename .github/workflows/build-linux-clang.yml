@@ -63,14 +63,14 @@ jobs:
       uses: actions/cache/restore@v5
       with:
         path: ~/eudaq_dependencies/root
-        key: root-v6.40.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.40.04-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
         
     - name: build CERN ROOT
       id: root_build
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
-        export CERN_ROOT_DOWNLOAD_NAME=root_v6.40.02.source.tar.gz
-        wget -nv https://github.com/root-project/root/releases/download/v6-40-02/$CERN_ROOT_DOWNLOAD_NAME
+        export CERN_ROOT_DOWNLOAD_NAME=root_v6.40.04.source.tar.gz
+        wget -nv https://github.com/root-project/root/releases/download/v6-40-04/$CERN_ROOT_DOWNLOAD_NAME
         mkdir root_source
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME -C ./root_source --strip-components=1
         rm -f $CERN_ROOT_DOWNLOAD_NAME
@@ -92,7 +92,7 @@ jobs:
       with:
         path: |
           ~/eudaq_dependencies/root
-        key: root-v6.40.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.40.04-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
 
     - name: install TLU dependencies
       run: |
@@ -103,11 +103,12 @@ jobs:
         sudo apt-get install -y make erlang g++ libboost-all-dev libpugixml-dev rsyslog
         echo "installing ipbus"
         mkdir -p ~/eudaq_dependencies/ipbus/
-        git clone --depth=1 -b v2.8.13 --recurse-submodules https://github.com/ipbus/ipbus-software.git
+        git clone --depth=1 -b v2.8.22 --recurse-submodules https://github.com/ipbus/ipbus-software.git
         cd ipbus-software
+        sed -i '/^[[:space:]]*boost_system[[:space:]]*\\$/d' uhal/uhal/Makefile uhal/tests/Makefile uhal/python/Makefile
         mkdir -p $GITHUB_WORKSPACE/extern/
-        make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
-        make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS?=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
+        make BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
+        make install BUILD_UHAL_PYTHON=0 BUILD_UHAL_TESTS=0 Set=uhal prefix=$GITHUB_WORKSPACE/extern/ CXXFLAGS="-g -Wall -pedantic -O3 -MMD -MP -fPIC -std=c++${{matrix.cpp_standard}}"
 
     - name: install cmspixel dependencies
       run: |
@@ -119,7 +120,7 @@ jobs:
         git checkout testbeam-2016
         mkdir build
         cd build
-        cmake -DBUILD_pxarui=OFF ..
+        cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DBUILD_pxarui=OFF ..
         make install
         ls $HOME/eudaq_dependencies/pxar
         echo "PXARPATH=$HOME/eudaq_dependencies/pxar" >> "$GITHUB_ENV"

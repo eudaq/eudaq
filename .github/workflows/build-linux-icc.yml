@@ -37,10 +37,14 @@ jobs:
       shell: bash
       run: |
         cd /tmp
-        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+        # Download the public GPG key and convert it to a binary keyring format
+        wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/intel-sw-products.gpg > /dev/null
+
+        # Add the repository pointing explicitly to our new isolated keyring
+        echo "deb [signed-by=/usr/share/keyrings/intel-sw-products.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+
+        # Run an update to let apt register the new software repository
+        sudo apt-get update
       
     - name: install oneAPI dpcpp compiler
       shell: bash
@@ -62,15 +66,15 @@ jobs:
       uses: actions/cache/restore@v5
       with:
         path: ~/eudaq_dependencies/root
-        key: root-v6.40.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.40.04-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
         
     - name: build CERN ROOT
       id: root_build
       if: steps.root_restore_from_cache.outputs.cache-hit != 'true'
       run: |
         source /opt/intel/oneapi/setvars.sh
-        export CERN_ROOT_DOWNLOAD_NAME=v6-40-02.tar.gz
-        wget https://github.com/root-project/root/archive/refs/tags/v6-40-02.tar.gz
+        export CERN_ROOT_DOWNLOAD_NAME=v6-40-04.tar.gz
+        wget https://github.com/root-project/root/archive/refs/tags/v6-40-04.tar.gz
         mkdir root_source
         tar -xzf $CERN_ROOT_DOWNLOAD_NAME -C ./root_source --strip-components=1
         rm -f $CERN_ROOT_DOWNLOAD_NAME
@@ -104,7 +108,7 @@ jobs:
       with:
         path: |
           ~/eudaq_dependencies/root
-        key: root-v6.40.02-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
+        key: root-v6.40.04-${{ runner.os }}-${{ steps.install_cc.outputs.cxx }}-${{matrix.cpp_standard}}
                   
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.

@@ -1,8 +1,15 @@
 #ifndef ATLASFE4IINTERPRETER_H
 #define ATLASFE4IINTERPRETER_H
 
-#include <bitset>
 typedef unsigned int uint;
+
+// Position of the lowest set bit of a mask (C++11-compatible, compile-time)
+constexpr uint determineShift(uint mask, uint shift = 0) {
+  return (shift >= 32 || (mask & 1u)) ? shift
+                                      : determineShift(mask >> 1, shift + 1);
+}
+static_assert(determineShift(0x00007F00) == 8,  "FE-I4A LV1ID shift");
+static_assert(determineShift(0x00007C00) == 10, "FE-I4B LV1ID shift");
 
 /*FEI4A
  *  DATA_HEADER_LV1ID_MASK	0x00007F00
@@ -20,6 +27,7 @@ typedef unsigned int uint;
     //-----------------
     // Data Header (dh)
     //-----------------
+    static constexpr uint dh_lv1id_shift = determineShift(dh_lv1id_msk);
     static const uint dh_wrd = 0x00E90000;
     static const uint dh_msk = 0xFFFF0000;
     static const uint dh_flag_msk = 0x00008000;
@@ -29,10 +37,8 @@ typedef unsigned int uint;
     inline bool is_dh_flag_set(uint X) const {
       return (dh_flag_msk & X) == dh_flag_msk;
     }
-    //	inline uint get_dh_lv1id(uint X) const		{return (dh_lv1id_msk & X) >>
-    //determineShift(dh_lv1id_msk);}
     inline uint get_dh_lv1id(uint X) const {
-      return (dh_lv1id_msk & X) >> myBitMask<dh_lv1id_msk>::shiftValue;
+      return (dh_lv1id_msk & X) >> dh_lv1id_shift;
     }
     inline uint get_dh_bcid(uint X) const { return (dh_bcid_msk & X); }
 
@@ -108,33 +114,6 @@ typedef unsigned int uint;
     inline uint get_tr_data(uint X) const { return (tr_data_msk & X) >> 8; }
     inline uint get_tr_err(uint X) const { return (tr_err_msk & X) >> 8; }
     inline uint get_tr_mode(uint X) const { return (tr_mode_msk & X) >> 13; }
-
-    // determine necessary bitshift from a bitmask
-    /*	constexpr uint determineShift(uint mask) const
-            {
-                    uint count = 0;
-                    std::bitset<32> maskField(mask);
-
-                    while(maskField[count] != true)
-                    {
-                            count++;
-                    }
-                    return count;
-            }
-    */
-    template <uint bitmask> struct myBitMask {
-      static uint getShift() {
-        uint count = 0;
-        std::bitset<32> maskField(bitmask);
-
-        while (maskField[count] != true) {
-          count++;
-        }
-        return count;
-      }
-
-      enum { shiftValue = getShift() };
-    };
 
   }; // class ATLASFEI4Interpreter
 
