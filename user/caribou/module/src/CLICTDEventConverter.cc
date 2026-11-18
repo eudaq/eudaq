@@ -1,10 +1,13 @@
 #include "CaribouEvent2StdEventConverter.hh"
 
 #include <devices/CLICTD/CLICTDFrameDecoder.hpp>
-#include <peary/utils/log.hpp>
+#include <peary/log/log.hpp>
 #include <devices/CLICTD/CLICTDPixels.hpp>
 
 using namespace eudaq;
+using namespace peary::utils;
+using namespace peary::dut;
+using namespace peary::device;
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::StdEventConverter>::
@@ -27,7 +30,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
   auto discard_tot_below = conf->Get("discard_tot_below", -1);
   auto discard_toa_below = conf->Get("discard_toa_below", -1);
 
-  static caribou::CLICTDFrameDecoder decoder(longcnt);
+  static CLICTDFrameDecoder decoder(longcnt);
   // No event
   if(!ev) {
     return false;
@@ -35,7 +38,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   // Data containers:
   std::vector<uint64_t> timestamps;
-  caribou::pearyRawData rawdata;
+  pearyRawData rawdata;
 
   // Retrieve data from event
   if(ev->NumBlocks() == 1) {
@@ -235,7 +238,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
 
   plane.SetSizeZS(128, 128, 0);
   for(const auto& px : data) {
-    auto pixel = dynamic_cast<caribou::CLICTDPixelReadout*>(px.second.get());
+    auto pixel = dynamic_cast<CLICTDPixelReadout*>(px.second.get());
 
     // Disentangle data types from pixel:
     int tot = -1;
@@ -248,7 +251,7 @@ bool CLICTDEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standa
       if(tot < discard_tot_below) {
         continue;
       }
-    } catch(caribou::DataException&) {
+    } catch(DataAcquisitionError&) {
       // Set ToT to one if not defined.
       tot = 1;
     }
