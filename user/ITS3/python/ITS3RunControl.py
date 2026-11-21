@@ -232,7 +232,7 @@ class ITS3TUI():
         return table
 
 class ITS3RunControl(pyeudaq.RunControl):
-    def __init__(self,con,init_fname):
+    def __init__(self,con,init_fname,single_run):
         pyeudaq.RunControl.__init__(self,con)
         self.connections={}
         self.status={}
@@ -261,6 +261,7 @@ class ITS3RunControl(pyeudaq.RunControl):
         self.running=False
         self.halt=False
         self.repeat=False
+        self.single_run=single_run
     
     @exception_handler
     def DoConnect(self,c):
@@ -269,17 +270,17 @@ class ITS3RunControl(pyeudaq.RunControl):
             self.status[c.GetName()]=None
             self.nsev[c.GetName()]=0
             self.ndev[c.GetName()]=0
-            if c.GetName() in self.dataproducers+self.moreproducers:
-                self.tui.update_producer(c.GetName(),0,0,0,'XXX')
-            else:
-                pass
+        if c.GetName() in self.dataproducers+self.moreproducers:
+            self.tui.update_producer(c.GetName(),0,0,0,'XXX')
+        else:
+            pass
     
     @exception_handler
     def DoDisconnect(self,c):
         with self.lock:
             del self.connections[c.GetName()]
-            if c.GetName() in self.dataproducers+self.moreproducers:
-                self.tui.update_producer(c.GetName(),0,0,0,'XXX')
+        if c.GetName() in self.dataproducers+self.moreproducers:
+            self.tui.update_producer(c.GetName(),0,0,0,'XXX')
     
     @exception_handler
     def DoStatus(self,c,s):
@@ -288,12 +289,12 @@ class ITS3RunControl(pyeudaq.RunControl):
             self.nsev[c.GetName()]=int('0'+s.GetTag('StatusEventN'))
             self.ndev[c.GetName()]=int('0'+s.GetTag('DataEventN'  ))
             msg=s.GetMessage()
-            if c.GetName() in self.dataproducers+self.moreproducers:
-                self.tui.update_producer(c.GetName(),s.GetState(),self.ndev[c.GetName()],self.nsev[c.GetName()],msg)
-            elif c.GetName() in self.collectors:
-                self.tui.update_collector(c.GetName(),s.GetState(),self.ndev[c.GetName()],self.nsev[c.GetName()],msg)
-            elif c.GetName() in self.loggers:
-                self.tui.update_logger(c.GetName(),s.GetState(),msg)
+        if c.GetName() in self.dataproducers+self.moreproducers:
+            self.tui.update_producer(c.GetName(),s.GetState(),self.ndev[c.GetName()],self.nsev[c.GetName()],msg)
+        elif c.GetName() in self.collectors:
+            self.tui.update_collector(c.GetName(),s.GetState(),self.ndev[c.GetName()],self.nsev[c.GetName()],msg)
+        elif c.GetName() in self.loggers:
+            self.tui.update_logger(c.GetName(),s.GetState(),msg)
     
     @exception_handler
     def framework_runner_(self):
@@ -389,6 +390,8 @@ class ITS3RunControl(pyeudaq.RunControl):
                 if active_config >= len(self.configs):
                     active_config = 0
                     iteration += 1
+                    if self.single_run:
+                        break
                     self.tui.reset_progress_tot()
         self.tui.set_state('TERMINATED')
         self.Terminate()
@@ -408,9 +411,10 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description='ITS3 Run Control',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--address',default='44000')
     parser.add_argument('--ini',help="Path to .ini file.", required=True)
+    parser.add_argument('--single_run', action="store_true", help="Execute 1 run per config file and exit at the end")
     args=parser.parse_args()
 
-    rc=ITS3RunControl(args.address,args.ini)
+    rc=ITS3RunControl(args.address,args.ini,args.single_run)
     rc.start()
     rc.tui.run()
 
