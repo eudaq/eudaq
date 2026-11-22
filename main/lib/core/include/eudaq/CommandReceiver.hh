@@ -1,19 +1,19 @@
 #ifndef EUDAQ_INCLUDED_CommandReceiver
 #define EUDAQ_INCLUDED_CommandReceiver
 
-#include "eudaq/Status.hh"
-#include "eudaq/Platform.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/Platform.hh"
+#include "eudaq/Status.hh"
 
-#include <thread>
-#include <memory>
-#include <string>
-#include <iosfwd>
-#include <future>
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <future>
+#include <iosfwd>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
 
 namespace eudaq {
 
@@ -22,10 +22,10 @@ namespace eudaq {
 
   class DLLEXPORT CommandReceiver {
   public:
-    CommandReceiver(const std::string & type, const std::string & name,
-		    const std::string & runctrl);
+    CommandReceiver(const std::string &type, const std::string &name,
+                    const std::string &runctrl);
     virtual ~CommandReceiver();
-    virtual void OnInitialise(); 
+    virtual void OnInitialise();
     virtual void OnConfigure();
     virtual void OnStartRun();
     virtual void OnStopRun();
@@ -33,13 +33,14 @@ namespace eudaq {
     virtual void OnReset();
     virtual void OnStatus();
     virtual void OnLog(const std::string &log);
-    virtual void OnUnrecognised(const std::string &cmd, const std::string &argv);
+    virtual void OnUnrecognised(const std::string &cmd,
+                                const std::string &argv);
     virtual void RunLoop();
     std::string Connect();
     void Disconnect();
     void SendStatus();
-    void SetStatus(Status::State, const std::string&);
-    void SetStatusMsg(const std::string&);
+    void SetStatus(Status::State, const std::string &);
+    void SetStatusMsg(const std::string &);
     void SetStatusTag(const std::string &key, const std::string &val);
 
     std::string GetFullName() const;
@@ -53,6 +54,13 @@ namespace eudaq {
 
     bool IsConnected() const;
     bool IsStatus(Status::State);
+
+  protected:
+    void LoadConfiguration(const std::string &file,
+                           const std::string &section = "");
+    void LoadInitConfiguration(const std::string &,
+                               const std::string &section = "");
+
   private:
     void CommandHandler(TransportEvent &);
     bool Deamon();
@@ -83,6 +91,6 @@ namespace eudaq {
     std::string m_name;
     uint32_t m_run_number;
   };
-}
+} // namespace eudaq
 
 #endif // EUDAQ_INCLUDED_CommandReceiver
