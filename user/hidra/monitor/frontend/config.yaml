@@ -1,0 +1,463 @@
+# HiDRA monitor frontend configuration.
+#
+# All layout is declared here. Panel types are implemented in
+# `hidra_frontend/panels/`. To add a custom layout/behaviour for a tab,
+# implement a new Panel class, register it in
+# `hidra_frontend/panels/__init__.py`, then reference its type name here.
+
+backend:
+  url: http://localhost:9090
+  request_timeout_s: 2.0
+
+# Histogram decoder.
+#   pure   - parses the TBufferJSON payload directly with numpy. Fast,
+#            self-contained, default.
+#   pyroot - round-trip through ROOT.TBufferJSON.ConvertFromJSON. Slower
+#            (2-200x), keeps a global lock. Useful as a fallback if the
+#            pure decoder doesn't yet handle a payload shape.
+decoder: pure
+
+polling:
+  default_ms: 500
+  floor_ms: 50
+  choices_ms: [100, 200, 500, 1000, 2000, 5000]
+  # Static mirror of the backend PUMP_INTERVAL_MS (set in dry.ini /
+  # hidra.ini under [Monitor.HidraHttpMonitor]). Shown in the status
+  # bar so the user knows the server-side refresh cadence. Not enforced
+  # at runtime.
+  server_pump_ms_hint: 20
+
+overlay:
+  enabled: true
+  # Directory of reference snapshots for the overlay. Normally this is taken
+  # automatically from the running monitor over HTTP (its HISTO_OUTPUT_PATTERN
+  # folder, exposed as /histo_output_dir), so nothing needs configuring. The
+  # value below is only a fallback used when the monitor is unreachable or
+  # doesn't expose it. The dropdown lists every file in the active directory (a
+  # non-ROOT pick just shows no overlay). May be absolute; a relative path is
+  # resolved against this config file's directory (monitor/frontend/).
+  search_dir: reference
+  default_file: null
+  # How live and reference are scaled for comparison:
+  #   area - genuine distributions (1D spectra) are each divided by their own
+  #          sum of counts, so both integrate to 1 and shapes compare regardless
+  #          of how much data each run collected. Profiles (means/saturation)
+  #          and per-channel value plots always overlay raw — normalizing a mean
+  #          would be meaningless. TH2 channel slices never get a reference.
+  #   none - raw counts everywhere (only meaningful at similar statistics).
+  normalize: area
+
+# FERS detector properties (hardware, not per-plot). Defined once here and
+# used by all FERS views: the board-map geometry, the channel-selector board
+# labels, and the per-channel `board_hover`.
+fers:
+  channels_per_board: 64
+
+# Per-histogram display options, keyed by histogram name. They apply
+# wherever that histogram is shown (any tab/panel). Both default to false.
+#   logx    - logarithmic x-axis (only when all bin edges are positive).
+#   density - divide each bin by its width, so non-uniform binning shows a
+#             comparable height per unit x instead of raw per-bin counts.
+histogram_options:
+  dt_between_events:
+    logx: true
+    density: true
+  # Show the underflow bar so the "no trigger mask" events (mask < 0, ROOT
+  # underflow) are visible and the bars sum to the title's entry count.
+  trigger_mask:
+    show_flow: true
+  # Show the overflow bar so gaps longer than the histogram range (e.g. a long run
+  # of physics with a missing pedestal) remain visible instead of being dropped.
+  events_between_pedestals:
+    show_flow: true
+  # FERS per-channel saturation: also show board number + channel-within-board
+  # in the hover, on top of the global channel index (board size from the
+  # top-level `fers:` section, parsed in hidra_frontend/config.py).
+  FERS_HG_saturation_physics:
+    board_hover: true
+  FERS_LG_saturation_physics:
+    board_hover: true
+
+# Ambient UI effects (the "cosmic-ray shower" particle animation). The
+# animation is always available on demand via a triple-click on the title;
+# this section only controls the automatic once-a-day trigger.
+ui_effects:
+  # Local hour (0-23) at which the daily shower fires. Set to null to
+  # disable the automatic trigger entirely (e.g. for production /
+  # control-room screens, so nothing animates unexpectedly).
+  shower_hour: 0
+
+tabs:
+  - id: summary
+    label: Summary
+    panels:
+      # Run header on one row: live event rate (Hz) from the true
+      # pre-prescale counter `events_received`, its sparkline, and the
+      # total event count.
+      - type: rate
+        histogram: events_received
+        count_histogram: event_count
+        smoothing: 0.9  # alpha for exponential smoothing of the sparkline; 1 = no smoothing
+      # Detector map: every module drawn at its (row, column) position,
+      # coloured by mean ADC of the *physics* events. Two figures: S
+      # channels and C channels. `link_tab` makes the modules clickable:
+      # clicking one opens that tab's channel selector on the clicked channel.
+      - type: detector
+        histogram: ADC_mean_physics
+        label: "mean ADC (physics)"
+        height: 550px  # optional per-panel parameter, default is 320px
+        link_tab: adc_channels
+      # Recent trigger-mask values as a one-row heatmap, right under the PMT map.
+      # The nominal pattern is 10 physics (mask=1) then 1 pedestal (mask=2),
+      # repeating: read the periodic physics…pedestal stripe by eye.
+      - type: mask_strip
+        histogram: trigger_mask_recent
+      # Per-event metadata histograms (filled by MetaFiller on the backend):
+      #   trigger_mask       - gate / physics / pedestal / both
+      #   detectors_present  - one bin per detID, counts when each is present
+      #   events_per_spill   - event multiplicity vs spill number
+      #   dt_between_events  - inter-event time, log-binned (see
+      #                        histogram_options below for logx + density)
+      - type: histograms
+        cols: 2
+        histograms: [trigger_mask, detectors_present, events_per_spill, dt_between_events]
+      # Number of non-pedestal events between two consecutive pedestals; peaks at
+      # 10 when the 10-physics : 1-pedestal pattern holds (see the strip above).
+      - type: histograms
+        histograms: [events_between_pedestals]
+
+  # Per-event SUM over a channel group (filled by ChannelSumFiller on the backend,
+  # raw values, no pedestal subtraction). Each overlay plot superimposes the three
+  # trigger flavours total / physics / pedestal (toggle each via the legend): the
+  # pedestal trace is the baseline, physics is baseline + signal, total their sum.
+  # One row per detector/gain, scintillator (S) left and Cherenkov (C) right. PMTs
+  # are the ADC (V792) channels, SiPMs the FERS channels (HG and LG separately);
+  # the S/C split comes from the channel maps.
+  - id: channel_sums
+    label: Channel sums
+    panels:
+      - type: overlay
+        cols: 2
+        show_flow: true   # show the overflow bin (sums above the axis max)
+        groups:
+          - title: "Sum over scintillator PMTs"
+            histograms: [sum_PMT_S, sum_PMT_S_physics, sum_PMT_S_pedestal]
+            labels: ["total", "physics", "pedestal"]
+          - title: "Sum over Cherenkov PMTs"
+            histograms: [sum_PMT_C, sum_PMT_C_physics, sum_PMT_C_pedestal]
+            labels: ["total", "physics", "pedestal"]
+      - type: overlay
+        cols: 2
+        show_flow: true   # show the overflow bin (sums above the axis max)
+        groups:
+          - title: "Sum over scintillator SiPMs (HG)"
+            histograms: [sum_SiPM_S_HG, sum_SiPM_S_HG_physics, sum_SiPM_S_HG_pedestal]
+            labels: ["total", "physics", "pedestal"]
+          - title: "Sum over Cherenkov SiPMs (HG)"
+            histograms: [sum_SiPM_C_HG, sum_SiPM_C_HG_physics, sum_SiPM_C_HG_pedestal]
+            labels: ["total", "physics", "pedestal"]
+      - type: overlay
+        cols: 2
+        show_flow: true   # show the overflow bin (sums above the axis max)
+        groups:
+          - title: "Sum over scintillator SiPMs (LG)"
+            histograms: [sum_SiPM_S_LG, sum_SiPM_S_LG_physics, sum_SiPM_S_LG_pedestal]
+            labels: ["total", "physics", "pedestal"]
+          - title: "Sum over Cherenkov SiPMs (LG)"
+            histograms: [sum_SiPM_C_LG, sum_SiPM_C_LG_physics, sum_SiPM_C_LG_pedestal]
+            labels: ["total", "physics", "pedestal"]
+
+  # Main ADC views show the physics events only; the pedestal lives in the
+  # dedicated "ADC noise" tab and the per-channel comparison in "ADC channels".
+  - id: xdc
+    label: ADC
+    panels:
+      - type: histograms
+        cols: 2
+        histograms: [ADC_inclusive_physics]
+      - type: histograms
+        cols: 2
+        histograms: [ADC_mean_physics]
+
+  - id: tdc
+    label: TDC
+    panels:
+      - type: histograms
+        cols: 2
+        histograms: [TDC_inclusive]
+      - type: histograms
+        cols: 2
+        histograms: [TDC_mean]
+
+  # Per-channel ADC inspection: one channel at a time, with a dropdown. The
+  # per-channel data lives in one TH2 per trigger copy (`ADC_dist*`, x=channel,
+  # y=ADC); a single channel is fetched as a server-side ProjectionY (issue
+  # #138). The channel count comes from the TH2 x axis (GetNbinsX), so it always
+  # matches the current VME geo map.
+  - id: adc_channels
+    label: ADC channels
+    panels:
+      # `show_trigger_split` overlays the selected channel's total / physics /
+      # pedestal copies in one plot. Use the Plotly legend to hide/show each.
+      - type: channel_selector
+        projection_templates: ["ADC_dist"]
+        split_suffixes: ["", "_physics", "_pedestal"]
+        show_trigger_split: true
+
+  # Muon counter: a single dedicated ADC channel (index 161, "Muon" in
+  # hidra_frontend/mapping/adc_channels.json). Reuses the channel_selector in projection mode
+  # but pinned to one channel (no dropdown), overlaying the full spectrum
+  # ("total") and the pedestal-only copy. Like the ADC channels tab it fetches a
+  # server-side ProjectionY on tab-open / Refresh (issue #153), not every poll.
+  - id: muon
+    label: Muon counter
+    panels:
+      - type: channel_selector
+        projection_templates: ["ADC_dist"]
+        split_suffixes: ["", "_pedestal"]   # overlay: total + pedestal-only
+        show_trigger_split: true
+        fixed_channel: 161
+        title: "Muon counter · ch 161"
+        # Fraction of *physics* events above this ADC value, shown in the title
+        # with a vertical marker at the threshold.
+        threshold: 500
+        threshold_series: "_physics"
+
+  # Cherenkov chambers: three dedicated ADC channels (Cher1/Cher2/Cher3 =
+  # 162/163/164 in hidra_frontend/mapping/adc_channels.json), one fixed-channel spectrum each,
+  # overlaying total + pedestal (no threshold/fraction). Like the ADC channels /
+  # muon tabs, each fetches a server-side ProjectionY on tab-open / Refresh.
+  - id: cherenkov
+    label: Cherenkov
+    panels:
+      # One panel, three fixed channels on a single row (cols: 3); each plot
+      # overlays total + pedestal. Titles come from the calo mapping
+      # (Cher1/Cher2/Cher3). No threshold/fraction.
+      - type: channel_selector
+        projection_templates: ["ADC_dist"]
+        split_suffixes: ["", "_pedestal"]
+        show_trigger_split: true
+        fixed_channels: [162, 163, 164]
+        cols: 3
+
+  - id: adc_saturation
+    label: ADC Saturation
+    panels:
+      - type: histograms
+        cols: 1
+        histograms: [ADC_saturation_physics]
+      - type: detector
+        histogram: ADC_saturation_physics
+        label: "sat. fraction (physics)"
+        height: 550px
+        link_tab: adc_channels
+
+  # Pedestal-only views: the per-channel mean and the robust noise.
+  # ADC_noise_pedestal is computed on the backend as IQR/1.349 of each
+  # channel's pedestal distribution (robust to outliers, unlike the std
+  # dev), exposed as one value per channel.
+  - id: adc_noise
+    label: ADC noise
+    panels:
+      - type: histograms
+        cols: 1
+        histograms: [ADC_mean_pedestal]
+      - type: detector
+        histogram: ADC_mean_pedestal
+        label: "mean ADC (pedestal)"
+        height: 550px
+        link_tab: adc_channels
+      # Per-channel noise, both estimators overlaid: robust IQR/1.349 and the
+      # (outlier-sensitive) std dev. Toggle either via the legend.
+      - type: overlay
+        title: "Pedestal noise per channel"
+        per_channel: true
+        histograms: [ADC_noise_pedestal, ADC_noise_std_pedestal]
+        labels: ["IQR/1.349", "std"]
+      # The heatmap uses the robust estimator only.
+      - type: detector
+        histogram: ADC_noise_pedestal
+        title_tag: noise
+        label: "noise (IQR/1.349)"
+        height: 550px
+        link_tab: adc_channels
+
+  # ---- FERS --------------------------------------------------------------
+  # The FERS board map (`fers_board`) draws one heatmap per board, tiled on a
+  # `columns`-wide grid (2 boards per row): each board shows its 64 channels
+  # in a 16x4 block. All boards share a common colour scale. `n_boards` fixes
+  # the number of heatmaps (default 20 = backend FERS_NBOARDS); `height` is
+  # per board. `mode_toggle` adds a physics/pedestal radio and fetches only
+  # the shown variant. Clicking a cell opens the FERS channel selector of the
+  # same gain on that channel.
+  - id: fers_hg
+    label: FERS HG
+    panels:
+      # SiPM detector face: every FERS channel at its (column, row) fiber
+      # position, coloured by its mean HG. S/C fibers are interleaved by row
+      # in a single grid (channel -> position from the SiPM mapping). Clicking
+      # a cell opens the FERS channel selector on that channel.
+      - type: sipm_detector
+        histogram: FERS_HG_mean
+        label: "mean HG"
+        height: 420px
+        mode_toggle: true
+        link_tab: fers_channels
+      - type: fers_board
+        histogram: FERS_HG_mean
+        label: "mean HG"
+        n_boards: 20
+        columns: 2
+        height: 180px
+        mode_toggle: true
+        link_tab: fers_channels
+      - type: histograms
+        cols: 1
+        histograms: [FERS_HG_inclusive_physics]
+
+  - id: fers_lg
+    label: FERS LG
+    panels:
+      - type: sipm_detector
+        histogram: FERS_LG_mean
+        label: "mean LG"
+        height: 420px
+        mode_toggle: true
+        link_tab: fers_channels
+      - type: fers_board
+        histogram: FERS_LG_mean
+        label: "mean LG"
+        n_boards: 20
+        columns: 2
+        height: 180px
+        mode_toggle: true
+        link_tab: fers_channels
+      - type: histograms
+        cols: 1
+        histograms: [FERS_LG_inclusive_physics]
+
+  # Per-channel FERS distributions: one channel at a time, with a *single*
+  # dropdown driving both gain plots (HG and LG of the same channel, stacked).
+  # The per-channel data lives in one TH2 per gain/trigger (`FERS_*_dist_*`,
+  # x=channel, y=ADC); a single channel is fetched as a server-side ProjectionY
+  # (see issue #138), overlaying the physics and pedestal copies.
+  - id: fers_channels
+    label: FERS channels
+    panels:
+      - type: channel_selector
+        projection_templates: ["FERS_HG_dist", "FERS_LG_dist"]
+        split_suffixes: ["_physics", "_pedestal"]
+        board_labels: true   # label as "board B · ch L" (no calo mapping)
+        show_trigger_split: true
+
+  - id: fers_saturation
+    label: FERS saturation
+    panels:
+      - type: histograms
+        cols: 2
+        histograms: [FERS_HG_saturation_physics, FERS_LG_saturation_physics]
+      # SiPM detector face coloured by the HG saturation fraction (physics).
+      # Saturation is physics-only (pedestal events don't saturate), so no
+      # mode toggle here.
+      - type: sipm_detector
+        histogram: FERS_HG_saturation_physics
+        label: "sat. fraction (physics)"
+        height: 420px
+        link_tab: fers_channels
+      - type: fers_board
+        histogram: FERS_HG_saturation_physics
+        label: "sat. fraction (physics)"
+        n_boards: 20
+        columns: 2
+        height: 180px
+        link_tab: fers_channels
+
+  # Per-board quantities (x = board, one bar per board): mean over the board's
+  # channels, the all-zero (dead board) fraction, and each board's time offset
+  # vs the median (board-time compatibility).
+  - id: fers_boards
+    label: FERS boards
+    panels:
+      - type: histograms
+        cols: 2
+        histograms: [FERS_HG_board_mean, FERS_LG_board_mean, FERS_HG_board_allzero, FERS_board_time_offset]
+      # Per-event trigger-ID consistency: all boards of an event are triggered
+      # together, so every present channel should carry the same FERStrigger_id.
+      - type: histograms
+        histograms: [FERS_trigger_id_consistency]
+        bin_labels: [consistent, mismatch]
+
+  # ---- MAXICC ------------------------------------------------------------
+  # Geometric ADC maps of the MAXICC crystal calorimeter. MAXICC is its own
+  # detector sub-event (det_id 4), decoded by the monitor into separate
+  # `MAXICC_*` histograms (3 boards × 64 channels). One gain per tab; each tab
+  # shows the 3 readout planes (front 15µm | rear 15µm | rear 50µm) side by side,
+  # each crystal at its (col, row) position coloured by mean ADC. The MAXICC
+  # boards are local 0/1/2 in their own histogram, so board_offset = 0. The
+  # channel->position map is mapping/maxicc_channels.json.
+  - id: maxicc_hg
+    label: MAXICC HG
+    panels:
+      - type: maxicc_detector
+        histogram: MAXICC_HG_mean
+        label: "mean HG"
+        mode_toggle: true
+        board_offset: 0
+        height: 360px
+        link_tab: maxicc_channels   # click a crystal -> open it in MAXICC channels
+
+  - id: maxicc_lg
+    label: MAXICC LG
+    panels:
+      - type: maxicc_detector
+        histogram: MAXICC_LG_mean
+        label: "mean LG"
+        mode_toggle: true
+        board_offset: 0
+        height: 360px
+        link_tab: maxicc_channels   # click a crystal -> open it in MAXICC channels
+
+  # Per-channel MAXICC distributions (one channel at a time, HG+LG stacked),
+  # mirroring the FERS channels tab but reading the MAXICC TH2s. Reached by
+  # clicking a crystal in the MAXICC maps above.
+  - id: maxicc_channels
+    label: MAXICC channels
+    panels:
+      - type: channel_selector
+        projection_templates: ["MAXICC_HG_dist", "MAXICC_LG_dist"]
+        split_suffixes: ["_physics", "_pedestal"]
+        board_labels: true   # label as "board B · ch L" (no calo mapping)
+        show_trigger_split: true
+
+  # Per-board MAXICC aggregates (x = board, one bar per board).
+  - id: maxicc_boards
+    label: MAXICC boards
+    panels:
+      - type: histograms
+        cols: 2
+        histograms: [MAXICC_HG_board_mean, MAXICC_LG_board_mean, MAXICC_HG_board_allzero, MAXICC_board_time_offset]
+      - type: histograms
+        histograms: [MAXICC_trigger_id_consistency]
+        bin_labels: [consistent, mismatch]
+
+  # ---- Tracker -----------------------------------------------------------
+  # One 2D hit map (X vs Y occupancy) per tracker station, published by the
+  # backend TrackerFiller as `Tracker_station<i>` (TH2). The station count and
+  # the per-station X/Y range/binning are set in the monitor `.conf`
+  # (TRACKER_NSTATIONS, TRACKER_X_*/TRACKER_Y_*); keep the names below in sync
+  # with TRACKER_NSTATIONS. `equal_aspect` locks a 1:1 x/y pixel ratio.
+  - id: tracker
+    label: Tracker
+    panels:
+      - type: tracker
+        histograms: [Tracker_station0, Tracker_station1, Tracker_station2]
+        cols: 3              # all three station maps on one row
+        height: 360px
+        equal_aspect: true
+        projections: true    # X and Y distributions below, all stations overlaid
+      # No-hit (negative coordinate) counter: one bar per station plus an `any`
+      # bar (the OR over all stations), published by TrackerFiller. The bins are
+      # categories, so label them in the frontend.
+      - type: histograms
+        histograms: [Tracker_errors]
+        bin_labels: [station0, station1, station2, any]

@@ -1,0 +1,23 @@
+# imported from https://gitlab.cern.ch/atlas-tdaq-ph2upgrades/atlas-tdaq-dataflow/dataflow_hub/-/blob/master/.clang-format
+
+# clang-format v19.1.4 for ATLAS Dataflow projects
+BasedOnStyle: LLVM
+ColumnLimit: 120
+
+# Short statements: all forbidden
+AllowShortFunctionsOnASingleLine: Inline
+InsertBraces: true
+
+# Includes: alphabetical + grouping
+IncludeBlocks: Regroup
+
+# Function arguments + Initializers: one per line if doesn't fit, aligned
+BinPackArguments: false
+BinPackParameters: false
+PackConstructorInitializers: Never
+
+# Other
+PointerAlignment: Left
+
+# Include sorting
+SortIncludes: false
